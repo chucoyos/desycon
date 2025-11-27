@@ -1,6 +1,13 @@
 require 'rails_helper'
 
 RSpec.describe "/shipping_lines", type: :request do
+  let(:admin_role) { Role.create!(name: Role::ADMIN) }
+  let(:user) { User.create!(email: 'test@example.com', password: 'password123', role: admin_role) }
+
+  before do
+    sign_in user
+  end
+
   let(:valid_attributes) {
     { name: "Evergreen" }
   }

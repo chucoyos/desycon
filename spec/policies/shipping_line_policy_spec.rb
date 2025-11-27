@@ -1,27 +1,40 @@
 require 'rails_helper'
 
 RSpec.describe ShippingLinePolicy, type: :policy do
-  let(:user) { User.new }
+  subject { described_class.new(user, shipping_line) }
 
-  subject { described_class }
+  let(:shipping_line) { ShippingLine.new }
+  let(:admin_role) { Role.new(name: Role::ADMIN) }
+  let(:operator_role) { Role.new(name: Role::OPERATOR) }
+  let(:customs_broker_role) { Role.new(name: Role::CUSTOMS_BROKER) }
 
-  permissions ".scope" do
-    pending "add some examples to (or delete) #{__FILE__}"
+  context 'for an admin user' do
+    let(:user) { User.new(role: admin_role) }
+
+    it { is_expected.to permit_action(:index) }
+    it { is_expected.to permit_action(:show) }
+    it { is_expected.to permit_action(:create) }
+    it { is_expected.to permit_action(:update) }
+    it { is_expected.to permit_action(:destroy) }
   end
 
-  permissions :show? do
-    pending "add some examples to (or delete) #{__FILE__}"
+  context 'for an operator user' do
+    let(:user) { User.new(role: operator_role) }
+
+    it { is_expected.to permit_action(:index) }
+    it { is_expected.to permit_action(:show) }
+    it { is_expected.to permit_action(:create) }
+    it { is_expected.to permit_action(:update) }
+    it { is_expected.not_to permit_action(:destroy) }
   end
 
-  permissions :create? do
-    pending "add some examples to (or delete) #{__FILE__}"
-  end
+  context 'for a customs broker user' do
+    let(:user) { User.new(role: customs_broker_role) }
 
-  permissions :update? do
-    pending "add some examples to (or delete) #{__FILE__}"
-  end
-
-  permissions :destroy? do
-    pending "add some examples to (or delete) #{__FILE__}"
+    it { is_expected.not_to permit_action(:index) }
+    it { is_expected.not_to permit_action(:show) }
+    it { is_expected.not_to permit_action(:create) }
+    it { is_expected.not_to permit_action(:update) }
+    it { is_expected.not_to permit_action(:destroy) }
   end
 end
