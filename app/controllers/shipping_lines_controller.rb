@@ -1,27 +1,34 @@
 class ShippingLinesController < ApplicationController
+  before_action :authenticate_user!
   before_action :set_shipping_line, only: %i[ show edit update destroy ]
+  after_action :verify_authorized, except: :index
+  after_action :verify_policy_scoped, only: :index
 
   # GET /shipping_lines or /shipping_lines.json
   def index
-    @shipping_lines = ShippingLine.all
+    @shipping_lines = policy_scope(ShippingLine)
   end
 
   # GET /shipping_lines/1 or /shipping_lines/1.json
   def show
+    authorize @shipping_line
   end
 
   # GET /shipping_lines/new
   def new
     @shipping_line = ShippingLine.new
+    authorize @shipping_line
   end
 
   # GET /shipping_lines/1/edit
   def edit
+    authorize @shipping_line
   end
 
   # POST /shipping_lines or /shipping_lines.json
   def create
     @shipping_line = ShippingLine.new(shipping_line_params)
+    authorize @shipping_line
 
     respond_to do |format|
       if @shipping_line.save
@@ -36,6 +43,8 @@ class ShippingLinesController < ApplicationController
 
   # PATCH/PUT /shipping_lines/1 or /shipping_lines/1.json
   def update
+    authorize @shipping_line
+
     respond_to do |format|
       if @shipping_line.update(shipping_line_params)
         format.html { redirect_to @shipping_line, notice: "Se actualizó la línea naviera.", status: :see_other }
@@ -49,6 +58,7 @@ class ShippingLinesController < ApplicationController
 
   # DELETE /shipping_lines/1 or /shipping_lines/1.json
   def destroy
+    authorize @shipping_line
     @shipping_line.destroy!
 
     respond_to do |format|

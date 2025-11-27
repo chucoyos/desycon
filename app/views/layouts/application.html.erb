@@ -25,6 +25,7 @@
 
   <body>
     <%= render 'shared/flash_messages' %>
+    <%= render 'shared/navbar' if user_signed_in? %>
     <main class="container mx-auto mt-28 px-5 flex">
       <%= yield %>
     </main>
