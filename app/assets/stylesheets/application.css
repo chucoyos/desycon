@@ -19,6 +19,16 @@
 #toast-container.toast-top-right {
   top: 12px;
   right: 12px;
+  left: auto;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+  #toast-container.toast-top-right {
+    top: 8px;
+    right: 8px;
+    left: 8px;
+  }
 }
 
 .toast {
@@ -26,16 +36,29 @@
   pointer-events: auto;
   overflow: hidden;
   margin: 0 0 6px;
-  padding: 10px 10px 10px 10px;
-  width: 300px;
+  padding: 12px 15px;
+  width: 100%;
+  max-width: 300px;
   border-radius: 8px;
   background-position: 15px center;
   background-repeat: no-repeat;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   color: #FFFFFF;
   opacity: 0;
   transform: translateX(400px);
   transition: all 0.3s ease-in-out;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Mobile responsive toast */
+@media (max-width: 640px) {
+  .toast {
+    max-width: 100%;
+    font-size: 13px;
+    padding: 10px 12px;
+    margin: 0 0 8px;
+  }
 }
 
 .toast-success {
@@ -52,8 +75,8 @@
 
 .toast-close-button {
   position: absolute;
-  right: 0.5em;
-  top: 0.1em;
+  right: 8px;
+  top: 8px;
   float: right;
   font-size: 20px;
   font-weight: bold;
@@ -65,9 +88,21 @@
   cursor: pointer;
   padding: 0;
   margin: 0;
-  width: 1em;
-  height: 1em;
-  line-height: 1em;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile close button */
+@media (max-width: 640px) {
+  .toast-close-button {
+    width: 28px;
+    height: 28px;
+    font-size: 22px;
+  }
 }
 
 .toast-close-button:hover {
@@ -76,5 +111,6 @@
 
 .toast-message {
   word-wrap: break-word;
+  padding-right: 30px;
 }
 
