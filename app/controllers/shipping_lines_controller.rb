@@ -25,7 +25,7 @@ class ShippingLinesController < ApplicationController
 
     respond_to do |format|
       if @shipping_line.save
-        format.html { redirect_to @shipping_line, notice: "Shipping line was successfully created." }
+        format.html { redirect_to @shipping_line, notice: "Se creó la línea naviera." }
         format.json { render :show, status: :created, location: @shipping_line }
       else
         format.html { render :new, status: :unprocessable_entity }
@@ -38,7 +38,7 @@ class ShippingLinesController < ApplicationController
   def update
     respond_to do |format|
       if @shipping_line.update(shipping_line_params)
-        format.html { redirect_to @shipping_line, notice: "Shipping line was successfully updated.", status: :see_other }
+        format.html { redirect_to @shipping_line, notice: "Se actualizó la línea naviera.", status: :see_other }
         format.json { render :show, status: :ok, location: @shipping_line }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -52,7 +52,7 @@ class ShippingLinesController < ApplicationController
     @shipping_line.destroy!
 
     respond_to do |format|
-      format.html { redirect_to shipping_lines_path, notice: "Shipping line was successfully destroyed.", status: :see_other }
+      format.html { redirect_to shipping_lines_path, notice: "Se eliminó la línea naviera.", status: :see_other }
       format.json { head :no_content }
     end
   end
