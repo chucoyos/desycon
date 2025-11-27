@@ -8,3 +8,73 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+
+/* Toast notifications styles */
+#toast-container {
+  position: fixed;
+  z-index: 999999;
+  pointer-events: none;
+}
+
+#toast-container.toast-top-right {
+  top: 12px;
+  right: 12px;
+}
+
+.toast {
+  position: relative;
+  pointer-events: auto;
+  overflow: hidden;
+  margin: 0 0 6px;
+  padding: 15px 15px 15px 50px;
+  width: 300px;
+  border-radius: 3px;
+  background-position: 15px center;
+  background-repeat: no-repeat;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+  color: #FFFFFF;
+  opacity: 0;
+  transform: translateX(400px);
+  transition: all 0.3s ease-in-out;
+}
+
+.toast-success {
+  background-color: #51A351;
+}
+
+.toast-error {
+  background-color: #BD362F;
+}
+
+.toast-info {
+  background-color: #2F96B4;
+}
+
+.toast-close-button {
+  position: absolute;
+  right: -0.2em;
+  top: -0.2em;
+  float: right;
+  font-size: 20px;
+  font-weight: bold;
+  color: #FFFFFF;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  opacity: 0.8;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  width: 1em;
+  height: 1em;
+  line-height: 1em;
+}
+
+.toast-close-button:hover {
+  opacity: 1;
+}
+
+.toast-message {
+  word-wrap: break-word;
+}
+
