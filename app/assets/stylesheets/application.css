@@ -36,7 +36,7 @@
   pointer-events: auto;
   overflow: hidden;
   margin: 0 0 6px;
-  padding: 12px 15px;
+  padding: 10px 12px;
   width: 100%;
   max-width: 300px;
   border-radius: 8px;
@@ -73,44 +73,7 @@
   background-color: #2F96B4;
 }
 
-.toast-close-button {
-  position: absolute;
-  right: 8px;
-  top: 8px;
-  float: right;
-  font-size: 20px;
-  font-weight: bold;
-  color: #FFFFFF;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
-  opacity: 0.8;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  margin: 0;
-  width: 24px;
-  height: 24px;
-  line-height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Mobile close button */
-@media (max-width: 640px) {
-  .toast-close-button {
-    width: 28px;
-    height: 28px;
-    font-size: 22px;
-  }
-}
-
-.toast-close-button:hover {
-  opacity: 1;
-}
-
 .toast-message {
   word-wrap: break-word;
-  padding-right: 30px;
 }
 

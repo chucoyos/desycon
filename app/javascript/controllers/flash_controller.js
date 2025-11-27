@@ -37,7 +37,6 @@ export default class extends Controller {
     const icon = iconMap[type] || 'ℹ'
     
     toast.innerHTML = `
-      <button type="button" class="toast-close-button" role="button">×</button>
       <div class="toast-message">${icon} ${message}</div>
     `
 
@@ -55,10 +54,6 @@ export default class extends Controller {
       toast.style.opacity = '0'
       setTimeout(() => toast.remove(), 300)
     }
-
-    // Agregar evento de cierre
-    const closeButton = toast.querySelector('.toast-close-button')
-    closeButton.addEventListener('click', closeToast)
 
     // Auto-remover después de 5 segundos
     setTimeout(closeToast, 5000)
