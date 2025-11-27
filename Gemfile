@@ -67,6 +67,9 @@ group :development, :test do
 
   # Herramientas para simular peticiones HTTP (vital para CFDI)
   gem "webmock", "~> 3.0"
+
+  # Bullet gem to help detect N+1 queries and unused eager loading
+  gem "bullet"
 end
 
 group :development do
