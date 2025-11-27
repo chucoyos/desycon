@@ -58,6 +58,14 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 end
 
+group :development, :test do
+  # RSpec para el framework de pruebas
+  gem "rspec-rails", "~> 6.0"
+
+  # Herramientas para simular peticiones HTTP (vital para CFDI)
+  gem "webmock", "~> 3.0"
+end
+
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
