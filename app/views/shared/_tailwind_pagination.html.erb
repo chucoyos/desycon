@@ -2,7 +2,26 @@
 <% paginated = local_assigns[:paginated] || paginated %>
 
 <%# Determine current per-page value (from paginated object if present, otherwise params or default) %>
-<% current_per = (paginated && paginated.respond_to?(:limit_value) ? paginated.limit_value : (params[:per].to_i.nonzero? || 10)) %>
+<% current_per = if paginated && paginated.respond_to?(:limit_value)
+  paginated.limit_value
+else
+  params[:per].to_i.nonzero? || 10
+end %>
+
+<%# Support plain Arrays in view specs: compute pagination values when Kaminari methods aren't available %>
+<% if paginated && paginated.respond_to?(:total_pages) %>
+  <% total_pages = paginated.total_pages %>
+  <% current_page = paginated.current_page %>
+  <% prev_page = paginated.prev_page %>
+  <% next_page = paginated.next_page %>
+<% else %>
+  <% size = paginated.respond_to?(:size) ? paginated.size : 0 %>
+  <% current_page = params[:page].to_i.nonzero? || 1 %>
+  <% per = current_per %>
+  <% total_pages = (size.to_f / per).ceil %>
+  <% prev_page = current_page > 1 ? current_page - 1 : nil %>
+  <% next_page = current_page < total_pages ? current_page + 1 : nil %>
+<% end %>
 
 <div class="flex items-center justify-center mt-6 space-x-4">
   <%# Per-page selector form - preserves other query params except page and per %>
@@ -18,13 +37,13 @@
   </div>
 
   <%# Guard: nothing to render for single page or missing collection %>
-  <% if paginated && paginated.total_pages && paginated.total_pages > 1 %>
+  <% if total_pages && total_pages > 1 %>
     <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center">
       <ul class="inline-flex items-center -space-x-px">
       <%# Prev button %>
-      <% if paginated.prev_page %>
+      <% if prev_page %>
         <li>
-          <%= link_to url_for(request.params.merge(page: paginated.prev_page)), class: "px-3 py-1 rounded-l-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50" , aria: { label: "Previous" } do %>
+          <%= link_to url_for(request.params.merge(page: prev_page)), class: "px-3 py-1 rounded-l-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50" , aria: { label: "Previous" } do %>
             &lsaquo;
           <% end %>
         </li>
@@ -35,8 +54,8 @@
       <% end %>
 
       <%# Page numbers: simple full range (acceptable for modest page counts) %>
-      <% 1.upto(paginated.total_pages) do |p| %>
-        <% if p == paginated.current_page %>
+      <% 1.upto(total_pages) do |p| %>
+        <% if p == current_page %>
           <li>
             <span class="px-3 py-1 border-t border-b border-gray-200 bg-blue-600 text-white"><%= p %></span>
           </li>
@@ -48,9 +67,9 @@
       <% end %>
 
       <%# Next button %>
-      <% if paginated.next_page %>
+      <% if next_page %>
         <li>
-          <%= link_to url_for(request.params.merge(page: paginated.next_page)), class: "px-3 py-1 rounded-r-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50", aria: { label: "Next" } do %>
+          <%= link_to url_for(request.params.merge(page: next_page)), class: "px-3 py-1 rounded-r-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50", aria: { label: "Next" } do %>
             &rsaquo;
           <% end %>
         </li>
