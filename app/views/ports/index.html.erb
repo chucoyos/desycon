@@ -11,6 +11,10 @@
   </div>
 
   <!-- Vista de tabla para desktop -->
+  <%# Tailwind-styled pagination %>
+  <div class="mt-6 mb-10">
+    <%= render 'shared/tailwind_pagination', paginated: @ports %>
+  </div>
   <div class="hidden md:block bg-white shadow-sm rounded-lg overflow-hidden">
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
@@ -102,7 +106,7 @@
     <% end %>
   </div>
   <%# Tailwind-styled pagination %>
-  <div class="mt-6">
+  <div class="mt-6 mb-10">
     <%= render 'shared/tailwind_pagination', paginated: @ports %>
   </div>
 </div>
