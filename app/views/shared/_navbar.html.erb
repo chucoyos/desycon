@@ -6,26 +6,83 @@
         <%= link_to "DESYCON", root_path, class: "text-2xl font-bold text-blue-600" %>
       </div>
 
-      <!-- Navigation Links -->
-      <div class="hidden md:block">
-        <div class="ml-10 flex items-baseline space-x-4">
-          <% if current_user.internal? %>
-            <%= link_to "Líneas Navieras", shipping_lines_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium" %>
-            <%= link_to "Puertos", ports_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium" %>
-          <% end %>
-        </div>
-      </div>
-
-      <!-- User Menu -->
-      <div class="flex items-center space-x-4">
-        <span class="text-sm text-gray-600">
+      <!-- Desktop Navigation Links -->
+      <div class="hidden md:flex items-center space-x-4">
+        <% if current_user.internal? %>
+          <%= link_to "Líneas Navieras", shipping_lines_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
+          <%= link_to "Puertos", ports_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
+        <% end %>
+        
+        <span class="text-sm text-gray-600 border-l pl-4 ml-2">
           <%= current_user.email %>
           <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
             <%= current_user.role_name&.titleize %>
           </span>
         </span>
-        <%= button_to "Cerrar Sesión", destroy_user_session_path, method: :delete, class: "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium" %>
+        <%= button_to "Cerrar Sesión", destroy_user_session_path, method: :delete, class: "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors" %>
+      </div>
+
+      <!-- Mobile menu button -->
+      <div class="md:hidden">
+        <button type="button" id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
+          <span class="sr-only">Abrir menú</span>
+          <!-- Heroicon: menu (hamburger) -->
+          <svg class="block h-6 w-6" id="menu-open-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+          <!-- Heroicon: x (close) -->
+          <svg class="hidden h-6 w-6" id="menu-close-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile menu -->
+  <div class="hidden md:hidden" id="mobile-menu">
+    <div class="px-2 pt-2 pb-3 space-y-1 border-t border-gray-200">
+      <% if current_user.internal? %>
+        <%= link_to "Líneas Navieras", shipping_lines_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
+        <%= link_to "Puertos", ports_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
+      <% end %>
+      
+      <div class="border-t border-gray-200 pt-2 mt-2">
+        <%= button_to "Cerrar Sesión", destroy_user_session_path, method: :delete, class: "w-full text-left bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-base font-medium" %>
       </div>
     </div>
   </div>
 </nav>
+
+<script>
+  document.addEventListener('turbo:load', initMobileMenu);
+  document.addEventListener('turbo:render', initMobileMenu);
+
+  function initMobileMenu() {
+    const menuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const menuOpenIcon = document.getElementById('menu-open-icon');
+    const menuCloseIcon = document.getElementById('menu-close-icon');
+
+    if (menuButton && mobileMenu) {
+      // Remove existing listener to avoid duplicates
+      menuButton.replaceWith(menuButton.cloneNode(true));
+      const newMenuButton = document.getElementById('mobile-menu-button');
+      
+      newMenuButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        const isHidden = mobileMenu.classList.contains('hidden');
+        
+        if (isHidden) {
+          mobileMenu.classList.remove('hidden');
+          menuOpenIcon.classList.add('hidden');
+          menuCloseIcon.classList.remove('hidden');
+        } else {
+          mobileMenu.classList.add('hidden');
+          menuOpenIcon.classList.remove('hidden');
+          menuCloseIcon.classList.add('hidden');
+        }
+      });
+    }
+  }
+</script>
