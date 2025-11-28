@@ -12,11 +12,11 @@ puts "✓ Roles creados"
 # Crear usuario admin inicial (solo en desarrollo)
 if Rails.env.development?
   puts "Creando usuario admin de prueba..."
-  User.find_or_create_by!(email: 'admin@desycon.com') do |user|
-    user.password = 'password123'
-    user.password_confirmation = 'password123'
-    user.role = admin_role
-  end
+  admin = User.find_or_initialize_by(email: 'admin@desycon.com')
+  admin.password = 'password123' if admin.new_record?
+  admin.password_confirmation = 'password123' if admin.new_record?
+  admin.role = admin_role
+  admin.save! if admin.changed? || admin.new_record?
   puts "✓ Usuario admin creado (admin@desycon.com / password123)"
 end
 
@@ -48,10 +48,9 @@ china_ports = [
 ]
 
 (mexican_ports + china_ports).each do |port_data|
-  Port.find_or_create_by!(code: port_data[:code]) do |port|
-    port.name = port_data[:name]
-    port.country_code = port_data[:country_code]
-  end
+  port = Port.find_or_initialize_by(code: port_data[:code])
+  port.assign_attributes(name: port_data[:name], country_code: port_data[:country_code])
+  port.save! if port.changed?
 end
 
 puts "✓ #{Port.count} puertos creados"
