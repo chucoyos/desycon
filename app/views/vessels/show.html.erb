@@ -1,0 +1,32 @@
+<% content_for :title, @vessel.name %>
+
+<div class="mx-auto md:w-2/3 w-full">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="font-bold text-4xl"><%= @vessel.name %></h1>
+    <div class="inline-flex space-x-2">
+      <%= link_to edit_vessel_path(@vessel), class: "rounded-md px-3.5 py-2.5 bg-gray-600 hover:bg-gray-500 text-white inline-block font-medium" do %>
+        Editar
+      <% end %>
+      <%= button_to "Eliminar", @vessel, method: :delete, class: "rounded-md px-3.5 py-2.5 bg-red-600 hover:bg-red-500 text-white inline-block font-medium", data: { turbo_confirm: "¿Estás seguro?" } %>
+    </div>
+  </div>
+
+  <div class="bg-white shadow-sm rounded-lg p-6">
+    <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <dt class="text-sm font-medium text-gray-500">Nombre</dt>
+        <dd class="mt-1 text-sm text-gray-900"><%= @vessel.name %></dd>
+      </div>
+      <div>
+        <dt class="text-sm font-medium text-gray-500">Línea Naviera</dt>
+        <dd class="mt-1 text-sm text-gray-900">
+          <%= link_to @vessel.shipping_line.name, @vessel.shipping_line, class: "text-blue-600 hover:text-blue-900" %>
+        </dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="mt-6">
+    <%= link_to "Volver a Buques", vessels_path, class: "text-blue-600 hover:text-blue-900" %>
+  </div>
+</div>

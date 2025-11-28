@@ -1,0 +1,11 @@
+<% content_for :title, "Editar Buque" %>
+
+<div class="mx-auto md:w-2/3 w-full">
+  <h1 class="font-bold text-4xl mb-8">Editar Buque</h1>
+
+  <%= render "form", vessel: @vessel %>
+
+  <div class="mt-8">
+    <%= link_to "Volver", @vessel, class: "text-blue-600 hover:text-blue-900" %>
+  </div>
+</div>

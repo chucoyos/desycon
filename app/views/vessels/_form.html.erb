@@ -1,0 +1,17 @@
+<%= form_with(model: vessel, class: "contents") do |form| %>
+  <%= render "shared/error_messages", object: vessel %>
+
+  <div class="my-5">
+    <%= form.label :name, "Nombre", class: "block text-sm font-medium text-gray-700 mb-2" %>
+    <%= form.text_field :name, class: [ "block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", { "border-gray-400 focus:outline-blue-600": vessel.errors[:name].none?, "border-red-400 focus:outline-red-600": vessel.errors[:name].any? } ] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :shipping_line_id, "Línea Naviera", class: "block text-sm font-medium text-gray-700 mb-2" %>
+    <%= form.collection_select :shipping_line_id, ShippingLine.alphabetical, :id, :name, { include_blank: "Selecciona una línea naviera" }, class: [ "block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", { "border-gray-400 focus:outline-blue-600": vessel.errors[:shipping_line].none?, "border-red-400 focus:outline-red-600": vessel.errors[:shipping_line].any? } ] %>
+  </div>
+
+  <div class="inline">
+    <%= form.submit class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+  </div>
+<% end %>
