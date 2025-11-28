@@ -12,8 +12,9 @@ class ApplicationController < ActionController::Base
 
   private
 
-  def user_not_authorized
-    flash[:alert] = "No estás autorizado para realizar esta acción."
+  def user_not_authorized(exception)
+    policy_name = exception.policy.class.to_s.underscore
+    flash[:alert] = t "pundit.#{policy_name}.#{exception.query}", default: :default
     redirect_back(fallback_location: root_path)
   end
 end
