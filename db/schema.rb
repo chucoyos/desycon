@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_27_210537) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_28_042611) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "ports", force: :cascade do |t|
+    t.string "code", null: false
+    t.string "country_code", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["code"], name: "index_ports_on_code", unique: true
+    t.index ["country_code", "name"], name: "index_ports_on_country_code_and_name"
+    t.index ["country_code"], name: "index_ports_on_country_code"
+  end
 
   create_table "roles", force: :cascade do |t|
     t.datetime "created_at", null: false

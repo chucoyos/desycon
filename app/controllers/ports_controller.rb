@@ -1,0 +1,80 @@
+class PortsController < ApplicationController
+  before_action :authenticate_user!
+  before_action :set_port, only: %i[ show edit update destroy ]
+  after_action :verify_authorized, except: :index
+  after_action :verify_policy_scoped, only: :index
+
+  # GET /ports or /ports.json
+  def index
+    @ports = policy_scope(Port).alphabetical
+  end
+
+  # GET /ports/1 or /ports/1.json
+  def show
+    authorize @port
+  end
+
+  # GET /ports/new
+  def new
+    @port = Port.new
+    authorize @port
+  end
+
+  # GET /ports/1/edit
+  def edit
+    authorize @port
+  end
+
+  # POST /ports or /ports.json
+  def create
+    @port = Port.new(port_params)
+    authorize @port
+
+    respond_to do |format|
+      if @port.save
+        format.html { redirect_to @port, notice: "Se creó el puerto." }
+        format.json { render :show, status: :created, location: @port }
+      else
+        format.html { render :new, status: :unprocessable_entity }
+        format.json { render json: @port.errors, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  # PATCH/PUT /ports/1 or /ports/1.json
+  def update
+    authorize @port
+
+    respond_to do |format|
+      if @port.update(port_params)
+        format.html { redirect_to @port, notice: "Se actualizó el puerto.", status: :see_other }
+        format.json { render :show, status: :ok, location: @port }
+      else
+        format.html { render :edit, status: :unprocessable_entity }
+        format.json { render json: @port.errors, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  # DELETE /ports/1 or /ports/1.json
+  def destroy
+    authorize @port
+    @port.destroy!
+
+    respond_to do |format|
+      format.html { redirect_to ports_path, notice: "Se eliminó el puerto.", status: :see_other }
+      format.json { head :no_content }
+    end
+  end
+
+  private
+    # Use callbacks to share common setup or constraints between actions.
+    def set_port
+      @port = Port.find(params.expect(:id))
+    end
+
+    # Only allow a list of trusted parameters through.
+    def port_params
+      params.expect(port: [ :name, :code, :country_code ])
+    end
+end

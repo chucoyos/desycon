@@ -20,4 +20,40 @@ if Rails.env.development?
   puts "✓ Usuario admin creado (admin@desycon.com / password123)"
 end
 
+# Crear puertos principales de México y USA
+puts "Creando puertos..."
+
+mexican_ports = [
+  { name: 'Veracruz', code: 'MXVER', country_code: 'MX' },
+  { name: 'Manzanillo', code: 'MXZLO', country_code: 'MX' },
+  { name: 'Altamira', code: 'MXATM', country_code: 'MX' },
+  { name: 'Lázaro Cárdenas', code: 'MXLZC', country_code: 'MX' },
+  { name: 'Ensenada', code: 'MXENS', country_code: 'MX' },
+  { name: 'Progreso', code: 'MXPGR', country_code: 'MX' },
+  { name: 'Tuxpan', code: 'MXTUX', country_code: 'MX' },
+  { name: 'Coatzacoalcos', code: 'MXCOA', country_code: 'MX' },
+  { name: 'Tampico', code: 'MXTAM', country_code: 'MX' },
+  { name: 'Guaymas', code: 'MXGYM', country_code: 'MX' }
+]
+
+china_ports = [
+  { name: 'Shanghai', code: 'CNSHA', country_code: 'CN' },
+  { name: 'Shenzhen', code: 'CNSZX', country_code: 'CN' },
+  { name: 'Ningbo', code: 'CNNGB', country_code: 'CN' },
+  { name: 'Guangzhou', code: 'CNCAN', country_code: 'CN' },
+  { name: 'Qingdao', code: 'CNTAO', country_code: 'CN' },
+  { name: 'Tianjin', code: 'CNTSN', country_code: 'CN' },
+  { name: 'Xiamen', code: 'CNXMN', country_code: 'CN' },
+  { name: 'Dalian', code: 'CNDLC', country_code: 'CN' }
+]
+
+(mexican_ports + china_ports).each do |port_data|
+  Port.find_or_create_by!(code: port_data[:code]) do |port|
+    port.name = port_data[:name]
+    port.country_code = port_data[:country_code]
+  end
+end
+
+puts "✓ #{Port.count} puertos creados"
+
 puts "Seeds completados exitosamente!"

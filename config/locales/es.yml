@@ -37,6 +37,7 @@ es:
       user: Usuario
       role: Rol
       shipping_line: Línea Naviera
+      port: Puerto
     attributes:
       user:
         email: Correo electrónico
@@ -46,6 +47,12 @@ es:
       shipping_line:
         name: Nombre
         code: Código
+        created_at: Fecha de creación
+        updated_at: Fecha de actualización
+      port:
+        name: Nombre
+        code: Código
+        country_code: País
         created_at: Fecha de creación
         updated_at: Fecha de actualización
   date:

@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :ports
   devise_for :users
 
   resources :shipping_lines
