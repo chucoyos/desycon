@@ -21,7 +21,9 @@ module Desycon
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
+    # Set timezone to Central Time (Mexico)
+    config.time_zone = "Mexico City"
+    config.active_record.default_timezone = :local
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Set default locale to Spanish
