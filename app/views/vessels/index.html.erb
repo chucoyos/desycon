@@ -10,6 +10,11 @@
     <% end %>
   </div>
 
+  <%# Tailwind-styled pagination %>
+  <div class="mb-6">
+    <%= render 'shared/tailwind_pagination', paginated: @vessels %>
+  </div>
+
   <!-- Vista de tabla para desktop -->
   <div class="hidden md:block bg-white shadow-sm rounded-lg overflow-hidden">
     <table class="min-w-full divide-y divide-gray-200">
