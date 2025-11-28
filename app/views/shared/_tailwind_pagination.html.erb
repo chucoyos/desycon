@@ -1,0 +1,47 @@
+<%# Tailwind-styled pagination partial. Usage: render 'shared/tailwind_pagination', paginated: @items %>
+<% paginated = local_assigns[:paginated] || paginated %>
+<%# Guard: nothing to render for single page or missing collection %>
+<% if paginated && paginated.total_pages && paginated.total_pages > 1 %>
+  <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center justify-center mt-6">
+    <ul class="inline-flex items-center -space-x-px">
+      <%# Prev button %>
+      <% if paginated.prev_page %>
+        <li>
+          <%= link_to url_for(request.params.merge(page: paginated.prev_page)), class: "px-3 py-1 rounded-l-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50" , aria: { label: "Previous" } do %>
+            &lsaquo;
+          <% end %>
+        </li>
+      <% else %>
+        <li>
+          <span class="px-3 py-1 rounded-l-md border border-gray-200 bg-gray-100 text-gray-400">&lsaquo;</span>
+        </li>
+      <% end %>
+
+      <%# Page numbers: simple full range (acceptable for modest page counts) %>
+      <% 1.upto(paginated.total_pages) do |p| %>
+        <% if p == paginated.current_page %>
+          <li>
+            <span class="px-3 py-1 border-t border-b border-gray-200 bg-blue-600 text-white"><%= p %></span>
+          </li>
+        <% else %>
+          <li>
+            <%= link_to p, url_for(request.params.merge(page: p)), class: "px-3 py-1 border border-gray-200 bg-white text-gray-700 hover:bg-gray-50" %>
+          </li>
+        <% end %>
+      <% end %>
+
+      <%# Next button %>
+      <% if paginated.next_page %>
+        <li>
+          <%= link_to url_for(request.params.merge(page: paginated.next_page)), class: "px-3 py-1 rounded-r-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50", aria: { label: "Next" } do %>
+            &rsaquo;
+          <% end %>
+        </li>
+      <% else %>
+        <li>
+          <span class="px-3 py-1 rounded-r-md border border-gray-200 bg-gray-100 text-gray-400">&rsaquo;</span>
+        </li>
+      <% end %>
+    </ul>
+  </nav>
+<% end %>

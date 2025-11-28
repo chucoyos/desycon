@@ -6,7 +6,7 @@ class PortsController < ApplicationController
 
   # GET /ports or /ports.json
   def index
-    @ports = policy_scope(Port).alphabetical
+    @ports = policy_scope(Port).alphabetical.page(params[:page]).per(10)
   end
 
   # GET /ports/1 or /ports/1.json
@@ -70,11 +70,11 @@ class PortsController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_port
-      @port = Port.find(params.expect(:id))
+      @port = Port.find(params[:id])
     end
 
     # Only allow a list of trusted parameters through.
     def port_params
-      params.expect(port: [ :name, :code, :country_code ])
+      params.require(:port).permit(:name, :code, :country_code)
     end
 end

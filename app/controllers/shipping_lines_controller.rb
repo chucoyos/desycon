@@ -5,8 +5,10 @@ class ShippingLinesController < ApplicationController
   after_action :verify_policy_scoped, only: :index
 
   # GET /shipping_lines or /shipping_lines.json
+  # Use Kaminari for pagination
+  # GET /shipping_lines or /shipping_lines.json
   def index
-    @shipping_lines = policy_scope(ShippingLine)
+    @shipping_lines = policy_scope(ShippingLine).order(:name).page(params[:page]).per(10)
   end
 
   # GET /shipping_lines/1 or /shipping_lines/1.json
@@ -70,11 +72,11 @@ class ShippingLinesController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_shipping_line
-      @shipping_line = ShippingLine.find(params.expect(:id))
+      @shipping_line = ShippingLine.find(params[:id])
     end
 
     # Only allow a list of trusted parameters through.
     def shipping_line_params
-      params.expect(shipping_line: [ :name ])
+      params.require(:shipping_line).permit(:name)
     end
 end
