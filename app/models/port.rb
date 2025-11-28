@@ -1,6 +1,6 @@
 class Port < ApplicationRecord
   # Validations
-  validates :name, presence: true
+  validates :name, presence: true, uniqueness: { case_sensitive: false }
   validates :code, presence: true, uniqueness: { case_sensitive: false }
   validates :country_code, presence: true, inclusion: { in: ISO3166::Country.codes }
 
