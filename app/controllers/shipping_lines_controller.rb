@@ -8,7 +8,11 @@ class ShippingLinesController < ApplicationController
   # Use Kaminari for pagination
   # GET /shipping_lines or /shipping_lines.json
   def index
-    @shipping_lines = policy_scope(ShippingLine).order(:name).page(params[:page]).per(10)
+    per = params[:per].to_i
+    allowed = [10, 25, 50, 100]
+    per = 10 unless allowed.include?(per)
+    @per_page = per
+    @shipping_lines = policy_scope(ShippingLine).order(:name).page(params[:page]).per(per)
   end
 
   # GET /shipping_lines/1 or /shipping_lines/1.json

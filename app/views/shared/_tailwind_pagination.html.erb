@@ -1,9 +1,26 @@
 <%# Tailwind-styled pagination partial. Usage: render 'shared/tailwind_pagination', paginated: @items %>
 <% paginated = local_assigns[:paginated] || paginated %>
-<%# Guard: nothing to render for single page or missing collection %>
-<% if paginated && paginated.total_pages && paginated.total_pages > 1 %>
-  <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center justify-center mt-6">
-    <ul class="inline-flex items-center -space-x-px">
+
+<%# Determine current per-page value (from paginated object if present, otherwise params or default) %>
+<% current_per = (paginated && paginated.respond_to?(:limit_value) ? paginated.limit_value : (params[:per].to_i.nonzero? || 10)) %>
+
+<div class="flex items-center justify-center mt-6 space-x-4">
+  <%# Per-page selector form - preserves other query params except page and per %>
+  <div class="flex items-center space-x-2">
+    <span class="text-sm text-gray-600">Mostrar</span>
+    <%= form_with url: request.path, method: :get, local: true, class: "inline" do %>
+      <% request.query_parameters.each do |k, v| %>
+        <% next if %w[per page].include?(k) %>
+        <%= hidden_field_tag k, v %>
+      <% end %>
+      <%= select_tag :per, options_for_select([10,25,50,100], current_per), onchange: 'this.form.submit()', class: "mt-1 block w-full pl-3 pr-10 py-1 text-sm border border-gray-200 rounded-md bg-white text-gray-700" %>
+    <% end %>
+  </div>
+
+  <%# Guard: nothing to render for single page or missing collection %>
+  <% if paginated && paginated.total_pages && paginated.total_pages > 1 %>
+    <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center">
+      <ul class="inline-flex items-center -space-x-px">
       <%# Prev button %>
       <% if paginated.prev_page %>
         <li>
@@ -42,6 +59,7 @@
           <span class="px-3 py-1 rounded-r-md border border-gray-200 bg-gray-100 text-gray-400">&rsaquo;</span>
         </li>
       <% end %>
-    </ul>
-  </nav>
-<% end %>
+      </ul>
+    </nav>
+  <% end %>
+</div>
