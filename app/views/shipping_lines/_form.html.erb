@@ -1,18 +1,8 @@
 <%= form_with(model: shipping_line, class: "contents") do |form| %>
-  <% if shipping_line.errors.any? %>
-    <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-md mt-3">
-      <h2><%= pluralize(shipping_line.errors.count, "error") %> prohibited this shipping_line from being saved:</h2>
-
-      <ul class="list-disc ml-6">
-        <% shipping_line.errors.each do |error| %>
-          <li><%= error.full_message %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
+  <%= render "shared/error_messages", object: shipping_line %>
 
   <div class="my-5">
-    <%= form.label :name %>
+    <%= form.label :name, class: "block text-sm font-medium text-gray-700 mb-2" %>
     <%= form.text_field :name, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": shipping_line.errors[:name].none?, "border-red-400 focus:outline-red-600": shipping_line.errors[:name].any?}] %>
   </div>
 
