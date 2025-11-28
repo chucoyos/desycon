@@ -8,7 +8,7 @@ RSpec.describe "ports/new", type: :view do
   it "renders new port form" do
     render
 
-    assert_select "form[action=?][method=?]", _ports_path, "post" do
+    assert_select "form[action=?][method=?]", ports_path, "post" do
     end
   end
 end

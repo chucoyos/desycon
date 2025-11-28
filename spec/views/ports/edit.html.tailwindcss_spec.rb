@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe "ports/edit", type: :view do
   let(:port) {
-    Port.create!()
+    Port.create!(name: "Veracruz", code: "MXVER", country_code: "MX")
   }
 
   before(:each) do
