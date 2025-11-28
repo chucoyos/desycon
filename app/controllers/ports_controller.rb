@@ -7,7 +7,7 @@ class PortsController < ApplicationController
   # GET /ports or /ports.json
   def index
     per = params[:per].to_i
-    allowed = [10, 25, 50, 100]
+    allowed = [ 10, 25, 50, 100 ]
     per = 10 unless allowed.include?(per)
     @per_page = per
     @ports = policy_scope(Port).alphabetical.page(params[:page]).per(per)

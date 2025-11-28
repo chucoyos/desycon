@@ -9,7 +9,7 @@ class ShippingLinesController < ApplicationController
   # GET /shipping_lines or /shipping_lines.json
   def index
     per = params[:per].to_i
-    allowed = [10, 25, 50, 100]
+    allowed = [ 10, 25, 50, 100 ]
     per = 10 unless allowed.include?(per)
     @per_page = per
     @shipping_lines = policy_scope(ShippingLine).order(:name).page(params[:page]).per(per)
