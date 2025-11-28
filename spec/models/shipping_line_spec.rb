@@ -10,14 +10,14 @@ RSpec.describe ShippingLine, type: :model do
     it 'is invalid without a name' do
       shipping_line = ShippingLine.new(name: nil)
       expect(shipping_line).not_to be_valid
-      expect(shipping_line.errors[:name]).to include("can't be blank")
+      expect(shipping_line.errors[:name]).to include("no puede estar en blanco")
     end
 
     it 'is invalid with a duplicate name (case insensitive)' do
       ShippingLine.create!(name: 'MSC')
       duplicate_shipping_line = ShippingLine.new(name: 'msc')
       expect(duplicate_shipping_line).not_to be_valid
-      expect(duplicate_shipping_line.errors[:name]).to include('has already been taken')
+      expect(duplicate_shipping_line.errors[:name]).to include('ya está en uso')
     end
 
     it 'allows different names' do
