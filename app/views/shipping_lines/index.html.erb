@@ -11,6 +11,11 @@
     <% end %>
   </div>
 
+   <%# Tailwind-styled pagination %>
+  <div class="mt-6">
+    <%= render 'shared/tailwind_pagination', paginated: @shipping_lines %>
+  </div>
+
   <div id="shipping_lines" class="min-w-full divide-y divide-gray-200 space-y-5">
     <% if @shipping_lines.any? %>
       <% @shipping_lines.each do |shipping_line| %>
