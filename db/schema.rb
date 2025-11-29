@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_29_055105) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_29_061016) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -32,6 +32,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_29_055105) do
     t.datetime "updated_at", null: false
     t.index ["addressable_type", "addressable_id", "tipo"], name: "index_addresses_on_addressable_and_tipo"
     t.index ["codigo_postal"], name: "index_addresses_on_codigo_postal"
+  end
+
+  create_table "consolidators", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_consolidators_on_name", unique: true
   end
 
   create_table "fiscal_profiles", force: :cascade do |t|

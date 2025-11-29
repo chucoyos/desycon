@@ -11,6 +11,7 @@
         <% if current_user.internal? %>
           <%= link_to "Líneas Navieras", shipping_lines_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
           <%= link_to "Buques", vessels_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
+          <%= link_to "Consolidadores", consolidators_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
           <%= link_to "Puertos", ports_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
         <% end %>
         
@@ -50,6 +51,7 @@
       <% if current_user.internal? %>
         <%= link_to "Líneas Navieras", shipping_lines_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
         <%= link_to "Buques", vessels_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
+        <%= link_to "Consolidadores", consolidators_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
         <%= link_to "Puertos", ports_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
       <% end %>
       

@@ -1,0 +1,17 @@
+<% content_for :title, "Editar #{@consolidator.name}" %>
+
+<div class="w-full max-w-2xl mx-auto">
+  <div class="mb-6">
+    <%= link_to @consolidator, class: "inline-flex items-center text-blue-600 hover:text-blue-800" do %>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+      </svg>
+      Volver
+    <% end %>
+  </div>
+
+  <div class="bg-white shadow-sm rounded-lg p-6">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">Editar Consolidador</h1>
+    <%= render "form", consolidator: @consolidator %>
+  </div>
+</div>
