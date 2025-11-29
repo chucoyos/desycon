@@ -1,15 +1,26 @@
-<%= form_with(model: consolidator, class: "space-y-8") do |form| %>
+<%= form_with(model: consolidator, class: "space-y-6 sm:space-y-8") do |form| %>
   <% if consolidator.errors.any? %>
-    <div class="rounded-md bg-red-50 p-4">
-      <div class="flex">
-        <div class="ml-3">
-          <h3 class="text-sm font-medium text-red-800">
-            <%= pluralize(consolidator.errors.count, "error") %> impidieron guardar este consolidador:
+    <!-- Material Design: Alert con elevación y mejor estructura -->
+    <div class="bg-red-50 border-l-4 border-red-500 rounded-lg shadow-sm p-4 sm:p-5">
+      <div class="flex items-start gap-3">
+        <div class="flex-shrink-0">
+          <svg class="h-6 w-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-sm sm:text-base font-bold text-red-900">
+            <%= pluralize(consolidator.errors.count, "error") %> <%= consolidator.errors.count == 1 ? 'impidió' : 'impidieron' %> guardar este consolidador
           </h3>
-          <div class="mt-2 text-sm text-red-700">
-            <ul class="list-disc list-inside space-y-1">
+          <div class="mt-3">
+            <ul class="space-y-2 text-sm text-red-800">
               <% consolidator.errors.full_messages.each do |message| %>
-                <li><%= message %></li>
+                <li class="flex items-start gap-2">
+                  <svg class="h-1.5 w-1.5 mt-1.5 flex-shrink-0" fill="currentColor" viewBox="0 0 8 8">
+                    <circle cx="4" cy="4" r="3"/>
+                  </svg>
+                  <span><%= message %></span>
+                </li>
               <% end %>
             </ul>
           </div>
@@ -18,94 +29,159 @@
     </div>
   <% end %>
 
-  <!-- Información General -->
-  <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-6">Información General</h2>
-    <div>
-      <%= form.label :name, "Nombre del Consolidador", class: "block text-sm font-medium text-gray-700 mb-2" %>
-      <%= form.text_field :name, class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors #{'border-red-300' if consolidator.errors[:name].any?}", placeholder: "Nombre" %>
-      <% if consolidator.errors[:name].any? %>
-        <p class="mt-2 text-sm text-red-600"><%= consolidator.errors[:name].first %></p>
-      <% end %>
+  <!-- Material Design: Card de Información General con elevación -->
+  <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <div class="bg-gradient-to-r from-gray-50 to-white px-5 sm:px-6 py-4 border-b border-gray-100">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-600 shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-white">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+          </svg>
+        </div>
+        <h2 class="text-lg sm:text-xl font-bold text-gray-900">Información General</h2>
+      </div>
+    </div>
+    <div class="px-5 sm:px-6 py-5 sm:py-6">
+      <div>
+        <%= form.label :name, class: "block text-sm font-semibold text-gray-700 mb-2" do %>
+          Nombre del Consolidador <span class="text-red-500">*</span>
+        <% end %>
+        <%= form.text_field :name, class: "block w-full px-4 py-3 rounded-lg border #{consolidator.errors[:name].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'} bg-white focus:ring-2 transition-all duration-200 text-base", placeholder: "Ej: Consolidadora del Golfo SA de CV", autofocus: true %>
+        <% if consolidator.errors[:name].any? %>
+          <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <%= consolidator.errors[:name].first %>
+          </p>
+        <% end %>
+      </div>
     </div>
   </div>
 
-  <!-- Datos Fiscales -->
-  <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-6">Datos Fiscales</h2>
+  <!-- Material Design: Card de Datos Fiscales con elevación -->
+  <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <div class="bg-gradient-to-r from-blue-50 to-white px-5 sm:px-6 py-4 border-b border-gray-100">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-600 shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-white">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+          </svg>
+        </div>
+        <div class="flex-1">
+          <h2 class="text-lg sm:text-xl font-bold text-gray-900">Datos Fiscales</h2>
+          <p class="text-xs text-gray-500 mt-0.5">Información opcional para facturación</p>
+        </div>
+      </div>
+    </div>
     <%= form.fields_for :fiscal_profile do |fp| %>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="px-5 sm:px-6 py-5 sm:py-6 grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
         <div>
-          <%= fp.label :razon_social, "Razón Social", class: "block text-sm font-medium text-gray-700 mb-2" %>
-          <%= fp.text_field :razon_social, class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors", placeholder: "Nombre o razón social" %>
+          <%= fp.label :razon_social, "Razón Social", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+          <%= fp.text_field :razon_social, class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200", placeholder: "Nombre o razón social" %>
         </div>
 
         <div>
-          <%= fp.label :rfc, "RFC", class: "block text-sm font-medium text-gray-700 mb-2" %>
-          <%= fp.text_field :rfc, class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors", placeholder: "Ingresa el RFC", maxlength: 13 %>
-          <p class="mt-1.5 text-xs text-gray-500">12 caracteres (persona moral) o 13 caracteres (persona física)</p>
+          <%= fp.label :rfc, "RFC", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+          <%= fp.text_field :rfc, class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-mono uppercase", placeholder: "ABC123456XYZ", maxlength: 13 %>
+          <p class="mt-1.5 text-xs text-gray-500 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+            </svg>
+            12 caracteres (moral) o 13 (física)
+          </p>
         </div>
 
         <div>
-          <%= fp.label :regimen, "Régimen Fiscal", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= fp.label :regimen, "Régimen Fiscal", class: "block text-sm font-semibold text-gray-700 mb-2" %>
           <%= fp.select :regimen, 
                 options_for_select(FiscalProfile::REGIMENES.map { |k, v| ["#{k} - #{v}", k] }, fp.object.regimen),
                 { prompt: "Seleccione un régimen" },
-                class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" %>
+                class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200" %>
         </div>
 
         <div>
-          <%= fp.label :uso_cfdi, "Uso CFDI", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= fp.label :uso_cfdi, "Uso CFDI", class: "block text-sm font-semibold text-gray-700 mb-2" %>
           <%= fp.select :uso_cfdi,
                 options_for_select(FiscalProfile::USOS_CFDI.map { |k, v| ["#{k} - #{v}", k] }, fp.object.uso_cfdi),
                 { prompt: "Seleccione un uso CFDI" },
-                class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" %>
+                class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200" %>
         </div>
 
         <div>
-          <%= fp.label :forma_pago, "Forma de Pago", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= fp.label :forma_pago, "Forma de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
           <%= fp.select :forma_pago,
                 options_for_select(FiscalProfile::FORMAS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, fp.object.forma_pago),
                 { prompt: "Seleccione forma de pago" },
-                class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" %>
+                class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200" %>
         </div>
 
         <div>
-          <%= fp.label :metodo_pago, "Método de Pago", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= fp.label :metodo_pago, "Método de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
           <%= fp.select :metodo_pago,
                 options_for_select(FiscalProfile::METODOS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, fp.object.metodo_pago),
                 { prompt: "Seleccione método de pago" },
-                class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" %>
+                class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200" %>
         </div>
       </div>
     <% end %>
   </div>
 
-  <!-- Direcciones -->
-  <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-lg font-semibold text-gray-900">Direcciones</h2>
-      <button type="button" id="add-address-btn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+  <!-- Material Design: Card de Direcciones con elevación -->
+  <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <div class="bg-gradient-to-r from-green-50 to-white px-5 sm:px-6 py-4 border-b border-gray-100">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-green-600 shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-white">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h2 class="text-lg sm:text-xl font-bold text-gray-900">Direcciones</h2>
+            <p class="text-xs text-gray-500 mt-0.5">Agregue las direcciones necesarias</p>
+          </div>
+        </div>
+        <button type="button" id="add-address-btn" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg shadow-sm text-sm font-semibold text-white bg-green-600 hover:bg-green-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          <span>Agregar Dirección</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="px-5 sm:px-6 py-5 sm:py-6">
+      <div id="addresses-container" class="space-y-4">
+        <%= form.fields_for :addresses do |address_form| %>
+          <%= render 'address_card', f: address_form, form: form %>
+        <% end %>
+      </div>
+      <p class="mt-4 text-xs text-gray-500 flex items-center gap-1">
+        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
         </svg>
-        Agregar Dirección
-      </button>
+        Los campos marcados con <span class="text-red-500 font-medium">*</span> son obligatorios
+      </p>
     </div>
-
-    <div id="addresses-container" class="space-y-4">
-      <%= form.fields_for :addresses do |address_form| %>
-        <%= render 'address_card', f: address_form, form: form %>
-      <% end %>
-    </div>
-
-    <p class="mt-3 text-xs text-gray-500">* Campos obligatorios para direcciones</p>
   </div>
 
-  <!-- Botones de acción -->
-  <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200 mb-6">
-    <%= link_to "Cancelar", consolidator.persisted? ? consolidator : consolidators_path, class: "px-6 py-2.5 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors" %>
-    <%= form.submit class: "px-6 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors" %>
+  <!-- Material Design: Botones de acción con elevación y mejor diseño -->
+  <div class="bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 px-5 sm:px-6 py-4 sm:py-5">
+    <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3">
+      <%= link_to consolidator.persisted? ? consolidator : consolidators_path, class: "inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border-2 border-gray-300 shadow-sm text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+        <span>Cancelar</span>
+      <% end %>
+      <%= form.submit class: "inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-transparent shadow-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 cursor-pointer" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+      <% end %>
+    </div>
   </div>
 <% end %>
 

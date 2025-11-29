@@ -1,18 +1,31 @@
 <% content_for :title, "Nuevo Consolidador" %>
 
-<div class="w-full max-w-5xl mx-auto">
-  <div class="mb-6">
-    <%= link_to consolidators_path, class: "inline-flex items-center text-blue-600 hover:text-blue-800" do %>
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+<!-- Material Design: Container con padding responsivo -->
+<div class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+  
+  <!-- Material Design: Navegación con hover mejorado -->
+  <div class="mb-4 sm:mb-6">
+    <%= link_to consolidators_path, class: "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-blue-700 hover:bg-blue-50 transition-all duration-200 ease-in-out group" do %>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 transition-transform group-hover:-translate-x-1">
         <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
       </svg>
-      Volver
+      <span>Volver a consolidadores</span>
     <% end %>
   </div>
 
-  <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Nuevo Consolidador</h1>
-    <p class="mt-2 text-sm text-gray-600">Complete la información del consolidador, incluyendo datos fiscales y al menos una dirección.</p>
+  <!-- Material Design: Header con icono y descripción mejorada -->
+  <div class="mb-6 sm:mb-8">
+    <div class="flex items-start gap-4">
+      <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 shadow-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-7 h-7 text-white">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+      </div>
+      <div class="flex-1">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Nuevo Consolidador</h1>
+        <p class="mt-2 text-sm sm:text-base text-gray-600">Complete la información del consolidador. Los campos marcados con <span class="text-red-500 font-medium">*</span> son obligatorios.</p>
+      </div>
+    </div>
   </div>
 
   <%= render "form", consolidator: @consolidator %>
