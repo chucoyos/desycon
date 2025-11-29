@@ -32,7 +32,7 @@ class ConsolidatorsController < ApplicationController
     authorize @consolidator
 
     if @consolidator.save
-      redirect_to @consolidator, notice: 'Consolidador creado exitosamente.'
+      redirect_to @consolidator, notice: "Consolidador creado exitosamente."
     else
       render :new, status: :unprocessable_entity
     end
@@ -42,7 +42,7 @@ class ConsolidatorsController < ApplicationController
     authorize @consolidator
 
     if @consolidator.update(consolidator_params)
-      redirect_to @consolidator, notice: 'Consolidador actualizado exitosamente.'
+      redirect_to @consolidator, notice: "Consolidador actualizado exitosamente."
     else
       render :edit, status: :unprocessable_entity
     end
@@ -51,7 +51,7 @@ class ConsolidatorsController < ApplicationController
   def destroy
     authorize @consolidator
     @consolidator.destroy!
-    redirect_to consolidators_url, notice: 'Consolidador eliminado exitosamente.'
+    redirect_to consolidators_url, notice: "Consolidador eliminado exitosamente."
   end
 
   private
