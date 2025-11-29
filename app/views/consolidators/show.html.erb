@@ -53,16 +53,50 @@
       <% if @consolidator.addresses.any? %>
         <div>
           <h2 class="text-lg font-semibold text-gray-900 mb-4">Direcciones</h2>
-          <div class="space-y-4">
+          <div class="space-y-6">
             <% @consolidator.addresses.each do |address| %>
-              <div class="border border-gray-200 rounded-md p-4">
-                <div class="flex items-center justify-between mb-2">
+              <div>
+                <div class="flex items-center mb-3">
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     <%= address.tipo_nombre %>
                   </span>
                 </div>
-                <p class="text-sm text-gray-900"><%= address.domicilio_completo %></p>
-                <p class="text-sm text-gray-500 mt-1"><%= address.email %></p>
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <% if address.calle.present? %>
+                    <div>
+                      <dt class="text-sm font-medium text-gray-500">Calle</dt>
+                      <dd class="mt-1 text-sm text-gray-900"><%= address.calle %> <%= address.numero_exterior %><%= ", #{address.numero_interior}" if address.numero_interior.present? %></dd>
+                    </div>
+                  <% end %>
+                  <% if address.colonia.present? %>
+                    <div>
+                      <dt class="text-sm font-medium text-gray-500">Colonia</dt>
+                      <dd class="mt-1 text-sm text-gray-900"><%= address.colonia %></dd>
+                    </div>
+                  <% end %>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Código Postal</dt>
+                    <dd class="mt-1 text-sm text-gray-900"><%= address.codigo_postal %></dd>
+                  </div>
+                  <% if address.municipio.present? %>
+                    <div>
+                      <dt class="text-sm font-medium text-gray-500">Municipio/Alcaldía</dt>
+                      <dd class="mt-1 text-sm text-gray-900"><%= address.municipio %></dd>
+                    </div>
+                  <% end %>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Estado</dt>
+                    <dd class="mt-1 text-sm text-gray-900"><%= address.estado %></dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">País</dt>
+                    <dd class="mt-1 text-sm text-gray-900"><%= address.pais %></dd>
+                  </div>
+                  <div class="md:col-span-2">
+                    <dt class="text-sm font-medium text-gray-500">Correo Electrónico</dt>
+                    <dd class="mt-1 text-sm text-gray-900"><%= address.email %></dd>
+                  </div>
+                </dl>
               </div>
             <% end %>
           </div>
