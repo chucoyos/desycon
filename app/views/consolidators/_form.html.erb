@@ -252,7 +252,10 @@ function initAddressHandlers() {
           <div class="flex items-center gap-2 mb-2">
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tipoBadgeClass}">
               ${tipoLabel}
-            </span>
+            </span>${cp ? `
+            <span class="text-xs font-medium text-gray-600">
+              CP: ${cp}
+            </span>` : ''}
           </div>`;
     
     if (calle || cp || estado) {

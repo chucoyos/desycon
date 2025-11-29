@@ -16,6 +16,11 @@
               Nueva Dirección
             </span>
           <% end %>
+          <% if f.object.codigo_postal.present? %>
+            <span class="text-xs font-medium text-gray-600">
+              CP: <%= f.object.codigo_postal %>
+            </span>
+          <% end %>
         </div>
         <% if f.object.persisted? && f.object.calle.present? %>
           <p class="text-sm text-gray-900"><%= f.object.calle %> <%= f.object.numero_exterior %><%= ", #{f.object.numero_interior}" if f.object.numero_interior.present? %></p>
