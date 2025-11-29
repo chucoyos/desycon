@@ -35,20 +35,30 @@ RSpec.describe FiscalProfile, type: :model do
         expect(fiscal_profile).not_to be_valid
       end
 
-      it 'requires 12 characters' do
+      it 'accepts 12 characters for persona moral' do
+        fiscal_profile.rfc = 'EMP850101XXX'
+        expect(fiscal_profile).to be_valid
+      end
+
+      it 'accepts 13 characters for persona física' do
+        fiscal_profile.rfc = 'PERF850101XXX'
+        expect(fiscal_profile).to be_valid
+      end
+
+      it 'rejects RFC with less than 12 characters' do
         fiscal_profile.rfc = 'ABC12345'
         expect(fiscal_profile).not_to be_valid
-        expect(fiscal_profile.errors[:rfc]).to include('debe tener 12 caracteres para personas morales')
+        expect(fiscal_profile.errors[:rfc]).to include('debe tener 12 caracteres (persona moral) o 13 caracteres (persona física)')
+      end
+
+      it 'rejects RFC with more than 13 characters' do
+        fiscal_profile.rfc = 'ABCD1234567890'
+        expect(fiscal_profile).not_to be_valid
       end
 
       it 'validates RFC format' do
         fiscal_profile.rfc = 'INVALID12345'
         expect(fiscal_profile).not_to be_valid
-      end
-
-      it 'accepts valid RFC' do
-        fiscal_profile.rfc = 'EMP850101XXX'
-        expect(fiscal_profile).to be_valid
       end
 
       it 'normalizes RFC to uppercase' do

@@ -82,7 +82,7 @@ class FiscalProfile < ApplicationRecord
   # Validaciones
   validates :razon_social, presence: true, length: { maximum: 254 }
   validates :rfc, presence: true,
-                  length: { is: 12, message: "debe tener 12 caracteres para personas morales" },
+                  length: { in: 12..13, message: "debe tener 12 caracteres (persona moral) o 13 caracteres (persona física)" },
                   format: { with: /\A[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}\z/, message: "formato inválido" },
                   uniqueness: { case_sensitive: false }
   validates :regimen, presence: true, inclusion: { in: REGIMENES.keys }
