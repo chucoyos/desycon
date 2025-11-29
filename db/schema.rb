@@ -10,9 +10,44 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_28_165103) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_29_055105) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "addresses", force: :cascade do |t|
+    t.bigint "addressable_id", null: false
+    t.string "addressable_type", null: false
+    t.string "calle"
+    t.string "codigo_postal", null: false
+    t.string "colonia"
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.string "estado", null: false
+    t.string "localidad"
+    t.string "municipio"
+    t.string "numero_exterior"
+    t.string "numero_interior"
+    t.string "pais", null: false
+    t.string "tipo"
+    t.datetime "updated_at", null: false
+    t.index ["addressable_type", "addressable_id", "tipo"], name: "index_addresses_on_addressable_and_tipo"
+    t.index ["codigo_postal"], name: "index_addresses_on_codigo_postal"
+  end
+
+  create_table "fiscal_profiles", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "forma_pago"
+    t.string "metodo_pago"
+    t.bigint "profileable_id", null: false
+    t.string "profileable_type", null: false
+    t.string "razon_social", null: false
+    t.string "regimen", null: false
+    t.string "rfc", null: false
+    t.datetime "updated_at", null: false
+    t.string "uso_cfdi"
+    t.index ["profileable_type", "profileable_id"], name: "index_fiscal_profiles_on_profileable", unique: true
+    t.index ["rfc"], name: "index_fiscal_profiles_on_rfc"
+  end
 
   create_table "ports", force: :cascade do |t|
     t.string "code", null: false
