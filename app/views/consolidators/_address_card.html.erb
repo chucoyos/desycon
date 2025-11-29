@@ -1,9 +1,10 @@
-<div class="address-item" data-address-id="<%= f.object.object_id %>">
+<% has_errors = f.object.errors.any? %>
+<div class="address-item" data-address-id="<%= f.object.object_id %>" data-has-errors="<%= has_errors %>">
   <%= f.hidden_field :id %>
   <%= f.hidden_field :_destroy, class: "destroy-field" %>
   
   <!-- Vista colapsada (resumen) -->
-  <div class="address-summary bg-gray-50 border border-gray-200 rounded-lg p-4">
+  <div class="address-summary bg-gray-50 border <%= has_errors ? 'border-red-300' : 'border-gray-200' %> rounded-lg p-4 <%= 'hidden' if has_errors %>">
     <div class="flex justify-between items-start">
       <div class="flex-1">
         <div class="flex items-center gap-2 mb-2">
@@ -19,6 +20,14 @@
           <% if f.object.codigo_postal.present? %>
             <span class="text-xs font-medium text-gray-600">
               CP: <%= f.object.codigo_postal %>
+            </span>
+          <% end %>
+          <% if has_errors %>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+              <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              Requiere corrección
             </span>
           <% end %>
         </div>
@@ -47,7 +56,26 @@
   </div>
 
   <!-- Vista expandida (formulario) -->
-  <div class="address-form hidden border border-gray-300 rounded-lg p-5 bg-gray-50">
+  <div class="address-form <%= 'hidden' unless has_errors %> border <%= has_errors ? 'border-red-300' : 'border-gray-300' %> rounded-lg p-5 bg-gray-50">
+    <% if has_errors %>
+      <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+        <div class="flex">
+          <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          </svg>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800">Esta dirección tiene errores</h3>
+            <div class="mt-1 text-sm text-red-700">
+              <ul class="list-disc list-inside space-y-1">
+                <% f.object.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
     <div class="flex justify-between items-center mb-4">
       <h3 class="text-sm font-semibold text-gray-900">
         <% if f.object.persisted? %>
@@ -74,12 +102,12 @@
 
       <div>
         <%= f.label :codigo_postal, "Código Postal *", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= f.text_field :codigo_postal, class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors", placeholder: "Código Postal" %>
+        <%= f.text_field :codigo_postal, class: "block w-full px-4 py-2.5 rounded-lg border #{f.object.errors[:codigo_postal].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'} bg-white focus:ring-1 transition-colors", placeholder: "Código Postal" %>
       </div>
 
       <div>
         <%= f.label :estado, "Estado *", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= f.text_field :estado, class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors", placeholder: "Estado" %>
+        <%= f.text_field :estado, class: "block w-full px-4 py-2.5 rounded-lg border #{f.object.errors[:estado].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'} bg-white focus:ring-1 transition-colors", placeholder: "Estado" %>
       </div>
 
       <div>
@@ -109,7 +137,7 @@
 
       <div class="md:col-span-2">
         <%= f.label :email, "Correo Electrónico *", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= f.email_field :email, class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors", placeholder: "contacto@mail.com" %>
+        <%= f.email_field :email, class: "block w-full px-4 py-2.5 rounded-lg border #{f.object.errors[:email].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'} bg-white focus:ring-1 transition-colors", placeholder: "contacto@mail.com" %>
       </div>
     </div>
     

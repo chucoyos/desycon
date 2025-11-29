@@ -116,6 +116,21 @@
 
   let addressCounter = Date.now();
   
+  // Scroll to first address with errors on page load
+  function scrollToFirstError() {
+    const addressWithErrors = document.querySelector('.address-item[data-has-errors="true"]');
+    if (addressWithErrors) {
+      addressWithErrors.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+  
+  // Execute on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scrollToFirstError);
+  } else {
+    scrollToFirstError();
+  }
+  
   function collapseAllForms() {
     document.querySelectorAll('.address-item').forEach(item => {
       const summary = item.querySelector('.address-summary');
