@@ -19,11 +19,11 @@
   <% end %>
 
   <!-- Información General -->
-  <div class="bg-white border border-gray-200 rounded-lg p-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-4">Información General</h2>
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-6">Información General</h2>
     <div>
-      <%= form.label :name, "Nombre del Consolidador", class: "block text-sm font-medium text-gray-700" %>
-      <%= form.text_field :name, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm #{'border-red-300' if consolidator.errors[:name].any?}", placeholder: "Nombre comercial" %>
+      <%= form.label :name, "Nombre del Consolidador", class: "block text-sm font-medium text-gray-700 mb-2" %>
+      <%= form.text_field :name, class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors #{'border-red-300' if consolidator.errors[:name].any?}", placeholder: "Nombre comercial" %>
       <% if consolidator.errors[:name].any? %>
         <p class="mt-2 text-sm text-red-600"><%= consolidator.errors[:name].first %></p>
       <% end %>
@@ -31,65 +31,65 @@
   </div>
 
   <!-- Datos Fiscales -->
-  <div class="bg-white border border-gray-200 rounded-lg p-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-4">Datos Fiscales</h2>
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-6">Datos Fiscales</h2>
     <%= form.fields_for :fiscal_profile do |fp| %>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <%= fp.label :razon_social, "Razón Social", class: "block text-sm font-medium text-gray-700" %>
-          <%= fp.text_field :razon_social, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm", placeholder: "Razón social completa" %>
+          <%= fp.label :razon_social, "Razón Social", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= fp.text_field :razon_social, class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors", placeholder: "Razón social completa" %>
         </div>
 
         <div>
-          <%= fp.label :rfc, "RFC", class: "block text-sm font-medium text-gray-700" %>
-          <%= fp.text_field :rfc, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm uppercase", placeholder: "ABC123456XXX", maxlength: 12 %>
-          <p class="mt-1 text-xs text-gray-500">12 caracteres para personas morales</p>
+          <%= fp.label :rfc, "RFC", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= fp.text_field :rfc, class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors uppercase", placeholder: "ABC123456XXX", maxlength: 12 %>
+          <p class="mt-1.5 text-xs text-gray-500">12 caracteres para personas morales</p>
         </div>
 
         <div>
-          <%= fp.label :regimen, "Régimen Fiscal", class: "block text-sm font-medium text-gray-700" %>
+          <%= fp.label :regimen, "Régimen Fiscal", class: "block text-sm font-medium text-gray-700 mb-2" %>
           <%= fp.select :regimen, 
                 options_for_select(FiscalProfile::REGIMENES.map { |k, v| ["#{k} - #{v}", k] }, fp.object.regimen),
                 { prompt: "Seleccione un régimen" },
-                class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+                class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors" %>
         </div>
 
         <div>
-          <%= fp.label :uso_cfdi, "Uso CFDI", class: "block text-sm font-medium text-gray-700" %>
+          <%= fp.label :uso_cfdi, "Uso CFDI", class: "block text-sm font-medium text-gray-700 mb-2" %>
           <%= fp.select :uso_cfdi,
                 options_for_select(FiscalProfile::USOS_CFDI.map { |k, v| ["#{k} - #{v}", k] }, fp.object.uso_cfdi),
                 { prompt: "Seleccione un uso CFDI" },
-                class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+                class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors" %>
         </div>
 
         <div>
-          <%= fp.label :forma_pago, "Forma de Pago", class: "block text-sm font-medium text-gray-700" %>
+          <%= fp.label :forma_pago, "Forma de Pago", class: "block text-sm font-medium text-gray-700 mb-2" %>
           <%= fp.select :forma_pago,
                 options_for_select(FiscalProfile::FORMAS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, fp.object.forma_pago),
                 { prompt: "Seleccione forma de pago" },
-                class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+                class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors" %>
         </div>
 
         <div>
-          <%= fp.label :metodo_pago, "Método de Pago", class: "block text-sm font-medium text-gray-700" %>
+          <%= fp.label :metodo_pago, "Método de Pago", class: "block text-sm font-medium text-gray-700 mb-2" %>
           <%= fp.select :metodo_pago,
                 options_for_select(FiscalProfile::METODOS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, fp.object.metodo_pago),
                 { prompt: "Seleccione método de pago" },
-                class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+                class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors" %>
         </div>
       </div>
     <% end %>
   </div>
 
   <!-- Direcciones -->
-  <div class="bg-white border border-gray-200 rounded-lg p-6">
-    <div class="flex justify-between items-center mb-4">
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+    <div class="flex justify-between items-center mb-6">
       <h2 class="text-lg font-semibold text-gray-900">Direcciones</h2>
     </div>
 
     <div id="addresses" class="space-y-6">
       <%= form.fields_for :addresses do |address_form| %>
-        <div class="border border-gray-300 rounded-lg p-4 relative">
+        <div class="border border-gray-300 rounded-lg p-5 relative bg-gray-50">
           <%= address_form.hidden_field :id %>
           
           <div class="absolute top-4 right-4">
@@ -101,70 +101,70 @@
             <% end %>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div>
-              <%= address_form.label :tipo, "Tipo de Dirección", class: "block text-sm font-medium text-gray-700" %>
+              <%= address_form.label :tipo, "Tipo de Dirección", class: "block text-sm font-medium text-gray-700 mb-2" %>
               <%= address_form.select :tipo,
                     options_for_select(Address::TIPOS.map { |k, v| [v, k] }, address_form.object.tipo),
                     { prompt: "Seleccione tipo" },
-                    class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+                    class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors" %>
             </div>
 
             <div>
-              <%= address_form.label :pais, "País", class: "block text-sm font-medium text-gray-700" %>
-              <%= address_form.text_field :pais, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm uppercase", placeholder: "MX", maxlength: 2, value: address_form.object.pais || 'MX' %>
+              <%= address_form.label :pais, "País", class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= address_form.text_field :pais, class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors uppercase", placeholder: "MX", maxlength: 2, value: address_form.object.pais || 'MX' %>
             </div>
 
             <div>
-              <%= address_form.label :codigo_postal, "Código Postal *", class: "block text-sm font-medium text-gray-700" %>
-              <%= address_form.text_field :codigo_postal, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm", placeholder: "12345" %>
+              <%= address_form.label :codigo_postal, "Código Postal *", class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= address_form.text_field :codigo_postal, class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors", placeholder: "12345" %>
             </div>
 
             <div>
-              <%= address_form.label :estado, "Estado *", class: "block text-sm font-medium text-gray-700" %>
-              <%= address_form.text_field :estado, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm", placeholder: "Ciudad de México" %>
+              <%= address_form.label :estado, "Estado *", class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= address_form.text_field :estado, class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors", placeholder: "Ciudad de México" %>
             </div>
 
             <div>
-              <%= address_form.label :municipio, "Municipio/Alcaldía", class: "block text-sm font-medium text-gray-700" %>
-              <%= address_form.text_field :municipio, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm", placeholder: "Cuauhtémoc" %>
+              <%= address_form.label :municipio, "Municipio/Alcaldía", class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= address_form.text_field :municipio, class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors", placeholder: "Cuauhtémoc" %>
             </div>
 
             <div>
-              <%= address_form.label :colonia, "Colonia", class: "block text-sm font-medium text-gray-700" %>
-              <%= address_form.text_field :colonia, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm", placeholder: "Centro" %>
+              <%= address_form.label :colonia, "Colonia", class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= address_form.text_field :colonia, class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors", placeholder: "Centro" %>
             </div>
 
             <div class="md:col-span-2">
-              <%= address_form.label :calle, "Calle", class: "block text-sm font-medium text-gray-700" %>
-              <%= address_form.text_field :calle, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm", placeholder: "Avenida Reforma" %>
+              <%= address_form.label :calle, "Calle", class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= address_form.text_field :calle, class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors", placeholder: "Avenida Reforma" %>
             </div>
 
             <div>
-              <%= address_form.label :numero_exterior, "No. Exterior", class: "block text-sm font-medium text-gray-700" %>
-              <%= address_form.text_field :numero_exterior, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm", placeholder: "123" %>
+              <%= address_form.label :numero_exterior, "No. Exterior", class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= address_form.text_field :numero_exterior, class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors", placeholder: "123" %>
             </div>
 
             <div>
-              <%= address_form.label :numero_interior, "No. Interior", class: "block text-sm font-medium text-gray-700" %>
-              <%= address_form.text_field :numero_interior, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm", placeholder: "Piso 3" %>
+              <%= address_form.label :numero_interior, "No. Interior", class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= address_form.text_field :numero_interior, class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors", placeholder: "Piso 3" %>
             </div>
 
             <div class="md:col-span-2">
-              <%= address_form.label :email, "Correo Electrónico *", class: "block text-sm font-medium text-gray-700" %>
-              <%= address_form.email_field :email, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm", placeholder: "contacto@ejemplo.com" %>
+              <%= address_form.label :email, "Correo Electrónico *", class: "block text-sm font-medium text-gray-700 mb-2" %>
+              <%= address_form.email_field :email, class: "block w-full px-4 py-2.5 rounded-lg border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-colors", placeholder: "contacto@ejemplo.com" %>
             </div>
           </div>
         </div>
       <% end %>
     </div>
 
-    <p class="mt-2 text-xs text-gray-500">* Campos obligatorios para direcciones</p>
+    <p class="mt-3 text-xs text-gray-500">* Campos obligatorios para direcciones</p>
   </div>
 
   <!-- Botones de acción -->
-  <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200 mb-6">
-    <%= link_to "Cancelar", consolidator.persisted? ? consolidator : consolidators_path, class: "px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" %>
-    <%= form.submit class: "px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+  <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200 mb-6">
+    <%= link_to "Cancelar", consolidator.persisted? ? consolidator : consolidators_path, class: "px-6 py-2.5 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors" %>
+    <%= form.submit class: "px-6 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors" %>
   </div>
 <% end %>
