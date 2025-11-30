@@ -10,7 +10,9 @@ class VesselsController < ApplicationController
     allowed = [ 10, 25, 50, 100 ]
     per = 10 unless allowed.include?(per)
     @per_page = per
-    @vessels = policy_scope(Vessel).includes(:shipping_line).alphabetical.page(params[:page]).per(per)
+    vessels = policy_scope(Vessel).includes(:shipping_line)
+    vessels = vessels.where("name ILIKE ?", "%#{params[:search]}%") if params[:search].present?
+    @vessels = vessels.alphabetical.page(params[:page]).per(per)
   end
 
   # GET /vessels/1 or /vessels/1.json
