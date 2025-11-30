@@ -2,7 +2,7 @@ class EntitiesController < ApplicationController
   before_action :set_entity, only: [ :show, :edit, :update, :destroy ]
 
   def index
-    @entities = Entity.includes(:addresses, :fiscal_profile, :customs_agent_patents)
+    @entities = Entity.includes(:fiscal_profile, :customs_agent_patents)
                       .order(:name)
                       .page(params[:page])
   end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_30_224526) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_30_223530) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -71,9 +71,16 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_224526) do
 
   create_table "consolidators", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.bigint "entity_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_id"], name: "index_consolidators_on_entity_id"
+  end
+
+  create_table "consolidators_old", force: :cascade do |t|
+    t.datetime "created_at", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_consolidators_on_name", unique: true
+    t.index ["name"], name: "index_consolidators_old_on_name", unique: true
   end
 
   create_table "container_services", force: :cascade do |t|
@@ -114,6 +121,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_224526) do
   create_table "containers", force: :cascade do |t|
     t.string "archivo_nr"
     t.string "bl_master"
+    t.bigint "consolidator_entity_id"
     t.bigint "consolidator_id", null: false
     t.string "cont_key"
     t.datetime "created_at", null: false
@@ -231,11 +239,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_224526) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "clients", "entities"
+  add_foreign_key "consolidators", "entities"
   add_foreign_key "container_services", "containers"
   add_foreign_key "container_services", "entities", column: "billed_to_entity_id"
   add_foreign_key "container_status_histories", "containers"
   add_foreign_key "container_status_histories", "users"
-  add_foreign_key "containers", "consolidators"
+  add_foreign_key "containers", "consolidators_old", column: "consolidator_id"
+  add_foreign_key "containers", "entities", column: "consolidator_entity_id", name: "containers_consolidator_entity_id_fkey"
   add_foreign_key "containers", "ports"
   add_foreign_key "containers", "shipping_lines"
   add_foreign_key "containers", "vessels"
