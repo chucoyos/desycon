@@ -11,6 +11,12 @@ class EntitiesController < ApplicationController
   def show
   end
 
+  def new
+    @entity = Entity.new
+    @entity.build_fiscal_profile
+    @entity.addresses.build
+  end
+
   def edit
   end
 
