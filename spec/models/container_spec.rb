@@ -209,7 +209,7 @@ RSpec.describe Container, type: :model do
     it 'returns recent containers first' do
       # El scope recent ordena por created_at desc
       # Limpiar contenedores previos de este contexto
-      Container.delete_all
+      Container.destroy_all
 
       first_container = create(:container)
       sleep 0.1 # Pequeña pausa para asegurar created_at diferente
@@ -338,14 +338,12 @@ RSpec.describe Container, type: :model do
 
     describe '#last_status_change' do
       it 'returns the most recent status history' do
-        container.container_status_histories.create!(
-          status: 'activo',
-          fecha_actualizacion: 2.days.ago
-        )
+        # El container ya tiene un historial inicial creado automáticamente
         new_history = container.container_status_histories.create!(
           status: 'validar_documentos',
-          fecha_actualizacion: 1.day.ago
+          fecha_actualizacion: 1.day.from_now
         )
+        container.reload
         expect(container.last_status_change).to eq(new_history)
       end
 
