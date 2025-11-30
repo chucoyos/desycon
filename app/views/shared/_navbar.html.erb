@@ -1,58 +1,94 @@
-<nav class="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
+<nav class="bg-gradient-to-r from-white via-blue-50 to-white shadow-lg border-b border-blue-100 fixed top-0 left-0 right-0 z-50 backdrop-blur-sm">
   <div class="container mx-auto px-5">
     <div class="flex items-center justify-between h-16">
       <!-- Logo/Brand -->
       <div class="flex-shrink-0">
-        <%= link_to "DESYCON", root_path, class: "text-2xl font-bold text-blue-600" %>
+        <%= link_to root_path, class: "flex items-center gap-3 group" do %>
+          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-md flex items-center justify-center group-hover:shadow-lg transition-all duration-200">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+          </div>
+          <span class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">DESYCON</span>
+        <% end %>
       </div>
 
       <!-- Desktop Navigation Links -->
-      <div class="hidden md:flex items-center space-x-4">
+      <div class="hidden md:flex items-center space-x-2">
         <% if current_user.internal? %>
-          <%= link_to "Contenedores", containers_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
+          <%= link_to "Contenedores", containers_path, class: "inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" %>
           
           <!-- Catálogos Dropdown -->
           <div class="relative" data-controller="dropdown">
-            <button type="button" data-action="click->dropdown#toggle" class="inline-flex items-center gap-1 text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            <button type="button" data-action="click->dropdown#toggle" class="inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+              </svg>
               Catálogos
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
               </svg>
             </button>
-            <div data-dropdown-target="menu" class="hidden absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-              <div class="py-1" role="menu">
-                <%= link_to "Líneas Navieras", shipping_lines_path, class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors", role: "menuitem" %>
-                <%= link_to "Buques", vessels_path, class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors", role: "menuitem" %>
-                <%= link_to "Consolidadores", consolidators_path, class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors", role: "menuitem" %>
-                <%= link_to "Puertos", ports_path, class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors", role: "menuitem" %>
+            <div data-dropdown-target="menu" class="hidden absolute right-0 mt-2 w-60 rounded-xl shadow-xl bg-white border border-gray-100 overflow-hidden">
+              <div class="py-2" role="menu">
+                <%= link_to shipping_lines_path, class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors", role: "menuitem" do %>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                  </svg>
+                  Líneas Navieras
+                <% end %>
+                <%= link_to vessels_path, class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors", role: "menuitem" do %>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                  </svg>
+                  Buques
+                <% end %>
+                <%= link_to consolidators_path, class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors", role: "menuitem" do %>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                  </svg>
+                  Consolidadores
+                <% end %>
+                <%= link_to ports_path, class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors", role: "menuitem" do %>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  Puertos
+                <% end %>
               </div>
             </div>
           </div>
         <% end %>
         
-        <span class="text-sm text-gray-600 border-l pl-4 ml-2">
-          <%= current_user.email %>
-          <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-2">
-            <%= current_user.role_name&.titleize %>
-          </span>
-        </span>
-        <%= button_to destroy_user_session_path, method: :delete, class: "inline-flex items-center justify-center p-2 rounded-full text-red-600 hover:bg-red-50 transition-colors", title: "Cerrar sesión" do %>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
-          </svg>
-        <% end %>
+        <div class="flex items-center gap-3 ml-4 pl-4 border-l border-gray-300">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm">
+              <span class="text-white text-xs font-semibold"><%= current_user.email.first.upcase %></span>
+            </div>
+            <div class="hidden lg:block">
+              <p class="text-sm font-medium text-gray-700 leading-tight"><%= current_user.email.split('@').first.titleize %></p>
+              <p class="text-xs text-gray-500"><%= current_user.role_name&.titleize %></p>
+            </div>
+          </div>
+          <%= button_to destroy_user_session_path, method: :delete, class: "inline-flex items-center justify-center w-9 h-9 rounded-lg text-red-600 hover:bg-red-50 transition-all duration-200 hover:shadow-sm", title: "Cerrar sesión" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
+            </svg>
+          <% end %>
+        </div>
       </div>
 
       <!-- Mobile menu button -->
       <div class="md:hidden">
-        <button type="button" id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
+        <button type="button" id="mobile-menu-button" class="inline-flex items-center justify-center w-10 h-10 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200">
           <span class="sr-only">Abrir menú</span>
           <!-- Heroicon: menu (hamburger) -->
-          <svg class="block h-6 w-6" id="menu-open-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <svg class="block h-6 w-6" id="menu-open-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
           </svg>
           <!-- Heroicon: x (close) -->
-          <svg class="hidden h-6 w-6" id="menu-close-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <svg class="hidden h-6 w-6" id="menu-close-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
           </svg>
         </button>
@@ -61,31 +97,71 @@
   </div>
 
   <!-- Mobile menu -->
-  <div class="hidden md:hidden" id="mobile-menu">
-    <div class="px-2 pt-2 pb-3 space-y-1 border-t border-gray-200">
+  <div class="hidden md:hidden bg-white border-t border-blue-100" id="mobile-menu">
+    <div class="px-4 py-3 space-y-2">
       <% if current_user.internal? %>
-        <%= link_to "Contenedores", containers_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
+        <%= link_to containers_path, class: "flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200" do %>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
+          Contenedores
+        <% end %>
         
         <!-- Catálogos Mobile Section -->
-        <div class="border-t border-gray-200 pt-2 mt-2">
-          <button type="button" id="mobile-catalogos-button" class="w-full flex items-center justify-between text-gray-700 hover:text-blue-600 hover:bg-gray-50 px-3 py-2 rounded-md text-base font-medium">
-            <span>Catálogos</span>
-            <svg class="w-5 h-5 transition-transform" id="catalogos-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-gray-50 rounded-lg p-2">
+          <button type="button" id="mobile-catalogos-button" class="w-full flex items-center justify-between text-gray-700 hover:text-blue-600 px-3 py-2.5 rounded-lg text-base font-medium transition-all duration-200">
+            <div class="flex items-center gap-3">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+              </svg>
+              <span>Catálogos</span>
+            </div>
+            <svg class="w-5 h-5 transition-transform duration-200" id="catalogos-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
             </svg>
           </button>
-          <div class="hidden pl-4 mt-1 space-y-1" id="mobile-catalogos-submenu">
-            <%= link_to "Líneas Navieras", shipping_lines_path, class: "text-gray-600 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-sm" %>
-            <%= link_to "Buques", vessels_path, class: "text-gray-600 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-sm" %>
-            <%= link_to "Consolidadores", consolidators_path, class: "text-gray-600 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-sm" %>
-            <%= link_to "Puertos", ports_path, class: "text-gray-600 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-sm" %>
+          <div class="hidden pl-2 mt-2 space-y-1" id="mobile-catalogos-submenu">
+            <%= link_to shipping_lines_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+              Líneas Navieras
+            <% end %>
+            <%= link_to vessels_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+              </svg>
+              Buques
+            <% end %>
+            <%= link_to consolidators_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+              Consolidadores
+            <% end %>
+            <%= link_to ports_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              Puertos
+            <% end %>
           </div>
         </div>
       <% end %>
       
-      <div class="border-t border-gray-200 pt-2 mt-2">
-        <%= button_to destroy_user_session_path, method: :delete, class: "w-full flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-base font-medium transition-colors" do %>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+      <div class="pt-3 mt-3 border-t border-gray-200">
+        <div class="flex items-center gap-3 px-4 py-2 mb-3">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm">
+            <span class="text-white text-sm font-semibold"><%= current_user.email.first.upcase %></span>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-700"><%= current_user.email.split('@').first.titleize %></p>
+            <p class="text-xs text-gray-500"><%= current_user.role_name&.titleize %></p>
+          </div>
+        </div>
+        <%= button_to destroy_user_session_path, method: :delete, class: "w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-3 rounded-lg text-base font-medium shadow-md hover:shadow-lg transition-all duration-200" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
           </svg>
           <span>Cerrar Sesión</span>
