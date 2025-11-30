@@ -10,10 +10,24 @@
       <div class="hidden md:flex items-center space-x-4">
         <% if current_user.internal? %>
           <%= link_to "Contenedores", containers_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
-          <%= link_to "Líneas Navieras", shipping_lines_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
-          <%= link_to "Buques", vessels_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
-          <%= link_to "Consolidadores", consolidators_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
-          <%= link_to "Puertos", ports_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
+          
+          <!-- Catálogos Dropdown -->
+          <div class="relative" data-controller="dropdown">
+            <button type="button" data-action="click->dropdown#toggle" class="inline-flex items-center gap-1 text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              Catálogos
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <div data-dropdown-target="menu" class="hidden absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+              <div class="py-1" role="menu">
+                <%= link_to "Líneas Navieras", shipping_lines_path, class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors", role: "menuitem" %>
+                <%= link_to "Buques", vessels_path, class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors", role: "menuitem" %>
+                <%= link_to "Consolidadores", consolidators_path, class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors", role: "menuitem" %>
+                <%= link_to "Puertos", ports_path, class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors", role: "menuitem" %>
+              </div>
+            </div>
+          </div>
         <% end %>
         
         <span class="text-sm text-gray-600 border-l pl-4 ml-2">
@@ -51,10 +65,22 @@
     <div class="px-2 pt-2 pb-3 space-y-1 border-t border-gray-200">
       <% if current_user.internal? %>
         <%= link_to "Contenedores", containers_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
-        <%= link_to "Líneas Navieras", shipping_lines_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
-        <%= link_to "Buques", vessels_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
-        <%= link_to "Consolidadores", consolidators_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
-        <%= link_to "Puertos", ports_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
+        
+        <!-- Catálogos Mobile Section -->
+        <div class="border-t border-gray-200 pt-2 mt-2">
+          <button type="button" id="mobile-catalogos-button" class="w-full flex items-center justify-between text-gray-700 hover:text-blue-600 hover:bg-gray-50 px-3 py-2 rounded-md text-base font-medium">
+            <span>Catálogos</span>
+            <svg class="w-5 h-5 transition-transform" id="catalogos-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div class="hidden pl-4 mt-1 space-y-1" id="mobile-catalogos-submenu">
+            <%= link_to "Líneas Navieras", shipping_lines_path, class: "text-gray-600 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-sm" %>
+            <%= link_to "Buques", vessels_path, class: "text-gray-600 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-sm" %>
+            <%= link_to "Consolidadores", consolidators_path, class: "text-gray-600 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-sm" %>
+            <%= link_to "Puertos", ports_path, class: "text-gray-600 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-sm" %>
+          </div>
+        </div>
       <% end %>
       
       <div class="border-t border-gray-200 pt-2 mt-2">
@@ -78,6 +104,9 @@
     const mobileMenu = document.getElementById('mobile-menu');
     const menuOpenIcon = document.getElementById('menu-open-icon');
     const menuCloseIcon = document.getElementById('menu-close-icon');
+    const catalogosButton = document.getElementById('mobile-catalogos-button');
+    const catalogosSubmenu = document.getElementById('mobile-catalogos-submenu');
+    const catalogosChevron = document.getElementById('catalogos-chevron');
 
     if (menuButton && mobileMenu) {
       // Remove existing listener to avoid duplicates
@@ -96,6 +125,25 @@
           mobileMenu.classList.add('hidden');
           menuOpenIcon.classList.remove('hidden');
           menuCloseIcon.classList.add('hidden');
+        }
+      });
+    }
+
+    // Catalogos submenu toggle
+    if (catalogosButton && catalogosSubmenu) {
+      catalogosButton.replaceWith(catalogosButton.cloneNode(true));
+      const newCatalogosButton = document.getElementById('mobile-catalogos-button');
+      
+      newCatalogosButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        const isHidden = catalogosSubmenu.classList.contains('hidden');
+        
+        if (isHidden) {
+          catalogosSubmenu.classList.remove('hidden');
+          catalogosChevron.style.transform = 'rotate(180deg)';
+        } else {
+          catalogosSubmenu.classList.add('hidden');
+          catalogosChevron.style.transform = 'rotate(0deg)';
         }
       });
     }
