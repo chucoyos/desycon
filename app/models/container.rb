@@ -54,6 +54,7 @@ class Container < ApplicationRecord
   scope :with_associations, -> { includes(:consolidator, :shipping_line) }
 
   # Callbacks para historial de status
+  after_create :create_initial_status_history
   after_update :create_status_history, if: :saved_change_to_status?
 
   # Métodos de conveniencia
@@ -113,6 +114,14 @@ class Container < ApplicationRecord
 
   def normalize_number
     self.number = number.to_s.upcase.strip if number.present?
+  end
+
+  def create_initial_status_history
+    container_status_histories.create!(
+      status: status,
+      fecha_actualizacion: Time.current,
+      observaciones: "Contenedor creado"
+    )
   end
 
   def create_status_history
