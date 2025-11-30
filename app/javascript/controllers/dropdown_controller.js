@@ -6,6 +6,9 @@ export default class extends Controller {
   connect() {
     // Close dropdown when clicking outside
     this.boundClose = this.closeOnClickOutside.bind(this)
+    // Close dropdown before Turbo navigation
+    this.boundBeforeVisit = this.close.bind(this)
+    document.addEventListener('turbo:before-visit', this.boundBeforeVisit)
   }
 
   toggle(event) {
@@ -37,5 +40,6 @@ export default class extends Controller {
 
   disconnect() {
     document.removeEventListener('click', this.boundClose)
+    document.removeEventListener('turbo:before-visit', this.boundBeforeVisit)
   }
 }
