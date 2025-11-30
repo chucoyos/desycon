@@ -210,9 +210,9 @@
               </svg>
               <div>
                 <p class="text-sm font-semibold text-gray-900">BL Master</p>
-                <p class="text-xs text-gray-500">
+                <p class="text-xs text-gray-500" title="<%= @container.bl_master_documento.filename if @container.bl_master_documento.attached? %>">
                   <% if @container.bl_master_documento.attached? %>
-                    <%= @container.bl_master_documento.filename %>
+                    <%= truncate_filename(@container.bl_master_documento.filename, max_length: 25) %>
                   <% else %>
                     No adjunto
                   <% end %>
@@ -236,9 +236,9 @@
               </svg>
               <div>
                 <p class="text-sm font-semibold text-gray-900">Tarja</p>
-                <p class="text-xs text-gray-500">
+                <p class="text-xs text-gray-500" title="<%= @container.tarja_documento.filename if @container.tarja_documento.attached? %>">
                   <% if @container.tarja_documento.attached? %>
-                    <%= @container.tarja_documento.filename %>
+                    <%= truncate_filename(@container.tarja_documento.filename, max_length: 25) %>
                   <% else %>
                     No adjunto
                   <% end %>

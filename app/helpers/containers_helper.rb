@@ -57,4 +57,21 @@ module ContainersHelper
       "exportacion" => "Exportación"
     }[tipo] || tipo.humanize
   end
+
+  def truncate_filename(filename, max_length: 30)
+    return filename if filename.to_s.length <= max_length
+    
+    name = filename.to_s
+    extension = File.extname(name)
+    basename = File.basename(name, extension)
+    
+    # Calculate how much space we have for the basename
+    available_length = max_length - extension.length - 3 # 3 for "..."
+    
+    if available_length > 0
+      "#{basename[0...available_length]}...#{extension}"
+    else
+      "#{name[0...max_length]}..."
+    end
+  end
 end
