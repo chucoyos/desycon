@@ -9,6 +9,7 @@
       <!-- Desktop Navigation Links -->
       <div class="hidden md:flex items-center space-x-4">
         <% if current_user.internal? %>
+          <%= link_to "Contenedores", containers_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
           <%= link_to "Líneas Navieras", shipping_lines_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
           <%= link_to "Buques", vessels_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
           <%= link_to "Consolidadores", consolidators_path, class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors" %>
@@ -49,6 +50,7 @@
   <div class="hidden md:hidden" id="mobile-menu">
     <div class="px-2 pt-2 pb-3 space-y-1 border-t border-gray-200">
       <% if current_user.internal? %>
+        <%= link_to "Contenedores", containers_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
         <%= link_to "Líneas Navieras", shipping_lines_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
         <%= link_to "Buques", vessels_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
         <%= link_to "Consolidadores", consolidators_path, class: "text-gray-700 hover:text-blue-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" %>
