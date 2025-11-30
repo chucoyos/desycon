@@ -1,5 +1,6 @@
 class EntitiesController < ApplicationController
   before_action :set_entity, only: [ :show, :edit, :update, :destroy ]
+  before_action :load_patents, only: [ :show ]
 
   def index
     @entities = Entity.includes(:fiscal_profile, :customs_agent_patents)
@@ -8,12 +9,6 @@ class EntitiesController < ApplicationController
   end
 
   def show
-  end
-
-  def new
-    @entity = Entity.new
-    @entity.build_fiscal_profile
-    @entity.addresses.build
   end
 
   def edit
@@ -45,7 +40,12 @@ class EntitiesController < ApplicationController
   private
 
   def set_entity
-    @entity = Entity.find(params.expect(:id))
+    @entity = Entity.includes(:addresses, :fiscal_profile).find(params.expect(:id))
+  end
+
+  def load_patents
+    # Eager load patents only for show action where they're displayed
+    @entity.customs_agent_patents.load
   end
 
   def entity_params

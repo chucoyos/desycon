@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_30_223530) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_30_234318) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -122,7 +122,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_223530) do
     t.string "archivo_nr"
     t.string "bl_master"
     t.bigint "consolidator_entity_id"
-    t.bigint "consolidator_id", null: false
+    t.bigint "consolidator_id"
     t.string "cont_key"
     t.datetime "created_at", null: false
     t.date "fecha_arribo"
@@ -244,7 +244,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_223530) do
   add_foreign_key "container_services", "entities", column: "billed_to_entity_id"
   add_foreign_key "container_status_histories", "containers"
   add_foreign_key "container_status_histories", "users"
-  add_foreign_key "containers", "consolidators_old", column: "consolidator_id"
   add_foreign_key "containers", "entities", column: "consolidator_entity_id", name: "containers_consolidator_entity_id_fkey"
   add_foreign_key "containers", "ports"
   add_foreign_key "containers", "shipping_lines"

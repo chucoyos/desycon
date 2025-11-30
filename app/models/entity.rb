@@ -53,6 +53,27 @@ class Entity < ApplicationRecord
     customs_agent_patents.order(:patent_number)
   end
 
+  # Address helper methods
+  def fiscal_address
+    addresses.fiscales.first
+  end
+
+  def shipping_addresses
+    addresses.envio
+  end
+
+  def warehouse_addresses
+    addresses.almacenes
+  end
+
+  def build_fiscal_profile_if_needed
+    build_fiscal_profile if fiscal_profile.blank?
+  end
+
+  def build_fiscal_address_if_needed
+    addresses.build(tipo: "fiscal") if addresses.fiscales.empty?
+  end
+
   private
 
   def must_have_at_least_one_role

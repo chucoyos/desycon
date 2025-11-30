@@ -32,7 +32,7 @@ class Container < ApplicationRecord
   validates :number, presence: true, uniqueness: { case_sensitive: false }
   validates :status, presence: true, inclusion: { in: statuses.keys }
   validates :tipo_maniobra, presence: true, inclusion: { in: tipo_maniobras.keys }
-  validates :consolidator, presence: true
+  validates :consolidator_entity, presence: true
   validates :shipping_line, presence: true
 
   validates :bl_master, length: { maximum: 100 }, allow_blank: true
@@ -48,11 +48,11 @@ class Container < ApplicationRecord
   # Scopes
   scope :by_status, ->(status) { where(status: status) }
   scope :by_tipo_maniobra, ->(tipo) { where(tipo_maniobra: tipo) }
-  scope :by_consolidator, ->(consolidator_id) { where(consolidator_id: consolidator_id) }
+  scope :by_consolidator, ->(entity_id) { where(consolidator_entity_id: entity_id) }
   scope :by_shipping_line, ->(shipping_line_id) { where(shipping_line_id: shipping_line_id) }
   scope :recent, -> { order(created_at: :desc) }
   scope :by_fecha_arribo, -> { order(fecha_arribo: :desc) }
-  scope :with_associations, -> { includes(:consolidator, :shipping_line) }
+  scope :with_associations, -> { includes(:consolidator_entity, :shipping_line) }
 
   # Callbacks para historial de status
   after_create :create_initial_status_history
@@ -72,7 +72,7 @@ class Container < ApplicationRecord
   end
 
   def nombre_consolidador
-    consolidator.name
+    consolidator_entity&.name || consolidator&.name || "Sin asignar"
   end
 
   def nombre_puerto

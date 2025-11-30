@@ -1,32 +1,25 @@
 FactoryBot.define do
   factory :consolidator do
-    sequence(:name) { |n| "Consolidador #{n}" }
+    # Always create an entity with consolidator role
+    entity { association :entity, is_consolidator: true }
 
     # Traits para crear con datos completos
     trait :with_fiscal_profile do
-      after(:create) do |consolidator|
-        create(:fiscal_profile, profileable: consolidator)
-      end
+      entity { association :entity, :with_fiscal_profile, is_consolidator: true }
     end
 
     trait :with_fiscal_address do
-      after(:create) do |consolidator|
-        create(:address, addressable: consolidator, tipo: 'fiscal')
-      end
+      entity { association :entity, :with_address, is_consolidator: true }
     end
 
     trait :with_shipping_address do
       after(:create) do |consolidator|
-        create(:address, :envio, addressable: consolidator)
+        create(:address, :envio, addressable: consolidator.entity)
       end
     end
 
     trait :complete do
-      after(:create) do |consolidator|
-        create(:fiscal_profile, profileable: consolidator)
-        create(:address, addressable: consolidator, tipo: 'fiscal')
-        create(:address, :envio, addressable: consolidator)
-      end
+      entity { association :entity, :complete, is_consolidator: true }
     end
   end
 end

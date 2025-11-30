@@ -3,9 +3,20 @@ FactoryBot.define do
     sequence(:number) { |n| "CONT#{n.to_s.rjust(3, '0')}" }
     status { 'activo' }
     tipo_maniobra { 'importacion' }
-    association :consolidator
     association :shipping_line
     association :port
+
+    # Use NEW consolidator_entity association (Entity with consolidator role)
+    # The old consolidator association will be removed in future migrations
+    after(:build) do |container|
+      if container.consolidator_entity.nil?
+        # Create entity with consolidator role
+        entity = FactoryBot.create(:entity, :consolidator)
+        container.consolidator_entity = entity
+      end
+      # Leave consolidator_id as nil - it's for the old architecture
+      container.consolidator_id = nil
+    end
 
     bl_master { "BL-#{rand(1000..9999)}" }
     fecha_arribo { Date.today + rand(7..30).days }

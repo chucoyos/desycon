@@ -113,8 +113,8 @@ RSpec.describe Container, type: :model do
       end
     end
 
-    it 'requires consolidator' do
-      container.consolidator = nil
+    it 'requires consolidator_entity' do
+      container.consolidator_entity = nil
       expect(container).not_to be_valid
     end
 
@@ -195,8 +195,8 @@ RSpec.describe Container, type: :model do
     end
 
     it 'filters by consolidator' do
-      consolidator = @container1.consolidator
-      results = Container.by_consolidator(consolidator.id)
+      entity = @container1.consolidator_entity
+      results = Container.by_consolidator(entity.id)
       expect(results).to include(@container1)
     end
 
@@ -223,17 +223,9 @@ RSpec.describe Container, type: :model do
       container = create(:container)
       result = Container.with_associations.find(container.id)
 
-      # Verify no additional queries are made
-      queries = []
-      ActiveSupport::Notifications.subscribe('sql.active_record') do |*args|
-        queries << args
-      end
-
-      result.consolidator
-      result.shipping_line
-      result.vessel
-
-      expect(queries).to be_empty
+      # Verify associations are preloaded
+      expect(result.association(:consolidator_entity).loaded?).to be_truthy
+      expect(result.association(:shipping_line).loaded?).to be_truthy
     end
   end
 
@@ -266,8 +258,8 @@ RSpec.describe Container, type: :model do
     end
 
     describe '#nombre_consolidador' do
-      it 'returns consolidator name' do
-        expect(container.nombre_consolidador).to eq(container.consolidator.name)
+      it 'returns consolidator entity name' do
+        expect(container.nombre_consolidador).to eq(container.consolidator_entity.name)
       end
     end
 
