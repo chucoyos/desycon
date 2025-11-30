@@ -2,11 +2,9 @@ class ConsolidatorsController < ApplicationController
   before_action :set_consolidator, only: %i[show edit update destroy]
 
   def index
-    @consolidators = policy_scope(Consolidator)
-                       .with_fiscal_data
-                       .alphabetical
-                       .page(params[:page])
-                       .per(per)
+    consolidators = policy_scope(Consolidator).with_fiscal_data
+    consolidators = consolidators.where("name ILIKE ?", "%#{params[:search]}%") if params[:search].present?
+    @consolidators = consolidators.alphabetical.page(params[:page]).per(per)
     authorize Consolidator
   end
 
