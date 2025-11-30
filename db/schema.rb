@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_30_044613) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_30_224526) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -62,6 +62,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_044613) do
     t.index ["codigo_postal"], name: "index_addresses_on_codigo_postal"
   end
 
+  create_table "clients", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "entity_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_id"], name: "index_clients_on_entity_id"
+  end
+
   create_table "consolidators", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -70,6 +77,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_044613) do
   end
 
   create_table "container_services", force: :cascade do |t|
+    t.bigint "billed_to_entity_id"
     t.decimal "cantidad", precision: 10, scale: 2, null: false
     t.string "cliente", null: false
     t.bigint "container_id", null: false
@@ -80,6 +88,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_044613) do
     t.string "referencia"
     t.string "servicio", null: false
     t.datetime "updated_at", null: false
+    t.index ["billed_to_entity_id"], name: "index_container_services_on_billed_to_entity_id"
     t.index ["cliente"], name: "index_container_services_on_cliente"
     t.index ["container_id"], name: "index_container_services_on_container_id"
     t.index ["factura"], name: "index_container_services_on_factura"
@@ -129,6 +138,26 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_044613) do
     t.index ["vessel_id"], name: "index_containers_on_vessel_id"
   end
 
+  create_table "customs_agent_patents", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "entity_id", null: false
+    t.string "patent_number", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_id", "patent_number"], name: "index_patents_on_entity_and_number", unique: true
+    t.index ["entity_id"], name: "index_customs_agent_patents_on_entity_id"
+  end
+
+  create_table "entities", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "is_client", default: false
+    t.boolean "is_consolidator", default: false
+    t.boolean "is_customs_agent", default: false
+    t.boolean "is_forwarder", default: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_entities_on_name"
+  end
+
   create_table "fiscal_profiles", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "forma_pago"
@@ -142,6 +171,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_044613) do
     t.string "uso_cfdi"
     t.index ["profileable_type", "profileable_id"], name: "index_fiscal_profiles_on_profileable", unique: true
     t.index ["rfc"], name: "index_fiscal_profiles_on_rfc"
+  end
+
+  create_table "forwarders", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "entity_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_id"], name: "index_forwarders_on_entity_id"
   end
 
   create_table "ports", force: :cascade do |t|
@@ -194,13 +230,17 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_044613) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "clients", "entities"
   add_foreign_key "container_services", "containers"
+  add_foreign_key "container_services", "entities", column: "billed_to_entity_id"
   add_foreign_key "container_status_histories", "containers"
   add_foreign_key "container_status_histories", "users"
   add_foreign_key "containers", "consolidators"
   add_foreign_key "containers", "ports"
   add_foreign_key "containers", "shipping_lines"
   add_foreign_key "containers", "vessels"
+  add_foreign_key "customs_agent_patents", "entities"
+  add_foreign_key "forwarders", "entities"
   add_foreign_key "users", "roles"
   add_foreign_key "vessels", "shipping_lines"
 end

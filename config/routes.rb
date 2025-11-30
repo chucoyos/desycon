@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :entities
   resources :ports
   devise_for :users
 

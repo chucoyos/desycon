@@ -1,5 +1,6 @@
 class ContainerService < ApplicationRecord
   belongs_to :container
+  belongs_to :billed_to_entity, class_name: "Entity", optional: true
 
   # Validaciones
   validates :cliente, presence: true, length: { maximum: 200 }

@@ -1,6 +1,7 @@
 class Container < ApplicationRecord
   # Asociaciones
-  belongs_to :consolidator
+  belongs_to :consolidator, optional: true  # Mantener temporalmente para compatibilidad
+  belongs_to :consolidator_entity, class_name: "Entity", optional: true
   belongs_to :shipping_line
   belongs_to :vessel, optional: true
   belongs_to :port, optional: true
