@@ -1,53 +1,173 @@
-<% content_for :title, "Shipping lines" %>
+<% content_for :title, "Líneas Navieras" %>
 
-<div class="w-full">
+<div class="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div class="flex items-start gap-4">
+        <div class="flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-bold text-3xl text-gray-900">Líneas Navieras</h1>
+          <p class="text-sm text-gray-500 mt-1">Gestión de compañías navieras</p>
+        </div>
+      </div>
+      <%= link_to new_shipping_line_path, class: "inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-200 text-sm font-semibold" do %>
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Nueva Línea Naviera
+      <% end %>
+    </div>
+  </div>
 
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="font-bold text-2xl md:text-4xl text-gray-900">Lineas Navieras</h1>
-    <%= link_to new_shipping_line_path, class: "inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200", title: "Nueva línea naviera" do %>
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+  <!-- Search Form -->
+  <div class="bg-white rounded-xl shadow-md border border-gray-200 p-5 mb-6">
+    <div class="flex items-center gap-2 mb-4">
+      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
       </svg>
+      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Búsqueda</h2>
+    </div>
+    <%= form_with url: shipping_lines_path, method: :get, class: "flex gap-3" do |f| %>
+      <div class="flex-1">
+        <%= f.text_field :search, value: params[:search], placeholder: "Buscar por nombre...", class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all" %>
+      </div>
+      <div class="flex gap-2">
+        <%= f.submit "Buscar", class: "px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md cursor-pointer" %>
+        <%= link_to "Limpiar", shipping_lines_path, class: "px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors" %>
+      </div>
     <% end %>
   </div>
 
-   <%# Tailwind-styled pagination %>
+  <!-- Pagination -->
   <div class="mb-6">
     <%= render 'shared/tailwind_pagination', paginated: @shipping_lines %>
   </div>
 
-  <div id="shipping_lines" class="min-w-full divide-y divide-gray-200 space-y-5">
+  <!-- Vista de tabla para desktop -->
+  <div class="hidden lg:block bg-white shadow-sm rounded-xl overflow-hidden border border-gray-100">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gradient-to-r from-gray-50 to-white">
+        <tr>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Nombre</th>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Fecha de Creación</th>
+          <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-100">
+        <% if @shipping_lines.any? %>
+          <% @shipping_lines.each do |shipping_line| %>
+            <tr class="hover:bg-gray-50 transition-colors duration-150">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm flex-shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                  </div>
+                  <span class="text-sm font-semibold text-gray-900"><%= shipping_line.name %></span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                <%= l(shipping_line.created_at, format: :short) %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <div class="flex justify-end items-center gap-2">
+                  <%= link_to shipping_line, class: "p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors", title: "Ver detalles" do %>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                  <% end %>
+                  <%= link_to edit_shipping_line_path(shipping_line), class: "p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors", title: "Editar" do %>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  <% end %>
+                  <%= button_to shipping_line, method: :delete, class: "p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors inline-flex", title: "Eliminar", data: { turbo_confirm: "¿Estás seguro de eliminar esta línea naviera?" } do %>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="3" class="px-6 py-12 text-center">
+              <div class="flex flex-col items-center">
+                <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                <p class="text-gray-500 text-lg font-medium">No hay líneas navieras registradas</p>
+                <p class="text-gray-400 text-sm mt-1">Comienza creando tu primera línea naviera</p>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Vista de tarjetas para móvil/tablet -->
+  <div class="lg:hidden space-y-4">
     <% if @shipping_lines.any? %>
       <% @shipping_lines.each do |shipping_line| %>
-        <div class="flex flex-col sm:flex-row justify-between items-center pb-5 sm:pb-0">
-          <%= render shipping_line %>
-          <div class="w-full sm:w-auto flex items-center space-x-3">
-            <%= link_to shipping_line, class: "text-blue-600 hover:text-blue-900 p-2", title: "Ver" do %>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+        <div class="bg-white shadow-sm rounded-xl p-4 border border-gray-100 hover:shadow-md transition-shadow duration-200">
+          <div class="flex items-start gap-3 mb-3">
+            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm flex-shrink-0">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg font-bold text-gray-900"><%= shipping_line.name %></h3>
+              <p class="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <%= l(shipping_line.created_at, format: :short) %>
+              </p>
+            </div>
+          </div>
+          
+          <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+            <%= link_to shipping_line, class: "p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors", title: "Ver" do %>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
               </svg>
             <% end %>
-
-            <%= link_to edit_shipping_line_path(shipping_line), class: "text-gray-600 hover:text-gray-900 p-2", title: "Editar" do %>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+            <%= link_to edit_shipping_line_path(shipping_line), class: "p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors", title: "Editar" do %>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
               </svg>
             <% end %>
-
-            <%= button_to shipping_line, method: :delete, class: "text-red-600 hover:text-red-900 inline-flex p-2", title: "Eliminar", data: { turbo_confirm: "¿Estás seguro?" } do %>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+            <%= button_to shipping_line, method: :delete, class: "p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors inline-flex", title: "Eliminar", data: { turbo_confirm: "¿Estás seguro?" } do %>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
               </svg>
             <% end %>
           </div>
         </div>
       <% end %>
     <% else %>
-      <p class="text-center my-10">No shipping lines found.</p>
+      <div class="bg-white shadow-sm rounded-xl p-12 text-center border border-gray-100">
+        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        <p class="text-gray-500 text-lg font-medium">No hay líneas navieras registradas</p>
+        <p class="text-gray-400 text-sm mt-1">Comienza creando tu primera línea naviera</p>
+      </div>
     <% end %>
   </div>
-  <%# Tailwind-styled pagination %>
+
+  <!-- Pagination inferior -->
   <div class="mt-6">
     <%= render 'shared/tailwind_pagination', paginated: @shipping_lines %>
   </div>
