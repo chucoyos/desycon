@@ -10,14 +10,14 @@ class ShippingLinesController < ApplicationController
     allowed = [ 10, 25, 50, 100 ]
     per = 10 unless allowed.include?(per)
     @per_page = per
-    
+
     @shipping_lines = policy_scope(ShippingLine).order(:name)
-    
+
     # Filtro de búsqueda
     if params[:search].present?
       @shipping_lines = @shipping_lines.where("name ILIKE ?", "%#{params[:search]}%")
     end
-    
+
     @shipping_lines = @shipping_lines.page(params[:page]).per(per)
   end
 
