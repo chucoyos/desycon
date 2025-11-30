@@ -10,7 +10,9 @@ class PortsController < ApplicationController
     allowed = [ 10, 25, 50, 100 ]
     per = 10 unless allowed.include?(per)
     @per_page = per
-    @ports = policy_scope(Port).alphabetical.page(params[:page]).per(per)
+    ports = policy_scope(Port)
+    ports = ports.where("name ILIKE ? OR code ILIKE ?", "%#{params[:search]}%", "%#{params[:search]}%") if params[:search].present?
+    @ports = ports.alphabetical.page(params[:page]).per(per)
   end
 
   # GET /ports/1 or /ports/1.json
