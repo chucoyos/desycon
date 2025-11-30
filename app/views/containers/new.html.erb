@@ -1,0 +1,29 @@
+<% content_for :title, "Nuevo Contenedor" %>
+
+<div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+  
+  <div class="mb-4 sm:mb-6">
+    <%= link_to containers_path, class: "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-blue-700 hover:bg-blue-50 transition-all duration-200 group" do %>
+      <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+      </svg>
+      <span>Volver a contenedores</span>
+    <% end %>
+  </div>
+
+  <div class="mb-6 sm:mb-8">
+    <div class="flex items-start gap-4">
+      <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 shadow-lg">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+      </div>
+      <div class="flex-1">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Nuevo Contenedor</h1>
+        <p class="mt-2 text-sm sm:text-base text-gray-600">Complete la información del contenedor. Los campos marcados con <span class="text-red-500 font-medium">*</span> son obligatorios.</p>
+      </div>
+    </div>
+  </div>
+
+  <%= render "form", container: @container %>
+</div>

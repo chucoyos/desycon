@@ -1,0 +1,205 @@
+<% content_for :title, "Contenedores" %>
+
+<div class="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+    <div>
+      <h1 class="font-bold text-2xl sm:text-3xl text-gray-900">Contenedores</h1>
+      <p class="text-sm text-gray-500 mt-1">Gestión de contenedores de importación y exportación</p>
+    </div>
+    <%= link_to new_container_path, class: "inline-flex items-center justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-200 text-sm font-medium" do %>
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Nuevo Contenedor
+    <% end %>
+  </div>
+
+  <!-- Filtros -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <%= form_with url: containers_path, method: :get, class: "grid grid-cols-1 md:grid-cols-4 gap-4" do |f| %>
+      <div>
+        <%= f.text_field :search, value: params[:search], placeholder: "Buscar por número...", class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" %>
+      </div>
+      
+      <div>
+        <%= f.select :status, options_for_select([['Todos los status', '']] + Container.statuses.keys.map { |s| [status_nombre(s), s] }, params[:status]), {}, class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" %>
+      </div>
+      
+      <div>
+        <%= f.select :tipo_maniobra, options_for_select([['Todos los tipos', '']] + Container.tipo_maniobras.keys.map { |t| [tipo_maniobra_nombre(t), t] }, params[:tipo_maniobra]), {}, class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" %>
+      </div>
+      
+      <div class="flex gap-2">
+        <%= f.submit "Filtrar", class: "flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer" %>
+        <%= link_to "Limpiar", containers_path, class: "px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors" %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Pagination -->
+  <div class="mb-6">
+    <%= render 'shared/tailwind_pagination', paginated: @containers %>
+  </div>
+
+  <!-- Vista de tabla para desktop -->
+  <div class="hidden lg:block bg-white shadow-sm rounded-xl overflow-hidden border border-gray-100">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gradient-to-r from-gray-50 to-white">
+        <tr>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Número</th>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tipo</th>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Consolidador</th>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Línea Naviera</th>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Fecha Arribo</th>
+          <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-100">
+        <% if @containers.any? %>
+          <% @containers.each do |container| %>
+            <tr class="hover:bg-gray-50 transition-colors duration-150">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm font-mono font-semibold text-gray-900"><%= container.number %></span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border <%= status_badge_class(container.status) %>">
+                  <%= status_icon(container.status) %>
+                  <%= status_nombre(container.status) %>
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border <%= tipo_maniobra_badge_class(container.tipo_maniobra) %>">
+                  <%= tipo_maniobra_icon(container.tipo_maniobra) %>
+                  <%= tipo_maniobra_nombre(container.tipo_maniobra) %>
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <%= container.consolidator.name %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <%= container.shipping_line.name %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                <%= container.fecha_arribo ? l(container.fecha_arribo, format: :short) : '-' %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <div class="flex justify-end items-center gap-2">
+                  <%= link_to container, class: "p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors", title: "Ver detalles" do %>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                  <% end %>
+                  <%= link_to edit_container_path(container), class: "p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors", title: "Editar" do %>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  <% end %>
+                  <%= button_to container, method: :delete, class: "p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors inline-flex", title: "Eliminar", data: { turbo_confirm: "¿Estás seguro de eliminar este contenedor?" } do %>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="7" class="px-6 py-12 text-center">
+              <div class="flex flex-col items-center">
+                <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                </svg>
+                <p class="text-gray-500 text-lg font-medium">No hay contenedores registrados</p>
+                <p class="text-gray-400 text-sm mt-1">Comienza creando tu primer contenedor</p>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Vista de tarjetas para móvil/tablet -->
+  <div class="lg:hidden space-y-4">
+    <% if @containers.any? %>
+      <% @containers.each do |container| %>
+        <div class="bg-white shadow-sm rounded-xl p-4 border border-gray-100 hover:shadow-md transition-shadow duration-200">
+          <div class="flex justify-between items-start mb-3">
+            <div class="flex-1">
+              <h3 class="text-lg font-mono font-bold text-gray-900"><%= container.number %></h3>
+              <div class="flex flex-wrap gap-2 mt-2">
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border <%= status_badge_class(container.status) %>">
+                  <%= status_icon(container.status) %>
+                  <%= status_nombre(container.status) %>
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border <%= tipo_maniobra_badge_class(container.tipo_maniobra) %>">
+                  <%= tipo_maniobra_icon(container.tipo_maniobra) %>
+                  <%= tipo_maniobra_nombre(container.tipo_maniobra) %>
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="space-y-2 text-sm mb-3">
+            <div class="flex items-center text-gray-600">
+              <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+              <span class="font-medium"><%= container.consolidator.name %></span>
+            </div>
+            <div class="flex items-center text-gray-600">
+              <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+              <span><%= container.shipping_line.name %></span>
+            </div>
+            <% if container.fecha_arribo %>
+              <div class="flex items-center text-gray-600">
+                <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span><%= l(container.fecha_arribo, format: :short) %></span>
+              </div>
+            <% end %>
+          </div>
+          
+          <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+            <%= link_to container, class: "p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors", title: "Ver" do %>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            <% end %>
+            <%= link_to edit_container_path(container), class: "p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors", title: "Editar" do %>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+            <% end %>
+            <%= button_to container, method: :delete, class: "p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors inline-flex", title: "Eliminar", data: { turbo_confirm: "¿Estás seguro?" } do %>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="bg-white shadow-sm rounded-xl p-12 text-center border border-gray-100">
+        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+        </svg>
+        <p class="text-gray-500 text-lg font-medium">No hay contenedores registrados</p>
+        <p class="text-gray-400 text-sm mt-1">Comienza creando tu primer contenedor</p>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Pagination inferior -->
+  <div class="mt-6">
+    <%= render 'shared/tailwind_pagination', paginated: @containers %>
+  </div>
+</div>

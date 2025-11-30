@@ -3,6 +3,9 @@ class Consolidator < ApplicationRecord
   has_one :fiscal_profile, as: :profileable, dependent: :destroy
   has_many :addresses, as: :addressable, dependent: :destroy
 
+  # Asociaciones con contenedores
+  has_many :containers, dependent: :restrict_with_error
+
   # Nested attributes para crear/actualizar datos fiscales y direcciones en un solo form
   accepts_nested_attributes_for :fiscal_profile, allow_destroy: true, reject_if: :all_blank
   accepts_nested_attributes_for :addresses, allow_destroy: true, reject_if: :reject_empty_address

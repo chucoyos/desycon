@@ -1,5 +1,6 @@
 class Vessel < ApplicationRecord
   belongs_to :shipping_line
+  has_many :containers, dependent: :restrict_with_error
 
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   validates :shipping_line, presence: true

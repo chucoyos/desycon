@@ -1,0 +1,30 @@
+<% content_for :title, "Editar Contenedor" %>
+
+<div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+  
+  <div class="mb-4 sm:mb-6">
+    <%= link_to @container, class: "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-blue-700 hover:bg-blue-50 transition-all duration-200 group" do %>
+      <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+      </svg>
+      <span>Volver a detalles</span>
+    <% end %>
+  </div>
+
+  <div class="mb-6 sm:mb-8">
+    <div class="flex items-start gap-4">
+      <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+      </div>
+      <div class="flex-1">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Editar Contenedor</h1>
+        <p class="mt-1 text-base sm:text-lg font-medium font-mono text-gray-700"><%= @container.number %></p>
+        <p class="mt-1 text-sm text-gray-600">Actualice la información necesaria del contenedor.</p>
+      </div>
+    </div>
+  </div>
+
+  <%= render "form", container: @container %>
+</div>

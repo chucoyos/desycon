@@ -1,0 +1,254 @@
+<%= form_with(model: container, class: "space-y-6") do |form| %>
+  
+  <% if container.errors.any? %>
+    <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 shadow-sm">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-semibold text-red-800">
+            <%= pluralize(container.errors.count, "error") %> impidieron guardar este contenedor:
+          </h3>
+          <div class="mt-2 text-sm text-red-700">
+            <ul class="list-disc list-inside space-y-1">
+              <% container.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Información General -->
+  <div class="bg-white shadow-md rounded-xl p-5 sm:p-6 border border-gray-100">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-600 shadow-sm">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-gray-900">Información General</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+      <div>
+        <%= form.label :number, "Número *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.text_field :number, autofocus: true, required: true, placeholder: "CONT001", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:number].any? ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}" %>
+        <% if container.errors[:number].any? %>
+          <p class="mt-1 text-sm text-red-600"><%= container.errors[:number].first %></p>
+        <% end %>
+      </div>
+
+      <div>
+        <%= form.label :status, "Status *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.select :status, Container.statuses.keys.map { |s| [status_nombre(s), s] }, {}, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:status].any? ? 'border-red-300' : ''}" %>
+        <% if container.errors[:status].any? %>
+          <p class="mt-1 text-sm text-red-600"><%= container.errors[:status].first %></p>
+        <% end %>
+      </div>
+
+      <div>
+        <%= form.label :tipo_maniobra, "Tipo de Maniobra *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.select :tipo_maniobra, Container.tipo_maniobras.keys.map { |t| [tipo_maniobra_nombre(t), t] }, {}, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:tipo_maniobra].any? ? 'border-red-300' : ''}" %>
+        <% if container.errors[:tipo_maniobra].any? %>
+          <p class="mt-1 text-sm text-red-600"><%= container.errors[:tipo_maniobra].first %></p>
+        <% end %>
+      </div>
+
+      <div>
+        <%= form.label :consolidator_id, "Consolidador *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.collection_select :consolidator_id, @consolidators, :id, :name, { prompt: "Seleccione un consolidador" }, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:consolidator].any? ? 'border-red-300' : ''}" %>
+        <% if container.errors[:consolidator].any? %>
+          <p class="mt-1 text-sm text-red-600"><%= container.errors[:consolidator].first %></p>
+        <% end %>
+      </div>
+
+      <div>
+        <%= form.label :shipping_line_id, "Línea Naviera *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.collection_select :shipping_line_id, @shipping_lines, :id, :name, { prompt: "Seleccione una línea naviera" }, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:shipping_line].any? ? 'border-red-300' : ''}" %>
+        <% if container.errors[:shipping_line].any? %>
+          <p class="mt-1 text-sm text-red-600"><%= container.errors[:shipping_line].first %></p>
+        <% end %>
+      </div>
+
+      <div>
+        <%= form.label :vessel_id, "Buque", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.collection_select :vessel_id, @vessels, :id, :name, { prompt: "Seleccione un buque", include_blank: true }, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detalles del Envío -->
+  <div class="bg-white shadow-md rounded-xl p-5 sm:p-6 border border-gray-100">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-green-600 shadow-sm">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-gray-900">Detalles del Envío</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+      <div>
+        <%= form.label :bl_master, "BL Master", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.text_field :bl_master, placeholder: "BL-0001", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
+      </div>
+
+      <div>
+        <%= form.label :fecha_arribo, "Fecha de Arribo", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.date_field :fecha_arribo, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" %>
+      </div>
+
+      <div>
+        <%= form.label :puerto_origen, "Puerto de Origen", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.text_field :puerto_origen, placeholder: "Shanghai", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" %>
+      </div>
+
+      <div>
+        <%= form.label :viaje, "Viaje", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.text_field :viaje, placeholder: "V001", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
+      </div>
+
+      <div>
+        <%= form.label :recinto, "Recinto", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.text_field :recinto, placeholder: "SSA, FRIMAN", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" %>
+      </div>
+
+      <div>
+        <%= form.label :archivo_nr, "Archivo NR", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.text_field :archivo_nr, placeholder: "NR-0001", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
+      </div>
+
+      <div>
+        <%= form.label :sello, "Sello", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.text_field :sello, placeholder: "SEAL12345", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
+      </div>
+
+      <div>
+        <%= form.label :cont_key, "Cont Key", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.text_field :cont_key, placeholder: "KEY0001", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Documentos -->
+  <div class="bg-white shadow-md rounded-xl p-5 sm:p-6 border border-gray-100">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-600 shadow-sm">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-gray-900">Documentos</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+      <div>
+        <%= form.label :bl_master_documento, "BL Master (PDF)", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <div class="relative">
+          <%= form.file_field :bl_master_documento, accept: "application/pdf", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" %>
+        </div>
+        <% if container.persisted? && container.bl_master_documento.attached? %>
+          <p class="mt-2 text-sm text-gray-600 flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Archivo actual: <%= container.bl_master_documento.filename %>
+          </p>
+        <% end %>
+      </div>
+
+      <div>
+        <%= form.label :tarja_documento, "Tarja (PDF)", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <div class="relative">
+          <%= form.file_field :tarja_documento, accept: "application/pdf", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100" %>
+        </div>
+        <% if container.persisted? && container.tarja_documento.attached? %>
+          <p class="mt-2 text-sm text-gray-600 flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Archivo actual: <%= container.tarja_documento.filename %>
+          </p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Servicios (Nested Form) -->
+  <div class="bg-white shadow-md rounded-xl p-5 sm:p-6 border border-gray-100">
+    <div class="flex items-center justify-between mb-5">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-600 shadow-sm">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+        </div>
+        <h2 class="text-xl font-bold text-gray-900">Servicios</h2>
+      </div>
+      <button type="button" id="add-service" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 shadow-sm hover:shadow-md transition-all duration-200">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Agregar Servicio
+      </button>
+    </div>
+
+    <div id="services-container" class="space-y-4">
+      <%= form.fields_for :container_services do |service_form| %>
+        <%= render 'service_fields', f: service_form %>
+      <% end %>
+    </div>
+
+    <div id="service-template" class="hidden">
+      <%= form.fields_for :container_services, ContainerService.new, child_index: 'NEW_RECORD' do |service_form| %>
+        <%= render 'service_fields', f: service_form %>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Botones de acción -->
+  <div class="bg-gradient-to-r from-gray-50 to-white rounded-xl p-5 sm:p-6 border border-gray-100 shadow-sm">
+    <div class="flex flex-col sm:flex-row gap-3 justify-end">
+      <%= link_to "Cancelar", container.persisted? ? container : containers_path, class: "inline-flex items-center justify-center px-6 py-3 rounded-lg text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 transition-all duration-200" %>
+      <%= form.submit container.persisted? ? "Actualizar Contenedor" : "Crear Contenedor", class: "inline-flex items-center justify-center px-6 py-3 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer" %>
+    </div>
+  </div>
+<% end %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const addServiceBtn = document.getElementById('add-service');
+    const servicesContainer = document.getElementById('services-container');
+    const serviceTemplate = document.getElementById('service-template');
+
+    if (addServiceBtn) {
+      addServiceBtn.addEventListener('click', () => {
+        const newService = serviceTemplate.innerHTML.replace(/NEW_RECORD/g, new Date().getTime());
+        servicesContainer.insertAdjacentHTML('beforeend', newService);
+      });
+    }
+
+    // Delegación de eventos para botones de eliminar
+    servicesContainer.addEventListener('click', (e) => {
+      if (e.target.closest('.remove-service')) {
+        e.preventDefault();
+        const serviceCard = e.target.closest('.service-card');
+        const destroyInput = serviceCard.querySelector('input[name*="_destroy"]');
+        
+        if (destroyInput) {
+          destroyInput.value = '1';
+          serviceCard.style.display = 'none';
+        } else {
+          serviceCard.remove();
+        }
+      }
+    });
+  });
+</script>

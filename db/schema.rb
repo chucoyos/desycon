@@ -10,9 +10,37 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_29_061016) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_30_040217) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "active_storage_attachments", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.bigint "record_id", null: false
+    t.string "record_type", null: false
+    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+  end
+
+  create_table "active_storage_blobs", force: :cascade do |t|
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.string "content_type"
+    t.datetime "created_at", null: false
+    t.string "filename", null: false
+    t.string "key", null: false
+    t.text "metadata"
+    t.string "service_name", null: false
+    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
 
   create_table "addresses", force: :cascade do |t|
     t.bigint "addressable_id", null: false
@@ -39,6 +67,65 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_29_061016) do
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_consolidators_on_name", unique: true
+  end
+
+  create_table "container_services", force: :cascade do |t|
+    t.decimal "cantidad", precision: 10, scale: 2, null: false
+    t.string "cliente", null: false
+    t.bigint "container_id", null: false
+    t.datetime "created_at", null: false
+    t.string "factura"
+    t.date "fecha_programada"
+    t.text "observaciones"
+    t.string "referencia"
+    t.string "servicio", null: false
+    t.datetime "updated_at", null: false
+    t.index ["cliente"], name: "index_container_services_on_cliente"
+    t.index ["container_id"], name: "index_container_services_on_container_id"
+    t.index ["factura"], name: "index_container_services_on_factura"
+    t.index ["fecha_programada"], name: "index_container_services_on_fecha_programada"
+    t.index ["servicio"], name: "index_container_services_on_servicio"
+  end
+
+  create_table "container_status_histories", force: :cascade do |t|
+    t.bigint "container_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "fecha_actualizacion", null: false
+    t.text "observaciones"
+    t.string "status", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["container_id", "fecha_actualizacion"], name: "index_status_histories_on_container_and_date"
+    t.index ["container_id"], name: "index_container_status_histories_on_container_id"
+    t.index ["fecha_actualizacion"], name: "index_container_status_histories_on_fecha_actualizacion"
+    t.index ["status"], name: "index_container_status_histories_on_status"
+    t.index ["user_id"], name: "index_container_status_histories_on_user_id"
+  end
+
+  create_table "containers", force: :cascade do |t|
+    t.string "archivo_nr"
+    t.string "bl_master"
+    t.bigint "consolidator_id", null: false
+    t.string "cont_key"
+    t.datetime "created_at", null: false
+    t.date "fecha_arribo"
+    t.string "number", null: false
+    t.string "puerto_origen"
+    t.string "recinto"
+    t.string "sello"
+    t.bigint "shipping_line_id", null: false
+    t.string "status", default: "activo", null: false
+    t.string "tipo_maniobra", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "vessel_id"
+    t.string "viaje"
+    t.index ["consolidator_id"], name: "index_containers_on_consolidator_id"
+    t.index ["fecha_arribo"], name: "index_containers_on_fecha_arribo"
+    t.index ["number"], name: "index_containers_on_number", unique: true
+    t.index ["shipping_line_id"], name: "index_containers_on_shipping_line_id"
+    t.index ["status"], name: "index_containers_on_status"
+    t.index ["tipo_maniobra"], name: "index_containers_on_tipo_maniobra"
+    t.index ["vessel_id"], name: "index_containers_on_vessel_id"
   end
 
   create_table "fiscal_profiles", force: :cascade do |t|
@@ -104,6 +191,14 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_29_061016) do
     t.index ["shipping_line_id"], name: "index_vessels_on_shipping_line_id"
   end
 
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "container_services", "containers"
+  add_foreign_key "container_status_histories", "containers"
+  add_foreign_key "container_status_histories", "users"
+  add_foreign_key "containers", "consolidators"
+  add_foreign_key "containers", "shipping_lines"
+  add_foreign_key "containers", "vessels"
   add_foreign_key "users", "roles"
   add_foreign_key "vessels", "shipping_lines"
 end
