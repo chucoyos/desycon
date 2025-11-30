@@ -106,7 +106,8 @@ class ContainersController < ApplicationController
   def load_form_data
     @consolidators = Consolidator.alphabetical
     @shipping_lines = ShippingLine.alphabetical
-    @vessels = @container.shipping_line ? @container.shipping_line.vessels.alphabetical : Vessel.none
+    @vessels = Vessel.alphabetical
+    @vessels_json = Vessel.all.select(:id, :name, :shipping_line_id).map { |v| { id: v.id, name: v.name, shipping_line_id: v.shipping_line_id } }.to_json
   end
 
   def per
