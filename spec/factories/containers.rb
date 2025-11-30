@@ -5,10 +5,10 @@ FactoryBot.define do
     tipo_maniobra { 'importacion' }
     association :consolidator
     association :shipping_line
+    association :port
 
     bl_master { "BL-#{rand(1000..9999)}" }
     fecha_arribo { Date.today + rand(7..30).days }
-    puerto_origen { %w[Shanghai LosAngeles Rotterdam Hamburg Singapore].sample }
     viaje { "V#{rand(100..999)}" }
     recinto { %w[SSA FRIMAN].sample }
     archivo_nr { "NR-#{rand(1000..9999)}" }

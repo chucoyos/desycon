@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_30_040217) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_30_044613) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -110,7 +110,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_040217) do
     t.datetime "created_at", null: false
     t.date "fecha_arribo"
     t.string "number", null: false
-    t.string "puerto_origen"
+    t.bigint "port_id"
     t.string "recinto"
     t.string "sello"
     t.bigint "shipping_line_id", null: false
@@ -122,6 +122,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_040217) do
     t.index ["consolidator_id"], name: "index_containers_on_consolidator_id"
     t.index ["fecha_arribo"], name: "index_containers_on_fecha_arribo"
     t.index ["number"], name: "index_containers_on_number", unique: true
+    t.index ["port_id"], name: "index_containers_on_port_id"
     t.index ["shipping_line_id"], name: "index_containers_on_shipping_line_id"
     t.index ["status"], name: "index_containers_on_status"
     t.index ["tipo_maniobra"], name: "index_containers_on_tipo_maniobra"
@@ -197,6 +198,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_040217) do
   add_foreign_key "container_status_histories", "containers"
   add_foreign_key "container_status_histories", "users"
   add_foreign_key "containers", "consolidators"
+  add_foreign_key "containers", "ports"
   add_foreign_key "containers", "shipping_lines"
   add_foreign_key "containers", "vessels"
   add_foreign_key "users", "roles"

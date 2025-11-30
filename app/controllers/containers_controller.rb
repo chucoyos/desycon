@@ -86,9 +86,9 @@ class ContainersController < ApplicationController
       :consolidator_id,
       :shipping_line_id,
       :vessel_id,
+      :port_id,
       :bl_master,
       :fecha_arribo,
-      :puerto_origen,
       :viaje,
       :recinto,
       :archivo_nr,
@@ -107,6 +107,7 @@ class ContainersController < ApplicationController
     @consolidators = Consolidator.alphabetical
     @shipping_lines = ShippingLine.alphabetical
     @vessels = Vessel.alphabetical
+    @ports = Port.alphabetical
     @vessels_json = Vessel.all.select(:id, :name, :shipping_line_id).map { |v| { id: v.id, name: v.name, shipping_line_id: v.shipping_line_id } }.to_json
   end
 

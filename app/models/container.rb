@@ -3,6 +3,7 @@ class Container < ApplicationRecord
   belongs_to :consolidator
   belongs_to :shipping_line
   belongs_to :vessel, optional: true
+  belongs_to :port, optional: true
 
   has_many :container_status_histories, dependent: :destroy
   has_many :container_services, dependent: :destroy
@@ -34,7 +35,6 @@ class Container < ApplicationRecord
   validates :shipping_line, presence: true
 
   validates :bl_master, length: { maximum: 100 }, allow_blank: true
-  validates :puerto_origen, length: { maximum: 100 }, allow_blank: true
   validates :viaje, length: { maximum: 50 }, allow_blank: true
   validates :recinto, length: { maximum: 100 }, allow_blank: true
   validates :archivo_nr, length: { maximum: 100 }, allow_blank: true
@@ -71,6 +71,10 @@ class Container < ApplicationRecord
 
   def nombre_consolidador
     consolidator.name
+  end
+
+  def nombre_puerto
+    port&.display_name
   end
 
   # Obtener el último status history
