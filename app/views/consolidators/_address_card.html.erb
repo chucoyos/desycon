@@ -1,168 +1,234 @@
 <% has_errors = f.object.errors.any? %>
-<div class="address-item" data-address-id="<%= f.object.object_id %>" data-has-errors="<%= has_errors %>">
+<% 
+  badge_classes = case f.object.tipo
+    when 'fiscal'
+      'bg-blue-100 text-blue-800 border-blue-200'
+    when 'envio'
+      'bg-green-100 text-green-800 border-green-200'
+    when 'almacen'
+      'bg-purple-100 text-purple-800 border-purple-200'
+    when 'entrega'
+      'bg-orange-100 text-orange-800 border-orange-200'
+    else
+      'bg-gray-100 text-gray-800 border-gray-200'
+  end
+%>
+
+<!-- Material Design: Card con elevación y mejor estructura -->
+<div class="address-item bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-200 <%= 'ring-2 ring-red-200' if has_errors %>" data-address-id="<%= f.object.object_id %>" data-has-errors="<%= has_errors %>">
   <%= f.hidden_field :id %>
   <%= f.hidden_field :_destroy, class: "destroy-field" %>
   
-  <!-- Vista colapsada (resumen) -->
-  <div class="address-summary bg-gray-50 border <%= has_errors ? 'border-red-300' : 'border-gray-200' %> rounded-lg p-4 <%= 'hidden' if has_errors %>">
-    <div class="flex justify-between items-start">
-      <div class="flex-1">
-        <div class="flex items-center gap-2 mb-2">
+  <!-- Material Design: Vista colapsada con mejor diseño -->
+  <div class="address-summary <%= 'hidden' if has_errors %>">
+    <!-- Header con badge de tipo -->
+    <div class="bg-gradient-to-r from-gray-50 to-white px-4 sm:px-5 py-3 border-b border-gray-100">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2 flex-wrap">
           <% if f.object.tipo.present? %>
-            <% 
-              badge_classes = case f.object.tipo
-                when 'fiscal'
-                  'bg-blue-100 text-blue-800'
-                when 'envio'
-                  'bg-green-100 text-green-800'
-                when 'almacen'
-                  'bg-purple-100 text-purple-800'
-                when 'entrega'
-                  'bg-orange-100 text-orange-800'
-                else
-                  'bg-gray-100 text-gray-800'
-              end
-            %>
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= badge_classes %>">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold <%= badge_classes %> border shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
+              </svg>
               <%= Address::TIPOS[f.object.tipo] || f.object.tipo %>
             </span>
           <% else %>
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
               Nueva Dirección
             </span>
           <% end %>
-          <% if f.object.codigo_postal.present? %>
-            <span class="text-xs font-medium text-gray-600">
-              CP: <%= f.object.codigo_postal %>
-            </span>
-          <% end %>
           <% if has_errors %>
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-              <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-red-100 text-red-800 border border-red-200 shadow-sm">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
               </svg>
               Requiere corrección
             </span>
           <% end %>
         </div>
-        <% if f.object.persisted? && f.object.calle.present? %>
-          <p class="text-sm text-gray-900"><%= f.object.calle %> <%= f.object.numero_exterior %><%= ", #{f.object.numero_interior}" if f.object.numero_interior.present? %></p>
-          <p class="text-sm text-gray-600"><%= f.object.colonia %>, <%= f.object.codigo_postal %></p>
-          <p class="text-sm text-gray-600"><%= f.object.municipio %>, <%= f.object.estado %></p>
-          <p class="text-sm text-gray-500 mt-1"><%= f.object.email %></p>
-        <% else %>
-          <p class="text-sm text-gray-500 italic">Formulario de dirección</p>
-        <% end %>
+        
+        <!-- Botones de acción -->
+        <div class="flex items-center gap-1.5">
+          <button type="button" class="edit-address-btn group p-2 rounded-lg text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200" title="Editar dirección">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+            </svg>
+          </button>
+          <button type="button" class="remove-address-btn group p-2 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200" title="Eliminar dirección">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+            </svg>
+          </button>
+        </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button type="button" class="edit-address-btn cursor-pointer inline-flex items-center justify-center p-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+    </div>
+    
+    <!-- Contenido del resumen -->
+    <div class="px-4 sm:px-5 py-3">
+      <% if f.object.codigo_postal.present? %>
+        <div class="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-400 flex-shrink-0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+          </svg>
+          <span class="font-mono"><%= f.object.codigo_postal %></span>
+        </div>
+      <% else %>
+        <div class="flex items-center gap-2 text-sm text-gray-500 italic">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-400">
             <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
           </svg>
-        </button>
-        <button type="button" class="remove-address-btn cursor-pointer inline-flex items-center justify-center p-1.5 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-          </svg>
-        </button>
-      </div>
+          Complete el formulario de dirección
+        </div>
+      <% end %>
     </div>
   </div>
 
-  <!-- Vista expandida (formulario) -->
-  <div class="address-form <%= 'hidden' unless has_errors %> border <%= has_errors ? 'border-red-300' : 'border-gray-300' %> rounded-lg p-5 bg-gray-50">
+  <!-- Material Design: Vista expandida (formulario) con mejor diseño -->
+  <div class="address-form <%= 'hidden' unless has_errors %>">
     <% if has_errors %>
-      <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-        <div class="flex">
-          <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+      <!-- Bloque de errores -->
+      <div class="mx-4 sm:mx-5 mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+        <div class="flex items-start gap-3">
+          <svg class="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
           </svg>
-          <div class="ml-3">
-            <h3 class="text-sm font-medium text-red-800">Esta dirección tiene errores</h3>
-            <div class="mt-1 text-sm text-red-700">
-              <ul class="list-disc list-inside space-y-1">
-                <% f.object.errors.full_messages.each do |message| %>
-                  <li><%= message %></li>
-                <% end %>
-              </ul>
+          <div class="flex-1">
+            <h3 class="text-sm font-bold text-red-900">Esta dirección tiene errores</h3>
+            <div class="mt-2 space-y-1">
+              <% f.object.errors.full_messages.each do |message| %>
+                <p class="text-sm text-red-800 flex items-start gap-1.5">
+                  <svg class="w-1.5 h-1.5 mt-1.5 flex-shrink-0" fill="currentColor" viewBox="0 0 8 8">
+                    <circle cx="4" cy="4" r="3"/>
+                  </svg>
+                  <span><%= message %></span>
+                </p>
+              <% end %>
             </div>
           </div>
         </div>
       </div>
     <% end %>
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-sm font-semibold text-gray-900">
-        <% if f.object.persisted? %>
-          Editar Dirección
-        <% else %>
-          Nueva Dirección
-        <% end %>
-      </h3>
+    
+    <!-- Header del formulario -->
+    <div class="px-4 sm:px-5 py-4 <%= 'border-t border-gray-100' if has_errors %>">
+      <div class="flex items-center gap-2">
+        <div class="flex items-center justify-center w-8 h-8 rounded-lg <%= has_errors ? 'bg-red-600' : 'bg-blue-600' %> shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-white">
+            <% if f.object.persisted? %>
+              <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+            <% else %>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            <% end %>
+          </svg>
+        </div>
+        <h3 class="text-base font-bold text-gray-900">
+          <%= f.object.persisted? ? 'Editar Dirección' : 'Nueva Dirección' %>
+        </h3>
+      </div>
     </div>
     
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+    <!-- Campos del formulario -->
+    <div class="px-4 sm:px-5 pb-5 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
       <div>
-        <%= f.label :tipo, "Tipo de Dirección", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= f.label :tipo, class: "block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2" do %>
+          Tipo de Dirección
+        <% end %>
         <%= f.select :tipo,
               options_for_select(Address::TIPOS.map { |k, v| [v, k] }, f.object.tipo),
               { prompt: "Seleccione tipo" },
-              class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" %>
+              class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200" %>
       </div>
 
       <div>
-        <%= f.label :pais, "País", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= f.text_field :pais, class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors uppercase", placeholder: "MX", maxlength: 2, value: f.object.pais || 'MX' %>
+        <%= f.label :pais, class: "block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2" do %>
+          País
+        <% end %>
+        <%= f.text_field :pais, class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200 uppercase font-mono", placeholder: "MX", maxlength: 2, value: f.object.pais || 'MX' %>
       </div>
 
       <div>
-        <%= f.label :codigo_postal, "Código Postal *", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= f.text_field :codigo_postal, class: "block w-full px-4 py-2.5 rounded-lg border #{f.object.errors[:codigo_postal].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'} bg-white focus:ring-1 transition-colors", placeholder: "Código Postal" %>
+        <%= f.label :codigo_postal, class: "block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2" do %>
+          Código Postal <span class="text-red-500">*</span>
+        <% end %>
+        <%= f.text_field :codigo_postal, class: "block w-full px-4 py-3 rounded-lg border #{f.object.errors[:codigo_postal].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'} bg-white focus:ring-2 transition-all duration-200 font-mono", placeholder: "12345" %>
       </div>
 
       <div>
-        <%= f.label :estado, "Estado *", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= f.text_field :estado, class: "block w-full px-4 py-2.5 rounded-lg border #{f.object.errors[:estado].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'} bg-white focus:ring-1 transition-colors", placeholder: "Estado" %>
+        <%= f.label :estado, class: "block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2" do %>
+          Estado <span class="text-red-500">*</span>
+        <% end %>
+        <%= f.text_field :estado, class: "block w-full px-4 py-3 rounded-lg border #{f.object.errors[:estado].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'} bg-white focus:ring-2 transition-all duration-200", placeholder: "Ej: Jalisco" %>
       </div>
 
       <div>
-        <%= f.label :municipio, "Municipio", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= f.text_field :municipio, class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors", placeholder: "Municipio" %>
+        <%= f.label :municipio, class: "block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2" do %>
+          Municipio
+        <% end %>
+        <%= f.text_field :municipio, class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200", placeholder: "Ej: Guadalajara" %>
       </div>
 
       <div>
-        <%= f.label :colonia, "Colonia", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= f.text_field :colonia, class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors", placeholder: "Colonia" %>
+        <%= f.label :colonia, class: "block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2" do %>
+          Colonia
+        <% end %>
+        <%= f.text_field :colonia, class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200", placeholder: "Ej: Centro" %>
       </div>
 
       <div class="md:col-span-2">
-        <%= f.label :calle, "Calle", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= f.text_field :calle, class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors", placeholder: "Calle o avenida" %>
+        <%= f.label :calle, class: "block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2" do %>
+          Calle
+        <% end %>
+        <%= f.text_field :calle, class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200", placeholder: "Ej: Av. Juárez" %>
       </div>
 
       <div>
-        <%= f.label :numero_exterior, "No. Exterior", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= f.text_field :numero_exterior, class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors", placeholder: "Número exterior" %>
+        <%= f.label :numero_exterior, class: "block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2" do %>
+          No. Exterior
+        <% end %>
+        <%= f.text_field :numero_exterior, class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200", placeholder: "123" %>
       </div>
 
       <div>
-        <%= f.label :numero_interior, "No. Interior", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= f.text_field :numero_interior, class: "block w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors", placeholder: "Número interior" %>
+        <%= f.label :numero_interior, class: "block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2" do %>
+          No. Interior
+        <% end %>
+        <%= f.text_field :numero_interior, class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200", placeholder: "Depto 4" %>
       </div>
 
       <div class="md:col-span-2">
-        <%= f.label :email, "Correo Electrónico *", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= f.email_field :email, class: "block w-full px-4 py-2.5 rounded-lg border #{f.object.errors[:email].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'} bg-white focus:ring-1 transition-colors", placeholder: "contacto@mail.com" %>
+        <%= f.label :email, class: "block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2" do %>
+          <span class="inline-flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+            </svg>
+            Correo Electrónico
+            <span class="text-red-500">*</span>
+          </span>
+        <% end %>
+        <%= f.email_field :email, class: "block w-full px-4 py-3 rounded-lg border #{f.object.errors[:email].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'} bg-white focus:ring-2 transition-all duration-200", placeholder: "contacto@example.com" %>
       </div>
     </div>
     
-    <!-- Botones del formulario de dirección -->
-    <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-      <button type="button" class="cancel-address-btn px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-        Cancelar
-      </button>
-      <button type="button" class="save-address-btn px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors">
-        Guardar Dirección
-      </button>
+    <!-- Botones de acción del formulario -->
+    <div class="bg-gradient-to-r from-gray-50 to-white px-4 sm:px-5 py-4 border-t border-gray-100">
+      <div class="flex items-center justify-end gap-3">
+        <button type="button" class="cancel-address-btn inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 border-gray-300 shadow-sm text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+          Cancelar
+        </button>
+        <button type="button" class="save-address-btn inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-transparent shadow-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+          Guardar Dirección
+        </button>
+      </div>
     </div>
   </div>
 </div>
