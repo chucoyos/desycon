@@ -7,6 +7,11 @@ class ApplicationController < ActionController::Base
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
+  # Redirect to containers index after sign in
+  def after_sign_in_path_for(resource)
+    containers_path
+  end
+
   # Pundit: catch authorization errors
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
