@@ -1,5 +1,6 @@
 class ContainersController < ApplicationController
-  before_action :set_container, only: %i[show edit update destroy]
+  before_action :set_container, only: %i[edit update destroy]
+  before_action :set_container_for_show, only: %i[show]
 
   def index
     @containers = policy_scope(Container)
@@ -69,10 +70,15 @@ class ContainersController < ApplicationController
   private
 
   def set_container
+    @container = Container.find(params[:id])
+  end
+
+  def set_container_for_show
     @container = Container.includes(
       :consolidator,
       :shipping_line,
       :vessel,
+      :port,
       :container_services,
       container_status_histories: :user
     ).find(params[:id])

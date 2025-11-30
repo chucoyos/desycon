@@ -51,7 +51,7 @@ class Container < ApplicationRecord
   scope :by_shipping_line, ->(shipping_line_id) { where(shipping_line_id: shipping_line_id) }
   scope :recent, -> { order(created_at: :desc) }
   scope :by_fecha_arribo, -> { order(fecha_arribo: :desc) }
-  scope :with_associations, -> { includes(:consolidator, :shipping_line, :vessel) }
+  scope :with_associations, -> { includes(:consolidator, :shipping_line) }
 
   # Callbacks para historial de status
   after_update :create_status_history, if: :saved_change_to_status?
