@@ -105,7 +105,7 @@ GEM
       xpath (~> 3.2)
     concurrent-ruby (1.3.5)
     connection_pool (2.5.5)
-    countries (6.0.1)
+    countries (8.0.4)
       unaccent (~> 0.3)
     crack (1.0.1)
       bigdecimal
@@ -458,7 +458,7 @@ DEPENDENCIES
   bullet
   bundler-audit
   capybara
-  countries (~> 6.0)
+  countries (~> 8.0)
   debug
   devise (~> 4.9)
   factory_bot_rails (~> 6.4)
