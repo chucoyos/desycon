@@ -1,0 +1,7 @@
+<%= turbo_stream.append "addresses-list" do %>
+  <%= render partial: "entity_addresses/address", locals: { address: @address } %>
+<% end %>
+<%= turbo_stream.replace "new_address", "" %>
+<%= turbo_stream.update "add-address-btn" do %>
+  <script>document.getElementById('add-address-btn').style.display = 'inline-flex';</script>
+<% end %>

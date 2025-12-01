@@ -17,6 +17,11 @@
             <% end %>
           </ul>
         </div>
+        <% if object.errors.details.any? { |attr, details| details.any? { |d| d[:error] == :invalid } } %>
+          <div class="mt-3 p-3 bg-red-100 rounded border border-red-200">
+            <p class="text-sm text-red-800 font-medium">Nota: Si estás intentando agregar una dirección, asegúrate de completar todos los campos requeridos marcados con *.</p>
+          </div>
+        <% end %>
       </div>
     </div>
   </div>

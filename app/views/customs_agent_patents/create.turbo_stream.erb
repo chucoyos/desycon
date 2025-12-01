@@ -1,0 +1,8 @@
+<%= turbo_stream.append "patents-list" do %>
+  <%= render partial: "customs_agent_patents/patent", locals: { patent: @patent } %>
+<% end %>
+<%= turbo_stream.replace "new_patent", "" %>
+<script>
+  var addBtn = document.getElementById('add-patent-btn');
+  if (addBtn) addBtn.style.display = 'inline-flex';
+</script>

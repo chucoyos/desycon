@@ -75,7 +75,7 @@ class ContainersController < ApplicationController
 
   def set_container_for_show
     @container = Container.includes(
-      :consolidator,
+      :consolidator_entity,
       :shipping_line,
       :vessel,
       :port,
@@ -89,7 +89,7 @@ class ContainersController < ApplicationController
       :number,
       :status,
       :tipo_maniobra,
-      :consolidator_id,
+      :consolidator_entity_id,
       :shipping_line_id,
       :vessel_id,
       :port_id,
@@ -110,7 +110,7 @@ class ContainersController < ApplicationController
   end
 
   def load_form_data
-    @consolidators = Consolidator.alphabetical
+    @consolidators = Entity.where(is_consolidator: true).order(:name)
     @shipping_lines = ShippingLine.alphabetical
     @vessels = Vessel.alphabetical
     @ports = Port.alphabetical

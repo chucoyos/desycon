@@ -14,14 +14,21 @@ class EntitiesController < ApplicationController
   def new
     @entity = Entity.new
     @entity.build_fiscal_profile
-    @entity.addresses.build
+    # Don't build address here - let the view handle it
   end
 
   def edit
+    # Ensure at least one address field is available for editing
+    @entity.addresses.build if @entity.addresses.empty?
   end
 
   def create
     @entity = Entity.new(entity_params)
+
+    # Handle duplicate addresses for new entities
+    if @entity.new_record? && @entity.addresses.size > 1
+      @entity.addresses = [@entity.addresses.last]
+    end
 
     if @entity.save
       redirect_to @entity, notice: "Entidad creada exitosamente."
@@ -46,16 +53,16 @@ class EntitiesController < ApplicationController
   private
 
   def set_entity
-    @entity = Entity.includes(:addresses, :fiscal_profile).find(params.expect(:id))
+    @entity = Entity.includes(:addresses, :fiscal_profile, :customs_agent_patents).find(params.expect(:id))
   end
 
   def load_patents
-    # Eager load patents only for show action where they're displayed
-    @entity.customs_agent_patents.load
+    # Patents are already loaded via includes in set_entity
+    # This callback exists for potential future use
   end
 
   def entity_params
-    params.expect(entity: [
+    params.require(:entity).permit(
       :name,
       :is_consolidator,
       :is_customs_agent,
@@ -71,6 +78,6 @@ class EntitiesController < ApplicationController
       customs_agent_patents_attributes: [
         :id, :patent_number, :_destroy
       ]
-    ])
+    )
   end
 end

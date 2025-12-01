@@ -25,6 +25,9 @@ class Entity < ApplicationRecord
 
   # Validaciones
   validates :name, presence: true
+  validates_associated :addresses
+  validates_associated :fiscal_profile
+  validates_associated :customs_agent_patents
   validate :must_have_at_least_one_role
 
   # Scopes

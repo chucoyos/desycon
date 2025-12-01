@@ -20,7 +20,7 @@ class Address < ApplicationRecord
   validates :colonia, length: { maximum: 100 }, allow_blank: true
   validates :numero_exterior, length: { maximum: 20 }, allow_blank: true
   validates :numero_interior, length: { maximum: 20 }, allow_blank: true
-  validates :tipo, inclusion: { in: TIPOS.keys }, allow_blank: true
+  validates :tipo, inclusion: { in: TIPOS.keys }, allow_blank: false
 
   # Normalización
   before_validation :normalize_codigo_postal

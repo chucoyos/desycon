@@ -1,0 +1,38 @@
+<%= turbo_frame_tag dom_id(address) do %>
+  <div class="address-item p-4 bg-white border border-gray-200 rounded-lg mb-3">
+    <div class="flex items-start justify-between mb-2">
+      <div class="flex-1">
+        <% if address.tipo.present? %>
+          <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full <%= address.tipo == 'fiscal' ? 'bg-purple-100 text-purple-700' : address.tipo == 'envio' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700' %>">
+            <%= Address::TIPOS[address.tipo] %>
+          </span>
+        <% end %>
+      </div>
+      <%= button_to entity_address_path(address.entity, address),
+          method: :delete,
+          form: { data: { turbo_confirm: "¿Eliminar esta dirección?" } },
+          class: "p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+      <% end %>
+    </div>
+    <div class="text-sm text-gray-700 space-y-1">
+      <% if address.calle.present? %>
+        <p><strong>Calle:</strong> <%= address.calle %> <%= address.numero_exterior %> <%= "Int. #{address.numero_interior}" if address.numero_interior.present? %></p>
+      <% end %>
+      <% if address.colonia.present? %>
+        <p><strong>Colonia:</strong> <%= address.colonia %></p>
+      <% end %>
+      <% if address.municipio.present? || address.estado.present? %>
+        <p><strong>Municipio/Estado:</strong> <%= address.municipio %>, <%= address.estado %></p>
+      <% end %>
+      <% if address.codigo_postal.present? %>
+        <p><strong>CP:</strong> <%= address.codigo_postal %></p>
+      <% end %>
+      <% if address.email.present? %>
+        <p><strong>Email:</strong> <%= address.email %></p>
+      <% end %>
+    </div>
+  </div>
+<% end %>
