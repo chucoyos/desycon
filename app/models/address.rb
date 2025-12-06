@@ -9,6 +9,14 @@ class Address < ApplicationRecord
     "entrega" => "Entrega"
   }.freeze
 
+  # Países
+  PAISES = {
+    "MX" => "México",
+    "US" => "Estados Unidos",
+    "CA" => "Canadá",
+    "ES" => "España"
+  }.freeze
+
   # Validaciones
   validates :pais, presence: true, length: { is: 2 }, format: { with: /\A[A-Z]{2}\z/ }
   validates :codigo_postal, presence: true, length: { maximum: 10 }

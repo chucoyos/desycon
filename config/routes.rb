@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   resources :entities do
+    get :new_address, on: :collection
     resources :customs_agent_patents, only: [ :create, :update, :destroy ]
     resources :addresses, controller: "entity_addresses", only: [ :create, :update, :destroy ]
   end

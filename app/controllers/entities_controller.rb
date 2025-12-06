@@ -13,8 +13,15 @@ class EntitiesController < ApplicationController
 
   def new
     @entity = Entity.new
-    @entity.build_fiscal_profile
-    # Don't build address here - let the view handle it
+    # Ensure at least one address field is available for new entities
+    @entity.addresses.build
+  end
+
+  def new_address
+    @entity = Entity.new
+    respond_to do |format|
+      format.turbo_stream
+    end
   end
 
   def edit

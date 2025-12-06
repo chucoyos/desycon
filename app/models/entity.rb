@@ -25,8 +25,8 @@ class Entity < ApplicationRecord
 
   # Validaciones
   validates :name, presence: true
-  validates_associated :addresses
-  validates_associated :fiscal_profile
+  validate :validate_addresses_if_present
+  validates_associated :fiscal_profile, if: -> { fiscal_profile.present? }
   validates_associated :customs_agent_patents
   validate :must_have_at_least_one_role
 
@@ -83,6 +83,37 @@ class Entity < ApplicationRecord
     unless is_consolidator || is_customs_agent || is_forwarder || is_client
       errors.add(:base, "Debe seleccionar al menos un rol")
     end
+  end
+
+  def addresses_loaded_and_present?
+    addresses.reject(&:marked_for_destruction?).any? do |addr|
+      addr.persisted? || user_provided_address_data?(addr)
+    end
+  end
+
+  private
+
+  def validate_addresses_if_present
+    return unless addresses_loaded_and_present?
+
+    addresses.each do |address|
+      next if address.marked_for_destruction?
+
+      unless address.valid?
+        # Add address validation errors to the entity
+        address.errors.each do |error|
+          errors.add(:addresses, error.message)
+        end
+      end
+    end
+  end
+
+  def user_provided_address_data?(address)
+    # Check only user-editable fields, excluding Rails internal attributes
+    user_fields = [ :tipo, :pais, :codigo_postal, :estado, :municipio, :localidad,
+                   :colonia, :calle, :numero_exterior, :numero_interior, :email ]
+
+    user_fields.any? { |field| address.send(field).present? }
   end
 
   def sync_profiles
