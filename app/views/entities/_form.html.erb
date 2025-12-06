@@ -76,55 +76,59 @@
       <h3 class="text-base sm:text-lg font-semibold text-gray-900">Perfil Fiscal</h3>
     </div>
     <div class="px-4 sm:px-6 py-4 space-y-4">
-      <%= form.fields_for :fiscal_profile do |fp| %>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <%= fp.label :rfc, "RFC", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-            <%= fp.text_field :rfc, 
-                class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-                placeholder: "XAXX010101000",
-                maxlength: 13 %>
-          </div>
+      <% if entity.fiscal_profile %>
+        <%= form.fields_for :fiscal_profile do |fp| %>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <%= fp.label :rfc, "RFC", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.text_field :rfc, 
+                  class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
+                  placeholder: "XAXX010101000",
+                  maxlength: 13 %>
+            </div>
 
-          <div>
-            <%= fp.label :razon_social, "Razón Social", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-            <%= fp.text_field :razon_social, 
-                class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-                placeholder: "Razón social completa" %>
-          </div>
+            <div>
+              <%= fp.label :razon_social, "Razón Social", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.text_field :razon_social, 
+                  class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
+                  placeholder: "Razón social completa" %>
+            </div>
 
-          <div>
-            <%= fp.label :regimen, "Régimen Fiscal", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-            <%= fp.select :regimen,
-                FiscalProfile::REGIMENES.map { |k, v| ["#{k} - #{v}", k] },
-                { include_blank: "Seleccionar régimen" },
-                class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
-          </div>
+            <div>
+              <%= fp.label :regimen, "Régimen Fiscal", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.select :regimen,
+                  FiscalProfile::REGIMENES.map { |k, v| ["#{k} - #{v}", k] },
+                  { include_blank: "Seleccionar régimen" },
+                  class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+            </div>
 
-          <div>
-            <%= fp.label :uso_cfdi, "Uso CFDI", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-            <%= fp.select :uso_cfdi,
-                FiscalProfile::USOS_CFDI.map { |k, v| ["#{k} - #{v}", k] },
-                { include_blank: "Seleccionar uso CFDI" },
-                class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
-          </div>
+            <div>
+              <%= fp.label :uso_cfdi, "Uso CFDI", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.select :uso_cfdi,
+                  FiscalProfile::USOS_CFDI.map { |k, v| ["#{k} - #{v}", k] },
+                  { include_blank: "Seleccionar uso CFDI" },
+                  class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+            </div>
 
-          <div>
-            <%= fp.label :forma_pago, "Forma de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-            <%= fp.select :forma_pago,
-                FiscalProfile::FORMAS_PAGO.map { |k, v| ["#{k} - #{v}", k] },
-                { include_blank: "Seleccionar forma de pago" },
-                class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
-          </div>
+            <div>
+              <%= fp.label :forma_pago, "Forma de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.select :forma_pago,
+                  FiscalProfile::FORMAS_PAGO.map { |k, v| ["#{k} - #{v}", k] },
+                  { include_blank: "Seleccionar forma de pago" },
+                  class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+            </div>
 
-          <div>
-            <%= fp.label :metodo_pago, "Método de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-            <%= fp.select :metodo_pago,
-                FiscalProfile::METODOS_PAGO.map { |k, v| ["#{k} - #{v}", k] },
-                { include_blank: "Seleccionar método de pago" },
-                class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+            <div>
+              <%= fp.label :metodo_pago, "Método de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.select :metodo_pago,
+                  FiscalProfile::METODOS_PAGO.map { |k, v| ["#{k} - #{v}", k] },
+                  { include_blank: "Seleccionar método de pago" },
+                  class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+            </div>
           </div>
-        </div>
+        <% end %>
+      <% else %>
+        <p class="text-gray-500">No hay perfil fiscal configurado.</p>
       <% end %>
     </div>
   </div>
@@ -211,8 +215,7 @@
                 <%= address_form.label :email, "Email *", class: "block text-sm font-medium text-gray-700 mb-1" %>
                 <%= address_form.email_field :email,
                     class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-teal-500 focus:ring-teal-500 text-gray-900",
-                    placeholder: "correo@ejemplo.com",
-                    required: true %>
+                    placeholder: "correo@ejemplo.com" %>
               </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
@@ -246,16 +249,14 @@
                 <%= address_form.label :codigo_postal, "CP *", class: "block text-sm font-medium text-gray-700 mb-1" %>
                 <%= address_form.text_field :codigo_postal,
                     class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-teal-500 focus:ring-teal-500 text-gray-900",
-                    placeholder: "12345",
-                    required: true %>
+                    placeholder: "12345" %>
               </div>
               <div>
                 <%= address_form.label :pais, "País *", class: "block text-sm font-medium text-gray-700 mb-1" %>
                 <%= address_form.text_field :pais,
                     class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-teal-500 focus:ring-teal-500 text-gray-900",
                     value: "MX",
-                    maxlength: 2,
-                    required: true %>
+                    maxlength: 2 %>
               </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
@@ -269,8 +270,7 @@
                 <%= address_form.label :estado, "Estado *", class: "block text-sm font-medium text-gray-700 mb-1" %>
                 <%= address_form.text_field :estado,
                     class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-teal-500 focus:ring-teal-500 text-gray-900",
-                    placeholder: "Estado",
-                    required: true %>
+                    placeholder: "Estado" %>
               </div>
             </div>
           </div>

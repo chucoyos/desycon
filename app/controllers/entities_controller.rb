@@ -27,7 +27,7 @@ class EntitiesController < ApplicationController
 
     # Handle duplicate addresses for new entities
     if @entity.new_record? && @entity.addresses.size > 1
-      @entity.addresses = [@entity.addresses.last]
+      @entity.addresses = [ @entity.addresses.last ]
     end
 
     if @entity.save

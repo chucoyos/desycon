@@ -8,7 +8,7 @@
           </span>
         <% end %>
       </div>
-      <%= button_to entity_address_path(address.entity, address),
+      <%= button_to entity_address_path(address.addressable, address),
           method: :delete,
           form: { data: { turbo_confirm: "¿Eliminar esta dirección?" } },
           class: "p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150" do %>
