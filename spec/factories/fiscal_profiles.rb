@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :fiscal_profile do
-    association :profileable, factory: :shipping_line
+    # association :profileable, factory: :shipping_line
     sequence(:razon_social) { |n| "Empresa de Prueba #{n} SA de CV" }
     sequence(:rfc) { |n| format('EMP%06d%03d', n, rand(100..999)) }
     regimen { '601' } # General de Ley Personas Morales

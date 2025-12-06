@@ -9,7 +9,7 @@ class Consolidator < ApplicationRecord
   validates :entity_id, presence: true, uniqueness: true
 
   # Delegaciones a Entity para acceso conveniente
-  delegate :name, :fiscal_profile, :addresses, :customs_agent_patents,
+  delegate :name, :fiscal_profile, :build_fiscal_profile, :build_fiscal_profile_if_needed, :addresses, :customs_agent_patents,
            :fiscal_address, :shipping_addresses, :warehouse_addresses,
            to: :entity, allow_nil: true
 
