@@ -10,7 +10,8 @@ RSpec.describe FiscalProfile, type: :model do
   end
 
   describe 'validations' do
-    let(:fiscal_profile) { build(:fiscal_profile) }
+    let(:shipping_line) { create(:shipping_line) }
+    let(:fiscal_profile) { build(:fiscal_profile, profileable: shipping_line) }
 
     it 'is valid with valid attributes' do
       expect(fiscal_profile).to be_valid
@@ -68,7 +69,7 @@ RSpec.describe FiscalProfile, type: :model do
       end
 
       it 'validates uniqueness case-insensitively' do
-        create(:fiscal_profile, rfc: 'EMP850101XXX')
+        create(:fiscal_profile, rfc: 'EMP850101XXX', profileable: create(:shipping_line))
         fiscal_profile.rfc = 'emp850101xxx'
         expect(fiscal_profile).not_to be_valid
       end
@@ -116,7 +117,7 @@ RSpec.describe FiscalProfile, type: :model do
 
   describe 'scopes' do
     it 'finds by RFC case-insensitively' do
-      profile = create(:fiscal_profile, rfc: 'EMP850101XXX')
+      profile = create(:fiscal_profile, rfc: 'EMP850101XXX', profileable: create(:shipping_line))
       expect(FiscalProfile.by_rfc('emp850101xxx')).to include(profile)
     end
   end
