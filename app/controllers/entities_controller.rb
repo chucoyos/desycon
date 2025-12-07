@@ -3,7 +3,8 @@ class EntitiesController < ApplicationController
   before_action :load_patents, only: [ :show ]
 
   def index
-    @entities = Entity.includes(:fiscal_profile, :customs_agent_patents)
+    @entities = Entity.includes(:fiscal_profile)
+                      .preload(:customs_agent_patents)
                       .order(:name)
                       .page(params[:page])
   end
@@ -13,7 +14,8 @@ class EntitiesController < ApplicationController
 
   def new
     @entity = Entity.new
-    # Ensure at least one address field is available for new entities
+    # Build associated objects for the form
+    @entity.build_fiscal_profile
     @entity.addresses.build
   end
 
@@ -60,12 +62,11 @@ class EntitiesController < ApplicationController
   private
 
   def set_entity
-    @entity = Entity.includes(:addresses, :fiscal_profile, :customs_agent_patents).find(params.expect(:id))
+    @entity = Entity.includes(:addresses, :fiscal_profile).find(params.expect(:id))
   end
 
   def load_patents
-    # Patents are already loaded via includes in set_entity
-    # This callback exists for potential future use
+    # Patents are loaded conditionally in set_entity for customs agents only
   end
 
   def entity_params

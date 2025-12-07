@@ -73,9 +73,21 @@
   <!-- Fiscal Profile -->
   <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
     <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-      <h3 class="text-base sm:text-lg font-semibold text-gray-900">Perfil Fiscal</h3>
+      <div class="flex items-center justify-between">
+        <h3 class="text-base sm:text-lg font-semibold text-gray-900">Perfil Fiscal</h3>
+        <button type="button"
+                id="toggle-fiscal-profile-btn"
+                class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors duration-150">
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+          Mostrar
+        </button>
+      </div>
     </div>
-    <div class="px-4 sm:px-6 py-4 space-y-4">
+
+    <!-- Fiscal Profile Form (Initially Hidden) -->
+    <div id="fiscal-profile-section" class="hidden px-4 sm:px-6 py-4">
       <% if entity.fiscal_profile %>
         <%= form.fields_for :fiscal_profile do |fp| %>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -128,7 +140,13 @@
           </div>
         <% end %>
       <% else %>
-        <p class="text-gray-500">No hay perfil fiscal configurado.</p>
+        <div class="text-center py-8">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">No hay perfil fiscal</h3>
+          <p class="mt-1 text-sm text-gray-500">El perfil fiscal se creará automáticamente cuando guardes la entidad.</p>
+        </div>
       <% end %>
     </div>
   </div>
@@ -167,6 +185,28 @@
       </template>
     </div>
   </div>
+  <% elsif entity.is_customs_agent %>
+    <!-- Customs Agent Patents for New Entities -->
+    <div id="patents-section" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+        <h3 class="text-base sm:text-lg font-semibold text-gray-900">Patentes Aduanales</h3>
+      </div>
+      <div class="px-4 sm:px-6 py-4">
+        <%= form.fields_for :customs_agent_patents do |patent_form| %>
+          <div class="space-y-4">
+            <div>
+              <%= patent_form.label :patent_number, "Número de Patente", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= patent_form.text_field :patent_number,
+                  class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
+                  placeholder: "Número de patente aduanal" %>
+            </div>
+          </div>
+        <% end %>
+        <div class="text-sm text-gray-500 mt-2">
+          Las patentes aduanales se pueden agregar después de crear la entidad.
+        </div>
+      </div>
+    </div>
   <% end %>
 
   <!-- Addresses -->
@@ -286,7 +326,85 @@
   </div>
   <% end %>
 
+  <script>
+    // Toggle fiscal profile section
+    document.getElementById('toggle-fiscal-profile-btn').addEventListener('click', function() {
+      const section = document.getElementById('fiscal-profile-section');
+      const button = this;
 
+      if (section.classList.contains('hidden')) {
+        section.classList.remove('hidden');
+        button.innerHTML = `
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+          </svg>
+          Ocultar
+        `;
+        button.classList.remove('text-gray-700', 'border-gray-300', 'hover:bg-gray-50');
+        button.classList.add('text-red-700', 'border-red-300', 'hover:bg-red-50');
+      } else {
+        section.classList.add('hidden');
+        button.innerHTML = `
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+          Mostrar
+        `;
+        button.classList.remove('text-red-700', 'border-red-300', 'hover:bg-red-50');
+        button.classList.add('text-gray-700', 'border-gray-300', 'hover:bg-gray-50');
+      }
+    });
+
+    // Toggle patents section based on customs agent checkbox
+    <% unless entity.persisted? %>
+    const customsAgentCheckbox = document.getElementById('entity_is_customs_agent');
+    const patentsSection = document.getElementById('patents-section');
+
+    if (customsAgentCheckbox && patentsSection) {
+      function togglePatentsSection() {
+        if (customsAgentCheckbox.checked) {
+          patentsSection.style.display = 'block';
+        } else {
+          patentsSection.style.display = 'none';
+        }
+      }
+
+      customsAgentCheckbox.addEventListener('change', togglePatentsSection);
+      // Initial check
+      togglePatentsSection();
+    }
+    <% end %>
+
+    // Toggle addresses form
+    const toggleAddressesBtn = document.getElementById('toggle-addresses-btn');
+    const newAddressSection = document.getElementById('new-address-section');
+
+    if (toggleAddressesBtn && newAddressSection) {
+      toggleAddressesBtn.addEventListener('click', function() {
+        if (newAddressSection.classList.contains('hidden')) {
+          newAddressSection.classList.remove('hidden');
+          this.innerHTML = `
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Cancelar
+          `;
+          this.classList.remove('text-gray-700', 'border-gray-300', 'hover:bg-gray-50');
+          this.classList.add('text-red-700', 'border-red-300', 'hover:bg-red-50');
+        } else {
+          newAddressSection.classList.add('hidden');
+          this.innerHTML = `
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            Agregar Dirección
+          `;
+          this.classList.remove('text-red-700', 'border-red-300', 'hover:bg-red-50');
+          this.classList.add('text-gray-700', 'border-gray-300', 'hover:bg-gray-50');
+        }
+      });
+    }
+  </script>
 
   <!-- Form Actions -->
   <div class="flex items-center gap-3 pt-4">

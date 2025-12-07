@@ -67,8 +67,9 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm text-gray-500">
-                  <% if entity.customs_agent_patents.any? %>
-                    <%= entity.customs_agent_patents.map(&:patent_number).join(", ") %>
+                  <% patents = entity.customs_agent_patents %>
+                  <% if entity.is_customs_agent && patents.any? %>
+                    <%= patents.map(&:patent_number).join(", ") %>
                   <% else %>
                     —
                   <% end %>
