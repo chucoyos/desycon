@@ -5,6 +5,6 @@
   </div>
   <div class="flex justify-end gap-3">
     <button type="button" data-action="click->modal#close" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancelar</button>
-    <%= form.submit "Actualizar Patente", class: "px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors" %>
+    <%= form.submit "Actualizar Patente", class: "px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors", data: { disable_with: "Actualizando..." } %>
   </div>
 <% end %>

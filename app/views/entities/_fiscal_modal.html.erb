@@ -1,0 +1,52 @@
+<!-- Fiscal Profile Edit Modal -->
+<div id="fiscal-modal" data-modal-target="modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" data-action="click->modal#closeOnBackdrop">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Editar Perfil Fiscal</h3>
+        <button type="button" data-action="click->modal#close" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <%= form_with(model: entity, url: entity_path(entity), method: :patch, class: "space-y-4", id: "fiscal_form") do |form| %>
+        <%= hidden_field_tag "modal", "fiscal" %>
+        <% if entity.fiscal_profile %>
+          <%= form.fields_for :fiscal_profile do |fp| %>
+            <div>
+              <%= fp.label :rfc, "RFC", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.text_field :rfc, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "XAXX010101000", maxlength: 13 %>
+            </div>
+            <div>
+              <%= fp.label :razon_social, "Razón Social", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.text_field :razon_social, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Razón social completa" %>
+            </div>
+            <div>
+              <%= fp.label :regimen, "Régimen Fiscal", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.select :regimen, FiscalProfile::REGIMENES.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar régimen" }, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+            </div>
+            <div>
+              <%= fp.label :uso_cfdi, "Uso CFDI", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.select :uso_cfdi, FiscalProfile::USOS_CFDI.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar uso CFDI" }, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+            </div>
+            <div>
+              <%= fp.label :forma_pago, "Forma de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.select :forma_pago, FiscalProfile::FORMAS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar forma de pago" }, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+            </div>
+            <div>
+              <%= fp.label :metodo_pago, "Método de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.select :metodo_pago, FiscalProfile::METODOS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar método de pago" }, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="text-sm text-gray-500">No hay perfil fiscal. Se creará automáticamente al guardar.</p>
+        <% end %>
+        <div class="flex justify-end gap-3">
+          <button type="button" data-action="click->modal#close" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancelar</button>
+          <%= form.submit "Guardar", class: "px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors", data: { disable_with: "Guardando..." } %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

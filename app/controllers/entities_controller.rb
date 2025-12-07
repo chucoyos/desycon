@@ -74,13 +74,13 @@ class EntitiesController < ApplicationController
             render turbo_stream: [
               turbo_stream.replace("fiscal_profile_container", partial: "entities/fiscal_profile_section", locals: { entity: @entity }),
               turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
-              turbo_stream.remove("fiscal-modal")
+              turbo_stream.replace("fiscal-modal", partial: "entities/fiscal_modal", locals: { entity: @entity })
             ]
           when "name"
             render turbo_stream: [
               turbo_stream.replace("entity_header", partial: "entities/header", locals: { entity: @entity }),
               turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
-              turbo_stream.remove("name-modal")
+              turbo_stream.replace("name-modal", partial: "entities/name_modal", locals: { entity: @entity })
             ]
           else
             render turbo_stream: [

@@ -12,7 +12,30 @@ export default class extends Controller {
     event.preventDefault()
     const modalId = event.currentTarget.dataset.modalId
     const modal = document.getElementById(modalId)
+
     if (modal) {
+      // For static modals (name and fiscal), reset forms
+      if (modalId === 'name-modal' || modalId === 'fiscal-modal') {
+        const forms = modal.querySelectorAll('form')
+        forms.forEach(form => {
+          // Reset the form
+          form.reset()
+
+          // Re-enable any disabled submit buttons and restore original text
+          const submitButtons = form.querySelectorAll('input[type="submit"], button[type="submit"]')
+          submitButtons.forEach(button => {
+            button.disabled = false
+            // Restore original button text if it was changed by Rails
+            if (button.hasAttribute('data-disable-with')) {
+              const originalText = button.getAttribute('value') || button.textContent
+              button.setAttribute('data-original-value', originalText)
+              button.setAttribute('data-original-text', originalText)
+              button.removeAttribute('data-disable-with')
+            }
+          })
+        })
+      }
+
       modal.classList.remove('hidden')
       console.log('Modal opened:', modalId)
 
