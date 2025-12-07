@@ -327,7 +327,7 @@
   <% end %>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    function initializeFormJavaScript() {
       // Toggle fiscal profile section
       const toggleFiscalBtn = document.getElementById('toggle-fiscal-profile-btn');
       const fiscalProfileSection = document.getElementById('fiscal-profile-section');
@@ -410,7 +410,14 @@
           }
         });
       }
-    });
+    }
+
+    // Initialize on both turbo:load and DOMContentLoaded for compatibility
+    document.addEventListener('turbo:load', initializeFormJavaScript);
+    document.addEventListener('DOMContentLoaded', initializeFormJavaScript);
+    
+    // Also initialize immediately in case events don't fire
+    initializeFormJavaScript();
   </script>
 
   <!-- Form Actions -->
