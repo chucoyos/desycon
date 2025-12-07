@@ -79,7 +79,7 @@ class EntitiesController < ApplicationController
             ]
           when "roles"
             render turbo_stream: [
-              turbo_stream.replace("roles_container", partial: "entities/roles_section", locals: { entity: @entity }),
+              turbo_stream.replace("entity_show", template: "entities/show", locals: { entity: @entity }),
               turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
               turbo_stream.remove("roles-modal")
             ]

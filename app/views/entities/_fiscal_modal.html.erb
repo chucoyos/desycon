@@ -10,6 +10,7 @@
           </svg>
         </button>
       </div>
+      <% entity.build_fiscal_profile unless entity.fiscal_profile.present? %>
       <%= form_with(model: entity, url: entity_path(entity), method: :patch, class: "space-y-4", id: "fiscal_form") do |form| %>
         <%= hidden_field_tag "modal", "fiscal" %>
         <%= form.fields_for :fiscal_profile do |fp| %>
