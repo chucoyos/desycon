@@ -41,8 +41,8 @@ class PortsController < ApplicationController
         format.html { redirect_to @port, notice: "Se creó el puerto." }
         format.json { render :show, status: :created, location: @port }
       else
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @port.errors, status: :unprocessable_entity }
+        format.html { render :new, status: :unprocessable_content }
+        format.json { render json: @port.errors, status: :unprocessable_content }
       end
     end
   end
@@ -56,8 +56,8 @@ class PortsController < ApplicationController
         format.html { redirect_to @port, notice: "Se actualizó el puerto.", status: :see_other }
         format.json { render :show, status: :ok, location: @port }
       else
-        format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @port.errors, status: :unprocessable_entity }
+        format.html { render :edit, status: :unprocessable_content }
+        format.json { render json: @port.errors, status: :unprocessable_content }
       end
     end
   end

@@ -47,8 +47,8 @@ class ShippingLinesController < ApplicationController
         format.html { redirect_to @shipping_line, notice: "Se creó la línea naviera." }
         format.json { render :show, status: :created, location: @shipping_line }
       else
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @shipping_line.errors, status: :unprocessable_entity }
+        format.html { render :new, status: :unprocessable_content }
+        format.json { render json: @shipping_line.errors, status: :unprocessable_content }
       end
     end
   end
@@ -62,8 +62,8 @@ class ShippingLinesController < ApplicationController
         format.html { redirect_to @shipping_line, notice: "Se actualizó la línea naviera.", status: :see_other }
         format.json { render :show, status: :ok, location: @shipping_line }
       else
-        format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @shipping_line.errors, status: :unprocessable_entity }
+        format.html { render :edit, status: :unprocessable_content }
+        format.json { render json: @shipping_line.errors, status: :unprocessable_content }
       end
     end
   end
@@ -71,11 +71,17 @@ class ShippingLinesController < ApplicationController
   # DELETE /shipping_lines/1 or /shipping_lines/1.json
   def destroy
     authorize @shipping_line
-    @shipping_line.destroy!
 
-    respond_to do |format|
-      format.html { redirect_to shipping_lines_path, notice: "Se eliminó la línea naviera.", status: :see_other }
-      format.json { head :no_content }
+    if @shipping_line.destroy
+      respond_to do |format|
+        format.html { redirect_to shipping_lines_path, notice: "Se eliminó la línea naviera.", status: :see_other }
+        format.json { head :no_content }
+      end
+    else
+      respond_to do |format|
+        format.html { redirect_to shipping_lines_path, alert: "No se puede eliminar la línea naviera porque tiene buques o contenedores asociados." }
+        format.json { render json: @shipping_line.errors, status: :unprocessable_content }
+      end
     end
   end
 

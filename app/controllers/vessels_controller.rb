@@ -43,8 +43,8 @@ class VesselsController < ApplicationController
         format.html { redirect_to @vessel, notice: "Se creó el buque." }
         format.json { render :show, status: :created, location: @vessel }
       else
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @vessel.errors, status: :unprocessable_entity }
+        format.html { render :new, status: :unprocessable_content }
+        format.json { render json: @vessel.errors, status: :unprocessable_content }
       end
     end
   end
@@ -58,8 +58,8 @@ class VesselsController < ApplicationController
         format.html { redirect_to @vessel, notice: "Se actualizó el buque.", status: :see_other }
         format.json { render :show, status: :ok, location: @vessel }
       else
-        format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @vessel.errors, status: :unprocessable_entity }
+        format.html { render :edit, status: :unprocessable_content }
+        format.json { render json: @vessel.errors, status: :unprocessable_content }
       end
     end
   end

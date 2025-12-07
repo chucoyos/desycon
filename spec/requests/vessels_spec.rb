@@ -64,7 +64,7 @@ RSpec.describe "Vessels", type: :request do
 
       it "renders a response with 422 status" do
         post vessels_url, params: { vessel: invalid_attributes }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
   end
@@ -92,7 +92,7 @@ RSpec.describe "Vessels", type: :request do
       it "renders a response with 422 status" do
         vessel = create(:vessel, shipping_line: shipping_line)
         patch vessel_url(vessel), params: { vessel: invalid_attributes }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
   end

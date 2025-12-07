@@ -46,7 +46,7 @@ class ContainersController < ApplicationController
       redirect_to @container, notice: "Contenedor creado exitosamente."
     else
       load_form_data
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -57,7 +57,7 @@ class ContainersController < ApplicationController
       redirect_to @container, notice: "Contenedor actualizado exitosamente."
     else
       load_form_data
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

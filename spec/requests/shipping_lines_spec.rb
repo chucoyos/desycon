@@ -70,7 +70,7 @@ RSpec.describe "/shipping_lines", type: :request do
 
       it "renders a response with 422 status (unprocessable entity)" do
         post shipping_lines_url, params: { shipping_line: invalid_attributes }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
   end
@@ -100,7 +100,7 @@ RSpec.describe "/shipping_lines", type: :request do
       it "renders a response with 422 status (unprocessable entity)" do
         shipping_line = ShippingLine.create! valid_attributes
         patch shipping_line_url(shipping_line), params: { shipping_line: invalid_attributes }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
   end

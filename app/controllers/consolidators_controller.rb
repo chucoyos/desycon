@@ -32,7 +32,7 @@ class ConsolidatorsController < ApplicationController
     if @consolidator.save
       redirect_to @consolidator, notice: "Consolidador creado exitosamente."
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -42,7 +42,7 @@ class ConsolidatorsController < ApplicationController
     if @consolidator.update(consolidator_params)
       redirect_to @consolidator, notice: "Consolidador actualizado exitosamente."
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

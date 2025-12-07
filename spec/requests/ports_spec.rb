@@ -69,7 +69,7 @@ RSpec.describe "/ports", type: :request do
 
       it "renders a response with 422 status (i.e. to display the 'new' template)" do
         post ports_url, params: { port: invalid_attributes }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
   end
@@ -100,7 +100,7 @@ RSpec.describe "/ports", type: :request do
       it "renders a response with 422 status (i.e. to display the 'edit' template)" do
         port = Port.create! valid_attributes
         patch port_url(port), params: { port: invalid_attributes }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
   end

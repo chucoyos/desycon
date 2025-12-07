@@ -13,7 +13,7 @@ class CustomsAgentPatentsController < ApplicationController
     else
       respond_to do |format|
         format.turbo_stream
-        format.html { render :new, status: :unprocessable_entity }
+        format.html { render :new, status: :unprocessable_content }
       end
     end
   end
@@ -37,7 +37,7 @@ class CustomsAgentPatentsController < ApplicationController
     else
       respond_to do |format|
         format.turbo_stream
-        format.html { render :edit, status: :unprocessable_entity }
+        format.html { render :edit, status: :unprocessable_content }
       end
     end
   end

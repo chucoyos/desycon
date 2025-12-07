@@ -48,7 +48,7 @@ class EntitiesController < ApplicationController
       @entity.build_fiscal_profile unless @entity.fiscal_profile
       @entity.addresses.build if @entity.addresses.empty?
       @entity.customs_agent_patents.build if @entity.customs_agent_patents.empty? && @entity.is_customs_agent?
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
