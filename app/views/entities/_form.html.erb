@@ -327,7 +327,14 @@
   <% end %>
 
   <script>
+    // Use a flag to ensure initialization only happens once per page load
+    let formInitialized = false;
+
     function initializeFormJavaScript() {
+      // Prevent multiple initializations
+      if (formInitialized) return;
+      formInitialized = true;
+
       // Toggle fiscal profile section
       const toggleFiscalBtn = document.getElementById('toggle-fiscal-profile-btn');
       const fiscalProfileSection = document.getElementById('fiscal-profile-section');
@@ -412,12 +419,23 @@
       }
     }
 
-    // Initialize on both turbo:load and DOMContentLoaded for compatibility
-    document.addEventListener('turbo:load', initializeFormJavaScript);
-    document.addEventListener('DOMContentLoaded', initializeFormJavaScript);
-    
-    // Also initialize immediately in case events don't fire
-    initializeFormJavaScript();
+    // Reset initialization flag when navigating with Turbo
+    document.addEventListener('turbo:before-visit', function() {
+      formInitialized = false;
+    });
+
+    // Initialize on turbo:load (this handles both initial page load and Turbo navigation)
+    document.addEventListener('turbo:load', function() {
+      // Small delay to ensure DOM is fully ready
+      setTimeout(initializeFormJavaScript, 10);
+    });
+
+    // Fallback for non-Turbo environments
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!formInitialized) {
+        initializeFormJavaScript();
+      }
+    });
   </script>
 
   <!-- Form Actions -->
