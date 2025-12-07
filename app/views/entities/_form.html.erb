@@ -327,43 +327,37 @@
   <% end %>
 
   <script>
-    // Use a flag to ensure initialization only happens once per page load
-    let formInitialized = false;
-
     function initializeFormJavaScript() {
-      // Prevent multiple initializations
-      if (formInitialized) return;
-      formInitialized = true;
-
       // Toggle fiscal profile section
       const toggleFiscalBtn = document.getElementById('toggle-fiscal-profile-btn');
       const fiscalProfileSection = document.getElementById('fiscal-profile-section');
 
       if (toggleFiscalBtn && fiscalProfileSection) {
-        toggleFiscalBtn.addEventListener('click', function() {
-          const section = fiscalProfileSection;
-          const button = this;
+        // Clone the button to remove any existing event listeners
+        const newToggleFiscalBtn = toggleFiscalBtn.cloneNode(true);
+        toggleFiscalBtn.parentNode.replaceChild(newToggleFiscalBtn, toggleFiscalBtn);
 
-          if (section.classList.contains('hidden')) {
-            section.classList.remove('hidden');
-            button.innerHTML = `
+        newToggleFiscalBtn.addEventListener('click', function() {
+          if (fiscalProfileSection.classList.contains('hidden')) {
+            fiscalProfileSection.classList.remove('hidden');
+            this.innerHTML = `
               <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
               </svg>
               Ocultar
             `;
-            button.classList.remove('text-gray-700', 'border-gray-300', 'hover:bg-gray-50');
-            button.classList.add('text-red-700', 'border-red-300', 'hover:bg-red-50');
+            this.classList.remove('text-gray-700', 'border-gray-300', 'hover:bg-gray-50');
+            this.classList.add('text-red-700', 'border-red-300', 'hover:bg-red-50');
           } else {
-            section.classList.add('hidden');
-            button.innerHTML = `
+            fiscalProfileSection.classList.add('hidden');
+            this.innerHTML = `
               <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
               </svg>
               Mostrar
             `;
-            button.classList.remove('text-red-700', 'border-red-300', 'hover:bg-red-50');
-            button.classList.add('text-gray-700', 'border-gray-300', 'hover:bg-gray-50');
+            this.classList.remove('text-red-700', 'border-red-300', 'hover:bg-red-50');
+            this.classList.add('text-gray-700', 'border-gray-300', 'hover:bg-gray-50');
           }
         });
       }
@@ -374,26 +368,35 @@
       const patentsSection = document.getElementById('patents-section');
 
       if (customsAgentCheckbox && patentsSection) {
+        // Clone the checkbox to remove any existing event listeners
+        const newCustomsAgentCheckbox = customsAgentCheckbox.cloneNode(true);
+        customsAgentCheckbox.parentNode.replaceChild(newCustomsAgentCheckbox, customsAgentCheckbox);
+
         function togglePatentsSection() {
-          if (customsAgentCheckbox.checked) {
+          if (newCustomsAgentCheckbox.checked) {
             patentsSection.style.display = 'block';
           } else {
             patentsSection.style.display = 'none';
           }
         }
 
-        customsAgentCheckbox.addEventListener('change', togglePatentsSection);
+        newCustomsAgentCheckbox.addEventListener('change', togglePatentsSection);
         // Initial check
         togglePatentsSection();
       }
       <% end %>
 
-      // Toggle addresses form
+      // Toggle addresses form (only for persisted entities)
+      <% if entity.persisted? %>
       const toggleAddressesBtn = document.getElementById('toggle-addresses-btn');
       const newAddressSection = document.getElementById('new-address-section');
 
       if (toggleAddressesBtn && newAddressSection) {
-        toggleAddressesBtn.addEventListener('click', function() {
+        // Clone the button to remove any existing event listeners
+        const newToggleAddressesBtn = toggleAddressesBtn.cloneNode(true);
+        toggleAddressesBtn.parentNode.replaceChild(newToggleAddressesBtn, toggleAddressesBtn);
+
+        newToggleAddressesBtn.addEventListener('click', function() {
           if (newAddressSection.classList.contains('hidden')) {
             newAddressSection.classList.remove('hidden');
             this.innerHTML = `
@@ -417,25 +420,15 @@
           }
         });
       }
+      <% end %>
     }
 
-    // Reset initialization flag when navigating with Turbo
-    document.addEventListener('turbo:before-visit', function() {
-      formInitialized = false;
-    });
-
-    // Initialize on turbo:load (this handles both initial page load and Turbo navigation)
-    document.addEventListener('turbo:load', function() {
-      // Small delay to ensure DOM is fully ready
-      setTimeout(initializeFormJavaScript, 10);
-    });
-
-    // Fallback for non-Turbo environments
-    document.addEventListener('DOMContentLoaded', function() {
-      if (!formInitialized) {
-        initializeFormJavaScript();
-      }
-    });
+    // Initialize on page load and after Turbo navigation
+    document.addEventListener('DOMContentLoaded', initializeFormJavaScript);
+    document.addEventListener('turbo:load', initializeFormJavaScript);
+    
+    // Also initialize immediately
+    initializeFormJavaScript();
   </script>
 
   <!-- Form Actions -->

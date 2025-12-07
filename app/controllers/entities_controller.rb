@@ -43,6 +43,10 @@ class EntitiesController < ApplicationController
     if @entity.save
       redirect_to @entity, notice: "Entidad creada exitosamente."
     else
+      # Rebuild associated objects for form display when validation fails
+      @entity.build_fiscal_profile unless @entity.fiscal_profile
+      @entity.addresses.build if @entity.addresses.empty?
+      @entity.customs_agent_patents.build if @entity.customs_agent_patents.empty? && @entity.is_customs_agent?
       render :new, status: :unprocessable_entity
     end
   end
