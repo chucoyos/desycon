@@ -6,12 +6,16 @@ class EntityAddressesController < ApplicationController
 
     if @address.save
       flash.now[:notice] = "Dirección agregada exitosamente."
+      @entity.reload # Reload to ensure addresses association is fresh
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to edit_entity_path(@entity), notice: "Dirección agregada exitosamente." }
       end
     else
-      render :new, status: :unprocessable_entity
+      respond_to do |format|
+        format.turbo_stream
+        format.html { render :new, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -19,12 +23,23 @@ class EntityAddressesController < ApplicationController
     @address = @entity.addresses.find(params[:id])
 
     if @address.update(address_params)
+      flash.now[:notice] = "Dirección actualizada exitosamente."
       respond_to do |format|
         format.turbo_stream
-        format.html { redirect_to edit_entity_path(@entity), notice: "Dirección actualizada exitosamente." }
+        format.html { redirect_to @entity, notice: "Dirección actualizada exitosamente." }
       end
     else
-      render :edit, status: :unprocessable_entity
+      respond_to do |format|
+        format.turbo_stream
+        format.html { render :edit, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  def edit
+    @address = @entity.addresses.find(params[:id])
+    respond_to do |format|
+      format.html { render :edit }
     end
   end
 

@@ -57,12 +57,25 @@ class EntitiesController < ApplicationController
         @entity.reload # Reload to ensure associations are fresh
         flash.now[:notice] = "Entidad actualizada exitosamente."
         format.turbo_stream do
-          render turbo_stream: [
-            turbo_stream.update("test-div", "<div id='test-div'>Turbo stream worked! Updated at #{Time.now}</div>"),
-            turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
-            turbo_stream.replace("entity_show", partial: "entities/show", locals: { entity: @entity }),
-            turbo_stream.remove("#{params[:modal]}-modal")
-          ]
+          case params[:modal]
+          when "address"
+            render turbo_stream: [
+              turbo_stream.replace("addresses_container", partial: "entities/addresses_section", locals: { entity: @entity }),
+              turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
+              turbo_stream.remove("address-modal")
+            ]
+          when "patent"
+            render turbo_stream: [
+              turbo_stream.replace("patents_container", partial: "entities/patents_section", locals: { entity: @entity }),
+              turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
+              turbo_stream.remove("patent-modal")
+            ]
+          else
+            render turbo_stream: [
+              turbo_stream.replace("entity_show", partial: "entities/show", locals: { entity: @entity }),
+              turbo_stream.remove("#{params[:modal]}-modal")
+            ]
+          end
         end
       else
         format.turbo_stream do

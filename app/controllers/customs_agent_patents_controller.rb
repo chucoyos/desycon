@@ -11,7 +11,10 @@ class CustomsAgentPatentsController < ApplicationController
         format.html { redirect_to edit_entity_path(@entity), notice: "Patente agregada exitosamente." }
       end
     else
-      render :new, status: :unprocessable_entity
+      respond_to do |format|
+        format.turbo_stream
+        format.html { render :new, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -19,12 +22,16 @@ class CustomsAgentPatentsController < ApplicationController
     @patent = @entity.customs_agent_patents.find(params[:id])
 
     if @patent.update(patent_params)
+      flash.now[:notice] = "Patente actualizada exitosamente."
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to edit_entity_path(@entity), notice: "Patente actualizada exitosamente." }
       end
     else
-      render :edit, status: :unprocessable_entity
+      respond_to do |format|
+        format.turbo_stream
+        format.html { render :edit, status: :unprocessable_entity }
+      end
     end
   end
 

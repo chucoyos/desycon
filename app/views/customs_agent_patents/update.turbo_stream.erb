@@ -51,8 +51,10 @@
       </div>
     <% end %>
   </div>
-<% end %><%= turbo_stream.replace "flash_messages" do %>
+<% end %>
+
+<%= turbo_stream.replace "flash_messages" do %>
   <%= render partial: "shared/flash_messages", locals: { flash: flash } %>
 <% end %>
 
-<%= turbo_stream.remove "new-patent-modal" %>
+<%= turbo_stream.remove "patent-modal" %>
