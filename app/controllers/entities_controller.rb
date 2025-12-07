@@ -17,6 +17,7 @@ class EntitiesController < ApplicationController
     # Build associated objects for the form
     @entity.build_fiscal_profile
     @entity.addresses.build
+    @entity.customs_agent_patents.build
   end
 
   def new_address
