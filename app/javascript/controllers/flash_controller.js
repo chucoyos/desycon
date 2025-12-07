@@ -7,10 +7,12 @@ export default class extends Controller {
   }
 
   connect() {
+    console.log('Flash controller connected', this.typeValue, this.messageValue)
     this.showFlash()
   }
 
   showFlash() {
+    console.log('Showing flash:', this.typeValue, this.messageValue)
     const type = this.typeValue
     const message = this.messageValue
     

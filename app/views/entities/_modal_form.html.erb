@@ -10,7 +10,7 @@
       <% end %>
     </div>
     <div class="flex justify-end gap-3">
-      <button type="button" onclick="document.getElementById('name-modal').classList.add('hidden')" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancelar</button>
+      <button type="button" data-action="click->modal#close" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancelar</button>
       <%= form.submit "Guardar", class: "px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors" %>
     </div>
   <% end %>
@@ -66,7 +66,7 @@
       <p class="text-sm text-gray-500">No hay perfil fiscal. Se creará automáticamente al guardar.</p>
     <% end %>
     <div class="flex justify-end gap-3">
-      <button type="button" onclick="document.getElementById('fiscal-modal').classList.add('hidden')" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancelar</button>
+      <button type="button" data-action="click->modal#close" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancelar</button>
       <%= form.submit "Guardar", class: "px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors" %>
     </div>
   <% end %>
@@ -83,7 +83,7 @@
       </div>
     <% end %>
     <div class="flex justify-end gap-3">
-      <button type="button" onclick="document.getElementById('patent-modal').classList.add('hidden')" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancelar</button>
+      <button type="button" data-action="click->modal#close" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancelar</button>
       <%= form.submit "Guardar", class: "px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors" %>
     </div>
   <% end %>
@@ -163,7 +163,7 @@
       </div>
     <% end %>
     <div class="flex justify-end gap-3">
-      <button type="button" onclick="document.getElementById('address-modal').classList.add('hidden')" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancelar</button>
+      <button type="button" data-action="click->modal#close" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancelar</button>
       <%= form.submit "Guardar", class: "px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors" %>
     </div>
   <% end %>

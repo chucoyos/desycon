@@ -23,10 +23,11 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
+  <body data-controller="modal">
     <div id="flash_messages">
       <%= render 'shared/flash_messages' %>
     </div>
+    <div id="test-div">Initial content</div>
     <%= render 'shared/navbar' if user_signed_in? %>
     <% if user_signed_in? %>
       <main class="container mx-auto mt-28 px-5 flex">

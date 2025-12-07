@@ -56,16 +56,15 @@ class EntitiesController < ApplicationController
       if @entity.update(entity_params)
         @entity.reload # Reload to ensure associations are fresh
         flash.now[:notice] = "Entidad actualizada exitosamente."
-        format.html { redirect_to @entity, notice: "Entidad actualizada exitosamente." }
         format.turbo_stream do
           render turbo_stream: [
+            turbo_stream.update("test-div", "<div id='test-div'>Turbo stream worked! Updated at #{Time.now}</div>"),
             turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
             turbo_stream.replace("entity_show", partial: "entities/show", locals: { entity: @entity }),
             turbo_stream.remove("#{params[:modal]}-modal")
           ]
         end
       else
-        format.html { render :edit, status: :unprocessable_entity }
         format.turbo_stream do
           render turbo_stream: turbo_stream.replace("#{params[:modal]}_form", partial: "entities/modal_form", locals: { entity: @entity, modal: params[:modal] })
         end
