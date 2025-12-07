@@ -105,6 +105,11 @@
     </div>
   </div>
 
+  <!-- Roles -->
+  <div id="roles_container" class="mt-6">
+    <%= render "entities/roles_section", entity: @entity %>
+  </div>
+
   <!-- Addresses -->
   <%= render "entities/addresses_section", entity: @entity %>
 </div>
@@ -112,6 +117,7 @@
 <!-- Modals -->
 <%= render "entities/name_modal", entity: @entity %>
 <%= render "entities/fiscal_modal", entity: @entity %>
+<%= render "entities/roles_modal", entity: @entity %>
 
 <!-- Patent Edit Modal -->
 <div id="patent-modal" data-modal-target="modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" data-action="click->modal#closeOnBackdrop">

@@ -10,6 +10,7 @@ class EntitiesController < ApplicationController
   end
 
   def show
+    @entity.build_fiscal_profile unless @entity.fiscal_profile.present?
   end
 
   def new
