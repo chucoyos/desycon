@@ -52,10 +52,24 @@ class EntitiesController < ApplicationController
   end
 
   def update
-    if @entity.update(entity_params)
-      redirect_to @entity, notice: "Entidad actualizada exitosamente."
-    else
-      render :edit, status: :unprocessable_entity
+    respond_to do |format|
+      if @entity.update(entity_params)
+        @entity.reload # Reload to ensure associations are fresh
+        flash.now[:notice] = "Entidad actualizada exitosamente."
+        format.html { redirect_to @entity, notice: "Entidad actualizada exitosamente." }
+        format.turbo_stream do
+          render turbo_stream: [
+            turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
+            turbo_stream.replace("entity_show", partial: "entities/show", locals: { entity: @entity }),
+            turbo_stream.remove("#{params[:modal]}-modal")
+          ]
+        end
+      else
+        format.html { render :edit, status: :unprocessable_entity }
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace("#{params[:modal]}_form", partial: "entities/modal_form", locals: { entity: @entity, modal: params[:modal] })
+        end
+      end
     end
   end
 

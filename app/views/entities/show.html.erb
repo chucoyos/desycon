@@ -1,6 +1,6 @@
 <% content_for :title, @entity.name %>
 
-<div class="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+<div id="entity_show" class="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
   <!-- Header -->
   <div class="mb-6 sm:mb-8">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
@@ -11,7 +11,14 @@
           </svg>
         </div>
         <div>
-          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900"><%= @entity.name %></h1>
+          <div class="flex items-center gap-2">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900"><%= @entity.name %></h1>
+            <button type="button" onclick="document.getElementById('name-modal').classList.remove('hidden')" class="p-1 text-gray-400 hover:text-teal-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+              </svg>
+            </button>
+          </div>
           <div class="flex flex-wrap gap-1 mt-2">
             <% if @entity.is_consolidator %>
               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">Consolidador</span>
@@ -51,11 +58,18 @@
     <% if @entity.fiscal_profile.present? %>
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-          <div class="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-teal-600">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-            </svg>
-            <h2 class="text-base sm:text-lg font-semibold text-gray-900">Perfil Fiscal</h2>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-teal-600">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+              </svg>
+              <h2 class="text-base sm:text-lg font-semibold text-gray-900">Perfil Fiscal</h2>
+            </div>
+            <button type="button" onclick="document.getElementById('fiscal-modal').classList.remove('hidden')" class="p-1 text-gray-400 hover:text-teal-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+              </svg>
+            </button>
           </div>
         </div>
         <div class="px-4 sm:px-6 py-4">
@@ -103,11 +117,18 @@
     <% if @entity.is_customs_agent && @entity.customs_agent_patents.any? %>
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-          <div class="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-blue-600">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
-            </svg>
-            <h2 class="text-base sm:text-lg font-semibold text-gray-900">Patentes Aduanales</h2>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-blue-600">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 0 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+              </svg>
+              <h2 class="text-base sm:text-lg font-semibold text-gray-900">Patentes Aduanales</h2>
+            </div>
+            <button type="button" onclick="document.getElementById('patent-modal').classList.remove('hidden')" class="p-1 text-gray-400 hover:text-teal-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+              </svg>
+            </button>
           </div>
         </div>
         <div class="px-4 sm:px-6 py-4">
@@ -128,12 +149,19 @@
     <div class="mt-6">
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-          <div class="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-teal-600">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-            </svg>
-            <h2 class="text-base sm:text-lg font-semibold text-gray-900">Direcciones</h2>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-teal-600">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+              </svg>
+              <h2 class="text-base sm:text-lg font-semibold text-gray-900">Direcciones</h2>
+            </div>
+            <button type="button" onclick="document.getElementById('address-modal').classList.remove('hidden')" class="p-1 text-gray-400 hover:text-teal-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+              </svg>
+            </button>
           </div>
         </div>
         <div class="px-4 sm:px-6 py-4">
@@ -176,4 +204,179 @@
       </div>
     </div>
   <% end %>
+</div>
+
+<!-- Modals -->
+<!-- Name Edit Modal -->
+<div id="name-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Editar Nombre</h3>
+        <button type="button" onclick="document.getElementById('name-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <%= form_with(model: @entity, url: entity_path(@entity), method: :patch, class: "space-y-4", id: "name_form") do |form| %>
+        <%= hidden_field_tag "modal", "name" %>
+        <div>
+          <%= form.label :name, "Nombre", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+          <%= form.text_field :name, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Nombre de la entidad" %>
+        </div>
+        <div class="flex justify-end gap-3">
+          <button type="button" onclick="document.getElementById('name-modal').classList.add('hidden')" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancelar</button>
+          <%= form.submit "Guardar", class: "px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Fiscal Profile Edit Modal -->
+<div id="fiscal-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Editar Perfil Fiscal</h3>
+        <button type="button" onclick="document.getElementById('fiscal-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <%= form_with(model: @entity, url: entity_path(@entity), method: :patch, class: "space-y-4", id: "fiscal_form") do |form| %>
+        <%= hidden_field_tag "modal", "fiscal" %>
+        <% if @entity.fiscal_profile %>
+          <%= form.fields_for :fiscal_profile do |fp| %>
+            <div>
+              <%= fp.label :rfc, "RFC", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.text_field :rfc, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "XAXX010101000", maxlength: 13 %>
+            </div>
+            <div>
+              <%= fp.label :razon_social, "Razón Social", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.text_field :razon_social, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Razón social completa" %>
+            </div>
+            <div>
+              <%= fp.label :regimen, "Régimen Fiscal", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.select :regimen, FiscalProfile::REGIMENES.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar régimen" }, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+            </div>
+            <div>
+              <%= fp.label :uso_cfdi, "Uso CFDI", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.select :uso_cfdi, FiscalProfile::USOS_CFDI.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar uso CFDI" }, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+            </div>
+            <div>
+              <%= fp.label :forma_pago, "Forma de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.select :forma_pago, FiscalProfile::FORMAS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar forma de pago" }, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+            </div>
+            <div>
+              <%= fp.label :metodo_pago, "Método de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.select :metodo_pago, FiscalProfile::METODOS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar método de pago" }, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="text-sm text-gray-500">No hay perfil fiscal. Se creará automáticamente al guardar.</p>
+        <% end %>
+        <div class="flex justify-end gap-3">
+          <button type="button" onclick="document.getElementById('fiscal-modal').classList.add('hidden')" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancelar</button>
+          <%= form.submit "Guardar", class: "px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Patent Edit Modal -->
+<div id="patent-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Editar Patentes</h3>
+        <button type="button" onclick="document.getElementById('patent-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <%= form_with(model: @entity, url: entity_path(@entity), method: :patch, class: "space-y-4", id: "patent_form") do |form| %>
+        <%= hidden_field_tag "modal", "patent" %>
+        <%= form.fields_for :customs_agent_patents do |patent_form| %>
+          <div>
+            <%= patent_form.label :patent_number, "Número de Patente", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+            <%= patent_form.text_field :patent_number, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Número de patente aduanal" %>
+          </div>
+        <% end %>
+        <div class="flex justify-end gap-3">
+          <button type="button" onclick="document.getElementById('patent-modal').classList.add('hidden')" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancelar</button>
+          <%= form.submit "Guardar", class: "px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Address Edit Modal -->
+<div id="address-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Editar Dirección</h3>
+        <button type="button" onclick="document.getElementById('address-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <%= form_with(model: @entity, url: entity_path(@entity), method: :patch, class: "space-y-4", id: "address_form") do |form| %>
+        <%= hidden_field_tag "modal", "address" %>
+        <%= form.fields_for :addresses do |address_form| %>
+          <div>
+            <%= address_form.label :tipo, "Tipo", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+            <%= address_form.select :tipo, Address::TIPOS.map { |k, v| [v, k] }, { include_blank: "Seleccionar tipo" }, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+          </div>
+          <div>
+            <%= address_form.label :calle, "Calle", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+            <%= address_form.text_field :calle, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Nombre de la calle" %>
+          </div>
+          <div>
+            <%= address_form.label :numero_exterior, "Número Exterior", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+            <%= address_form.text_field :numero_exterior, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "123" %>
+          </div>
+          <div>
+            <%= address_form.label :numero_interior, "Número Interior", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+            <%= address_form.text_field :numero_interior, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "A, B, etc. (opcional)" %>
+          </div>
+          <div>
+            <%= address_form.label :colonia, "Colonia", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+            <%= address_form.text_field :colonia, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Nombre de la colonia" %>
+          </div>
+          <div>
+            <%= address_form.label :codigo_postal, "Código Postal", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+            <%= address_form.text_field :codigo_postal, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "12345" %>
+          </div>
+          <div>
+            <%= address_form.label :municipio, "Municipio", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+            <%= address_form.text_field :municipio, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Nombre del municipio" %>
+          </div>
+          <div>
+            <%= address_form.label :estado, "Estado", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+            <%= address_form.text_field :estado, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Nombre del estado" %>
+          </div>
+          <div>
+            <%= address_form.label :pais, "País", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+            <%= address_form.select :pais, Address::PAISES.map { |k, v| [v, k] }, { include_blank: "Seleccionar país" }, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+          </div>
+          <div>
+            <%= address_form.label :email, "Email", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+            <%= address_form.email_field :email, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "correo@ejemplo.com" %>
+          </div>
+        <% end %>
+        <div class="flex justify-end gap-3">
+          <button type="button" onclick="document.getElementById('address-modal').classList.add('hidden')" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancelar</button>
+          <%= form.submit "Guardar", class: "px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
 </div>
