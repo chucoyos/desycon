@@ -63,13 +63,13 @@ class EntitiesController < ApplicationController
             render turbo_stream: [
               turbo_stream.replace("addresses_container", partial: "entities/addresses_section", locals: { entity: @entity }),
               turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
-              turbo_stream.remove("address-modal")
+              turbo_stream.replace("address-modal", partial: "entities/address_modal", locals: { entity: @entity })
             ]
           when "patent"
             render turbo_stream: [
               turbo_stream.replace("patents_container", partial: "entities/patents_section", locals: { entity: @entity }),
               turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
-              turbo_stream.remove("patent-modal")
+              turbo_stream.replace("patent-modal", partial: "entities/patent_modal", locals: { entity: @entity })
             ]
           when "fiscal"
             render turbo_stream: [
