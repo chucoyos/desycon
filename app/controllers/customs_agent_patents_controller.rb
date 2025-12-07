@@ -18,6 +18,13 @@ class CustomsAgentPatentsController < ApplicationController
     end
   end
 
+  def edit
+    @patent = @entity.customs_agent_patents.find(params[:id])
+    respond_to do |format|
+      format.html { render :edit }
+    end
+  end
+
   def update
     @patent = @entity.customs_agent_patents.find(params[:id])
 

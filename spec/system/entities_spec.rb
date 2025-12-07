@@ -1,10 +1,11 @@
 require "rails_helper"
 
 RSpec.describe "Entities", type: :system do
-  let(:entity) { create(:entity, :with_addresses, :with_patents) }
+  let(:entity) { create(:entity) }
 
   before do
     visit entity_path(entity)
+    entity.reload # Ensure associations are loaded
   end
 
   describe "entity name update" do
@@ -120,11 +121,47 @@ RSpec.describe "Entities", type: :system do
       initial_patent_buttons = page.all("button[data-modal-id='patent-modal']").count
 
       # Click edit button on first patent
-      first("button[data-modal-id='patent-modal']").click
+      patent = entity.customs_agent_patents.first
+      find("button[data-patent-id='#{patent.id}']").click
+
+      # Wait for modal to open and form to load
+      expect(page).to have_selector("#patent-modal", visible: true)
+      expect(page).to have_selector("#edit-patent-form-container")
+
+      # Debug: check what's in the modal
+      within "#patent-modal" do
+        puts "Modal content: #{page.html}"
+      end
 
       # Edit patent
       within "#patent-modal" do
-        fill_in "customs_agent_patent_patent_number", with: "987654321"
+        fill_in "customs_agent_patent[patent_number]", with: "987654321"
+        click_button "Actualizar Patente"
+      end
+
+      # Verify all buttons are still present with same counts
+      expect(page).to have_selector("button[data-modal-id='address-modal']", count: initial_address_buttons)
+      expect(page).to have_selector("button[data-modal-id='patent-modal']", count: initial_patent_buttons)
+
+      # Verify the patent was updated
+      expect(page).to have_text("987654321")
+    end
+  end
+
+  describe "fiscal profile editing" do
+    it "preserves other buttons" do
+      skip "No fiscal profile" unless entity.fiscal_profile.present?
+
+      # Count initial buttons
+      initial_address_buttons = page.all("button[data-modal-id='address-modal']").count
+      initial_patent_buttons = page.all("button[data-modal-id='patent-modal']").count
+
+      # Click edit button on fiscal profile
+      find("button[data-modal-id='fiscal-modal']").click
+
+      # Edit fiscal profile
+      within "#fiscal-modal" do
+        fill_in "entity_fiscal_profile_attributes_razon_social", with: "Nueva Razón Social"
         click_button "Guardar"
       end
 
@@ -132,8 +169,8 @@ RSpec.describe "Entities", type: :system do
       expect(page).to have_selector("button[data-modal-id='address-modal']", count: initial_address_buttons)
       expect(page).to have_selector("button[data-modal-id='patent-modal']", count: initial_patent_buttons)
 
-      # Verify flash message appears
-      expect(page).to have_text("Patente actualizada exitosamente")
+      # Verify the fiscal profile was updated
+      expect(page).to have_text("Nueva Razón Social")
     end
   end
 end

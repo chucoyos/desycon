@@ -6,8 +6,9 @@ FactoryBot.define do
     is_forwarder { false }
     is_client { false }
 
-    # Create addresses and patents by default for testing
+    # Create associated records by default for testing
     after(:create) do |entity|
+      create(:fiscal_profile, profileable: entity)
       create_list(:address, 2, addressable: entity)
       create_list(:customs_agent_patent, 2, entity: entity) if entity.is_customs_agent?
     end
