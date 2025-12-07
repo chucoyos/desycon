@@ -5,6 +5,15 @@ import "controllers"
 console.log('Turbo loaded:', typeof window.Turbo)
 console.log('Stimulus loaded:', typeof window.Stimulus)
 
+// Ensure Stimulus controllers are connected after Turbo updates
+document.addEventListener('turbo:load', () => {
+  console.log('Turbo load event - ensuring Stimulus controllers are connected')
+  // Stimulus should automatically connect controllers, but let's force a refresh
+  if (window.Stimulus) {
+    window.Stimulus.application?.start()
+  }
+})
+
 // Debug Turbo events
 document.addEventListener('turbo:submit-start', (event) => {
   console.log('Turbo submit start:', event.detail.formAction)
