@@ -1,0 +1,29 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  addressable: one (Entity)
+  tipo: "Casa"
+  calle: "Calle Principal"
+  numero_exterior: "123"
+  numero_interior: ""
+  colonia: "Centro"
+  municipio: "Ciudad de México"
+  localidad: "Centro"
+  estado: "CDMX"
+  codigo_postal: "06000"
+  pais: "México"
+  email: "test@example.com"
+
+two:
+  addressable: one (Entity)
+  tipo: "Oficina"
+  calle: "Avenida Reforma"
+  numero_exterior: "456"
+  numero_interior: "B"
+  colonia: "Polanco"
+  municipio: "Ciudad de México"
+  localidad: "Polanco"
+  estado: "CDMX"
+  codigo_postal: "11550"
+  pais: "México"
+  email: "office@example.com"

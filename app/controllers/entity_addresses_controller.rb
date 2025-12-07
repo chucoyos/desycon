@@ -5,7 +5,7 @@ class EntityAddressesController < ApplicationController
     @address = @entity.addresses.build(address_params)
 
     if @address.save
-      flash.now[:notice] = "Dirección agregada exitosamente."
+      flash[:notice] = "Dirección agregada exitosamente."
       @entity.reload # Reload to ensure addresses association is fresh
       respond_to do |format|
         format.turbo_stream

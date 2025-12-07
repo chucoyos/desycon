@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: "Test Entity One"
+  is_consolidator: true
+  is_customs_agent: true
+  is_forwarder: false
+  is_client: false
+
+two:
+  name: "Test Entity Two"
+  is_consolidator: false
+  is_customs_agent: false
+  is_forwarder: true
+  is_client: true

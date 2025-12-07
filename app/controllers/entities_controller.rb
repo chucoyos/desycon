@@ -70,6 +70,12 @@ class EntitiesController < ApplicationController
               turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
               turbo_stream.remove("patent-modal")
             ]
+          when "name"
+            render turbo_stream: [
+              turbo_stream.replace("entity_header", partial: "entities/header", locals: { entity: @entity }),
+              turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
+              turbo_stream.remove("name-modal")
+            ]
           else
             render turbo_stream: [
               turbo_stream.replace("entity_show", partial: "entities/show", locals: { entity: @entity }),

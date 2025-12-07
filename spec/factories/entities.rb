@@ -2,9 +2,15 @@ FactoryBot.define do
   factory :entity do
     sequence(:name) { |n| "Entidad #{n}" }
     is_consolidator { true }
-    is_customs_agent { false }
+    is_customs_agent { true }
     is_forwarder { false }
     is_client { false }
+
+    # Create addresses and patents by default for testing
+    after(:create) do |entity|
+      create_list(:address, 2, addressable: entity)
+      create_list(:customs_agent_patent, 2, entity: entity) if entity.is_customs_agent?
+    end
 
     trait :consolidator do
       is_consolidator { true }
@@ -34,10 +40,17 @@ FactoryBot.define do
       end
     end
 
-    trait :with_patent do
-      customs_agent
+    trait :with_addresses do
       after(:create) do |entity|
-        create(:customs_agent_patent, entity: entity)
+        create_list(:address, 2, addressable: entity)
+      end
+    end
+
+    trait :with_patents do
+      customs_agent
+
+      after(:create) do |entity|
+        create_list(:customs_agent_patent, 2, entity: entity)
       end
     end
 
