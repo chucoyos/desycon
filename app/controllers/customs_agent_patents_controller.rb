@@ -5,6 +5,7 @@ class CustomsAgentPatentsController < ApplicationController
     @patent = @entity.customs_agent_patents.build(patent_params)
 
     if @patent.save
+      flash.now[:notice] = "Patente agregada exitosamente."
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to edit_entity_path(@entity), notice: "Patente agregada exitosamente." }

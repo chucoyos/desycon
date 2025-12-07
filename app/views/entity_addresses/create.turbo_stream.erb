@@ -1,7 +1,7 @@
-<%= turbo_stream.append "addresses-list" do %>
-  <%= render partial: "entity_addresses/address", locals: { address: @address } %>
+<%= turbo_stream.update "entity_show" do %>
+  <%= render partial: "entities/show", locals: { entity: @entity } %>
 <% end %>
-<%= turbo_stream.replace "new_address", "" %>
-<%= turbo_stream.update "add-address-btn" do %>
-  <script>document.getElementById('add-address-btn').style.display = 'inline-flex';</script>
+<%= turbo_stream.replace "flash_messages" do %>
+  <%= render partial: "shared/flash_messages", locals: { flash: flash } %>
 <% end %>
+<%= turbo_stream.remove "new-address-modal" %>

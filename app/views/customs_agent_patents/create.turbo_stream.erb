@@ -1,8 +1,7 @@
-<%= turbo_stream.append "patents-list" do %>
-  <%= render partial: "customs_agent_patents/patent", locals: { patent: @patent } %>
+<%= turbo_stream.update "entity_show" do %>
+  <%= render partial: "entities/show", locals: { entity: @patent.entity } %>
 <% end %>
-<%= turbo_stream.replace "new_patent", "" %>
-<script>
-  var addBtn = document.getElementById('add-patent-btn');
-  if (addBtn) addBtn.style.display = 'inline-flex';
-</script>
+<%= turbo_stream.replace "flash_messages" do %>
+  <%= render partial: "shared/flash_messages", locals: { flash: flash } %>
+<% end %>
+<%= turbo_stream.remove "new-patent-modal" %>

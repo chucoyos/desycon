@@ -5,6 +5,7 @@ class EntityAddressesController < ApplicationController
     @address = @entity.addresses.build(address_params)
 
     if @address.save
+      flash.now[:notice] = "Dirección agregada exitosamente."
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to edit_entity_path(@entity), notice: "Dirección agregada exitosamente." }
