@@ -6,13 +6,6 @@ FactoryBot.define do
     is_forwarder { false }
     is_client { false }
 
-    # Create associated records by default for testing
-    after(:create) do |entity|
-      create(:fiscal_profile, profileable: entity)
-      create_list(:address, 2, addressable: entity)
-      create_list(:customs_agent_patent, 2, entity: entity) if entity.is_customs_agent?
-    end
-
     trait :consolidator do
       is_consolidator { true }
     end
@@ -31,19 +24,19 @@ FactoryBot.define do
 
     trait :with_fiscal_profile do
       after(:create) do |entity|
-        create(:fiscal_profile, profileable: entity)
+        create(:fiscal_profile, profileable: entity) unless entity.fiscal_profile.present?
       end
     end
 
     trait :with_address do
       after(:create) do |entity|
-        create(:address, addressable: entity, tipo: 'fiscal')
+        create(:address, addressable: entity, tipo: 'fiscal') unless entity.addresses.any?
       end
     end
 
     trait :with_addresses do
       after(:create) do |entity|
-        create_list(:address, 2, addressable: entity)
+        create_list(:address, 2, addressable: entity) if entity.addresses.empty?
       end
     end
 

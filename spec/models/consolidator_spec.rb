@@ -14,8 +14,7 @@ RSpec.describe Consolidator, type: :model do
     end
 
     it 'delegates fiscal_profile to entity' do
-      consolidator = create(:consolidator)
-      create(:fiscal_profile, profileable: consolidator.entity)
+      consolidator = create(:consolidator, :with_fiscal_profile)
       consolidator.entity.reload
       expect(consolidator.fiscal_profile).to be_present
       expect(consolidator.fiscal_profile).to be_a(FiscalProfile)
@@ -23,16 +22,14 @@ RSpec.describe Consolidator, type: :model do
     end
 
     it 'delegates addresses to entity' do
-      consolidator = create(:consolidator)
-      create(:address, addressable: consolidator.entity, tipo: 'fiscal')
-      create(:address, :envio, addressable: consolidator.entity)
+      consolidator = create(:consolidator, :with_addresses)
+      consolidator.entity.reload
       expect(consolidator.addresses.count).to eq(2)
       expect(consolidator.addresses).to eq(consolidator.entity.addresses)
     end
 
     it 'destroys fiscal_profile when entity is destroyed' do
       consolidator = create(:consolidator)
-      create(:fiscal_profile, profileable: consolidator.entity)
       consolidator.entity.reload
       fiscal_profile_id = consolidator.entity.fiscal_profile.id
       consolidator.entity.destroy
@@ -119,12 +116,13 @@ RSpec.describe Consolidator, type: :model do
 
     describe '#fiscal_address' do
       it 'returns the fiscal address' do
-        fiscal_addr = create(:address, addressable: consolidator.entity, tipo: 'fiscal')
-        create(:address, :envio, addressable: consolidator.entity)
+        consolidator = create(:consolidator, :with_fiscal_address)
+        fiscal_addr = consolidator.entity.addresses.fiscales.first
         expect(consolidator.fiscal_address).to eq(fiscal_addr)
       end
 
       it 'returns nil when no fiscal address exists' do
+        consolidator = create(:consolidator)
         expect(consolidator.fiscal_address).to be_nil
       end
     end
@@ -157,9 +155,8 @@ RSpec.describe Consolidator, type: :model do
       end
 
       it 'does not build if already exists' do
-        consolidator = create(:consolidator)
-        existing_profile = create(:fiscal_profile, profileable: consolidator.entity)
-        consolidator.entity.reload
+        consolidator = create(:consolidator, :with_fiscal_profile)
+        existing_profile = consolidator.fiscal_profile
         consolidator.build_fiscal_profile_if_needed
         expect(consolidator.fiscal_profile).to eq(existing_profile)
       end
@@ -167,6 +164,7 @@ RSpec.describe Consolidator, type: :model do
 
     describe '#build_fiscal_address_if_needed' do
       it 'delegates to entity and builds fiscal address if none exists' do
+        consolidator = create(:consolidator)
         expect(consolidator.entity.addresses.fiscales).to be_empty
         consolidator.build_fiscal_address_if_needed
         fiscal_addresses = consolidator.entity.addresses.select { |a| a.tipo == 'fiscal' }
