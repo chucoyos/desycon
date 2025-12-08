@@ -9,13 +9,56 @@ class Address < ApplicationRecord
     "entrega" => "Entrega"
   }.freeze
 
-  # Países
-  PAISES = {
-    "MX" => "México",
-    "US" => "Estados Unidos",
-    "CA" => "Canadá",
-    "ES" => "España"
-  }.freeze
+  # Países usando la gema countries
+  def self.paises_options
+    ISO3166::Country.all.map do |country|
+      [ country.alpha2, country.iso_short_name || country.translations["en"] || country.name ]
+    end.sort_by { |code, name| name }
+  end
+
+  # Países con banderas (usando códigos de país a emoji)
+  def self.paises_con_banderas
+    ISO3166::Country.all.map do |country|
+      name = country.iso_short_name || country.translations["en"] || country.name
+      emoji_flag = country_code_to_emoji(country.alpha2)
+      [ "#{emoji_flag} #{name}", country.alpha2 ]
+    end.sort_by { |display, code| display }
+  end
+
+  def to_s
+    [
+      calle,
+      numero_exterior,
+      numero_interior.present? ? "Int. #{numero_interior}" : nil,
+      colonia,
+      "CP #{codigo_postal}",
+      municipio,
+      estado,
+      pais
+    ].compact.join(", ")
+  end
+
+  def domicilio_completo
+    to_s
+  end
+
+  def tipo_nombre
+    TIPOS[tipo] || tipo
+  end
+
+  private
+
+  def self.country_code_to_emoji(country_code)
+    return "" if country_code.nil? || country_code.empty?
+
+    # Convertir código de país a emoji de bandera
+    # Los emojis de banderas usan caracteres regionales (🇦-🇿)
+    # que corresponden a las letras A-Z más 0x1F1E6-0x1F1FF
+    base = 0x1F1E6
+    country_code.upcase.each_char.map do |char|
+      (base + (char.ord - "A".ord)).chr("UTF-8")
+    end.join
+  end
 
   # Validaciones
   validates :pais, presence: true, length: { is: 2 }, format: { with: /\A[A-Z]{2}\z/ }
@@ -38,27 +81,6 @@ class Address < ApplicationRecord
   scope :envio, -> { where(tipo: "envio") }
   scope :almacenes, -> { where(tipo: "almacen") }
   scope :by_codigo_postal, ->(cp) { where(codigo_postal: cp) }
-
-  def to_s
-    [
-      calle,
-      numero_exterior,
-      numero_interior.present? ? "Int. #{numero_interior}" : nil,
-      colonia,
-      "CP #{codigo_postal}",
-      municipio,
-      estado,
-      pais
-    ].compact.join(", ")
-  end
-
-  def domicilio_completo
-    to_s
-  end
-
-  def tipo_nombre
-    TIPOS[tipo] || tipo
-  end
 
   private
 
