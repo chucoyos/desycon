@@ -29,7 +29,7 @@ RSpec.describe Consolidator, type: :model do
     end
 
     it 'destroys fiscal_profile when entity is destroyed' do
-      consolidator = create(:consolidator)
+      consolidator = create(:consolidator, :with_fiscal_profile)
       consolidator.entity.reload
       fiscal_profile_id = consolidator.entity.fiscal_profile.id
       consolidator.entity.destroy
@@ -156,6 +156,7 @@ RSpec.describe Consolidator, type: :model do
 
       it 'does not build if already exists' do
         consolidator = create(:consolidator, :with_fiscal_profile)
+        consolidator.entity.reload
         existing_profile = consolidator.fiscal_profile
         consolidator.build_fiscal_profile_if_needed
         expect(consolidator.fiscal_profile).to eq(existing_profile)

@@ -12,6 +12,10 @@ FactoryBot.define do
       entity { association :entity, :with_address, is_consolidator: true }
     end
 
+    trait :with_addresses do
+      entity { association :entity, :with_addresses, is_consolidator: true }
+    end
+
     trait :with_shipping_address do
       after(:create) do |consolidator|
         create(:address, :envio, addressable: consolidator.entity)
