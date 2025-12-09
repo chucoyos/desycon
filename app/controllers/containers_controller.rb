@@ -63,8 +63,12 @@ class ContainersController < ApplicationController
 
   def destroy
     authorize @container
-    @container.destroy!
-    redirect_to containers_url, notice: "Contenedor eliminado exitosamente."
+
+    if @container.destroy
+      redirect_to containers_url, notice: "Contenedor eliminado exitosamente."
+    else
+      redirect_to containers_url, alert: "No se puede eliminar el contenedor porque tiene registros asociados (líneas BL)."
+    end
   end
 
   private
