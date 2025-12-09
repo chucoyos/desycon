@@ -323,48 +323,47 @@
     </div>
   </div>
 
-  <!-- Historial de Estados -->
-  <% if @bl_house_line.bl_house_line_status_histories.any? %>
-    <div class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
-      <div class="flex items-center gap-3 mb-5">
-        <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-600 shadow-sm">
-          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
+      <!-- Historial de Status -->
+      <section class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-600 shadow-sm">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <h2 class="text-lg font-bold text-gray-900">Historial</h2>
         </div>
-        <h2 class="text-lg font-bold text-gray-900">Historial</h2>
-      </div>
-      
-      <% if @bl_house_line.bl_house_line_status_histories.any? %>
-        <div class="space-y-3">
-          <% @bl_house_line.bl_house_line_status_histories.order(created_at: :desc).limit(5).each do |history| %>
-            <div class="flex gap-3 pb-3 border-b border-gray-100 last:border-0">
-              <div class="flex-shrink-0 w-8 h-8 rounded-full <%= status_badge_class(history.status).split.first %> flex items-center justify-center">
-                <%= status_icon(history.status) %>
+        
+        <% if @bl_house_line.bl_house_line_status_histories.any? %>
+          <div class="space-y-3">
+            <% @bl_house_line.bl_house_line_status_histories.order(fecha_actualizacion: :desc).limit(5).each do |history| %>
+              <div class="flex gap-3 pb-3 border-b border-gray-100 last:border-0">
+                <div class="flex-shrink-0 w-8 h-8 rounded-full <%= status_badge_class(history.status).split.first %> flex items-center justify-center">
+                  <%= status_icon(history.status) %>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-gray-900"><%= status_nombre(history.status) %></p>
+                  <p class="text-xs text-gray-500 mt-0.5"><%= l(history.fecha_actualizacion, format: :short) %></p>
+                  <% if history.observaciones.present? %>
+                    <p class="text-xs text-gray-600 mt-1"><%= history.observaciones %></p>
+                  <% end %>
+                  <% if history.user.present? %>
+                    <p class="text-xs text-gray-400 mt-1">por <%= history.user.email %></p>
+                  <% end %>
+                </div>
               </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-gray-900"><%= history.status.humanize %></p>
-                <p class="text-xs text-gray-500 mt-0.5"><%= l(history.changed_at, format: :short) %></p>
-                <% if history.previous_status.present? %>
-                  <p class="text-xs text-gray-600 mt-1">De: <%= history.previous_status.humanize %></p>
-                <% end %>
-                <% if history.changed_by.present? %>
-                  <p class="text-xs text-gray-400 mt-1">por <%= history.changed_by.name %></p>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      <% else %>
-        <div class="text-center py-6">
-          <svg class="w-12 h-12 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          <p class="text-sm text-gray-500">Sin historial</p>
-        </div>
-      <% end %>
-    </div>
-  <% end %>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="text-center py-6">
+            <svg class="w-12 h-12 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p class="text-sm text-gray-500">Sin historial</p>
+          </div>
+        <% end %>
+      </section>
+
 
 </div>
     </div>
