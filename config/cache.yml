@@ -14,3 +14,7 @@ test:
 production:
   database: primary
   <<: *default
+
+staging:
+  database: primary
+  <<: *default
