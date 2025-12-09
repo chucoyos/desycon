@@ -118,17 +118,10 @@
       <h2 class="text-xl font-bold text-gray-900">Detalles de Cantidad y Estado</h2>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
       <div>
         <label class="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Cantidad</label>
         <p class="text-gray-900 font-semibold text-lg"><%= @bl_house_line.cantidad %></p>
-      </div>
-
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Estado</label>
-        <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full <%= status_badge_class(@bl_house_line.status) %>">
-          <%= @bl_house_line.status.humanize %>
-        </span>
       </div>
 
       <div>
@@ -140,9 +133,7 @@
         <label class="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Volumen (m³)</label>
         <p class="text-gray-900"><%= number_with_precision(@bl_house_line.volumen, precision: 2) if @bl_house_line.volumen %></p>
       </div>
-    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 mt-4">
       <div>
         <label class="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Empaque</label>
         <p class="text-gray-900"><%= @bl_house_line.packaging&.nombre || "No especificado" %></p>
@@ -336,19 +327,19 @@
         
         <% if @bl_house_line.bl_house_line_status_histories.any? %>
           <div class="space-y-3">
-            <% @bl_house_line.bl_house_line_status_histories.order(fecha_actualizacion: :desc).limit(5).each do |history| %>
+            <% @bl_house_line.bl_house_line_status_histories.order(changed_at: :desc).limit(5).each do |history| %>
               <div class="flex gap-3 pb-3 border-b border-gray-100 last:border-0">
                 <div class="flex-shrink-0 w-8 h-8 rounded-full <%= status_badge_class(history.status).split.first %> flex items-center justify-center">
                   <%= status_icon(history.status) %>
                 </div>
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-semibold text-gray-900"><%= status_nombre(history.status) %></p>
-                  <p class="text-xs text-gray-500 mt-0.5"><%= l(history.fecha_actualizacion, format: :short) %></p>
-                  <% if history.observaciones.present? %>
-                    <p class="text-xs text-gray-600 mt-1"><%= history.observaciones %></p>
+                  <p class="text-xs text-gray-500 mt-0.5"><%= l(history.changed_at, format: :short) %></p>
+                  <% if history.previous_status.present? %>
+                    <p class="text-xs text-gray-600 mt-1">De: <%= status_nombre(history.previous_status) %></p>
                   <% end %>
-                  <% if history.user.present? %>
-                    <p class="text-xs text-gray-400 mt-1">por <%= history.user.email %></p>
+                  <% if history.changed_by.present? %>
+                    <p class="text-xs text-gray-400 mt-1">por <%= history.changed_by.name %></p>
                   <% end %>
                 </div>
               </div>

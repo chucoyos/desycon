@@ -36,6 +36,8 @@ class BlHouseLine < ApplicationRecord
 
   # Callbacks
   before_save :assign_next_partida_number, if: -> { partida.blank? && container_id.present? }
+  after_create :create_initial_status_history
+  after_update :create_status_history, if: :saved_change_to_status?
   def documentos_completos?
     bl_endosado_documento.attached? && liberacion_documento.attached? && bl_revalidado_documento.attached?
   end
@@ -61,6 +63,41 @@ class BlHouseLine < ApplicationRecord
     BlHouseLineStatusHistory.create!(
       bl_house_line: self,
       status: self.status,
+      previous_status: status_before_last_save,
+      changed_at: Time.current,
+      changed_by: defined?(Current) && Current.respond_to?(:user) ? Current.user : nil
+    )
+  end
+
+  private
+
+  def assign_next_partida_number
+    return if partida.present? || container_id.blank?
+
+    self.partida = next_available_partida_number
+  end
+
+  def next_available_partida_number
+    return 1 if container.blank?
+
+    max_partida = container.bl_house_lines.maximum(:partida) || 0
+    max_partida + 1
+  end
+
+  def create_initial_status_history
+    BlHouseLineStatusHistory.create!(
+      bl_house_line: self,
+      status: status,
+      previous_status: nil,
+      changed_at: Time.current,
+      changed_by: defined?(Current) && Current.respond_to?(:user) ? Current.user : nil
+    )
+  end
+
+  def create_status_history
+    BlHouseLineStatusHistory.create!(
+      bl_house_line: self,
+      status: status,
       previous_status: status_before_last_save,
       changed_at: Time.current,
       changed_by: defined?(Current) && Current.respond_to?(:user) ? Current.user : nil
