@@ -28,20 +28,32 @@ class BlHouseLine < ApplicationRecord
 
   # Validations
   validates :blhouse, presence: true
-  validates :partida, presence: true, numericality: { only_integer: true, greater_than: 0 }
+  validates :partida, presence: true, numericality: { only_integer: true, greater_than: 0 }, unless: -> { container_id.present? && partida.blank? }
+  validates :partida, uniqueness: { scope: :container_id, message: "debe ser único dentro del contenedor" }, if: :container_id?
   validates :cantidad, presence: true, numericality: { only_integer: true, greater_than: 0 }
   validates :peso, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :volumen, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   # Callbacks
-  after_save :track_status_change
-
-  # Methods
+  before_save :assign_next_partida_number, if: -> { partida.blank? && container_id.present? }
   def documentos_completos?
     bl_endosado_documento.attached? && liberacion_documento.attached? && bl_revalidado_documento.attached?
   end
 
   private
+
+  def assign_next_partida_number
+    return if partida.present? || container_id.blank?
+
+    self.partida = next_available_partida_number
+  end
+
+  def next_available_partida_number
+    return 1 if container.blank?
+
+    max_partida = container.bl_house_lines.maximum(:partida) || 0
+    max_partida + 1
+  end
 
   def track_status_change
     return unless saved_change_to_status?
