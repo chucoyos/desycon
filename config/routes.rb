@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :packagings
   resources :entities do
     get :new_address, on: :collection
     resources :customs_agent_patents, only: [ :create, :update, :destroy, :edit ]
@@ -11,6 +12,7 @@ Rails.application.routes.draw do
   resources :vessels
   resources :consolidators
   resources :containers
+  resources :bl_house_lines
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

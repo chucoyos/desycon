@@ -1,0 +1,212 @@
+<%= form_with(model: bl_house_line, class: "space-y-6") do |form| %>
+
+  <% if bl_house_line.errors.any? %>
+    <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 shadow-sm">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-semibold text-red-800">
+            <%= pluralize(bl_house_line.errors.count, "error") %> impidieron guardar esta partida:
+          </h3>
+          <div class="mt-2 text-sm text-red-700">
+            <ul class="list-disc list-inside space-y-1">
+              <% bl_house_line.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Información Básica -->
+  <div class="bg-white shadow-md rounded-xl p-5 sm:p-6 border border-gray-100">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-green-600 shadow-sm">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-gray-900">Información Básica</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+      <div>
+        <%= form.label :blhouse, "BL House *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.text_field :blhouse, required: true, placeholder: "BLH-001", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 font-mono #{bl_house_line.errors[:blhouse].any? ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}" %>
+        <% if bl_house_line.errors[:blhouse].any? %>
+          <p class="mt-1 text-sm text-red-600"><%= bl_house_line.errors[:blhouse].first %></p>
+        <% end %>
+      </div>
+
+      <div>
+        <%= form.label :partida, "Número de Partida *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.number_field :partida, required: true, placeholder: "1", min: 1, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 #{bl_house_line.errors[:partida].any? ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}" %>
+        <% if bl_house_line.errors[:partida].any? %>
+          <p class="mt-1 text-sm text-red-600"><%= bl_house_line.errors[:partida].first %></p>
+        <% end %>
+      </div>
+
+      <div class="md:col-span-2">
+        <%= form.label :contiene, "Contenido", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.text_area :contiene, rows: 3, placeholder: "Descripción detallada del contenido de la partida", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 resize-vertical" %>
+      </div>
+
+      <div class="md:col-span-2">
+        <%= form.label :marcas, "Marcas y Números", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.text_area :marcas, rows: 2, placeholder: "Marcas, números de serie, o identificadores especiales", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 resize-vertical" %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Información de Agente Aduanal y Cliente -->
+  <div class="bg-white shadow-md rounded-xl p-5 sm:p-6 border border-gray-100">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-600 shadow-sm">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-gray-900">Información de Agente Aduanal y Cliente</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+      <div>
+        <%= form.label :customs_agent_id, "Agente Aduanal", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.collection_select :customs_agent_id, Entity.customs_agents, :id, :name, { include_blank: "Seleccionar agente aduanal (opcional)" }, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200" %>
+      </div>
+
+      <div>
+        <%= form.label :client_id, "Cliente", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.collection_select :client_id, Entity.clients, :id, :name, { include_blank: "Seleccionar cliente (opcional)" }, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200" %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detalles de Cantidad y Estado -->
+  <div class="bg-white shadow-md rounded-xl p-5 sm:p-6 border border-gray-100">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-600 shadow-sm">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-gray-900">Detalles de Cantidad y Estado</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+      <div>
+        <%= form.label :cantidad, "Cantidad *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.number_field :cantidad, required: true, placeholder: "100", min: 1, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 #{bl_house_line.errors[:cantidad].any? ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}" %>
+        <% if bl_house_line.errors[:cantidad].any? %>
+          <p class="mt-1 text-sm text-red-600"><%= bl_house_line.errors[:cantidad].first %></p>
+        <% end %>
+      </div>
+
+      <div>
+        <%= form.label :status, "Estado *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.select :status, BlHouseLine.statuses.keys.map { |s| [s.humanize, s] }, {}, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 #{bl_house_line.errors[:status].any? ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}" %>
+        <% if bl_house_line.errors[:status].any? %>
+          <p class="mt-1 text-sm text-red-600"><%= bl_house_line.errors[:status].first %></p>
+        <% end %>
+      </div>
+
+      <div>
+        <%= form.label :peso_bruto, "Peso Bruto (kg)", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.number_field :peso_bruto, step: "0.01", placeholder: "150.50", min: 0, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200" %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Información Adicional -->
+  <div class="bg-white shadow-md rounded-xl p-5 sm:p-6 border border-gray-100">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-600 shadow-sm">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-gray-900">Información Adicional</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+      <div>
+        <%= form.label :numero_paquetes, "Número de Paquetes", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.number_field :numero_paquetes, placeholder: "10", min: 1, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200" %>
+      </div>
+
+      <div>
+        <%= form.label :packaging_id, "Tipo de Empaque", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.collection_select :packaging_id, Packaging.all, :id, :nombre, { include_blank: "Seleccionar empaque" }, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200" %>
+      </div>
+
+      <% if bl_house_line.container_id.present? %>
+        <%= form.hidden_field :container_id %>
+      <% end %>
+
+      <div class="md:col-span-2">
+        <%= form.label :observaciones, "Observaciones", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.text_area :observaciones, rows: 3, placeholder: "Observaciones adicionales sobre la partida", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 resize-vertical" %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Documentos -->
+  <div class="bg-white shadow-md rounded-xl p-5 sm:p-6 border border-gray-100">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-600 shadow-sm">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-gray-900">Documentos</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+      <div>
+        <%= form.label :bl_endosado_documento, "BL Endosado", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.file_field :bl_endosado_documento, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100" %>
+        <% if bl_house_line.persisted? && bl_house_line.bl_endosado_documento.attached? %>
+          <p class="mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.bl_endosado_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
+        <% end %>
+      </div>
+
+      <div>
+        <%= form.label :liberacion_documento, "Liberación", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.file_field :liberacion_documento, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100" %>
+        <% if bl_house_line.persisted? && bl_house_line.liberacion_documento.attached? %>
+          <p class="mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.liberacion_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
+        <% end %>
+      </div>
+
+      <div>
+        <%= form.label :bl_revalidado_documento, "BL Revalidado", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.file_field :bl_revalidado_documento, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100" %>
+        <% if bl_house_line.persisted? && bl_house_line.bl_revalidado_documento.attached? %>
+          <p class="mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.bl_revalidado_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botones -->
+  <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+    <%= link_to bl_house_line.container.present? ? container_path(bl_house_line.container, anchor: 'partidas') : bl_house_lines_path, class: "inline-flex items-center justify-center px-6 py-3 rounded-lg text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 transition-all duration-200" do %>
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+      Cancelar
+    <% end %>
+    <%= form.submit class: "inline-flex items-center justify-center px-6 py-3 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 shadow-sm hover:shadow-md transition-all duration-200" do %>
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      <%= bl_house_line.persisted? ? "Actualizar Partida" : "Crear Partida" %>
+    <% end %>
+  </div>
+<% end %>

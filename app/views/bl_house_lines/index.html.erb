@@ -1,0 +1,60 @@
+<h1>Bl House Lines</h1>
+
+<div id="bl_house_lines">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-2xl font-bold">Partidas (Bl House Lines)</h2>
+    <%= link_to "Nueva Partida", new_bl_house_line_path, class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+  </div>
+
+  <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">BL House</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partida</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contenido</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Peso</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Volumen</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <% @bl_house_lines.each do |bl_house_line| %>
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+              <%= bl_house_line.blhouse %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <%= bl_house_line.partida %>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+              <%= bl_house_line.contiene %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <%= bl_house_line.cantidad %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <%= number_with_precision(bl_house_line.peso, precision: 2) if bl_house_line.peso %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <%= number_with_precision(bl_house_line.volumen, precision: 2) if bl_house_line.volumen %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                <%= status_badge_class(bl_house_line.status) %>">
+                <%= bl_house_line.status.humanize %>
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <%= link_to "Ver", bl_house_line, class: "text-indigo-600 hover:text-indigo-900 mr-3" %>
+              <%= link_to "Editar", edit_bl_house_line_path(bl_house_line), class: "text-indigo-600 hover:text-indigo-900 mr-3" %>
+              <%= link_to "Eliminar", bl_house_line, method: :delete, data: { confirm: '¿Estás seguro?' }, class: "text-red-600 hover:text-red-900" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

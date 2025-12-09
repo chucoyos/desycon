@@ -1,0 +1,47 @@
+<%= form_with(model: packaging, class: "space-y-6") do |form| %>
+  <% if packaging.errors.any? %>
+    <div class="bg-red-50 border border-red-200 rounded-md p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-red-800">
+            Hay <%= pluralize(packaging.errors.count, "error") %> que impiden guardar el empaque:
+          </h3>
+          <div class="mt-2 text-sm text-red-700">
+            <ul role="list" class="list-disc pl-5 space-y-1">
+              <% packaging.errors.each do |error| %>
+                <li><%= error.full_message %></li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+      <h3 class="text-lg font-medium text-gray-900">
+        <%= packaging.new_record? ? "Nuevo Empaque" : "Editar Empaque" %>
+      </h3>
+    </div>
+
+    <div class="px-6 py-4">
+      <div class="max-w-md">
+        <div>
+          <%= form.label :nombre, class: "block text-sm font-medium text-gray-700" %>
+          <%= form.text_field :nombre, class: "mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm", placeholder: "Ej: Caja de cartón, Pallet plástico, etc." %>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+      <%= link_to "Cancelar", packagings_path, class: "bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" %>
+      <%= form.submit class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+    </div>
+  </div>
+<% end %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_30_234318) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_09_064210) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -60,6 +60,40 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_234318) do
     t.datetime "updated_at", null: false
     t.index ["addressable_type", "addressable_id", "tipo"], name: "index_addresses_on_addressable_and_tipo"
     t.index ["codigo_postal"], name: "index_addresses_on_codigo_postal"
+  end
+
+  create_table "bl_house_line_status_histories", force: :cascade do |t|
+    t.bigint "bl_house_line_id"
+    t.datetime "changed_at"
+    t.bigint "changed_by_id"
+    t.string "changed_by_type"
+    t.datetime "created_at", null: false
+    t.string "previous_status"
+    t.string "status"
+    t.datetime "updated_at", null: false
+    t.index ["bl_house_line_id"], name: "index_bl_house_line_status_histories_on_bl_house_line_id"
+    t.index ["changed_by_type", "changed_by_id"], name: "index_bl_house_line_status_histories_on_changed_by"
+  end
+
+  create_table "bl_house_lines", force: :cascade do |t|
+    t.string "blhouse"
+    t.integer "cantidad"
+    t.bigint "client_id"
+    t.bigint "container_id"
+    t.text "contiene"
+    t.datetime "created_at", null: false
+    t.bigint "customs_agent_id"
+    t.text "marcas"
+    t.bigint "packaging_id"
+    t.integer "partida"
+    t.decimal "peso"
+    t.string "status"
+    t.datetime "updated_at", null: false
+    t.decimal "volumen"
+    t.index ["client_id"], name: "index_bl_house_lines_on_client_id"
+    t.index ["container_id"], name: "index_bl_house_lines_on_container_id"
+    t.index ["customs_agent_id"], name: "index_bl_house_lines_on_customs_agent_id"
+    t.index ["packaging_id"], name: "index_bl_house_lines_on_packaging_id"
   end
 
   create_table "clients", force: :cascade do |t|
@@ -188,6 +222,12 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_234318) do
     t.index ["entity_id"], name: "index_forwarders_on_entity_id"
   end
 
+  create_table "packagings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "nombre"
+    t.datetime "updated_at", null: false
+  end
+
   create_table "ports", force: :cascade do |t|
     t.string "code", null: false
     t.string "country_code", null: false
@@ -238,6 +278,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_30_234318) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "bl_house_line_status_histories", "bl_house_lines"
+  add_foreign_key "bl_house_lines", "containers"
+  add_foreign_key "bl_house_lines", "entities", column: "client_id"
+  add_foreign_key "bl_house_lines", "entities", column: "customs_agent_id"
+  add_foreign_key "bl_house_lines", "packagings"
   add_foreign_key "clients", "entities"
   add_foreign_key "consolidators", "entities"
   add_foreign_key "container_services", "containers"

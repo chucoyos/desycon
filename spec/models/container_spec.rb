@@ -27,6 +27,11 @@ RSpec.describe Container, type: :model do
       expect(container).to respond_to(:container_services)
     end
 
+    it 'has many bl_house_lines' do
+      container = create(:container)
+      expect(container).to respond_to(:bl_house_lines)
+    end
+
     it 'destroys status histories when destroyed' do
       container = create(:container)
       history = container.container_status_histories.create!(

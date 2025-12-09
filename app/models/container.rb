@@ -8,6 +8,7 @@ class Container < ApplicationRecord
 
   has_many :container_status_histories, dependent: :destroy
   has_many :container_services, dependent: :destroy
+  has_many :bl_house_lines, dependent: :restrict_with_error
 
   # Active Storage para documentos
   has_one_attached :bl_master_documento
