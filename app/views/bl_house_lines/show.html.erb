@@ -38,7 +38,7 @@
             </div>
           </div>
           <div class="flex flex-wrap gap-2 mt-3">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border <%= status_badge_class(@bl_house_line.status) %> shadow-sm">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border <%= bl_house_line_status_badge_class(@bl_house_line.status) %> shadow-sm">
               <%= @bl_house_line.status.humanize %>
             </span>
             <% if @bl_house_line.container.present? %>
@@ -329,14 +329,14 @@
           <div class="space-y-3">
             <% @bl_house_line.bl_house_line_status_histories.order(changed_at: :desc).limit(5).each do |history| %>
               <div class="flex gap-3 pb-3 border-b border-gray-100 last:border-0">
-                <div class="flex-shrink-0 w-8 h-8 rounded-full <%= status_badge_class(history.status).split.first %> flex items-center justify-center">
-                  <%= status_icon(history.status) %>
+                <div class="flex-shrink-0 w-8 h-8 rounded-full <%= bl_house_line_status_badge_class(history.status).split.first %> flex items-center justify-center">
+                  <%= bl_house_line_status_icon(history.status) %>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-semibold text-gray-900"><%= status_nombre(history.status) %></p>
+                  <p class="text-sm font-semibold text-gray-900"><%= bl_house_line_status_nombre(history.status) %></p>
                   <p class="text-xs text-gray-500 mt-0.5"><%= l(history.changed_at, format: :short) %></p>
                   <% if history.previous_status.present? %>
-                    <p class="text-xs text-gray-600 mt-1">De: <%= status_nombre(history.previous_status) %></p>
+                    <p class="text-xs text-gray-600 mt-1">De: <%= bl_house_line_status_nombre(history.previous_status) %></p>
                   <% end %>
                   <% if history.changed_by.present? %>
                     <p class="text-xs text-gray-400 mt-1">por <%= history.changed_by.name %></p>

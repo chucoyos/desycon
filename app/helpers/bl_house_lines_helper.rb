@@ -1,5 +1,5 @@
 module BlHouseLinesHelper
-  def status_badge_class(status)
+  def bl_house_line_status_badge_class(status)
     case status
     when "activo"
       "bg-green-100 text-green-800"
@@ -24,7 +24,7 @@ module BlHouseLinesHelper
     end
   end
 
-  def status_icon(status)
+  def bl_house_line_status_icon(status)
     case status
     when "activo"
       '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>'.html_safe
@@ -47,5 +47,19 @@ module BlHouseLinesHelper
     else
       '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'.html_safe
     end
+  end
+
+  def bl_house_line_status_nombre(status)
+    {
+      "activo" => "Activo",
+      "bl_original" => "BL Original",
+      "documentos_ok" => "Documentos OK",
+      "despachado" => "Despachado",
+      "pendiente_endoso_agente_aduanal" => "Pendiente Endoso Agente Aduanal",
+      "pendiente_endoso_consignatario" => "Pendiente Endoso Consignatario",
+      "finalizado" => "Finalizado",
+      "instrucciones_pendientes" => "Instrucciones Pendientes",
+      "pendiente_pagos_locales" => "Pendiente Pagos Locales"
+    }[status] || status.humanize
   end
 end
