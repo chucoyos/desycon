@@ -347,9 +347,7 @@
                   <% if history.previous_status.present? %>
                     <p class="text-xs text-gray-600 mt-1">De: <%= bl_house_line_status_nombre(history.previous_status) %></p>
                   <% end %>
-                  <% if history.changed_by.present? %>
-                    <p class="text-xs text-gray-400 mt-1">por <%= history.changed_by.name %></p>
-                  <% end %>
+                  <p class="text-xs text-gray-400 mt-1">por <%= history.user&.email || "Sistema" %></p>
                 </div>
               </div>
             <% end %>

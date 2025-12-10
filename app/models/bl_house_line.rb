@@ -35,6 +35,8 @@ class BlHouseLine < ApplicationRecord
   validates :volumen, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   # Callbacks
+  before_create :capture_current_user
+  before_update :capture_current_user
   before_save :assign_next_partida_number, if: -> { partida.blank? && container_id.present? }
   after_create :create_initial_status_history
   after_update :create_status_history, if: :saved_change_to_status?
@@ -71,6 +73,10 @@ class BlHouseLine < ApplicationRecord
 
   private
 
+  def capture_current_user
+    @current_user = defined?(Current) && Current.respond_to?(:user) ? Current.user : nil
+  end
+
   def assign_next_partida_number
     return if partida.present? || container_id.blank?
 
@@ -90,7 +96,7 @@ class BlHouseLine < ApplicationRecord
       status: status,
       previous_status: nil,
       changed_at: Time.current,
-      changed_by: defined?(Current) && Current.respond_to?(:user) ? Current.user : nil
+      user: @current_user
     )
   end
 
@@ -100,7 +106,7 @@ class BlHouseLine < ApplicationRecord
       status: status,
       previous_status: status_before_last_save,
       changed_at: Time.current,
-      changed_by: defined?(Current) && Current.respond_to?(:user) ? Current.user : nil
+      user: @current_user
     )
   end
 end

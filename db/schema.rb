@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_09_064210) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_10_062240) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -71,8 +71,10 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_09_064210) do
     t.string "previous_status"
     t.string "status"
     t.datetime "updated_at", null: false
+    t.integer "user_id"
     t.index ["bl_house_line_id"], name: "index_bl_house_line_status_histories_on_bl_house_line_id"
     t.index ["changed_by_type", "changed_by_id"], name: "index_bl_house_line_status_histories_on_changed_by"
+    t.index ["user_id"], name: "index_bl_house_line_status_histories_on_user_id"
   end
 
   create_table "bl_house_lines", force: :cascade do |t|

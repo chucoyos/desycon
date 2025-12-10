@@ -50,7 +50,7 @@ class BlHouseLinesController < ApplicationController
 
   def set_bl_house_line
     # find with eager loading to avoid N+1 queries in show view
-    @bl_house_line = BlHouseLine.includes(bl_house_line_status_histories: :changed_by).find(params[:id])
+    @bl_house_line = BlHouseLine.includes(bl_house_line_status_histories: :user).find(params[:id])
   end
 
   def bl_house_line_params
