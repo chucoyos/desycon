@@ -56,6 +56,8 @@ class Container < ApplicationRecord
   scope :with_associations, -> { includes(:consolidator_entity, :shipping_line) }
 
   # Callbacks para historial de status
+  before_create :capture_current_user
+  before_update :capture_current_user
   after_create :create_initial_status_history
   after_update :create_status_history, if: :saved_change_to_status?
 
@@ -114,6 +116,10 @@ class Container < ApplicationRecord
 
   private
 
+  def capture_current_user
+    @current_user = defined?(Current) && Current.respond_to?(:user) ? Current.user : nil
+  end
+
   def normalize_number
     self.number = number.to_s.upcase.strip if number.present?
   end
@@ -122,7 +128,8 @@ class Container < ApplicationRecord
     container_status_histories.create!(
       status: status,
       fecha_actualizacion: Time.current,
-      observaciones: "Contenedor creado"
+      observaciones: "Contenedor creado",
+      user: @current_user
     )
   end
 
@@ -139,7 +146,8 @@ class Container < ApplicationRecord
       container_status_histories.create!(
         status: status,
         fecha_actualizacion: Time.current,
-        observaciones: "Status actualizado automáticamente"
+        observaciones: "Status actualizado automáticamente",
+        user: @current_user
       )
     end
   end

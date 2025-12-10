@@ -370,9 +370,7 @@
                   <% if history.observaciones.present? %>
                     <p class="text-xs text-gray-600 mt-1"><%= history.observaciones %></p>
                   <% end %>
-                  <% if history.user.present? %>
-                    <p class="text-xs text-gray-400 mt-1">por <%= history.user.email %></p>
-                  <% end %>
+                  <p class="text-xs text-gray-400 mt-1">por <%= history.user&.email || "Sistema" %></p>
                 </div>
               </div>
             <% end %>

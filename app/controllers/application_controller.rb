@@ -7,6 +7,9 @@ class ApplicationController < ActionController::Base
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
+  # Set current user for Current attributes
+  before_action :set_current_user
+
   # Redirect to containers index after sign in
   def after_sign_in_path_for(resource)
     containers_path
@@ -16,6 +19,10 @@ class ApplicationController < ActionController::Base
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
   private
+
+  def set_current_user
+    Current.user = current_user
+  end
 
   def user_not_authorized(exception)
     policy_name = exception.policy.class.to_s.underscore
