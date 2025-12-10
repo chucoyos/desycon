@@ -49,8 +49,11 @@ class BlHouseLinesController < ApplicationController
   private
 
   def set_bl_house_line
-    # find with eager loading to avoid N+1 queries in show view
-    @bl_house_line = BlHouseLine.includes(bl_house_line_status_histories: :user).find(params[:id])
+    if action_name == "show"
+      @bl_house_line = BlHouseLine.includes(bl_house_line_status_histories: :user).find(params[:id])
+    else
+      @bl_house_line = BlHouseLine.find(params[:id])
+    end
   end
 
   def bl_house_line_params
