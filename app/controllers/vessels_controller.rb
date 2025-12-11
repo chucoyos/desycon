@@ -67,11 +67,15 @@ class VesselsController < ApplicationController
   # DELETE /vessels/1 or /vessels/1.json
   def destroy
     authorize @vessel
-    @vessel.destroy!
 
     respond_to do |format|
-      format.html { redirect_to vessels_path, notice: "Se eliminó el buque.", status: :see_other }
-      format.json { head :no_content }
+      if @vessel.destroy
+        format.html { redirect_to vessels_path, notice: "Se eliminó el buque.", status: :see_other }
+        format.json { head :no_content }
+      else
+        format.html { redirect_to vessels_path, alert: "No se puede eliminar el buque porque tiene contenedores asociados." }
+        format.json { render json: @vessel.errors, status: :unprocessable_entity }
+      end
     end
   end
 
