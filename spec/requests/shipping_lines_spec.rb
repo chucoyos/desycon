@@ -8,7 +8,7 @@ RSpec.describe "/shipping_lines", type: :request do
   end
 
   let(:valid_attributes) {
-    { name: "Evergreen", scac_code: "EGLV" }
+    { name: "Evergreen", iso_code: "EGL" }
   }
 
   let(:invalid_attributes) {

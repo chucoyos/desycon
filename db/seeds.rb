@@ -152,43 +152,29 @@ end
 
 puts "✓ #{Port.count} puertos creados"
 
-# Crear líneas navieras con sus códigos SCAC
+# Crear líneas navieras con sus códigos ISO
 puts "Creando líneas navieras..."
 
 shipping_lines_data = [
-  { name: "Maersk", scac_code: "MAEU" },
-  { name: "CMA CGM", scac_code: "CMDU" },
-  { name: "Evergreen", scac_code: "EGLV" },
-  { name: "COSCO Shipping Lines", scac_code: "COSU" },
-  { name: "Hapag-Lloyd", scac_code: "HPGL" },
-  { name: "Hapag-Lloyd México", scac_code: "HPLM" },
-  { name: "Yang Ming Marine Transport Corporation", scac_code: "YMLU" },
-  { name: "ONE", scac_code: "ONEY" },
-  { name: "Hyundai Merchant Marine", scac_code: "HDMU" },
-  { name: "Hyundai de México", scac_code: "HDMX" },
-  { name: "PIL Pacific International Lines", scac_code: "PABV" },
-  { name: "ZIM", scac_code: "ZIMU" },
-  { name: "Wan Hai Lines", scac_code: "WHLC" },
-  { name: "Kawasaki Kisen Kaisha", scac_code: "KKLU" },
-  { name: "MOL", scac_code: "MOLU" },
-  { name: "Nippon Yusen Kaisha", scac_code: "NYKS" },
-  { name: "China Shipping Container Lines", scac_code: "CSCL" },
-  { name: "Regional Container Line", scac_code: "RCLU" },
-  { name: "LPA", scac_code: "LPAA" },
-  { name: "HAMBURG SUD", scac_code: "HSDU" },
-  { name: "Mediterranean Shipping Company", scac_code: "MSCU" },
-  { name: "Orient Overseas Container Line", scac_code: "OOLU" },
-  { name: "Bal Container Line", scac_code: "BACL" },
-  { name: "Consignataria Oseanica", scac_code: "COSO" },
-  { name: "TS Lines", scac_code: "TSLU" },
-  { name: "Sea Lead", scac_code: "SEAL" },
-  { name: "Sinocor Merchant Marine", scac_code: "SKLU" },
-  { name: "Corean Marine Transport Company", scac_code: "KMTC" }
+  { name: "COSCO", iso_code: "COS" },
+  { name: "LPA", iso_code: "LPA" },
+  { name: "HAMBURG SUD", iso_code: "SUD" },
+  { name: "CMA CGM", iso_code: "CMD" },
+  { name: "ONE", iso_code: "ONE" },
+  { name: "PACIFIC INTERNATIONAL LINES", iso_code: "PIL" },
+  { name: "YANG MING LINE", iso_code: "YML" },
+  { name: "ZIM", iso_code: "ZIM" },
+  { name: "Wan Hai Lines", iso_code: "WHL" },
+  { name: "Regional Container Lines", iso_code: "RCO" },
+  { name: "Mediterranean Shipping Company", iso_code: "MSO" },
+  { name: "Bal Container Line", iso_code: "BAL" },
+  { name: "TS Lines", iso_code: "TSL" },
+  { name: "Korea Marine Transport", iso_code: "KMO" }
 ]
 
 shipping_lines_data.each do |line_data|
   shipping_line = ShippingLine.find_or_initialize_by(name: line_data[:name])
-  shipping_line.scac_code = line_data[:scac_code] if shipping_line.scac_code.blank?
+  shipping_line.iso_code = line_data[:iso_code] if shipping_line.iso_code.blank?
   shipping_line.save!(validate: false) if shipping_line.new_record? || shipping_line.changed?
 end
 
