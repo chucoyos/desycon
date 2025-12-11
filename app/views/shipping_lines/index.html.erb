@@ -53,6 +53,7 @@
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gradient-to-r from-gray-50 to-white">
         <tr>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Código SCAC</th>
           <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Nombre</th>
           <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Fecha de Creación</th>
           <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Acciones</th>
@@ -69,8 +70,13 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                     </svg>
                   </div>
-                  <span class="text-sm font-semibold text-gray-900"><%= shipping_line.name %></span>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <%= shipping_line.scac_code %>
+                </span>
                 </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm font-semibold text-gray-900"><%= shipping_line.name %></span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                 <%= l(shipping_line.created_at, format: :short) %>
@@ -127,7 +133,12 @@
             </div>
             <div class="flex-1">
               <h3 class="text-lg font-bold text-gray-900"><%= shipping_line.name %></h3>
-              <p class="text-sm text-gray-600 flex items-center gap-1 mt-1">
+              <div class="flex items-center gap-2 mt-1">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <%= shipping_line.scac_code %>
+                </span>
+              </div>
+              <p class="text-sm text-gray-600 flex items-center gap-1 mt-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
