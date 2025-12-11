@@ -93,6 +93,6 @@ class ShippingLinesController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def shipping_line_params
-      params.require(:shipping_line).permit(:name)
+      params.require(:shipping_line).permit(:name, :scac_code)
     end
 end
