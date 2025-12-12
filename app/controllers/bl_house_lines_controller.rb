@@ -60,7 +60,7 @@ class BlHouseLinesController < ApplicationController
     params.require(:bl_house_line).permit(
       :blhouse, :partida, :cantidad, :contiene, :marcas, :peso, :volumen,
       :customs_agent_id, :client_id, :container_id, :packaging_id, :status,
-      :bl_endosado_documento, :liberacion_documento, :bl_revalidado_documento
+      :bl_endosado_documento, :liberacion_documento, :bl_revalidado_documento, :encomienda_documento
     )
   end
 end

@@ -12,6 +12,7 @@ class BlHouseLine < ApplicationRecord
   has_one_attached :bl_endosado_documento
   has_one_attached :liberacion_documento
   has_one_attached :bl_revalidado_documento
+  has_one_attached :encomienda_documento
 
   # Enums
   enum :status, {
@@ -43,7 +44,7 @@ class BlHouseLine < ApplicationRecord
   after_create :create_initial_status_history
   after_update :create_status_history, if: :saved_change_to_status?
   def documentos_completos?
-    bl_endosado_documento.attached? && liberacion_documento.attached? && bl_revalidado_documento.attached?
+    bl_endosado_documento.attached? && liberacion_documento.attached? && bl_revalidado_documento.attached? && encomienda_documento.attached?
   end
 
   private
