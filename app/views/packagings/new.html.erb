@@ -1,5 +1,22 @@
-<% content_for :title, "Nuevo Empaque" %>
+<% content_for :title, "Nuevo Embalaje" %>
 
-<div class="max-w-2xl mx-auto">
-  <%= render "form", packaging: @packaging %>
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Breadcrumb -->
+    <nav class="mb-8">
+      <ol class="flex items-center space-x-2">
+        <li>
+          <%= link_to "Embalajes", packagings_path, class: "text-gray-500 hover:text-gray-700 transition-colors duration-200" %>
+        </li>
+        <li class="flex items-center">
+          <svg class="w-4 h-4 text-gray-400 mx-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+          </svg>
+          <span class="text-gray-900 font-medium">Nuevo Embalaje</span>
+        </li>
+      </ol>
+    </nav>
+
+    <%= render "form", packaging: @packaging %>
+  </div>
 </div>
