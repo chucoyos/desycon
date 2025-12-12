@@ -39,7 +39,8 @@
           </div>
           <div class="flex flex-wrap gap-2 mt-3">
             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border <%= bl_house_line_status_badge_class(@bl_house_line.status) %> shadow-sm">
-              <%= @bl_house_line.status.humanize %>
+              <%= bl_house_line_status_icon(@bl_house_line.status) %>
+              <%= bl_house_line_status_nombre(@bl_house_line.status) %>
             </span>
             <% if @bl_house_line.container.present? %>
               <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border border-blue-200 bg-blue-50 text-blue-700 shadow-sm">

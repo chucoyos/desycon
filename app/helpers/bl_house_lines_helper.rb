@@ -19,6 +19,10 @@ module BlHouseLinesHelper
       "bg-indigo-100 text-indigo-800"
     when "pendiente_pagos_locales"
       "bg-pink-100 text-pink-800"
+    when "listo"
+      "bg-emerald-100 text-emerald-800"
+    when "revalidado"
+      "bg-cyan-100 text-cyan-800"
     else
       "bg-gray-100 text-gray-800"
     end
@@ -44,6 +48,10 @@ module BlHouseLinesHelper
       '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>'.html_safe
     when "pendiente_pagos_locales"
       '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>'.html_safe
+    when "listo"
+      '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'.html_safe
+    when "revalidado"
+      '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>'.html_safe
     else
       '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'.html_safe
     end
@@ -59,7 +67,9 @@ module BlHouseLinesHelper
       "pendiente_endoso_consignatario" => "Pendiente Endoso Consignatario",
       "finalizado" => "Finalizado",
       "instrucciones_pendientes" => "Instrucciones Pendientes",
-      "pendiente_pagos_locales" => "Pendiente Pagos Locales"
+      "pendiente_pagos_locales" => "Pendiente Pagos Locales",
+      "listo" => "Listo",
+      "revalidado" => "Revalidado"
     }[status] || status.humanize
   end
 end

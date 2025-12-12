@@ -23,7 +23,9 @@ class BlHouseLine < ApplicationRecord
     pendiente_endoso_consignatario: "pendiente_endoso_consignatario",
     finalizado: "finalizado",
     instrucciones_pendientes: "instrucciones_pendientes",
-    pendiente_pagos_locales: "pendiente_pagos_locales"
+    pendiente_pagos_locales: "pendiente_pagos_locales",
+    listo: "listo",
+    revalidado: "revalidado"
   }
 
   # Validations

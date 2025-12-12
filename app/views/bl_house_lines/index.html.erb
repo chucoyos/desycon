@@ -44,7 +44,8 @@
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                 <%= bl_house_line_status_badge_class(bl_house_line.status) %>">
-                <%= bl_house_line.status.humanize %>
+                <%= bl_house_line_status_icon(bl_house_line.status) %>
+                <%= bl_house_line_status_nombre(bl_house_line.status) %>
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
