@@ -4,7 +4,7 @@ class CustomsAgentsController < ApplicationController
 
   def dashboard
     @bl_house_lines = BlHouseLine.where(customs_agent: current_user.entity)
-                                 .includes(:container, :client, :packaging)
+                                 .includes(:container, :client)
                                  .order(created_at: :desc)
   end
 
