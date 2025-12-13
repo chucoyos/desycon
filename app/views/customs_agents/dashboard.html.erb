@@ -1,0 +1,126 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Dashboard Agente Aduanal</h1>
+      <p class="mt-2 text-sm text-gray-600">
+        Bienvenido <%= current_user.entity.name %> - Gestión de asignaciones de carga
+      </p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                <span class="text-white text-sm font-medium">📦</span>
+              </div>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">Total Asignaciones</dt>
+                <dd class="text-lg font-medium text-gray-900"><%= @bl_house_lines.count %></dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+                <span class="text-white text-sm font-medium">⏳</span>
+              </div>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">Pendientes</dt>
+                <dd class="text-lg font-medium text-gray-900"><%= @bl_house_lines.where.not(status: [:finalizado, :revalidado]).count %></dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                <span class="text-white text-sm font-medium">✅</span>
+              </div>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">Completados</dt>
+                <dd class="text-lg font-medium text-gray-900"><%= @bl_house_lines.where(status: [:finalizado, :revalidado]).count %></dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
+                <span class="text-white text-sm font-medium">⚠️</span>
+              </div>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">Con Problemas</dt>
+                <dd class="text-lg font-medium text-gray-900"><%= @bl_house_lines.where(status: [:instrucciones_pendientes, :pendiente_pagos_locales]).count %></dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BL House Lines Pipeline View -->
+    <div class="space-y-6">
+      <% if @bl_house_lines.any? %>
+        <% @bl_house_lines.each do |bl_house_line| %>
+          <div class="bg-white shadow overflow-hidden sm:rounded-md">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+              <div class="flex justify-between items-center">
+                <div>
+                  <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    BL: <%= bl_house_line.blhouse %>
+                  </h3>
+                  <p class="mt-1 text-sm text-gray-500">
+                    Cliente: <%= bl_house_line.client&.name || 'N/A' %> |
+                    Contenedor: <%= bl_house_line.container&.number || 'N/A' %> |
+                    Cantidad: <%= bl_house_line.cantidad %>
+                  </p>
+                </div>
+                <div class="flex space-x-2">
+                  <%= link_to 'Ver Detalles', bl_house_line_path(bl_house_line), class: 'bg-indigo-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-700' %>
+                  <%= link_to 'Editar', edit_bl_house_line_path(bl_house_line), class: 'bg-gray-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700' %>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-6">
+              <%= render 'status_pipeline', bl_house_line: bl_house_line %>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="bg-white shadow overflow-hidden sm:rounded-md">
+          <div class="text-center py-12">
+            <div class="text-gray-500">
+              <p>No tienes asignaciones de carga actualmente.</p>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

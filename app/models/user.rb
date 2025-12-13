@@ -5,6 +5,7 @@ class User < ApplicationRecord
          :recoverable, :rememberable, :validatable
 
   belongs_to :role
+  belongs_to :entity, optional: true
 
   validates :role, presence: true
 

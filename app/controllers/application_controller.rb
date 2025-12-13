@@ -10,9 +10,13 @@ class ApplicationController < ActionController::Base
   # Set current user for Current attributes
   before_action :set_current_user
 
-  # Redirect to containers index after sign in
+  # Redirect based on user role after sign in
   def after_sign_in_path_for(resource)
-    containers_path
+    if resource.customs_broker? && resource.entity&.is_customs_agent?
+      customs_agents_dashboard_path
+    else
+      containers_path
+    end
   end
 
   # Pundit: catch authorization errors

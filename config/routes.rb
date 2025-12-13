@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  get "customs_agents/dashboard"
   resources :packagings
   resources :entities do
     get :new_address, on: :collection

@@ -15,6 +15,7 @@ FactoryBot.define do
 
     trait :customs_broker do
       association :role, :customs_broker
+      association :entity, :customs_agent
     end
   end
 end

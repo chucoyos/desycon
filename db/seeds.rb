@@ -180,4 +180,101 @@ end
 
 puts "✓ #{ShippingLine.count} líneas navieras creadas"
 
+# Crear entidades de ejemplo
+puts "Creando entidades de ejemplo..."
+
+# Agentes aduanales de ejemplo
+customs_agents_data = [
+  { name: "Agencia Aduanal García & Asociados", is_customs_agent: true },
+  { name: "Despachos Aduanales Ramírez S.A.", is_customs_agent: true },
+  { name: "Servicios Aduanales López", is_customs_agent: true },
+  { name: "Agencia Aduanal Martínez", is_customs_agent: true }
+]
+
+customs_agents_data.each do |agent_data|
+  entity = Entity.find_or_initialize_by(name: agent_data[:name])
+  entity.assign_attributes(agent_data)
+  entity.save! if entity.changed? || entity.new_record?
+end
+
+# Clientes de ejemplo
+clients_data = [
+  { name: "Importadora ABC S.A. de C.V.", is_client: true },
+  { name: "Comercial XYZ Ltda.", is_client: true },
+  { name: "Distribuidora Nacional", is_client: true }
+]
+
+clients_data.each do |client_data|
+  entity = Entity.find_or_initialize_by(name: client_data[:name])
+  entity.assign_attributes(client_data)
+  entity.save! if entity.changed? || entity.new_record?
+end
+
+puts "✓ #{Entity.count} entidades creadas"
+
+# Crear usuarios de ejemplo asociados a entidades
+puts "Creando usuarios de ejemplo..."
+
+# Usuario para agencia aduanal
+customs_broker_role = Role.find_by(name: Role::CUSTOMS_BROKER)
+customs_agent_entity = Entity.find_by(name: "Agencia Aduanal García & Asociados")
+
+if customs_broker_role && customs_agent_entity
+  customs_user = User.find_or_initialize_by(email: 'agente@garcia.com')
+  customs_user.password = 'password123' if customs_user.new_record?
+  customs_user.password_confirmation = 'password123' if customs_user.new_record?
+  customs_user.role = customs_broker_role
+  customs_user.entity = customs_agent_entity
+  customs_user.save! if customs_user.changed? || customs_user.new_record?
+  puts "✓ Usuario agente aduanal creado (agente@garcia.com / password123)"
+end
+
+# Crear BL House Lines de ejemplo
+puts "Creando BL House Lines de ejemplo..."
+
+customs_agent_entity = Entity.find_by(name: "Agencia Aduanal García & Asociados")
+client_entity = Entity.find_by(name: "Importadora ABC S.A. de C.V.")
+consolidator_entity = Entity.find_by(is_consolidator: true)
+shipping_line = ShippingLine.first
+vessel = Vessel.first
+
+# Crear contenedor de ejemplo si no existe
+container = Container.find_or_create_by!(number: "CONT001") do |c|
+  c.consolidator_entity = consolidator_entity
+  c.shipping_line = shipping_line
+  c.vessel = vessel
+  c.status = "activo"
+  c.tipo_maniobra = "importacion"
+end
+
+packaging = Packaging.first || Packaging.create!(name: "Cajas", description: "Cajas de cartón")
+
+if customs_agent_entity && client_entity && container && packaging
+  bl_house_lines_data = [
+    { blhouse: "ABC123456789", status: "activo", cantidad: 100, partida: 1 },
+    { blhouse: "DEF987654321", status: "documentos_ok", cantidad: 200, partida: 2 },
+    { blhouse: "GHI456789123", status: "listo", cantidad: 150, partida: 3 },
+    { blhouse: "JKL789123456", status: "revalidado", cantidad: 80, partida: 4 }
+  ]
+
+  bl_house_lines_data.each do |bl_data|
+    bl = BlHouseLine.find_or_initialize_by(blhouse: bl_data[:blhouse])
+    bl.assign_attributes(
+      customs_agent: customs_agent_entity,
+      client: client_entity,
+      container: container,
+      packaging: packaging,
+      status: bl_data[:status],
+      cantidad: bl_data[:cantidad],
+      partida: bl_data[:partida],
+      peso: 1000.0,
+      volumen: 10.0,
+      contiene: "Mercancía de ejemplo"
+    )
+    bl.save! if bl.changed? || bl.new_record?
+  end
+
+  puts "✓ #{BlHouseLine.count} BL House Lines creadas"
+end
+
 puts "Seeds completados exitosamente!"
