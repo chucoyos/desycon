@@ -22,12 +22,14 @@ RSpec.describe "Containers", type: :request do
 
   describe "GET /containers/:id" do
     it "renders a successful response" do
+      sign_in user, scope: :user
       container = create(:container)
       get container_url(container)
       expect(response).to be_successful
     end
 
     it "displays associated bl_house_lines" do
+      sign_in user, scope: :user
       container = create(:container)
       bl_house_line = create(:bl_house_line, container: container)
 
@@ -38,6 +40,7 @@ RSpec.describe "Containers", type: :request do
     end
 
     it "shows create new partida link" do
+      sign_in user, scope: :user
       container = create(:container)
       get container_url(container)
       expect(response).to be_successful
@@ -49,6 +52,7 @@ RSpec.describe "Containers", type: :request do
   describe "DELETE /containers/:id" do
     context "when container has no associated bl_house_lines" do
       it "destroys the requested container" do
+        sign_in user, scope: :user
         container = create(:container)
         # Ensure the container has no BlHouseLines
         expect(container.bl_house_lines).to be_empty
@@ -59,6 +63,7 @@ RSpec.describe "Containers", type: :request do
       end
 
       it "redirects to the containers list" do
+        sign_in user, scope: :user
         container = create(:container)
         # Ensure the container has no BlHouseLines
         expect(container.bl_house_lines).to be_empty
@@ -70,6 +75,7 @@ RSpec.describe "Containers", type: :request do
 
     context "when container has associated bl_house_lines" do
       it "does not destroy the container" do
+        sign_in user, scope: :user
         container = create(:container)
         create(:bl_house_line, container: container)
 
@@ -79,6 +85,7 @@ RSpec.describe "Containers", type: :request do
       end
 
       it "redirects to containers list with alert message" do
+        sign_in user, scope: :user
         container = create(:container)
         create(:bl_house_line, container: container)
 

@@ -35,6 +35,7 @@ class BlHouseLinesController < ApplicationController
     if @bl_house_line.save
       redirect_to @bl_house_line, notice: "Bl house line was successfully created."
     else
+      @customs_agents = available_customs_agents
       render :new, status: :unprocessable_entity
     end
   end
@@ -46,6 +47,7 @@ class BlHouseLinesController < ApplicationController
     if @bl_house_line.update(bl_house_line_params)
       redirect_to @bl_house_line, notice: "Bl house line was successfully updated."
     else
+      @customs_agents = available_customs_agents
       render :edit, status: :unprocessable_entity
     end
   end
@@ -61,6 +63,8 @@ class BlHouseLinesController < ApplicationController
   private
 
   def available_customs_agents
+    return Entity.customs_agents unless current_user
+
     if current_user.customs_broker? && current_user.entity&.is_customs_agent?
       Entity.where(id: current_user.entity_id)
     else

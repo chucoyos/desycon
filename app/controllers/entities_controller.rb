@@ -36,6 +36,7 @@ class EntitiesController < ApplicationController
   def edit
     # Ensure at least one address field is available for editing
     @entity.addresses.build if @entity.addresses.empty?
+    authorize @entity
   end
 
   def create

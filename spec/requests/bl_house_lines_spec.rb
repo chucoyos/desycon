@@ -1,6 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe "BlHouseLines", type: :request do
+  let(:user) { create(:user, :operator) }
   let(:customs_agent) { create(:entity, :customs_agent) }
   let(:client) { create(:entity, :client) }
   let(:container) { create(:container) }
@@ -37,6 +38,7 @@ RSpec.describe "BlHouseLines", type: :request do
 
   describe "GET /bl_house_lines" do
     it "renders a successful response" do
+      sign_in user, scope: :user
       create(:bl_house_line)
       get bl_house_lines_url
       expect(response).to be_successful
@@ -45,6 +47,7 @@ RSpec.describe "BlHouseLines", type: :request do
 
   describe "GET /bl_house_lines/:id" do
     it "renders a successful response" do
+      sign_in user, scope: :user
       bl_house_line = create(:bl_house_line)
       get bl_house_line_url(bl_house_line)
       expect(response).to be_successful
@@ -53,6 +56,7 @@ RSpec.describe "BlHouseLines", type: :request do
 
   describe "GET /bl_house_lines/new" do
     it "renders a successful response" do
+      sign_in user, scope: :user
       get new_bl_house_line_url
       expect(response).to be_successful
     end
@@ -60,6 +64,7 @@ RSpec.describe "BlHouseLines", type: :request do
 
   describe "GET /bl_house_lines/:id/edit" do
     it "renders a successful response" do
+      sign_in user, scope: :user
       bl_house_line = create(:bl_house_line)
       get edit_bl_house_line_url(bl_house_line)
       expect(response).to be_successful
@@ -69,12 +74,14 @@ RSpec.describe "BlHouseLines", type: :request do
   describe "POST /bl_house_lines" do
     context "with valid parameters" do
       it "creates a new BlHouseLine" do
+        sign_in user, scope: :user
         expect {
           post bl_house_lines_url, params: { bl_house_line: valid_attributes }
         }.to change(BlHouseLine, :count).by(1)
       end
 
       it "redirects to the created bl_house_line" do
+        sign_in user, scope: :user
         post bl_house_lines_url, params: { bl_house_line: valid_attributes }
         expect(response).to redirect_to(bl_house_line_url(BlHouseLine.last))
       end
@@ -82,12 +89,14 @@ RSpec.describe "BlHouseLines", type: :request do
 
     context "with invalid parameters" do
       it "does not create a new BlHouseLine" do
+        sign_in user, scope: :user
         expect {
           post bl_house_lines_url, params: { bl_house_line: invalid_attributes }
         }.to change(BlHouseLine, :count).by(0)
       end
 
       it "renders a response with 422 status (i.e. to display the 'new' template)" do
+        sign_in user, scope: :user
         post bl_house_lines_url, params: { bl_house_line: invalid_attributes }
         expect(response).to have_http_status(:unprocessable_entity)
       end
@@ -104,6 +113,7 @@ RSpec.describe "BlHouseLines", type: :request do
       }
 
       it "updates the requested bl_house_line" do
+        sign_in user, scope: :user
         bl_house_line = create(:bl_house_line)
         patch bl_house_line_url(bl_house_line), params: { bl_house_line: new_attributes }
         bl_house_line.reload
@@ -112,6 +122,7 @@ RSpec.describe "BlHouseLines", type: :request do
       end
 
       it "redirects to the bl_house_line" do
+        sign_in user, scope: :user
         bl_house_line = create(:bl_house_line)
         patch bl_house_line_url(bl_house_line), params: { bl_house_line: new_attributes }
         bl_house_line.reload
@@ -121,6 +132,7 @@ RSpec.describe "BlHouseLines", type: :request do
 
     context "with invalid parameters" do
       it "renders a response with 422 status (i.e. to display the 'edit' template)" do
+        sign_in user, scope: :user
         bl_house_line = create(:bl_house_line)
         patch bl_house_line_url(bl_house_line), params: { bl_house_line: invalid_attributes }
         expect(response).to have_http_status(:unprocessable_entity)
@@ -130,6 +142,7 @@ RSpec.describe "BlHouseLines", type: :request do
 
   describe "DELETE /bl_house_lines/:id" do
     it "destroys the requested bl_house_line" do
+      sign_in user, scope: :user
       bl_house_line = create(:bl_house_line)
       expect {
         delete bl_house_line_url(bl_house_line)
@@ -137,6 +150,7 @@ RSpec.describe "BlHouseLines", type: :request do
     end
 
     it "redirects to the bl_house_lines list" do
+      sign_in user, scope: :user
       bl_house_line = create(:bl_house_line)
       delete bl_house_line_url(bl_house_line)
       expect(response).to redirect_to(bl_house_lines_url)
