@@ -18,7 +18,7 @@ class CustomsAgentsController < ApplicationController
 
     @bl_house_lines = BlHouseLine.where(customs_agent: current_user.entity)
                                  .or(BlHouseLine.where(customs_agent: nil))
-                                 .includes(:container, :client, :customs_agent)
+                                 .includes(:container, :client, :customs_agent, :bl_house_line_status_histories)
                                  .order(created_at: :desc)
   end
 
