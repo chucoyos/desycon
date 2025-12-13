@@ -1,10 +1,19 @@
 <% content_for :title, "Partida #{@bl_house_line.partida}" %>
 
+<% is_customs_agent = current_user.customs_broker? && current_user.entity&.is_customs_agent? %>
+
 <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
 
   <!-- Breadcrumb Navigation -->
   <div class="mb-4 sm:mb-6">
-    <% if @bl_house_line.container.present? %>
+    <% if is_customs_agent %>
+      <%= link_to customs_agents_dashboard_path, class: "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-blue-700 hover:bg-blue-50 transition-all duration-200 group" do %>
+        <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+        </svg>
+        <span>Volver al dashboard</span>
+      <% end %>
+    <% elsif @bl_house_line.container.present? %>
       <%= link_to container_path(@bl_house_line.container, anchor: 'partidas'), class: "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-blue-700 hover:bg-blue-50 transition-all duration-200 group" do %>
         <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>

@@ -1,10 +1,10 @@
 class BlHouseLinePolicy < ApplicationPolicy
   def index?
-    user.present? && (!user.customs_broker? || owned_by_customs_agent?)
+    user.present? && (!user.customs_broker? || owned_by_customs_agent? || record.customs_agent.nil?)
   end
 
   def show?
-    user.present? && (!user.customs_broker? || owned_by_customs_agent?)
+    user.present? && (!user.customs_broker? || owned_by_customs_agent? || record.customs_agent.nil?)
   end
 
   def create?
@@ -16,7 +16,7 @@ class BlHouseLinePolicy < ApplicationPolicy
   end
 
   def update?
-    user.present? && (!user.customs_broker? || owned_by_customs_agent?)
+    user.present? && (!user.customs_broker? || owned_by_customs_agent? || record.customs_agent.nil?)
   end
 
   def edit?
@@ -30,9 +30,9 @@ class BlHouseLinePolicy < ApplicationPolicy
   class Scope < Scope
     def resolve
       if user.nil? || user.customs_broker?
-        # For customs brokers, only return their assigned BL House Lines
+        # For customs brokers, return their assigned BL House Lines or unassigned ones
         if user&.customs_broker?
-          scope.where(customs_agent: user.entity)
+          scope.where(customs_agent: user.entity).or(scope.where(customs_agent: nil))
         else
           scope.none
         end

@@ -3,8 +3,22 @@ class CustomsAgentsController < ApplicationController
   before_action :ensure_customs_agent
 
   def dashboard
+    if params[:blhouse].present?
+      bl_house_line = BlHouseLine.where(customs_agent: current_user.entity)
+                                .or(BlHouseLine.where(customs_agent: nil))
+                                .where("LOWER(blhouse) = ?", params[:blhouse].strip.downcase)
+                                .first
+      if bl_house_line
+        redirect_to edit_bl_house_line_path(bl_house_line)
+        return
+      else
+        flash[:alert] = "BL House no encontrado."
+      end
+    end
+
     @bl_house_lines = BlHouseLine.where(customs_agent: current_user.entity)
-                                 .includes(:container, :client)
+                                 .or(BlHouseLine.where(customs_agent: nil))
+                                 .includes(:container, :client, :customs_agent)
                                  .order(created_at: :desc)
   end
 
