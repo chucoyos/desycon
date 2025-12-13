@@ -17,11 +17,13 @@ class BlHouseLinesController < ApplicationController
   def new
     @bl_house_line = BlHouseLine.new
     @bl_house_line.container_id = params[:container_id] if params[:container_id].present?
+    @customs_agents = available_customs_agents
     authorize @bl_house_line
   end
 
   # GET /bl_house_lines/1/edit
   def edit
+    @customs_agents = available_customs_agents
     authorize @bl_house_line
   end
 
@@ -57,6 +59,14 @@ class BlHouseLinesController < ApplicationController
   end
 
   private
+
+  def available_customs_agents
+    if current_user.customs_broker? && current_user.entity&.is_customs_agent?
+      Entity.where(id: current_user.entity_id)
+    else
+      Entity.customs_agents
+    end
+  end
 
   def set_bl_house_line
     if action_name == "show"
