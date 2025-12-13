@@ -1,16 +1,19 @@
 class EntitiesController < ApplicationController
   before_action :set_entity, only: [ :show, :edit, :update, :destroy ]
   before_action :load_patents, only: [ :show ]
+  after_action :verify_authorized, except: :index
 
   def index
-    @entities = Entity.includes(:fiscal_profile)
-                      .preload(:customs_agent_patents)
-                      .order(:name)
-                      .page(params[:page])
+    @entities = policy_scope(Entity).includes(:fiscal_profile)
+                                    .preload(:customs_agent_patents)
+                                    .order(:name)
+                                    .page(params[:page])
+    authorize Entity
   end
 
   def show
     @entity.build_fiscal_profile unless @entity.fiscal_profile.present?
+    authorize @entity
   end
 
   def new
@@ -19,10 +22,12 @@ class EntitiesController < ApplicationController
     @entity.build_fiscal_profile
     @entity.addresses.build
     @entity.customs_agent_patents.build
+    authorize @entity
   end
 
   def new_address
     @entity = Entity.new
+    authorize @entity
     respond_to do |format|
       format.turbo_stream
     end
@@ -35,6 +40,7 @@ class EntitiesController < ApplicationController
 
   def create
     @entity = Entity.new(entity_params)
+    authorize @entity
 
     # Handle duplicate addresses for new entities
     if @entity.new_record? && @entity.addresses.size > 1
@@ -53,6 +59,8 @@ class EntitiesController < ApplicationController
   end
 
   def update
+    authorize @entity
+
     respond_to do |format|
       if @entity.update(entity_params)
         @entity.reload # Reload to ensure associations are fresh
@@ -106,6 +114,8 @@ class EntitiesController < ApplicationController
   end
 
   def destroy
+    authorize @entity
+
     @entity.destroy
     redirect_to entities_path, notice: "Entidad eliminada exitosamente."
   end

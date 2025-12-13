@@ -1,14 +1,14 @@
 class ContainerPolicy < ApplicationPolicy
   def index?
-    true
+    user.present? && !user.customs_broker?
   end
 
   def show?
-    true
+    user.present? && !user.customs_broker?
   end
 
   def create?
-    user.present?
+    user.present? && !user.customs_broker?
   end
 
   def new?
@@ -16,7 +16,7 @@ class ContainerPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present?
+    user.present? && !user.customs_broker?
   end
 
   def edit?
@@ -29,7 +29,11 @@ class ContainerPolicy < ApplicationPolicy
 
   class Scope < Scope
     def resolve
-      scope.all
+      if user.nil? || user.customs_broker?
+        scope.none
+      else
+        scope.all
+      end
     end
   end
 end

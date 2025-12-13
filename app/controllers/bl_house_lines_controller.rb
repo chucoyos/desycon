@@ -1,28 +1,34 @@
 class BlHouseLinesController < ApplicationController
   before_action :set_bl_house_line, only: %i[show edit update destroy]
+  after_action :verify_authorized, except: :index
 
   # GET /bl_house_lines
   def index
-    @bl_house_lines = BlHouseLine.all
+    @bl_house_lines = policy_scope(BlHouseLine)
+    authorize BlHouseLine
   end
 
   # GET /bl_house_lines/1
   def show
+    authorize @bl_house_line
   end
 
   # GET /bl_house_lines/new
   def new
     @bl_house_line = BlHouseLine.new
     @bl_house_line.container_id = params[:container_id] if params[:container_id].present?
+    authorize @bl_house_line
   end
 
   # GET /bl_house_lines/1/edit
   def edit
+    authorize @bl_house_line
   end
 
   # POST /bl_house_lines
   def create
     @bl_house_line = BlHouseLine.new(bl_house_line_params)
+    authorize @bl_house_line
 
     if @bl_house_line.save
       redirect_to @bl_house_line, notice: "Bl house line was successfully created."
@@ -33,6 +39,8 @@ class BlHouseLinesController < ApplicationController
 
   # PATCH/PUT /bl_house_lines/1
   def update
+    authorize @bl_house_line
+
     if @bl_house_line.update(bl_house_line_params)
       redirect_to @bl_house_line, notice: "Bl house line was successfully updated."
     else
@@ -42,6 +50,8 @@ class BlHouseLinesController < ApplicationController
 
   # DELETE /bl_house_lines/1
   def destroy
+    authorize @bl_house_line
+
     @bl_house_line.destroy
     redirect_to bl_house_lines_url, notice: "Bl house line was successfully destroyed."
   end

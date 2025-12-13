@@ -1,27 +1,33 @@
 class PackagingsController < ApplicationController
   before_action :set_packaging, only: %i[ show edit update destroy ]
+  after_action :verify_authorized, except: :index
 
   # GET /packagings or /packagings.json
   def index
-    @packagings = Packaging.all
+    @packagings = policy_scope(Packaging)
+    authorize Packaging
   end
 
   # GET /packagings/1 or /packagings/1.json
   def show
+    authorize @packaging
   end
 
   # GET /packagings/new
   def new
     @packaging = Packaging.new
+    authorize @packaging
   end
 
   # GET /packagings/1/edit
   def edit
+    authorize @packaging
   end
 
   # POST /packagings or /packagings.json
   def create
     @packaging = Packaging.new(packaging_params)
+    authorize @packaging
 
     respond_to do |format|
       if @packaging.save
@@ -36,6 +42,8 @@ class PackagingsController < ApplicationController
 
   # PATCH/PUT /packagings/1 or /packagings/1.json
   def update
+    authorize @packaging
+
     respond_to do |format|
       if @packaging.update(packaging_params)
         format.html { redirect_to @packaging, notice: "Packaging was successfully updated.", status: :see_other }
@@ -49,6 +57,8 @@ class PackagingsController < ApplicationController
 
   # DELETE /packagings/1 or /packagings/1.json
   def destroy
+    authorize @packaging
+
     @packaging.destroy!
 
     respond_to do |format|

@@ -1,4 +1,4 @@
-class ConsolidatorPolicy < ApplicationPolicy
+class PackagingPolicy < ApplicationPolicy
   def index?
     user.present? && !user.customs_broker?
   end
@@ -11,8 +11,16 @@ class ConsolidatorPolicy < ApplicationPolicy
     user.present? && !user.customs_broker?
   end
 
+  def new?
+    create?
+  end
+
   def update?
     user.present? && !user.customs_broker?
+  end
+
+  def edit?
+    update?
   end
 
   def destroy?

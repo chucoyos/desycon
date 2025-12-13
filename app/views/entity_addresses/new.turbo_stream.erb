@@ -72,7 +72,7 @@
       <select name="address[pais]" id="address_pais" class="block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900">
         <option value="">Seleccionar país</option>
         <% Address.paises_con_banderas.each do |display_name, code| %>
-          <option value="<%= code %>"><%= display_name %></option>
+          <option value="<%= code %>" <%= "selected" if code == "MX" %>><%= display_name %></option>
         <% end %>
       </select>
       <% if @address.errors[:pais].any? %>
