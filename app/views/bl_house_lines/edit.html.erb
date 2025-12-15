@@ -1,4 +1,27 @@
+<% is_customs_agent = current_user.customs_broker? && current_user.entity&.is_customs_agent? %>
+
 <div class="max-w-4xl mx-auto">
+  <% if is_customs_agent %>
+    <!-- Instructions Banner for Customs Agents -->
+    <div class="mb-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg shadow-sm">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zm-11-1a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-blue-800 mb-2">Instrucciones Importantes</h3>
+          <ul class="text-sm text-blue-700 space-y-1 ml-4 list-disc">
+            <li>Completa la información requerida: Agente Aduanal y Cliente a Facturar</li>
+            <li>Carga la documentación: BL Endosado, Liberación y Encomienda</li>
+            <li>Asegúrate de que el BL esté debidamente endosado para evitar retrasos</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
   <div class="bg-white shadow-lg rounded-lg overflow-hidden">
     <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
       <h1 class="text-2xl font-bold text-gray-900">Editar Partida <%= @bl_house_line.partida %></h1>
