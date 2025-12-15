@@ -60,31 +60,6 @@
       <% end %>
     </div>
 
-    <!-- BL Revalidado -->
-    <div class="flex flex-col items-center justify-center p-3 rounded-lg <%= bl_house_line.bl_revalidado_documento.attached? ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200' %>">
-      <svg class="w-8 h-8 <%= bl_house_line.bl_revalidado_documento.attached? ? 'text-green-600' : 'text-gray-400' %> mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
-      <p class="text-sm font-semibold text-gray-900 text-center mb-1">BL Revalidado</p>
-      <p class="text-xs text-gray-500 text-center" title="<%= bl_house_line.bl_revalidado_documento.filename if bl_house_line.bl_revalidado_documento.attached? %>">
-        <% if bl_house_line.bl_revalidado_documento.attached? %>
-          ✓ Cargado
-        <% else %>
-          ✗ No cargado
-        <% end %>
-      </p>
-      <% if bl_house_line.bl_revalidado_documento.attached? %>
-        <div class="mt-2">
-          <%= link_to rails_blob_path(bl_house_line.bl_revalidado_documento, disposition: "inline"), target: "_blank", class: "p-1 text-green-600 hover:bg-green-100 rounded transition-colors", title: "Ver documento" do %>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-            </svg>
-          <% end %>
-        </div>
-      <% end %>
-    </div>
-
     <!-- Encomienda -->
     <div class="flex flex-col items-center justify-center p-3 rounded-lg <%= bl_house_line.encomienda_documento.attached? ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200' %>">
       <svg class="w-8 h-8 <%= bl_house_line.encomienda_documento.attached? ? 'text-green-600' : 'text-gray-400' %> mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,6 +76,31 @@
       <% if bl_house_line.encomienda_documento.attached? %>
         <div class="mt-2">
           <%= link_to rails_blob_path(bl_house_line.encomienda_documento, disposition: "inline"), target: "_blank", class: "p-1 text-green-600 hover:bg-green-100 rounded transition-colors", title: "Ver documento" do %>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+        <!-- BL Revalidado -->
+    <div class="flex flex-col items-center justify-center p-3 rounded-lg <%= bl_house_line.bl_revalidado_documento.attached? ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200' %>">
+      <svg class="w-8 h-8 <%= bl_house_line.bl_revalidado_documento.attached? ? 'text-green-600' : 'text-gray-400' %> mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <p class="text-sm font-semibold text-gray-900 text-center mb-1">BL Revalidado</p>
+      <p class="text-xs text-gray-500 text-center" title="<%= bl_house_line.bl_revalidado_documento.filename if bl_house_line.bl_revalidado_documento.attached? %>">
+        <% if bl_house_line.bl_revalidado_documento.attached? %>
+          ✓ Cargado
+        <% else %>
+          ✗ No cargado
+        <% end %>
+      </p>
+      <% if bl_house_line.bl_revalidado_documento.attached? %>
+        <div class="mt-2">
+          <%= link_to rails_blob_path(bl_house_line.bl_revalidado_documento, disposition: "inline"), target: "_blank", class: "p-1 text-green-600 hover:bg-green-100 rounded transition-colors", title: "Ver documento" do %>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
