@@ -7,6 +7,10 @@ class User < ApplicationRecord
   belongs_to :role
   belongs_to :entity, optional: true
 
+  # Associations that reference users; prevent deletion when present
+  has_many :container_status_histories, dependent: :restrict_with_error
+  has_many :bl_house_line_status_histories, dependent: :restrict_with_error
+
   validates :role, presence: true
 
   # Override Devise password validation to allow blank when updating
