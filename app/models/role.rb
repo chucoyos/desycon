@@ -6,7 +6,7 @@ class Role < ApplicationRecord
   # Constantes para los roles
   ADMIN = "admin"
   OPERATOR = "operator"
-  CUSTOMS_BROKER = "customs_broker"
+  CUSTOMS_BROKER = "agente aduanal"
 
   def admin?
     name == ADMIN
@@ -22,5 +22,17 @@ class Role < ApplicationRecord
 
   def internal?
     admin? || operator?
+  end
+
+  # Nombre visible del role
+  def display_name
+    case name
+    when OPERATOR
+      "Operador"
+    when CUSTOMS_BROKER
+      "Agente Aduanal"
+    else
+      name
+    end
   end
 end

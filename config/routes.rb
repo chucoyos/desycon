@@ -1,13 +1,21 @@
 Rails.application.routes.draw do
   get "customs_agents/dashboard"
+
+  devise_for :users
+
   resources :packagings
+  resources :roles
+
+  namespace :admin do
+    resources :users
+  end
+
   resources :entities do
     get :new_address, on: :collection
     resources :customs_agent_patents, only: [ :create, :update, :destroy, :edit ]
     resources :addresses, controller: "entity_addresses", only: [ :create, :update, :destroy, :edit ]
   end
   resources :ports
-  devise_for :users
 
   resources :shipping_lines
   resources :vessels

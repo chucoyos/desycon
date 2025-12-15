@@ -1,10 +1,10 @@
-class UserPolicy < ApplicationPolicy
+class RolePolicy < ApplicationPolicy
   def index?
     user.present? && user.admin?
   end
 
   def show?
-    user.present? && (user == record || user.admin?)
+    user.present? && user.admin?
   end
 
   def create?
@@ -16,7 +16,7 @@ class UserPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present? && (user == record || user.admin?)
+    user.present? && user.admin?
   end
 
   def edit?
@@ -32,7 +32,7 @@ class UserPolicy < ApplicationPolicy
       if user&.admin?
         scope.all
       else
-        scope.where(id: user.id)
+        scope.none
       end
     end
   end
