@@ -1,6 +1,9 @@
 class BlHouseLinePolicy < ApplicationPolicy
   def index?
-    user.present? && (!user.customs_broker? || owned_by_customs_agent? || record.customs_agent.nil?)
+    # When authorizing the collection route we receive the policy with
+    # the class as the record. Avoid calling instance methods on `record`.
+    # Rely on the policy scope to limit which records a customs broker sees.
+    user.present?
   end
 
   def show?
