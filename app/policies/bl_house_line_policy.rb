@@ -1,9 +1,20 @@
 class BlHouseLinePolicy < ApplicationPolicy
   def index?
-    # When authorizing the collection route we receive the policy with
-    # the class as the record. Avoid calling instance methods on `record`.
-    # Rely on the policy scope to limit which records a customs broker sees.
-    user.present?
+    # When authorizing the collection route we may receive the policy with
+    # the class as the record (for controller#index) or with an instance
+    # (some specs call the policy with a record). If we get the class,
+    # rely on the scope to limit results; if we get an instance, apply the
+    # same ownership rules used by `show?`/`update?` so specs behave correctly.
+    return false unless user.present?
+
+    return true unless user.customs_broker?
+
+    # If `record` is the class (policy for collection), allow — scope will filter.
+    return true if record.is_a?(Class)
+
+    # For instance records, only allow index if the bl is assigned to the
+    # user's entity or it's unassigned.
+    owned_by_customs_agent? || record.customs_agent.nil?
   end
 
   def show?
