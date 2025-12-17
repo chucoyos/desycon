@@ -64,8 +64,7 @@ RSpec.describe BlHouseLinePolicy, type: :policy do
 
     context "when bl_house_line is unassigned" do
       let(:bl_house_line) { create(:bl_house_line, customs_agent: nil) }
-
-      it { is_expected.to permit_action(:index) }
+        it { is_expected.not_to permit_action(:index) }
       it { is_expected.to permit_action(:show) }
       it { is_expected.not_to permit_action(:create) }
       it { is_expected.not_to permit_action(:new) }
@@ -74,8 +73,8 @@ RSpec.describe BlHouseLinePolicy, type: :policy do
       it { is_expected.not_to permit_action(:destroy) }
 
       describe "scope" do
-        it "returns the bl_house_line" do
-          expect(BlHouseLinePolicy::Scope.new(user, BlHouseLine.all).resolve).to include(bl_house_line)
+        it "does not return the unassigned bl_house_line" do
+          expect(BlHouseLinePolicy::Scope.new(user, BlHouseLine.all).resolve).not_to include(bl_house_line)
         end
       end
     end

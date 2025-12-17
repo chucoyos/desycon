@@ -13,8 +13,8 @@ class BlHouseLinePolicy < ApplicationPolicy
     return true if record.is_a?(Class)
 
     # For instance records, only allow index if the bl is assigned to the
-    # user's entity or it's unassigned.
-    owned_by_customs_agent? || record.customs_agent.nil?
+    # user's entity.
+    owned_by_customs_agent?
   end
 
   def show?
@@ -43,13 +43,11 @@ class BlHouseLinePolicy < ApplicationPolicy
 
   class Scope < Scope
     def resolve
-      if user.nil? || user.customs_broker?
-        # For customs brokers, return their assigned BL House Lines or unassigned ones
-        if user&.customs_broker?
-          scope.where(customs_agent: user.entity).or(scope.where(customs_agent: nil))
-        else
-          scope.none
-        end
+      if user.nil?
+        scope.none
+      elsif user.customs_broker?
+        # For customs brokers, return only BL House Lines assigned to their entity
+        scope.where(customs_agent: user.entity)
       else
         scope.all
       end

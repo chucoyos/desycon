@@ -1,11 +1,11 @@
 <%# Tailwind-styled pagination partial. Usage: render 'shared/tailwind_pagination', paginated: @items %>
-<% paginated = local_assigns[:paginated] || paginated %>
+<% paginated = local_assigns[:paginated] || local_assigns[:collection] || paginated %>
 
 <%# Determine current per-page value (from paginated object if present, otherwise params or default) %>
 <% current_per = if paginated && paginated.respond_to?(:limit_value)
   paginated.limit_value
 else
-  params[:per].to_i.nonzero? || 10
+  (params[:per].to_i.nonzero? || 10)
 end %>
 
 <%# Support plain Arrays in view specs: compute pagination values when Kaminari methods aren't available %>
@@ -15,10 +15,11 @@ end %>
   <% prev_page = paginated.prev_page %>
   <% next_page = paginated.next_page %>
 <% else %>
-  <% size = paginated.respond_to?(:size) ? paginated.size : 0 %>
+  <% size = paginated.respond_to?(:size) ? paginated.size : (paginated.present? ? Array(paginated).size : 0) %>
   <% current_page = params[:page].to_i.nonzero? || 1 %>
-  <% per = current_per %>
-  <% total_pages = (size.to_f / per).ceil %>
+  <% per = (current_per || 10).to_i %>
+  <% per = 10 if per <= 0 %>
+  <% total_pages = per > 0 ? (size.to_f / per).ceil : 0 %>
   <% prev_page = current_page > 1 ? current_page - 1 : nil %>
   <% next_page = current_page < total_pages ? current_page + 1 : nil %>
 <% end %>

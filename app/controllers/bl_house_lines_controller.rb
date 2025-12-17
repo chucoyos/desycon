@@ -4,8 +4,30 @@ class BlHouseLinesController < ApplicationController
 
   # GET /bl_house_lines
   def index
-    @bl_house_lines = policy_scope(BlHouseLine)
-    authorize BlHouseLine
+    scope = policy_scope(BlHouseLine).includes(:client)
+
+    # Filters
+    if params[:blhouse].present?
+      scope = scope.where("bl_house_lines.blhouse ILIKE ?", "%#{params[:blhouse]}%")
+    end
+
+    if params[:container_number].present?
+      scope = scope.joins(:container).where("containers.number ILIKE ?", "%#{params[:container_number]}%")
+    end
+
+    if params[:client_id].present?
+      scope = scope.where(client_id: params[:client_id])
+    end
+
+    if params[:customs_agent_id].present?
+      scope = scope.where(customs_agent_id: params[:customs_agent_id])
+    end
+
+    @bl_house_lines = scope.page(params[:page]).per(params[:per] || 20)
+
+    # Data for filters
+    @clients = Entity.clients.order(:name)
+    @customs_agents = available_customs_agents
   end
 
   # GET /bl_house_lines/1
