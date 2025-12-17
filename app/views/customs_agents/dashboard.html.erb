@@ -143,8 +143,19 @@
             </div>
 
             <div class="p-6 space-y-6">
-              <%= render 'status_pipeline', bl_house_line: bl_house_line %>
-              <%= render 'documents_info', bl_house_line: bl_house_line %>
+              <details class="mb-4 bg-gray-50 p-4 rounded">
+                <summary class="cursor-pointer font-medium text-gray-800">Línea de tiempo</summary>
+                <div class="mt-3">
+                  <%= render 'status_pipeline', bl_house_line: bl_house_line %>
+                </div>
+              </details>
+
+              <details class="mb-4 bg-gray-50 p-4 rounded">
+                <summary class="cursor-pointer font-medium text-gray-800">Documentos</summary>
+                <div class="mt-3">
+                  <%= render 'documents_info', bl_house_line: bl_house_line %>
+                </div>
+              </details>
             </div>
           </div>
         <% end %>
