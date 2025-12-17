@@ -50,7 +50,9 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <%= link_to "Ver", bl_house_line, class: "text-indigo-600 hover:text-indigo-900 mr-3" %>
               <%= link_to "Editar", edit_bl_house_line_path(bl_house_line), class: "text-indigo-600 hover:text-indigo-900 mr-3" %>
-              <%= button_to "Eliminar", bl_house_line, method: :delete, form: { class: "inline", onsubmit: "return confirm('¿Estás seguro?')" }, class: "text-red-600 hover:text-red-900 bg-transparent p-0" %>
+              <% if policy(bl_house_line).destroy? %>
+                <%= button_to "Eliminar", bl_house_line, method: :delete, form: { class: "inline", onsubmit: "return confirm('¿Estás seguro?')" }, class: "text-red-600 hover:text-red-900 bg-transparent p-0" %>
+              <% end %>
             </td>
           </tr>
         <% end %>
