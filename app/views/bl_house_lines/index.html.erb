@@ -48,12 +48,12 @@
 
         <div class="relative w-full sm:w-auto">
           <%= f.label :client_id, "Cliente", class: "sr-only" %>
-          <%= f.select :client_id, options_from_collection_for_select(@clients || Entity.clients.order(:name), :id, :name, params[:client_id]), { include_blank: "Todos los clientes" }, class: "block w-full sm:w-64 px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+          <%= f.select :client_id, options_from_collection_for_select(@clients || Entity.clients.order(:name), :id, :name, params[:client_id]), { include_blank: "Todos los clientes" }, class: "block w-full sm:w-64 px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
         </div>
 
         <div class="relative w-full sm:w-auto">
           <%= f.label :customs_agent_id, "Agente Aduanal", class: "sr-only" %>
-          <%= f.select :customs_agent_id, options_from_collection_for_select(@customs_agents || Entity.customs_agents.order(:name), :id, :display_name, params[:customs_agent_id]), { include_blank: "Todos los agentes" }, class: "block w-full sm:w-64 px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+          <%= f.select :customs_agent_id, options_from_collection_for_select(@customs_agents || Entity.customs_agents.order(:name), :id, :display_name, params[:customs_agent_id]), { include_blank: "Todos los agentes" }, class: "block w-full sm:w-64 px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
         </div>
       </div>
 
