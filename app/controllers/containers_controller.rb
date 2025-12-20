@@ -1,4 +1,6 @@
 class ContainersController < ApplicationController
+  before_action :authenticate_user!
+  after_action :verify_authorized, except: :index
   before_action :set_container, only: %i[edit update destroy]
   before_action :set_container_for_show, only: %i[show]
 

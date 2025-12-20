@@ -1,4 +1,5 @@
 class PackagingsController < ApplicationController
+  before_action :authenticate_user!
   before_action :set_packaging, only: %i[ show edit update destroy ]
   after_action :verify_authorized, except: :index
 

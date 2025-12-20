@@ -1,4 +1,5 @@
 class EntitiesController < ApplicationController
+  before_action :authenticate_user!
   before_action :set_entity, only: [ :show, :edit, :update, :destroy ]
   before_action :load_patents, only: [ :show ]
   after_action :verify_authorized, except: :index
