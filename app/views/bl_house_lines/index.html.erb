@@ -15,14 +15,15 @@
           <p class="text-sm text-gray-500 mt-1">Gestión de partidas BL House</p>
         </div>
       </div>
-      <% if policy(::BlHouseLine).create? %>
-        <%= link_to new_bl_house_line_path, class: "inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-md hover:shadow-lg transition-all duration-200 text-sm font-semibold" do %>
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-          </svg>
-          Nueva Partida
-        <% end %>
-      <% end %>
+      <%# Temporarily hidden until container number/BL master input flow is defined and data availability (existing container & bl_master) is ensured %>
+      <%# if policy(::BlHouseLine).create? %>
+      <%#   link_to new_bl_house_line_path, class: "inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-md hover:shadow-lg transition-all duration-200 text-sm font-semibold" do %>
+      <%#     content_tag(:svg, nil, class: "w-5 h-5 mr-2", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24") do %>
+      <%#       content_tag(:path, nil, stroke_linecap: "round", stroke_linejoin: "round", stroke_width: "2", d: "M12 4v16m8-8H4") %>
+      <%#     end %>
+      <%#     concat "Nueva Partida" %>
+      <%#   end %>
+      <%# end %>
     </div>
   </div>
 

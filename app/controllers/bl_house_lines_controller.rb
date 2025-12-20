@@ -63,6 +63,8 @@ class BlHouseLinesController < ApplicationController
     @bl_house_line = BlHouseLine.new(bl_house_line_params)
     authorize @bl_house_line
 
+    assign_container_from_params
+
     if @bl_house_line.save
       redirect_to @bl_house_line, notice: "Bl house line was successfully created."
     else
@@ -74,6 +76,8 @@ class BlHouseLinesController < ApplicationController
   # PATCH/PUT /bl_house_lines/1
   def update
     authorize @bl_house_line
+
+    assign_container_from_params
 
     if @bl_house_line.update(bl_house_line_params)
       redirect_to @bl_house_line, notice: "Bl house line was successfully updated."
@@ -117,5 +121,17 @@ class BlHouseLinesController < ApplicationController
       :customs_agent_id, :client_id, :container_id, :packaging_id, :status,
       :bl_endosado_documento, :liberacion_documento, :bl_revalidado_documento, :encomienda_documento
     )
+  end
+
+  def assign_container_from_params
+    return if params[:container_number].blank?
+
+    container = Container.find_by(number: params[:container_number])
+    return unless container
+
+    @bl_house_line.container = container
+    if params[:bl_master].present? && container.bl_master.blank?
+      container.update(bl_master: params[:bl_master])
+    end
   end
 end
