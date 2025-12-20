@@ -1,5 +1,4 @@
 <div class="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100">
-  <h3 class="text-xs font-semibold text-gray-800 mb-2">Estado de la Asignación</h3>
 
   <% allowed_statuses = ['activo', 'documentos_rechazados', 'documentos_ok', 'revalidado'] %>
   <% history_statuses = bl_house_line.bl_house_line_status_histories.map(&:status).uniq %>
