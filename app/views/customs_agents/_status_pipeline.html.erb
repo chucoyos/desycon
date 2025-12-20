@@ -2,7 +2,7 @@
   <h3 class="text-sm font-semibold text-gray-800 mb-4">Estado de la Asignación</h3>
 
   <% allowed_statuses = ['activo', 'documentos_rechazados', 'documentos_ok', 'revalidado'] %>
-  <% history_statuses = bl_house_line.bl_house_line_status_histories.pluck(:status).uniq %>
+  <% history_statuses = bl_house_line.bl_house_line_status_histories.map(&:status).uniq %>
   <% display_statuses = allowed_statuses.reject { |s| s == 'documentos_rechazados' && !history_statuses.include?(s) } %>
 
   <% if display_statuses.any? %>
