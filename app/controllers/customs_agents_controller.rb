@@ -4,8 +4,8 @@ class CustomsAgentsController < ApplicationController
 
   def dashboard
     # Scope used for the revalidation form: only unassigned or assigned to this agent
-    revalidation_scope = BlHouseLine.where(customs_agent: [current_user.entity, nil])
-                                     .includes(:container, :client)
+    revalidation_scope = BlHouseLine.where(customs_agent: [ current_user.entity, nil ])
+                     .includes(:container, :client)
 
     search_blhouse = params[:revalidation_blhouse].presence || params[:blhouse].presence
 
@@ -20,7 +20,7 @@ class CustomsAgentsController < ApplicationController
     end
 
     # Listing scope: assignments for this agent or unassigned
-    base_scope = BlHouseLine.where(customs_agent: [current_user.entity, nil])
+    base_scope = BlHouseLine.where(customs_agent: [ current_user.entity, nil ])
                              .includes(
                                :container,
                                :client,
