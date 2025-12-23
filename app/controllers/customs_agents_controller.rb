@@ -4,11 +4,13 @@ class CustomsAgentsController < ApplicationController
 
   def dashboard
     # Scope used for the revalidation form: only unassigned or assigned to this agent
-    revalidation_scope = BlHouseLine.where(customs_agent: [ current_user.entity, nil ])
+    revalidation_scope = BlHouseLine.where(customs_agent: [current_user.entity, nil])
                                      .includes(:container, :client)
 
-    if params[:revalidation_blhouse].present?
-      bl_house_line = revalidation_scope.where("LOWER(blhouse) = ?", params[:revalidation_blhouse].strip.downcase).first
+    search_blhouse = params[:revalidation_blhouse].presence || params[:blhouse].presence
+
+    if search_blhouse
+      bl_house_line = revalidation_scope.where("LOWER(blhouse) = ?", search_blhouse.strip.downcase).first
       if bl_house_line
         redirect_to edit_bl_house_line_path(bl_house_line)
         return
@@ -17,8 +19,8 @@ class CustomsAgentsController < ApplicationController
       end
     end
 
-    # Listing scope: only assignments for this agent
-    base_scope = BlHouseLine.where(customs_agent: current_user.entity)
+    # Listing scope: assignments for this agent or unassigned
+    base_scope = BlHouseLine.where(customs_agent: [current_user.entity, nil])
                              .includes(
                                :container,
                                :client,
@@ -32,12 +34,12 @@ class CustomsAgentsController < ApplicationController
 
     filtered_scope = base_scope
 
-    if params[:blhouse].present?
-      filtered_scope = filtered_scope.where("bl_house_lines.blhouse ILIKE ?", "%#{params[:blhouse]}%")
+    if params[:filter_blhouse].present?
+      filtered_scope = filtered_scope.where("bl_house_lines.blhouse ILIKE ?", "%#{params[:filter_blhouse]}%")
     end
 
-    if params[:container_number].present?
-      filtered_scope = filtered_scope.joins(:container).where("containers.number ILIKE ?", "%#{params[:container_number]}%")
+    if params[:filter_container_number].present?
+      filtered_scope = filtered_scope.joins(:container).where("containers.number ILIKE ?", "%#{params[:filter_container_number]}%")
     end
 
     if params[:status].present?
