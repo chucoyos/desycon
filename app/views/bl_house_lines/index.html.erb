@@ -36,7 +36,7 @@
       <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Búsqueda</h2>
     </div>
     <%= form_with url: bl_house_lines_path, method: :get, class: "w-full" do |f| %>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
         <div class="min-w-0">
           <%= f.label :blhouse, "BL House", class: "sr-only" %>
           <%= f.text_field :blhouse, value: params[:blhouse], placeholder: "BL House...", class: "block w-full h-12 px-4 border border-gray-200 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-shadow truncate" %>
@@ -49,16 +49,21 @@
 
         <div class="relative w-full sm:w-auto">
           <%= f.label :client_id, "Cliente", class: "sr-only" %>
-          <%= f.select :client_id, options_from_collection_for_select(@clients || Entity.clients.order(:name), :id, :name, params[:client_id]), { include_blank: "Todos los clientes" }, class: "block w-full sm:w-64 px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+          <%= f.select :client_id, options_from_collection_for_select(@clients || Entity.clients.order(:name), :id, :name, params[:client_id]), { include_blank: "Todos los clientes" }, class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
         </div>
 
         <div class="relative w-full sm:w-auto">
           <%= f.label :customs_agent_id, "Agente Aduanal", class: "sr-only" %>
-          <%= f.select :customs_agent_id, options_from_collection_for_select(@customs_agents || Entity.customs_agents.order(:name), :id, :display_name, params[:customs_agent_id]), { include_blank: "Todos los agentes" }, class: "block w-full sm:w-64 px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+          <%= f.select :customs_agent_id, options_from_collection_for_select(@customs_agents || Entity.customs_agents.order(:name), :id, :display_name, params[:customs_agent_id]), { include_blank: "Todos los agentes" }, class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+        </div>
+
+        <div class="relative w-full sm:w-auto">
+          <%= f.label :status, "Estatus", class: "sr-only" %>
+          <%= f.select :status, options_for_select(@status_filter_options.map { |status| [status.titleize, status] }, params[:status]), { include_blank: "Todos los estatus" }, class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
         </div>
       </div>
 
-      <div class="flex gap-2 mt-3">
+      <div class="flex flex-wrap items-center gap-2 mt-4">
         <%= f.submit "Buscar", class: "px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md cursor-pointer" %>
         <%= link_to "Limpiar", bl_house_lines_path, class: "px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors" %>
       </div>

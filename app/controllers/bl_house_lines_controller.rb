@@ -15,6 +15,8 @@ class BlHouseLinesController < ApplicationController
         :bl_revalidado_documento_attachment
       )
 
+    @status_filter_options = customs_agent_user? ? customs_agent_statuses : BlHouseLine.statuses.keys
+
     # Filters
     if params[:blhouse].present?
       scope = scope.where("bl_house_lines.blhouse ILIKE ?", "%#{params[:blhouse]}%")
@@ -30,6 +32,10 @@ class BlHouseLinesController < ApplicationController
 
     if params[:customs_agent_id].present?
       scope = scope.where(customs_agent_id: params[:customs_agent_id])
+    end
+
+    if params[:status].present? && @status_filter_options.include?(params[:status])
+      scope = scope.where(status: params[:status])
     end
 
     @bl_house_lines = scope.page(params[:page]).per(params[:per] || 20)
@@ -105,6 +111,14 @@ class BlHouseLinesController < ApplicationController
     else
       Entity.customs_agents
     end
+  end
+
+  def customs_agent_user?
+    current_user&.customs_broker? && current_user.entity&.is_customs_agent?
+  end
+
+  def customs_agent_statuses
+    %w[activo documentos_rechazados documentos_ok revalidado despachado]
   end
 
   def set_bl_house_line
