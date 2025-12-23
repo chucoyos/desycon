@@ -5,7 +5,7 @@
 # Crear roles
 puts "Creando roles..."
 admin_role = Role.find_or_create_by!(name: Role::ADMIN)
-operator_role = Role.find_or_create_by!(name: Role::OPERATOR)
+executive_role = Role.find_or_create_by!(name: Role::EXECUTIVE)
 customs_broker_role = Role.find_or_create_by!(name: Role::CUSTOMS_BROKER)
 puts "✓ Roles creados"
 

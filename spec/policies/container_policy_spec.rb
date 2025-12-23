@@ -21,14 +21,14 @@ RSpec.describe ContainerPolicy, type: :policy do
     end
   end
 
-  context "for operator users" do
-    let(:user) { create(:user, :operator) }
+  context "for executive users" do
+    let(:user) { create(:user, :executive) }
 
     it { is_expected.to permit_action(:index) }
     it { is_expected.to permit_action(:show) }
     it { is_expected.to permit_action(:create) }
     it { is_expected.to permit_action(:update) }
-    it { is_expected.not_to permit_action(:destroy) }
+    it { is_expected.to permit_action(:destroy) }
 
     describe "scope" do
       it "returns all containers" do

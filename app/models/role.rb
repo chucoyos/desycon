@@ -5,15 +5,15 @@ class Role < ApplicationRecord
 
   # Constantes para los roles
   ADMIN = "admin"
-  OPERATOR = "operator"
+  EXECUTIVE = "executive"
   CUSTOMS_BROKER = "agente aduanal"
 
   def admin?
     name == ADMIN
   end
 
-  def operator?
-    name == OPERATOR
+  def executive?
+    name == EXECUTIVE
   end
 
   def customs_broker?
@@ -21,14 +21,18 @@ class Role < ApplicationRecord
   end
 
   def internal?
-    admin? || operator?
+    admin_or_executive?
+  end
+
+  def admin_or_executive?
+    admin? || executive?
   end
 
   # Nombre visible del role
   def display_name
     case name
-    when OPERATOR
-      "Operador"
+    when EXECUTIVE
+      "Ejecutivo"
     when CUSTOMS_BROKER
       "Agente Aduanal"
     else

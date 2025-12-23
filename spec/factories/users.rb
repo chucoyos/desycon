@@ -9,8 +9,8 @@ FactoryBot.define do
       association :role, :admin
     end
 
-    trait :operator do
-      association :role, :operator
+    trait :executive do
+      association :role, :executive
     end
 
     trait :customs_broker do

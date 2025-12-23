@@ -19,8 +19,8 @@ class CustomsAgentsController < ApplicationController
       end
     end
 
-    # Listing scope: assignments for this agent or unassigned
-    base_scope = BlHouseLine.where(customs_agent: [ current_user.entity, nil ])
+    # Listing scope: only BL House Lines assigned to this agent
+    base_scope = BlHouseLine.where(customs_agent: current_user.entity)
                              .includes(
                                :container,
                                :client,

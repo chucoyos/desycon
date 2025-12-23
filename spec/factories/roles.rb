@@ -1,13 +1,13 @@
 FactoryBot.define do
   factory :role do
-    name { Role::OPERATOR }
+    name { Role::EXECUTIVE }
 
     trait :admin do
       name { Role::ADMIN }
     end
 
-    trait :operator do
-      name { Role::OPERATOR }
+    trait :executive do
+      name { Role::EXECUTIVE }
     end
 
     trait :customs_broker do

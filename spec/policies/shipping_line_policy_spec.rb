@@ -5,7 +5,7 @@ RSpec.describe ShippingLinePolicy, type: :policy do
 
   let(:shipping_line) { ShippingLine.new }
   let(:admin_role) { Role.new(name: Role::ADMIN) }
-  let(:operator_role) { Role.new(name: Role::OPERATOR) }
+  let(:executive_role) { Role.new(name: Role::EXECUTIVE) }
   let(:customs_broker_role) { Role.new(name: Role::CUSTOMS_BROKER) }
 
   context 'for an admin user' do
@@ -18,14 +18,14 @@ RSpec.describe ShippingLinePolicy, type: :policy do
     it { is_expected.to permit_action(:destroy) }
   end
 
-  context 'for an operator user' do
-    let(:user) { User.new(role: operator_role) }
+  context 'for an executive user' do
+    let(:user) { User.new(role: executive_role) }
 
     it { is_expected.to permit_action(:index) }
     it { is_expected.to permit_action(:show) }
     it { is_expected.to permit_action(:create) }
     it { is_expected.to permit_action(:update) }
-    it { is_expected.not_to permit_action(:destroy) }
+    it { is_expected.to permit_action(:destroy) }
   end
 
   context 'for a customs broker user' do

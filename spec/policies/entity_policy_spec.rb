@@ -24,8 +24,8 @@ RSpec.describe EntityPolicy, type: :policy do
     end
   end
 
-  context "for operator users" do
-    let(:user) { create(:user, :operator) }
+  context "for executive users" do
+    let(:user) { create(:user, :executive) }
 
     it { is_expected.to permit_action(:index) }
     it { is_expected.to permit_action(:show) }

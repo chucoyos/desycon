@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe "BlHouseLines", type: :request do
-  let(:user) { create(:user, :operator) }
+  let(:user) { create(:user, :executive) }
   let(:customs_agent) { create(:entity, :customs_agent) }
   let(:client) { create(:entity, :client) }
   let(:container) { create(:container) }

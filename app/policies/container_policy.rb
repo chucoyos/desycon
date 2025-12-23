@@ -24,7 +24,7 @@ class ContainerPolicy < ApplicationPolicy
   end
 
   def destroy?
-    user.present? && user.admin?
+    user.present? && user.admin_or_executive?
   end
 
   class Scope < Scope

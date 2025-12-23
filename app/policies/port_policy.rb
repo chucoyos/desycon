@@ -14,14 +14,14 @@ class PortPolicy < ApplicationPolicy
     user.internal?
   end
 
-  # Solo admin y operator pueden editar
+  # Solo admin y ejecutivos pueden editar
   def update?
     user.internal?
   end
 
-  # Solo admin puede eliminar
+  # Solo admin y ejecutivos pueden eliminar
   def destroy?
-    user.admin?
+    user.admin_or_executive?
   end
 
   # Alias para new y edit
