@@ -27,6 +27,14 @@ class RolePolicy < ApplicationPolicy
     user.present? && user.admin_or_executive?
   end
 
+  def permissions?
+    update?
+  end
+
+  def update_permissions?
+    update?
+  end
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       if user&.admin_or_executive?

@@ -4,7 +4,12 @@ Rails.application.routes.draw do
   devise_for :users
 
   resources :packagings
-  resources :roles
+  resources :roles do
+    member do
+      get :permissions
+      patch :permissions, action: :update_permissions
+    end
+  end
 
   namespace :admin do
     resources :users

@@ -1,6 +1,6 @@
 class RolesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_role, only: [ :show, :edit, :update, :destroy ]
+  before_action :set_role, only: [ :show, :edit, :update, :destroy, :permissions, :update_permissions ]
   after_action :verify_authorized, except: :index
 
   def index
@@ -19,6 +19,11 @@ class RolesController < ApplicationController
 
   def edit
     authorize @role
+  end
+
+  def permissions
+    authorize @role
+    @permissions = Permission.ordered
   end
 
   def create
@@ -46,6 +51,19 @@ class RolesController < ApplicationController
     authorize @role
     @role.destroy
     redirect_to roles_url, notice: "Role eliminado exitosamente."
+  end
+
+  def update_permissions
+    authorize @role
+    selected_ids = Array(params[:role][:permission_ids]).reject(&:blank?)
+    @role.permission_ids = selected_ids
+    if @role.save
+      redirect_to permissions_role_path(@role), notice: "Permisos actualizados exitosamente."
+    else
+      @permissions = Permission.ordered
+      flash.now[:alert] = "No se pudieron actualizar los permisos."
+      render :permissions, status: :unprocessable_content
+    end
   end
 
   private

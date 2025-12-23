@@ -23,6 +23,13 @@
         </svg>
         Editar
       <% end %>
+
+      <%= link_to permissions_role_path(@role), class: "inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 font-medium" do %>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4s-3 1.567-3 3.5S10.343 11 12 11Zm0 0a4.5 4.5 0 0 0-4.5 4.5V17a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-1.5A4.5 4.5 0 0 0 12 11Z" />
+        </svg>
+        Permisos
+      <% end %>
       
       <%= link_to roles_path, class: "inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 font-medium" do %>
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

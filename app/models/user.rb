@@ -24,6 +24,10 @@ class User < ApplicationRecord
   def role_name
     role&.name
   end
+  
+    def can?(permission_key)
+      role&.allows?(permission_key)
+    end
 
   private
 

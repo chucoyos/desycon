@@ -1,5 +1,7 @@
 class Role < ApplicationRecord
   has_many :users, dependent: :restrict_with_error
+  has_many :role_permissions, dependent: :destroy
+  has_many :permissions, through: :role_permissions
 
   validates :name, presence: true, uniqueness: { case_sensitive: false }
 
@@ -26,6 +28,15 @@ class Role < ApplicationRecord
 
   def admin_or_executive?
     admin? || executive?
+  end
+
+  def allows?(permission_key)
+    key = permission_key.to_s
+    assigned_any = permissions.exists?
+    return permissions.where(key: key).exists? if assigned_any
+
+    # Default: if no permissions assigned, internal roles allow everything, others allow nothing
+    admin_or_executive?
   end
 
   # Nombre visible del role

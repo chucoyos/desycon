@@ -9,6 +9,45 @@ executive_role = Role.find_or_create_by!(name: Role::EXECUTIVE)
 customs_broker_role = Role.find_or_create_by!(name: Role::CUSTOMS_BROKER)
 puts "✓ Roles creados"
 
+# Crear permisos
+puts "Creando permisos..."
+permissions_data = [
+  { key: "containers.read", name: "Contenedores - Ver" },
+  { key: "containers.create", name: "Contenedores - Crear" },
+  { key: "containers.update", name: "Contenedores - Editar" },
+  { key: "containers.destroy", name: "Contenedores - Eliminar" },
+
+  { key: "bl_house_lines.read", name: "Partidas - Ver" },
+  { key: "bl_house_lines.create", name: "Partidas - Crear" },
+  { key: "bl_house_lines.update", name: "Partidas - Editar" },
+  { key: "bl_house_lines.destroy", name: "Partidas - Eliminar" },
+
+  { key: "catalogs.shipping_lines.manage", name: "Catálogos - Líneas Navieras" },
+  { key: "catalogs.vessels.manage", name: "Catálogos - Buques" },
+  { key: "catalogs.ports.manage", name: "Catálogos - Puertos" },
+  { key: "catalogs.entities.manage", name: "Catálogos - Entidades" },
+  { key: "catalogs.packagings.manage", name: "Catálogos - Embalajes" },
+
+  { key: "admin.roles.manage", name: "Administración - Roles" },
+  { key: "admin.users.manage", name: "Administración - Usuarios" },
+
+  { key: "customs.dashboard.access", name: "Dashboard Agente Aduanal" }
+]
+
+permissions = permissions_data.map do |perm|
+  Permission.find_or_create_by!(key: perm[:key]) do |p|
+    p.name = perm[:name]
+    p.description = perm[:description]
+  end
+end
+puts "✓ #{Permission.count} permisos creados"
+
+# Asignar permisos por rol (por defecto admin y ejecutivo tienen todos)
+admin_role.permissions = permissions
+executive_role.permissions = permissions
+customs_broker_role.permissions = permissions.select { |p| %w[customs.dashboard.access bl_house_lines.read bl_house_lines.update].include?(p.key) }
+puts "✓ Permisos asignados a roles"
+
 # Crear usuario admin inicial (solo en desarrollo)
 if Rails.env.development?
   puts "Creando usuario admin de prueba..."

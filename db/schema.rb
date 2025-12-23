@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_13_021243) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_23_120010) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -230,6 +230,15 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_13_021243) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "permissions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "description"
+    t.string "key", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_permissions_on_key", unique: true
+  end
+
   create_table "ports", force: :cascade do |t|
     t.string "code", null: false
     t.string "country_code", null: false
@@ -239,6 +248,16 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_13_021243) do
     t.index ["code"], name: "index_ports_on_code", unique: true
     t.index ["country_code", "name"], name: "index_ports_on_country_code_and_name"
     t.index ["country_code"], name: "index_ports_on_country_code"
+  end
+
+  create_table "role_permissions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "permission_id", null: false
+    t.bigint "role_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["permission_id"], name: "index_role_permissions_on_permission_id"
+    t.index ["role_id", "permission_id"], name: "index_role_permissions_on_role_id_and_permission_id", unique: true
+    t.index ["role_id"], name: "index_role_permissions_on_role_id"
   end
 
   create_table "roles", force: :cascade do |t|
@@ -300,6 +319,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_13_021243) do
   add_foreign_key "containers", "vessels"
   add_foreign_key "customs_agent_patents", "entities"
   add_foreign_key "forwarders", "entities"
+  add_foreign_key "role_permissions", "permissions"
+  add_foreign_key "role_permissions", "roles"
   add_foreign_key "users", "entities"
   add_foreign_key "users", "roles"
   add_foreign_key "vessels", "shipping_lines"

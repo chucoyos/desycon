@@ -1,0 +1,61 @@
+<div class="max-w-5xl mx-auto py-8">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-800">Permisos para <%= @role.display_name %></h1>
+      <p class="text-sm text-gray-600">Activa o desactiva permisos específicos para este rol.</p>
+    </div>
+    <%= link_to "Volver", roles_path, class: "px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium" %>
+  </div>
+
+  <%= form_with model: @role, url: permissions_role_path(@role), method: :patch, local: true do |f| %>
+    <% grouped = @permissions.group_by { |p| p.key.split('.').first } %>
+
+    <div class="space-y-6">
+      <% grouped.each do |group, perms| %>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
+          <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold text-gray-800"><%= group.titleize %></p>
+              <p class="text-xs text-gray-500">Selecciona las acciones permitidas para este módulo.</p>
+            </div>
+            <button type="button" class="text-xs text-blue-600 hover:text-blue-700 font-medium" data-action="click->permissions#toggleAll" data-permissions-target="group" data-group="<%= group %>">Seleccionar todo</button>
+          </div>
+          <div class="divide-y divide-gray-100" data-permissions-target="container" data-group="<%= group %>">
+            <% perms.each do |perm| %>
+              <label class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer">
+                <%= check_box_tag "role[permission_ids][]", perm.id, @role.permission_ids.include?(perm.id), class: "mt-1", data: { group: group } %>
+                <div>
+                  <p class="text-sm font-medium text-gray-800"><%= perm.name %></p>
+                  <% if perm.description.present? %>
+                    <p class="text-xs text-gray-500"><%= perm.description %></p>
+                  <% end %>
+                </div>
+              </label>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="mt-6 flex items-center gap-3">
+      <%= f.submit "Guardar", class: "px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 shadow-sm" %>
+      <%= link_to "Cancelar", role_path(@role), class: "px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium" %>
+    </div>
+  <% end %>
+</div>
+
+<%= javascript_tag do %>
+  (function() {
+    const controller = {
+      toggleAll(event) {
+        const group = event.currentTarget.dataset.group;
+        const checkboxes = document.querySelectorAll(`input[data-group='${group}']`);
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        checkboxes.forEach(cb => cb.checked = !allChecked);
+      }
+    };
+    document.querySelectorAll('[data-action="click->permissions#toggleAll"]').forEach(btn => {
+      btn.addEventListener('click', (event) => controller.toggleAll(event));
+    });
+  })();
+<% end %>
