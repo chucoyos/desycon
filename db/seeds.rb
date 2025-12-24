@@ -249,6 +249,17 @@ clients_data.each do |client_data|
   entity.save! if entity.changed? || entity.new_record?
 end
 
+# Consolidador de ejemplo (requerido por Container)
+consolidators_data = [
+  { name: "Consolidadora Demo", is_consolidator: true }
+]
+
+consolidators_data.each do |consolidator_data|
+  entity = Entity.find_or_initialize_by(name: consolidator_data[:name])
+  entity.assign_attributes(consolidator_data)
+  entity.save! if entity.changed? || entity.new_record?
+end
+
 puts "✓ #{Entity.count} entidades creadas"
 
 # Crear usuarios de ejemplo asociados a entidades
