@@ -1,33 +1,39 @@
-<div class="max-w-5xl mx-auto py-8">
-  <div class="flex items-center justify-between mb-6">
-    <div>
-      <h1 class="text-2xl font-semibold text-gray-800">Permisos para <%= @role.display_name %></h1>
-      <p class="text-sm text-gray-600">Activa o desactiva permisos específicos para este rol.</p>
+<div class="max-w-6xl mx-auto py-10 space-y-6">
+  <div class="bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 text-white rounded-2xl shadow-lg px-6 py-5 flex items-center justify-between">
+    <div class="space-y-1">
+      <p class="text-xs uppercase tracking-wide/loose opacity-90">Gestión de permisos</p>
+      <h1 class="text-2xl font-semibold">Permisos para <%= @role.display_name %></h1>
+      <p class="text-sm text-indigo-100">Activa o desactiva acciones con un vistazo claro por módulo.</p>
     </div>
-    <%= link_to "Volver", roles_path, class: "px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium" %>
+    <%= link_to "Volver", roles_path, class: "inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 border border-white/20 text-sm font-medium text-white backdrop-blur hover:bg-white/25 transition" %>
   </div>
 
   <%= form_with model: @role, url: permissions_role_path(@role), method: :patch, local: true do |f| %>
     <% grouped = @permissions.group_by { |p| p.key.split('.').first } %>
 
-    <div class="space-y-6">
+    <div class="grid gap-6 md:grid-cols-2">
       <% grouped.each do |group, perms| %>
-        <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
-          <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <div>
-              <p class="text-sm font-semibold text-gray-800"><%= group.titleize %></p>
-              <p class="text-xs text-gray-500">Selecciona las acciones permitidas para este módulo.</p>
+        <div class="bg-white rounded-2xl shadow-xl shadow-indigo-100/60 border border-slate-100 overflow-hidden">
+          <div class="px-5 py-4 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
+            <div class="space-y-1">
+              <p class="text-xs font-semibold tracking-wide text-indigo-600"><%= group.titleize %></p>
+              <p class="text-xs text-slate-500">Selecciona las acciones permitidas para este módulo.</p>
             </div>
-            <button type="button" class="text-xs text-blue-600 hover:text-blue-700 font-medium" data-action="click->permissions#toggleAll" data-permissions-target="group" data-group="<%= group %>">Seleccionar todo</button>
+            <button type="button" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 px-3 py-1.5 rounded-full hover:bg-indigo-50 transition" data-action="click->permissions#toggleAll" data-permissions-target="group" data-group="<%= group %>">
+              Seleccionar todo
+            </button>
           </div>
-          <div class="divide-y divide-gray-100" data-permissions-target="container" data-group="<%= group %>">
+
+          <div class="divide-y divide-slate-100" data-permissions-target="container" data-group="<%= group %>">
             <% perms.each do |perm| %>
-              <label class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer">
-                <%= check_box_tag "role[permission_ids][]", perm.id, @role.permission_ids.include?(perm.id), class: "mt-1", data: { group: group } %>
-                <div>
-                  <p class="text-sm font-medium text-gray-800"><%= perm.name %></p>
+              <label class="flex items-start gap-3 px-5 py-4 hover:bg-indigo-50/60 transition cursor-pointer">
+                <span class="mt-1 inline-flex h-5 w-5 items-center justify-center rounded border border-slate-300 bg-white shadow-sm">
+                  <%= check_box_tag "role[permission_ids][]", perm.id, @role.permission_ids.include?(perm.id), class: "h-4 w-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-400", data: { group: group } %>
+                </span>
+                <div class="space-y-1">
+                  <p class="text-sm font-semibold text-slate-800"><%= perm.name %></p>
                   <% if perm.description.present? %>
-                    <p class="text-xs text-gray-500"><%= perm.description %></p>
+                    <p class="text-xs text-slate-500"><%= perm.description %></p>
                   <% end %>
                 </div>
               </label>
@@ -37,9 +43,9 @@
       <% end %>
     </div>
 
-    <div class="mt-6 flex items-center gap-3">
-      <%= f.submit "Guardar", class: "px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 shadow-sm" %>
-      <%= link_to "Cancelar", role_path(@role), class: "px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium" %>
+    <div class="sticky bottom-6 mt-8 flex flex-wrap gap-3 bg-white/80 backdrop-blur rounded-2xl px-4 py-3 shadow-lg shadow-indigo-100/60 border border-slate-100">
+      <%= f.submit "Guardar cambios", class: "inline-flex items-center justify-center px-4 py-2 rounded-full bg-indigo-600 text-white text-sm font-semibold shadow-md shadow-indigo-200 hover:bg-indigo-700 transition" %>
+      <%= link_to "Cancelar", role_path(@role), class: "inline-flex items-center justify-center px-4 py-2 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 text-sm font-semibold transition" %>
     </div>
   <% end %>
 </div>
