@@ -1,26 +1,17 @@
-class ContainerService < ApplicationRecord
-  belongs_to :container
+class BlHouseLineService < ApplicationRecord
+  belongs_to :bl_house_line
   belongs_to :service_catalog
   belongs_to :billed_to_entity, class_name: "Entity", optional: true
 
   validates :service_catalog, presence: true
   validates :amount, presence: true, numericality: { greater_than: 0 }
   validates :currency, presence: true, inclusion: { in: [ "MXN" ] }
-  validates :factura, length: { maximum: 100 }, allow_blank: true
   validates :observaciones, length: { maximum: 1000 }, allow_blank: true
+  validates :factura, length: { maximum: 100 }, allow_blank: true
 
-  scope :by_fecha_programada, -> { order(fecha_programada: :asc) }
-  scope :pendientes, -> { where(factura: nil) }
   scope :facturados, -> { where.not(factura: nil) }
-  scope :by_service_catalog, ->(service_catalog_id) { where(service_catalog_id: service_catalog_id) }
-
-  def to_s
-    service_catalog.display_name
-  end
-
-  def total
-    amount
-  end
+  scope :pendientes, -> { where(factura: nil) }
+  scope :by_fecha_programada, -> { order(fecha_programada: :asc) }
 
   def facturado?
     factura.present?

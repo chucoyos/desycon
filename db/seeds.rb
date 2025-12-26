@@ -249,6 +249,23 @@ clients_data.each do |client_data|
   entity.save! if entity.changed? || entity.new_record?
 end
 
+# Catálogo de servicios base
+puts "Creando catálogo de servicios..."
+services_catalog_data = [
+  { name: "Coordinación de contenedor a almacén", applies_to: "container", code: "CONT-COOR", amount: 1500.00, currency: "MXN" },
+  { name: "Asignación electrónica de carga", applies_to: "bl_house_line", code: "BL-ASIG", amount: 950.00, currency: "MXN" }
+]
+
+services_catalog_data.each do |service_data|
+  service = ServiceCatalog.find_or_initialize_by(name: service_data[:name], applies_to: service_data[:applies_to])
+  service.code = service_data[:code]
+  service.amount = service_data[:amount]
+  service.currency = service_data[:currency]
+  service.active = true
+  service.save! if service.changed? || service.new_record?
+end
+puts "✓ #{ServiceCatalog.count} servicios en catálogo"
+
 # Consolidador de ejemplo (requerido por Container)
 consolidators_data = [
   { name: "Consolidadora Demo", is_consolidator: true }
@@ -297,6 +314,14 @@ container = Container.find_or_create_by!(number: "CONT001") do |c|
   c.tipo_maniobra = "importacion"
 end
 
+service_catalog_container = ServiceCatalog.find_by(name: "Coordinación de contenedor a almacén", applies_to: "container") || ServiceCatalog.for_containers.first
+if container && service_catalog_container
+  ContainerService.find_or_create_by!(container: container, service_catalog: service_catalog_container) do |service|
+    service.fecha_programada = Date.today + 3.days
+    service.observaciones = "Servicio de coordinación para traslado a almacén"
+  end
+end
+
 packaging = Packaging.first || Packaging.create!(name: "Cajas", description: "Cajas de cartón")
 
 if customs_agent_entity && client_entity && container && packaging
@@ -325,6 +350,14 @@ if customs_agent_entity && client_entity && container && packaging
   end
 
   puts "✓ #{BlHouseLine.count} BL House Lines creadas"
+
+  service_catalog_bl = ServiceCatalog.find_by(name: "Asignación electrónica de carga", applies_to: "bl_house_line") || ServiceCatalog.for_bl_house_lines.first
+  if service_catalog_bl && (bl = BlHouseLine.find_by(blhouse: bl_house_lines_data.first[:blhouse]))
+    BlHouseLineService.find_or_create_by!(bl_house_line: bl, service_catalog: service_catalog_bl) do |service|
+      service.fecha_programada = Date.today + 5.days
+      service.observaciones = "Asignación electrónica de la carga para despacho aduanal"
+    end
+  end
 end
 
 puts "Seeds completados exitosamente!"

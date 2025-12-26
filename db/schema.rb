@@ -62,6 +62,22 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_23_120010) do
     t.index ["codigo_postal"], name: "index_addresses_on_codigo_postal"
   end
 
+  create_table "bl_house_line_services", force: :cascade do |t|
+    t.bigint "billed_to_entity_id"
+    t.bigint "bl_house_line_id", null: false
+    t.datetime "created_at", null: false
+    t.string "factura"
+    t.date "fecha_programada"
+    t.text "observaciones"
+    t.bigint "service_catalog_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["billed_to_entity_id"], name: "index_bl_house_line_services_on_billed_to_entity_id"
+    t.index ["bl_house_line_id"], name: "index_bl_house_line_services_on_bl_house_line_id"
+    t.index ["factura"], name: "index_bl_house_line_services_on_factura"
+    t.index ["fecha_programada"], name: "index_bl_house_line_services_on_fecha_programada"
+    t.index ["service_catalog_id"], name: "index_bl_house_line_services_on_service_catalog_id"
+  end
+
   create_table "bl_house_line_status_histories", force: :cascade do |t|
     t.bigint "bl_house_line_id"
     t.datetime "changed_at"
@@ -121,22 +137,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_23_120010) do
 
   create_table "container_services", force: :cascade do |t|
     t.bigint "billed_to_entity_id"
-    t.decimal "cantidad", precision: 10, scale: 2, null: false
-    t.string "cliente", null: false
     t.bigint "container_id", null: false
     t.datetime "created_at", null: false
     t.string "factura"
     t.date "fecha_programada"
     t.text "observaciones"
-    t.string "referencia"
-    t.string "servicio", null: false
+    t.bigint "service_catalog_id", null: false
     t.datetime "updated_at", null: false
     t.index ["billed_to_entity_id"], name: "index_container_services_on_billed_to_entity_id"
-    t.index ["cliente"], name: "index_container_services_on_cliente"
     t.index ["container_id"], name: "index_container_services_on_container_id"
     t.index ["factura"], name: "index_container_services_on_factura"
     t.index ["fecha_programada"], name: "index_container_services_on_fecha_programada"
-    t.index ["servicio"], name: "index_container_services_on_servicio"
+    t.index ["service_catalog_id"], name: "index_container_services_on_service_catalog_id"
   end
 
   create_table "container_status_histories", force: :cascade do |t|
@@ -267,6 +279,19 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_23_120010) do
     t.index ["name"], name: "index_roles_on_name", unique: true
   end
 
+  create_table "service_catalogs", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.string "applies_to", null: false
+    t.string "code"
+    t.datetime "created_at", null: false
+    t.string "currency", default: "MXN", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["applies_to", "name"], name: "index_service_catalogs_on_applies_to_and_name", unique: true
+    t.index ["code"], name: "index_service_catalogs_on_code", unique: true
+  end
+
   create_table "shipping_lines", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "iso_code"
@@ -302,6 +327,9 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_23_120010) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "bl_house_line_services", "bl_house_lines"
+  add_foreign_key "bl_house_line_services", "entities", column: "billed_to_entity_id"
+  add_foreign_key "bl_house_line_services", "service_catalogs"
   add_foreign_key "bl_house_line_status_histories", "bl_house_lines"
   add_foreign_key "bl_house_lines", "containers"
   add_foreign_key "bl_house_lines", "entities", column: "client_id"
@@ -311,6 +339,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_23_120010) do
   add_foreign_key "consolidators", "entities"
   add_foreign_key "container_services", "containers"
   add_foreign_key "container_services", "entities", column: "billed_to_entity_id"
+  add_foreign_key "container_services", "service_catalogs"
   add_foreign_key "container_status_histories", "containers"
   add_foreign_key "container_status_histories", "users"
   add_foreign_key "containers", "entities", column: "consolidator_entity_id", name: "containers_consolidator_entity_id_fkey"

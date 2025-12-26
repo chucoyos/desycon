@@ -55,12 +55,16 @@ class BlHouseLinesController < ApplicationController
     @bl_house_line = BlHouseLine.new
     @bl_house_line.container_id = params[:container_id] if params[:container_id].present?
     @customs_agents = available_customs_agents
+    @service_catalogs = ServiceCatalog.for_bl_house_lines
+    @clients = Entity.clients.order(:name)
     authorize @bl_house_line
   end
 
   # GET /bl_house_lines/1/edit
   def edit
     @customs_agents = available_customs_agents
+    @service_catalogs = ServiceCatalog.for_bl_house_lines
+    @clients = Entity.clients.order(:name)
     authorize @bl_house_line
   end
 
@@ -75,6 +79,8 @@ class BlHouseLinesController < ApplicationController
       redirect_to @bl_house_line, notice: "Bl house line was successfully created."
     else
       @customs_agents = available_customs_agents
+      @service_catalogs = ServiceCatalog.for_bl_house_lines
+      @clients = Entity.clients.order(:name)
       render :new, status: :unprocessable_entity
     end
   end
@@ -89,6 +95,8 @@ class BlHouseLinesController < ApplicationController
       redirect_to @bl_house_line, notice: "Bl house line was successfully updated."
     else
       @customs_agents = available_customs_agents
+      @service_catalogs = ServiceCatalog.for_bl_house_lines
+      @clients = Entity.clients.order(:name)
       render :edit, status: :unprocessable_entity
     end
   end
@@ -123,7 +131,10 @@ class BlHouseLinesController < ApplicationController
 
   def set_bl_house_line
     if action_name == "show"
-      @bl_house_line = BlHouseLine.includes(bl_house_line_status_histories: :user).find(params[:id])
+      @bl_house_line = BlHouseLine.includes(
+        { bl_house_line_status_histories: :user },
+        { bl_house_line_services: [ :service_catalog, :billed_to_entity ] }
+      ).find(params[:id])
     else
       @bl_house_line = BlHouseLine.find(params[:id])
     end
@@ -133,7 +144,16 @@ class BlHouseLinesController < ApplicationController
     params.require(:bl_house_line).permit(
       :blhouse, :partida, :cantidad, :contiene, :marcas, :peso, :volumen,
       :customs_agent_id, :client_id, :container_id, :packaging_id, :status,
-      :bl_endosado_documento, :liberacion_documento, :bl_revalidado_documento, :encomienda_documento
+      :bl_endosado_documento, :liberacion_documento, :bl_revalidado_documento, :encomienda_documento,
+      bl_house_line_services_attributes: [
+        :id,
+        :service_catalog_id,
+        :billed_to_entity_id,
+        :fecha_programada,
+        :observaciones,
+        :factura,
+        :_destroy
+      ]
     )
   end
 

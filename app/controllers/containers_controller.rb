@@ -85,7 +85,7 @@ class ContainersController < ApplicationController
       :shipping_line,
       :vessel,
       :port,
-      :container_services,
+      container_services: [ :service_catalog, :billed_to_entity ],
       container_status_histories: :user
     ).find(params[:id])
   end
@@ -109,17 +109,24 @@ class ContainersController < ApplicationController
       :bl_master_documento,
       :tarja_documento,
       container_services_attributes: [
-        :id, :cliente, :cantidad, :servicio, :fecha_programada,
-        :observaciones, :referencia, :factura, :_destroy
+        :id,
+        :service_catalog_id,
+        :billed_to_entity_id,
+        :fecha_programada,
+        :observaciones,
+        :factura,
+        :_destroy
       ]
     )
   end
 
   def load_form_data
     @consolidators = Entity.where(is_consolidator: true).order(:name)
+    @clients = Entity.clients.order(:name)
     @shipping_lines = ShippingLine.alphabetical
     @vessels = Vessel.alphabetical
     @ports = Port.alphabetical
+    @service_catalogs = ServiceCatalog.for_containers
     @vessels_json = Vessel.all.select(:id, :name, :shipping_line_id).map { |v| { id: v.id, name: v.name, shipping_line_id: v.shipping_line_id } }.to_json
   end
 

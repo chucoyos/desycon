@@ -116,75 +116,6 @@
         </dl>
       </section>
 
-      <!-- Servicios -->
-      <section class="bg-white shadow-sm rounded-xl p-5 sm:p-6 border border-gray-100">
-        <div class="flex items-center justify-between mb-5">
-          <div class="flex items-center gap-3">
-            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-600 shadow-sm">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-              </svg>
-            </div>
-            <h2 class="text-xl font-bold text-gray-900">Servicios</h2>
-          </div>
-          <span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
-            <%= @container.container_services.count %> <%= @container.container_services.count == 1 ? 'servicio' : 'servicios' %>
-          </span>
-        </div>
-        
-        <% if @container.container_services.any? %>
-          <div class="space-y-3">
-            <% @container.container_services.each do |service| %>
-              <div class="border border-gray-200 rounded-lg p-4 hover:border-purple-300 hover:bg-purple-50/30 transition-all duration-200">
-                <div class="flex justify-between items-start mb-2">
-                  <div class="flex-1">
-                    <h3 class="font-semibold text-gray-900"><%= service.servicio %></h3>
-                    <p class="text-sm text-gray-600 mt-1"><%= service.cliente %></p>
-                  </div>
-                  <div class="text-right">
-                    <p class="text-lg font-bold text-gray-900">$<%= number_with_delimiter(service.cantidad, delimiter: ',') %></p>
-                    <% if service.facturado? %>
-                      <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Facturado</span>
-                    <% else %>
-                      <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Pendiente</span>
-                    <% end %>
-                  </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-gray-100 text-xs">
-                  <div>
-                    <span class="text-gray-500">Fecha programada:</span>
-                    <span class="font-medium text-gray-900"><%= service.fecha_programada ? l(service.fecha_programada, format: :short) : '-' %></span>
-                  </div>
-                  <div>
-                    <span class="text-gray-500">Referencia:</span>
-                    <span class="font-medium text-gray-900 font-mono"><%= service.referencia || '-' %></span>
-                  </div>
-                  <% if service.factura.present? %>
-                    <div class="col-span-2">
-                      <span class="text-gray-500">Factura:</span>
-                      <span class="font-medium text-gray-900 font-mono"><%= service.factura %></span>
-                    </div>
-                  <% end %>
-                  <% if service.observaciones.present? %>
-                    <div class="col-span-2">
-                      <span class="text-gray-500">Observaciones:</span>
-                      <p class="text-gray-700 mt-1"><%= service.observaciones %></p>
-                    </div>
-                  <% end %>
-                </div>
-              </div>
-            <% end %>
-          </div>
-        <% else %>
-          <div class="text-center py-8">
-            <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-            </svg>
-            <p class="text-gray-500">No hay servicios registrados</p>
-          </div>
-        <% end %>
-      </section>
-
       <!-- Partidas -->
       <section id="partidas" class="bg-white shadow-sm rounded-xl p-5 sm:p-6 border border-gray-100">
         <div class="flex items-center justify-between mb-5">
@@ -257,6 +188,68 @@
 
     <!-- Columna lateral (1/3) -->
     <div class="space-y-6">
+
+      <!-- Servicios -->
+      <section class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-600 shadow-sm">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+            </div>
+            <h2 class="text-lg font-bold text-gray-900">Servicios</h2>
+          </div>
+          <span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+            <%= @container.container_services.count %>
+          </span>
+        </div>
+
+        <% if @container.container_services.any? %>
+          <div class="space-y-3">
+            <% @container.container_services.each do |service| %>
+              <div class="border border-gray-200 rounded-lg p-4 hover:border-purple-300 hover:bg-purple-50/30 transition-all duration-200">
+                <div class="flex justify-between items-start mb-2">
+                  <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900"><%= service.service_catalog.name %></h3>
+                    <% if service.billed_to_entity.present? %>
+                      <p class="text-xs text-gray-600 mt-1">Facturar a: <%= service.billed_to_entity.name %></p>
+                    <% end %>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-base font-bold text-gray-900">$<%= number_with_delimiter(service.amount, delimiter: ',') %> <%= service.currency || 'MXN' %></p>
+                    <% if service.facturado? %>
+                      <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-100 text-green-800">Facturado</span>
+                    <% else %>
+                      <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-yellow-100 text-yellow-800">Pendiente</span>
+                    <% end %>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-xs text-gray-700">
+                  <div>
+                    <span class="text-gray-500">Fecha programada:</span>
+                    <span class="font-medium"><%= service.fecha_programada ? l(service.fecha_programada, format: :short) : '-' %></span>
+                  </div>
+                  <% if service.factura.present? %>
+                    <div>
+                      <span class="text-gray-500">Factura:</span>
+                      <span class="font-medium font-mono"><%= service.factura %></span>
+                    </div>
+                  <% end %>
+                  <% if service.observaciones.present? %>
+                    <div class="col-span-2">
+                      <span class="text-gray-500">Observaciones:</span>
+                      <p class="text-gray-700 mt-1"><%= service.observaciones %></p>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-sm text-gray-500">No hay servicios registrados.</p>
+        <% end %>
+      </section>
       
       <!-- Documentos -->
       <section class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">

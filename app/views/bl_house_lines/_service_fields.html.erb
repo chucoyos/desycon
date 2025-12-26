@@ -14,27 +14,27 @@
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
     <div>
       <%= f.label :service_catalog_id, "Servicio *", class: "block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider" %>
-      <%= f.collection_select :service_catalog_id, @service_catalogs, :id, :display_name, { prompt: "Selecciona un servicio" }, class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200" %>
+      <%= f.collection_select :service_catalog_id, @service_catalogs, :id, :display_name, { prompt: "Selecciona un servicio" }, class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200" %>
     </div>
 
     <div>
       <%= f.label :billed_to_entity_id, "Facturar a", class: "block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider" %>
-      <%= f.collection_select :billed_to_entity_id, @clients, :id, :name, { include_blank: "Selecciona cliente" }, class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200" %>
+      <%= f.collection_select :billed_to_entity_id, @clients, :id, :name, { include_blank: "Selecciona cliente" }, class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200" %>
     </div>
 
     <div>
       <%= f.label :fecha_programada, "Fecha Programada", class: "block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider" %>
-      <%= f.date_field :fecha_programada, class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200" %>
+      <%= f.date_field :fecha_programada, class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200" %>
     </div>
 
     <div>
       <%= f.label :factura, "Factura", class: "block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider" %>
-      <%= f.text_field :factura, placeholder: "FAC-001", class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 font-mono" %>
+      <%= f.text_field :factura, placeholder: "FAC-001", class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 font-mono" %>
     </div>
 
     <div class="sm:col-span-2 lg:col-span-3">
       <%= f.label :observaciones, "Observaciones", class: "block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider" %>
-      <%= f.text_area :observaciones, rows: 2, placeholder: "Notas adicionales sobre el servicio...", class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 resize-none" %>
+      <%= f.text_area :observaciones, rows: 2, placeholder: "Notas adicionales sobre el servicio...", class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 resize-none" %>
     </div>
   </div>
 </div>
