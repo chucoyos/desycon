@@ -250,6 +250,11 @@
       if (e.target.closest('.remove-service')) {
         e.preventDefault();
         const serviceCard = e.target.closest('.service-card');
+        const isPersisted = serviceCard?.dataset.servicePersisted === 'true';
+        if (isPersisted) {
+          const confirmed = window.confirm('¿Eliminar este servicio? Los cambios se guardarán al actualizar el contenedor.');
+          if (!confirmed) return;
+        }
         const destroyInput = serviceCard.querySelector('input[name*="_destroy"]');
 
         if (destroyInput) {

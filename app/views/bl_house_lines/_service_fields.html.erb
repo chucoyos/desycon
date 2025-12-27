@@ -1,5 +1,6 @@
 <% is_new = !(f.object && f.object.respond_to?(:persisted?) && f.object.persisted?) %>
-<div class="service-card rounded-lg p-3 sm:p-4 border shadow-sm hover:shadow-md transition-all duration-200 <%= is_new ? 'bg-amber-50/50 border-amber-300 ring-2 ring-amber-200' : 'bg-white border-slate-200' %>">
+<div class="service-card rounded-lg p-3 sm:p-4 border shadow-sm hover:shadow-md transition-all duration-200 <%= is_new ? 'bg-amber-50/50 border-amber-300 ring-2 ring-amber-200' : 'bg-white border-slate-200' %>"
+  data-service-persisted="<%= is_new ? 'false' : 'true' %>">
   <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
     <div class="flex items-center gap-2">
       <span class="h-5 w-1.5 rounded-full <%= is_new ? 'bg-amber-500' : 'bg-slate-300' %>"></span>
