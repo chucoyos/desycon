@@ -46,9 +46,7 @@ RSpec.describe Container, type: :model do
     it 'destroys services when destroyed' do
       container = create(:container)
       service = container.container_services.create!(
-        cliente: 'Test Client',
-        cantidad: 100,
-        servicio: 'Test Service'
+        service_catalog: create(:service_catalog_maniobra)
       )
       container_id = container.id
       container.destroy

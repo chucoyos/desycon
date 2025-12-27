@@ -251,7 +251,14 @@
 
   <!-- Botones -->
   <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-    <%= link_to bl_house_line_path(bl_house_line), class: "inline-flex items-center justify-center px-6 py-3 rounded-lg text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 transition-all duration-200" do %>
+    <% cancel_target = if bl_house_line.persisted?
+                         bl_house_line_path(bl_house_line)
+                       elsif bl_house_line.container.present?
+                         container_path(bl_house_line.container, anchor: 'partidas')
+                       else
+                         bl_house_lines_path
+                       end %>
+    <%= link_to cancel_target, class: "inline-flex items-center justify-center px-6 py-3 rounded-lg text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 transition-all duration-200" do %>
       <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
       </svg>
