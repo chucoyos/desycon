@@ -1,5 +1,7 @@
 Rails.application.routes.draw do
   get "customs_agents/dashboard"
+  get "customs_agents/revalidations", to: "customs_agents#revalidation_modal", as: :customs_agents_revalidation
+  patch "customs_agents/revalidations/:id", to: "customs_agents#revalidation_update", as: :customs_agents_revalidation_update
 
   devise_for :users
 

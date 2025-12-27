@@ -4,8 +4,7 @@ class CustomsAgentsController < ApplicationController
 
   def dashboard
     # Scope used for the revalidation form: only unassigned or assigned to this agent
-    revalidation_scope = BlHouseLine.where(customs_agent: [ current_user.entity, nil ])
-                     .includes(:container, :client)
+    revalidation_scope = revalidation_lookup_scope.includes(:container, :client)
 
     search_blhouse = params[:revalidation_blhouse].presence || params[:blhouse].presence
 
@@ -58,7 +57,98 @@ class CustomsAgentsController < ApplicationController
     @problem_assignments = base_scope.where(status: [ :instrucciones_pendientes, :pendiente_pagos_locales ]).count
   end
 
+  def revalidation_modal
+    search_blhouse = params[:revalidation_blhouse].to_s.strip.downcase.presence || params[:blhouse].to_s.strip.downcase.presence
+
+    unless turbo_frame_request?
+      redirect_to customs_agents_dashboard_path(revalidation_blhouse: search_blhouse), alert: "Solicita la revalidación desde el dashboard." and return
+    end
+
+    if search_blhouse.blank?
+      render partial: "customs_agents/revalidation_not_found", status: :unprocessable_entity and return
+    end
+
+    @bl_house_line = revalidation_lookup_scope.includes(:container, :client)
+                                               .where("LOWER(blhouse) = ?", search_blhouse)
+                                               .first
+
+    if @bl_house_line
+      render partial: "customs_agents/revalidation_modal", locals: { bl_house_line: @bl_house_line, customs_agents: revalidation_customs_agents, clients: revalidation_clients }
+    else
+      render partial: "customs_agents/revalidation_not_found", status: :not_found
+    end
+  end
+
+  def revalidation_update
+    unless turbo_frame_request?
+      redirect_to customs_agents_dashboard_path, alert: "No se pudo procesar la solicitud en modal." and return
+    end
+
+    @bl_house_line = revalidation_lookup_scope.find_by(id: params[:id])
+
+    unless @bl_house_line
+      render partial: "customs_agents/revalidation_not_found", status: :not_found and return
+    end
+
+    assign_revalidation_agent(@bl_house_line)
+
+    if @bl_house_line.update(revalidation_params)
+      render partial: "customs_agents/revalidation_success", locals: { bl_house_line: @bl_house_line }
+    else
+      render partial: "customs_agents/revalidation_modal", status: :unprocessable_entity, locals: { bl_house_line: @bl_house_line, customs_agents: revalidation_customs_agents, clients: revalidation_clients }
+    end
+  end
+
   private
+
+  def revalidation_lookup_scope
+    BlHouseLine.where(customs_agent: [ current_user.entity, nil ])
+  end
+
+  def assign_revalidation_agent(bl_house_line)
+    return if bl_house_line.customs_agent_id.present?
+
+    bl_house_line.customs_agent = current_user.entity
+  end
+
+  def revalidation_params
+    permitted = params.require(:bl_house_line).permit(
+      :customs_agent_id,
+      :client_id,
+      :bl_endosado_documento,
+      :liberacion_documento,
+      :encomienda_documento
+    )
+    permitted[:customs_agent_id] = sanitize_customs_agent_id(permitted[:customs_agent_id])
+    permitted[:client_id] = sanitize_client_id(permitted[:client_id])
+    permitted
+  rescue ActionController::ParameterMissing
+    {}
+  end
+
+  def sanitize_customs_agent_id(agent_id)
+    allowed_ids = revalidation_customs_agents.pluck(:id)
+    candidate = agent_id.presence&.to_i
+    return current_user.entity_id if candidate.blank?
+
+    allowed_ids.include?(candidate) ? candidate : current_user.entity_id
+  end
+
+  def sanitize_client_id(client_id)
+    return nil if client_id.blank?
+
+    allowed_ids = revalidation_clients.pluck(:id)
+    candidate = client_id.to_i
+    allowed_ids.include?(candidate) ? candidate : nil
+  end
+
+  def revalidation_customs_agents
+    Entity.where(id: current_user.entity_id)
+  end
+
+  def revalidation_clients
+    Entity.clients.order(:name)
+  end
 
   def ensure_customs_agent
     unless current_user.customs_broker? && current_user.entity&.is_customs_agent?

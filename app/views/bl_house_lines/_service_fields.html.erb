@@ -1,4 +1,5 @@
 <% is_new = !(f.object && f.object.respond_to?(:persisted?) && f.object.persisted?) %>
+<% disable_inputs = local_assigns[:is_customs_agent] == true %>
 <div class="service-card rounded-lg p-3 sm:p-4 border shadow-sm hover:shadow-md transition-all duration-200 <%= is_new ? 'bg-amber-50/50 border-amber-300 ring-2 ring-amber-200' : 'bg-white border-slate-200' %>"
   data-service-persisted="<%= is_new ? 'false' : 'true' %>">
   <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
@@ -9,12 +10,14 @@
         <%= is_new ? 'Nuevo (sin guardar)' : 'Existente' %>
       </span>
     </div>
-    <button type="button" class="remove-service inline-flex items-center justify-center gap-1 px-3 py-1.5 sm:py-1 rounded-lg text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-all duration-200 w-full sm:w-auto">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-      </svg>
-      Eliminar
-    </button>
+    <% unless disable_inputs %>
+      <button type="button" class="remove-service inline-flex items-center justify-center gap-1 px-3 py-1.5 sm:py-1 rounded-lg text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-all duration-200 w-full sm:w-auto">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        Eliminar
+      </button>
+    <% end %>
   </div>
 
   <%= f.hidden_field :_destroy %>
@@ -22,27 +25,27 @@
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
     <div>
       <%= f.label :service_catalog_id, "Servicio *", class: "block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider" %>
-      <%= f.collection_select :service_catalog_id, @service_catalogs, :id, :display_name, { prompt: "Selecciona un servicio" }, class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200" %>
+      <%= f.collection_select :service_catalog_id, @service_catalogs, :id, :display_name, { prompt: "Selecciona un servicio" }, disabled: disable_inputs, class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 #{disable_inputs ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}" %>
     </div>
 
     <div>
       <%= f.label :billed_to_entity_id, "Facturar a", class: "block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider" %>
-      <%= f.collection_select :billed_to_entity_id, @clients, :id, :name, { include_blank: "Selecciona cliente" }, class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200" %>
+      <%= f.collection_select :billed_to_entity_id, @clients, :id, :name, { include_blank: "Selecciona cliente" }, disabled: disable_inputs, class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 #{disable_inputs ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}" %>
     </div>
 
     <div>
       <%= f.label :fecha_programada, "Fecha Programada", class: "block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider" %>
-      <%= f.date_field :fecha_programada, class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200" %>
+      <%= f.date_field :fecha_programada, disabled: disable_inputs, class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 #{disable_inputs ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}" %>
     </div>
 
     <div>
       <%= f.label :factura, "Factura", class: "block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider" %>
-      <%= f.text_field :factura, placeholder: "FAC-001", class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 font-mono" %>
+      <%= f.text_field :factura, placeholder: "FAC-001", disabled: disable_inputs, class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 font-mono #{disable_inputs ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}" %>
     </div>
 
     <div class="sm:col-span-2 lg:col-span-3">
       <%= f.label :observaciones, "Observaciones", class: "block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider" %>
-      <%= f.text_area :observaciones, rows: 2, placeholder: "Notas adicionales sobre el servicio...", class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 resize-none" %>
+      <%= f.text_area :observaciones, rows: 2, placeholder: "Notas adicionales sobre el servicio...", disabled: disable_inputs, class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 resize-none #{disable_inputs ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}" %>
     </div>
   </div>
 </div>

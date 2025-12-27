@@ -176,25 +176,29 @@
           </div>
           <h2 class="text-xl font-bold text-gray-900">Servicios</h2>
         </div>
-        <button type="button" id="add-bl-service" class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 shadow-sm hover:shadow-md transition-all duration-200 w-full sm:w-auto">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-          </svg>
-          Agregar Servicio
-        </button>
+        <% unless is_customs_agent %>
+          <button type="button" id="add-bl-service" class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 shadow-sm hover:shadow-md transition-all duration-200 w-full sm:w-auto">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Agregar Servicio
+          </button>
+        <% end %>
       </div>
 
       <div id="bl-services-container" class="space-y-4">
         <%= form.fields_for :bl_house_line_services do |service_form| %>
-          <%= render 'service_fields', f: service_form %>
+          <%= render 'service_fields', f: service_form, is_customs_agent: is_customs_agent %>
         <% end %>
       </div>
 
-      <div id="bl-service-template" class="hidden">
-        <%= form.fields_for :bl_house_line_services, BlHouseLineService.new, child_index: 'NEW_RECORD' do |service_form| %>
-          <%= render 'service_fields', f: service_form %>
-        <% end %>
-      </div>
+      <% unless is_customs_agent %>
+        <div id="bl-service-template" class="hidden">
+          <%= form.fields_for :bl_house_line_services, BlHouseLineService.new, child_index: 'NEW_RECORD' do |service_form| %>
+            <%= render 'service_fields', f: service_form, is_customs_agent: is_customs_agent %>
+          <% end %>
+        </div>
+      <% end %>
     </div>
 
   <!-- Documentos -->

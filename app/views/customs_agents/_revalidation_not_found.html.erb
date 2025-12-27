@@ -1,0 +1,17 @@
+<turbo-frame id="revalidation_modal">
+<div class="fixed inset-0 z-50 flex items-center justify-center" data-controller="revalidation-wizard">
+  <div class="absolute inset-0 bg-gray-900/50" aria-hidden="true" data-action="click->revalidation-wizard#close"></div>
+  <div class="relative bg-white w-full max-w-md mx-4 rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+    <div class="px-6 py-5 text-center space-y-3">
+      <div class="mx-auto w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600">!</div>
+      <p class="text-lg font-semibold text-gray-900">BL House no encontrado</p>
+      <p class="text-sm text-gray-600">Verifica el número e inténtalo nuevamente. Solo puedes revalidar BL asignados a tu agencia o sin asignar.</p>
+      <div class="pt-2">
+        <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700" data-action="click->revalidation-wizard#close" data-controller="revalidation-wizard">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</turbo-frame>
