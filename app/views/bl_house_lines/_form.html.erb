@@ -286,6 +286,11 @@
       addServiceBtn.addEventListener('click', () => {
         const newService = serviceTemplate.innerHTML.replace(/NEW_RECORD/g, Date.now());
         servicesContainer.insertAdjacentHTML('afterbegin', newService);
+        const newCard = servicesContainer.firstElementChild;
+        if (newCard) {
+          newCard.classList.add('service-card-appear');
+          newCard.addEventListener('animationend', () => newCard.classList.remove('service-card-appear'), { once: true });
+        }
       });
     }
 

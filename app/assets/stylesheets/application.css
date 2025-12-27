@@ -89,3 +89,19 @@
   word-wrap: break-word;
 }
 
+/* Gentle pop-in for newly added service cards */
+.service-card-appear {
+  animation: service-card-appear 1s ease-out;
+}
+
+@keyframes service-card-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(1);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
