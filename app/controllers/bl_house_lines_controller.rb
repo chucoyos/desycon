@@ -76,7 +76,7 @@ class BlHouseLinesController < ApplicationController
     assign_container_from_params
 
     if @bl_house_line.save
-      redirect_to @bl_house_line, notice: "Bl house line was successfully created."
+      redirect_to @bl_house_line, notice: "Partida creada correctamente."
     else
       @customs_agents = available_customs_agents
       @service_catalogs = ServiceCatalog.for_bl_house_lines
@@ -92,7 +92,7 @@ class BlHouseLinesController < ApplicationController
     assign_container_from_params
 
     if @bl_house_line.update(bl_house_line_params)
-      redirect_to @bl_house_line, notice: "Bl house line was successfully updated."
+      redirect_to @bl_house_line, notice: "Partida actualizada correctamente."
     else
       @customs_agents = available_customs_agents
       @service_catalogs = ServiceCatalog.for_bl_house_lines
@@ -106,7 +106,7 @@ class BlHouseLinesController < ApplicationController
     authorize @bl_house_line
 
     @bl_house_line.destroy
-    redirect_to bl_house_lines_url, notice: "Bl house line was successfully destroyed."
+    redirect_to bl_house_lines_url, notice: "Partida eliminada correctamente."
   end
 
   private
