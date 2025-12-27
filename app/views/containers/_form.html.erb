@@ -238,7 +238,7 @@
     if (addServiceBtn && serviceTemplate) {
       addServiceBtn.addEventListener('click', () => {
         const newService = serviceTemplate.innerHTML.replace(/NEW_RECORD/g, Date.now());
-        servicesContainer.insertAdjacentHTML('beforeend', newService);
+        servicesContainer.insertAdjacentHTML('afterbegin', newService);
       });
     }
 
