@@ -227,14 +227,17 @@
 <% end %>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  const initContainerServices = () => {
     const addServiceBtn = document.getElementById('add-service');
     const servicesContainer = document.getElementById('services-container');
     const serviceTemplate = document.getElementById('service-template');
 
-    if (addServiceBtn) {
+    if (!servicesContainer || servicesContainer.dataset.initialized === 'true') return;
+    servicesContainer.dataset.initialized = 'true';
+
+    if (addServiceBtn && serviceTemplate) {
       addServiceBtn.addEventListener('click', () => {
-        const newService = serviceTemplate.innerHTML.replace(/NEW_RECORD/g, new Date().getTime());
+        const newService = serviceTemplate.innerHTML.replace(/NEW_RECORD/g, Date.now());
         servicesContainer.insertAdjacentHTML('beforeend', newService);
       });
     }
@@ -245,7 +248,7 @@
         e.preventDefault();
         const serviceCard = e.target.closest('.service-card');
         const destroyInput = serviceCard.querySelector('input[name*="_destroy"]');
-        
+
         if (destroyInput) {
           destroyInput.value = '1';
           serviceCard.style.display = 'none';
@@ -254,5 +257,8 @@
         }
       }
     });
-  });
+  };
+
+  document.addEventListener('turbo:load', initContainerServices);
+  document.addEventListener('DOMContentLoaded', initContainerServices);
 </script>

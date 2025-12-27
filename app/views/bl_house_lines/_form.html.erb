@@ -274,14 +274,17 @@
 <% end %>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  const initBlServices = () => {
     const addServiceBtn = document.getElementById('add-bl-service');
     const servicesContainer = document.getElementById('bl-services-container');
     const serviceTemplate = document.getElementById('bl-service-template');
 
-    if (addServiceBtn) {
+    if (!servicesContainer || servicesContainer.dataset.initialized === 'true') return;
+    servicesContainer.dataset.initialized = 'true';
+
+    if (addServiceBtn && serviceTemplate) {
       addServiceBtn.addEventListener('click', () => {
-        const newService = serviceTemplate.innerHTML.replace(/NEW_RECORD/g, new Date().getTime());
+        const newService = serviceTemplate.innerHTML.replace(/NEW_RECORD/g, Date.now());
         servicesContainer.insertAdjacentHTML('beforeend', newService);
       });
     }
@@ -300,5 +303,8 @@
         }
       }
     });
-  });
+  };
+
+  document.addEventListener('turbo:load', initBlServices);
+  document.addEventListener('DOMContentLoaded', initBlServices);
 </script>
