@@ -194,7 +194,7 @@
 
       <% unless is_customs_agent %>
         <div id="bl-service-template" class="hidden">
-          <%= form.fields_for :bl_house_line_services, BlHouseLineService.new, child_index: 'NEW_RECORD' do |service_form| %>
+          <%= form.fields_for :bl_house_line_services, BlHouseLineService.new(billed_to_entity_id: bl_house_line.client_id), child_index: 'NEW_RECORD' do |service_form| %>
             <%= render 'service_fields', f: service_form, is_customs_agent: is_customs_agent %>
           <% end %>
         </div>
