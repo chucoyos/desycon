@@ -4,7 +4,7 @@ class CustomsAgentsController < ApplicationController
 
   def dashboard
     # Scope used for the revalidation form: only unassigned or assigned to this agent
-    revalidation_scope = revalidation_lookup_scope.includes(:container, :client)
+    revalidation_scope = revalidation_lookup_scope.includes(:container)
 
     search_blhouse = params[:revalidation_blhouse].presence || params[:blhouse].presence
 
@@ -68,7 +68,7 @@ class CustomsAgentsController < ApplicationController
       render partial: "customs_agents/revalidation_not_found", status: :unprocessable_entity and return
     end
 
-    @bl_house_line = revalidation_lookup_scope.includes(:container, :client)
+    @bl_house_line = revalidation_lookup_scope.includes(:container)
                                                .where("LOWER(blhouse) = ?", search_blhouse)
                                                .first
 
