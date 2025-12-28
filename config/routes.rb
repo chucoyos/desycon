@@ -51,6 +51,7 @@ Rails.application.routes.draw do
   resources :consolidators
   resources :containers
   resources :bl_house_lines
+  resources :service_catalogs
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

@@ -1,0 +1,141 @@
+<% content_for :title, "Catálogo de Servicios" %>
+
+<div class="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 py-10 flex justify-center items-stretch">
+  <div class="w-full px-4 sm:px-6 lg:px-8">
+    <div class="mb-8 overflow-hidden rounded-2xl bg-white shadow-xl shadow-slate-200/50 border border-slate-100">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-6 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] opacity-90">Catálogo</p>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-5 w-5">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M6 7h12M6 12h12M6 17h6" />
+              </svg>
+            </span>
+            <h1 class="text-3xl font-bold leading-tight">Catálogo de Servicios</h1>
+          </div>
+          <p class="text-sm text-indigo-100">Define las tarifas que se aplican en contenedores y BL House.</p>
+        </div>
+        <% if policy(ServiceCatalog).create? %>
+          <%= link_to new_service_catalog_path, class: "inline-flex items-center gap-2 rounded-xl bg-white/90 px-4 py-2 text-sm font-semibold text-indigo-700 shadow-lg shadow-indigo-900/10 hover:bg-white" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-4 w-4">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 5v14m7-7H5" />
+            </svg>
+            <span>Nuevo servicio</span>
+          <% end %>
+        <% end %>
+      </div>
+
+      <div class="p-5 border-b border-slate-100 bg-white">
+        <%= form_with url: service_catalogs_path, method: :get, local: true, class: "grid grid-cols-1 md:grid-cols-4 gap-3" do |form| %>
+          <div>
+            <%= form.label :search, "Buscar", class: "block text-xs font-semibold text-slate-600 mb-1 uppercase tracking-wide" %>
+            <%= form.text_field :search, value: params[:search], placeholder: "Nombre o código", class: "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
+          </div>
+          <div>
+            <%= form.label :applies_to, "Aplicable a", class: "block text-xs font-semibold text-slate-600 mb-1 uppercase tracking-wide" %>
+            <% options = [["Todos", ""],["Contenedores", "container"],["BL House", "bl_house_line"]] %>
+            <%= form.select :applies_to, options_for_select(options, params[:applies_to]), {}, class: "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
+          </div>
+          <div>
+            <%= form.label :active, "Estado", class: "block text-xs font-semibold text-slate-600 mb-1 uppercase tracking-wide" %>
+            <% active_options = [["Todos", ""],["Activos", "true"],["Inactivos", "false"]] %>
+            <%= form.select :active, options_for_select(active_options, params[:active]), {}, class: "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
+          </div>
+          <div class="flex items-end gap-2">
+            <%= form.button class: "inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:bg-indigo-700" do %>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-4 w-4">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 6h16l-6 7v5l-4 2v-7L4 6z" />
+              </svg>
+              <span>Filtrar</span>
+            <% end %>
+            <%= link_to service_catalogs_path, class: "inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm" do %>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-4 w-4">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 6h16M4 12h10m-6 6h12" />
+              </svg>
+              <span>Limpiar</span>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <% if @service_catalogs.any? %>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-5">
+          <% @service_catalogs.each do |service| %>
+            <div class="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm shadow-slate-200/60 hover:-translate-y-0.5 hover:shadow-md transition transform">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-[11px] font-semibold uppercase tracking-wide text-indigo-600">Servicio</p>
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-5 w-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M6 7h12M6 12h12M6 17h6" />
+                      </svg>
+                    </span>
+                    <h2 class="text-xl font-semibold text-slate-900 leading-tight"><%= service.name %></h2>
+                  </div>
+                  <p class="text-sm text-slate-500"><%= service.code.presence || "Sin código" %></p>
+                </div>
+                <% if policy(service).destroy? %>
+                  <%= button_to service, method: :delete, form: { data: { turbo_confirm: "¿Eliminar este servicio?" } }, class: "inline-flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-700" do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-4 w-4">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M6 7h12m-9 4v5m6-5v5M9 7l1-2h4l1 2m-9 0v12h10V7" />
+                    </svg>
+                    <span>Eliminar</span>
+                  <% end %>
+                <% end %>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                  <span class="h-2 w-2 rounded-full bg-indigo-500"></span>
+                  <%= service.applies_to == "container" ? "Contenedores" : "BL House" %>
+                </span>
+                <% if service.active? %>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    Activo
+                  </span>
+                <% else %>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                    <span class="h-2 w-2 rounded-full bg-slate-500"></span>
+                    Inactivo
+                  </span>
+                <% end %>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Monto</p>
+                  <p class="text-lg font-semibold text-slate-900"><%= number_to_currency(service.amount, unit: "#{service.currency} $", format: "%u %n") %></p>
+                </div>
+                <div class="flex gap-2">
+                  <%= link_to service, class: "inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50" do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-4 w-4">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z" />
+                      <circle cx="12" cy="12" r="2.5" />
+                    </svg>
+                    <span>Ver</span>
+                  <% end %>
+                  <% if policy(service).update? %>
+                    <%= link_to edit_service_catalog_path(service), class: "inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700" do %>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-4 w-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M15.5 4.5l4 4-9 9H6.5v-4.5l9-9z" />
+                      </svg>
+                      <span>Editar</span>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+        <div class="px-5 pb-5">
+          <%= render "shared/tailwind_pagination", paginated: @service_catalogs %>
+        </div>
+      <% else %>
+        <div class="p-10 text-center text-slate-600">No hay servicios registrados.</div>
+      <% end %>
+    </div>
+  </div>
+</div>

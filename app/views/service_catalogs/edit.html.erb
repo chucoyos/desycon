@@ -1,0 +1,30 @@
+<% content_for :title, "Editar servicio" %>
+
+<div class="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-6 overflow-hidden rounded-2xl bg-white shadow-lg shadow-slate-200/70 border border-slate-100">
+      <div class="flex items-center justify-between gap-3 p-6 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-5 w-5">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M15.5 4.5l4 4-9 9H6.5v-4.5l9-9z" />
+            </svg>
+          </span>
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] opacity-90">Catálogo</p>
+            <h1 class="text-3xl font-bold leading-tight">Editar servicio</h1>
+          </div>
+        </div>
+        <%= link_to service_catalogs_path, class: "inline-flex items-center gap-2 rounded-xl border border-white/60 bg-transparent px-4 py-2 text-sm font-semibold text-white hover:bg-white/10" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-4 w-4">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span>Volver</span>
+        <% end %>
+      </div>
+
+      <div class="p-6 bg-white">
+        <%= render "form", service_catalog: @service_catalog %>
+      </div>
+    </div>
+  </div>
+</div>

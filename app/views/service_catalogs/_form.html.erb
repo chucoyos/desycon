@@ -1,0 +1,57 @@
+<%= form_with(model: service_catalog, local: true, class: "space-y-6") do |form| %>
+  <% if service_catalog.errors.any? %>
+    <div class="rounded-2xl border border-red-200 bg-red-50/80 p-4 text-sm text-red-800 shadow-sm">
+      <p class="font-semibold mb-2">No pudimos guardar el servicio:</p>
+      <ul class="list-disc list-inside space-y-1">
+        <% service_catalog.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="space-y-1">
+      <%= form.label :name, "Nombre *", class: "block text-sm font-semibold text-gray-800 tracking-wide" %>
+      <%= form.text_field :name, required: true, class: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 bg-white" %>
+      <p class="text-xs text-gray-500">Nombre visible en contenedores o BL House.</p>
+    </div>
+
+    <div class="space-y-1">
+      <%= form.label :code, "Código", class: "block text-sm font-semibold text-gray-800 tracking-wide" %>
+      <%= form.text_field :code, placeholder: "Opcional", class: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 bg-white" %>
+      <p class="text-xs text-gray-500">Úsalo si necesitas referenciarlo en facturación.</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="space-y-1">
+      <%= form.label :applies_to, "Aplicable a *", class: "block text-sm font-semibold text-gray-800 tracking-wide" %>
+      <% options = ServiceCatalog::APPLIES_TO.map { |v| [v == "container" ? "Contenedores" : "BL House", v] } %>
+      <%= form.select :applies_to, options_for_select(options, service_catalog.applies_to), { prompt: "Selecciona" }, class: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 bg-white" %>
+    </div>
+
+    <div class="space-y-1">
+      <%= form.label :amount, "Monto *", class: "block text-sm font-semibold text-gray-800 tracking-wide" %>
+      <%= form.number_field :amount, step: 0.01, min: 0, required: true, class: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 bg-white" %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="space-y-1">
+      <%= form.label :currency, "Moneda *", class: "block text-sm font-semibold text-gray-800 tracking-wide" %>
+      <%= form.select :currency, options_for_select([ ["MXN", "MXN"] ], service_catalog.currency || "MXN"), {}, class: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 bg-white" %>
+    </div>
+
+    <div class="flex items-center gap-2 pt-7">
+      <%= form.check_box :active, class: "h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" %>
+      <%= form.label :active, "Activo", class: "text-sm font-semibold text-gray-800" %>
+      <span class="text-xs text-gray-500">Muestra este servicio en formularios.</span>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-end gap-2 pt-2">
+    <%= link_to "Cancelar", service_catalogs_path, class: "px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm" %>
+    <%= form.submit class: "px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:bg-indigo-700" %>
+  </div>
+<% end %>
