@@ -1,10 +1,11 @@
 FactoryBot.define do
   factory :container do
-    sequence(:number) { |n| "CONT#{n.to_s.rjust(3, '0')}" }
+    sequence(:number) { |n| "CONT#{n.to_s.rjust(7, '0')}" }
     status { 'activo' }
     tipo_maniobra { 'importacion' }
     association :shipping_line
     association :port
+    association :vessel
 
     # Use NEW consolidator_entity association (Entity with consolidator role)
     # The old consolidator association will be removed in future migrations

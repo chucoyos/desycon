@@ -12,9 +12,9 @@ RSpec.describe Container, type: :model do
       expect(container).to respond_to(:shipping_line)
     end
 
-    it 'belongs to vessel optionally' do
-      container = create(:container, vessel: nil)
-      expect(container).to be_valid
+    it 'belongs to vessel' do
+      container = build(:container)
+      expect(container).to respond_to(:vessel)
     end
 
     it 'has many container_status_histories' do
@@ -68,15 +68,36 @@ RSpec.describe Container, type: :model do
         expect(container.errors[:number]).to include("no puede estar en blanco")
       end
 
-      it 'validates uniqueness case-insensitively' do
-        create(:container, number: 'CONT001')
-        container.number = 'cont001'
+      it 'validates uniqueness case-insensitively scoped to bl_master' do
+        create(:container, number: 'CONU0000001', bl_master: 'BL-ABC')
+        container.number = 'conu0000001'
+        container.bl_master = 'BL-ABC'
         expect(container).not_to be_valid
       end
 
+      it 'allows same number with different bl_master' do
+        create(:container, number: 'CONU0000002', bl_master: 'BL-AAA')
+        container.number = 'CONU0000002'
+        container.bl_master = 'BL-BBB'
+        expect(container).to be_valid
+      end
+
       it 'normalizes number before validation' do
-        container = create(:container, number: '  cont-001  ')
-        expect(container.number).to eq('CONT-001')
+        container = create(:container, number: '  con-u-1234567  ')
+        expect(container.number).to eq('CONU1234567')
+      end
+
+      it 'enforces 4 letters plus 7 digits format' do
+        container.number = 'ABC1234567'
+        expect(container).not_to be_valid
+        expect(container.errors[:number]).to_not be_empty
+      end
+    end
+
+    describe 'bl_master' do
+      it 'requires bl_master' do
+        container.bl_master = nil
+        expect(container).not_to be_valid
       end
     end
 
@@ -88,10 +109,11 @@ RSpec.describe Container, type: :model do
 
       it 'has default status activo' do
         container = Container.new(
-          number: 'TEST001',
+          number: 'TEST0000001',
           consolidator: create(:consolidator),
           shipping_line: create(:shipping_line),
-          tipo_maniobra: 'importacion'
+          tipo_maniobra: 'importacion',
+          bl_master: 'BL-DEFAULT'
         )
         expect(container.status).to eq('activo')
       end
@@ -123,6 +145,11 @@ RSpec.describe Container, type: :model do
 
     it 'requires shipping_line' do
       container.shipping_line = nil
+      expect(container).not_to be_valid
+    end
+
+    it 'requires vessel' do
+      container.vessel = nil
       expect(container).not_to be_valid
     end
   end
@@ -233,11 +260,11 @@ RSpec.describe Container, type: :model do
   end
 
   describe 'instance methods' do
-    let(:container) { create(:container, number: 'CONT123') }
+    let(:container) { create(:container, number: 'CONT0000123') }
 
     describe '#to_s' do
       it 'returns the container number' do
-        expect(container.to_s).to eq('CONT123')
+        expect(container.to_s).to eq('CONT0000123')
       end
     end
 

@@ -30,18 +30,26 @@ class Container < ApplicationRecord
   }, prefix: true
 
   # Validaciones
-  validates :number, presence: true, uniqueness: { case_sensitive: false }
+  validates :number,
+            presence: true,
+            uniqueness: { case_sensitive: false, scope: :bl_master, message: "ya existe para este BL Master" },
+            format: {
+              with: /\A[A-Z]{4}\d{7}\z/,
+              message: "debe tener el formato de contenedor (4 letras seguidas de 7 dígitos)"
+            }
+  validates :bl_master, presence: true, length: { maximum: 100 }
   validates :status, presence: true, inclusion: { in: statuses.keys }
   validates :tipo_maniobra, presence: true, inclusion: { in: tipo_maniobras.keys }
   validates :consolidator_entity, presence: true
   validates :shipping_line, presence: true
 
-  validates :bl_master, length: { maximum: 100 }, allow_blank: true
-  validates :viaje, length: { maximum: 50 }, allow_blank: true
-  validates :recinto, length: { maximum: 100 }, allow_blank: true
-  validates :archivo_nr, length: { maximum: 100 }, allow_blank: true
-  validates :sello, length: { maximum: 50 }, allow_blank: true
-  validates :cont_key, length: { maximum: 50 }, allow_blank: true
+  validates :viaje, length: { maximum: 50 }, presence: true
+  validates :recinto, length: { maximum: 100 }, presence: true
+  validates :archivo_nr, length: { maximum: 100 }, presence: true
+  validates :sello, length: { maximum: 50 }, presence: true
+  validates :cont_key, length: { maximum: 50 }, presence: true
+  validates :vessel, presence: true
+  validates :fecha_arribo, presence: true
 
   # Normalización
   before_validation :normalize_number
@@ -121,7 +129,10 @@ class Container < ApplicationRecord
   end
 
   def normalize_number
-    self.number = number.to_s.upcase.strip if number.present?
+    return if number.blank?
+
+    cleaned = number.to_s.upcase.gsub(/[^A-Z0-9]/, "")
+    self.number = cleaned
   end
 
   def create_initial_status_history
