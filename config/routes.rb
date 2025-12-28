@@ -3,7 +3,29 @@ Rails.application.routes.draw do
   get "customs_agents/revalidations", to: "customs_agents#revalidation_modal", as: :customs_agents_revalidation
   patch "customs_agents/revalidations/:id", to: "customs_agents#revalidation_update", as: :customs_agents_revalidation_update
 
-  devise_for :users
+  devise_for :users, skip: :all
+
+  devise_scope :user do
+    # Sessions
+    get    "users/sign_in",  to: "devise/sessions#new",     as: :new_user_session
+    post   "users/sign_in",  to: "devise/sessions#create",  as: :user_session
+    delete "users/sign_out", to: "devise/sessions#destroy", as: :destroy_user_session
+
+    # Registrations
+    get    "users/sign_up", to: "devise/registrations#new",    as: :new_user_registration
+    post   "users",         to: "devise/registrations#create", as: :user_registration
+    get    "users/edit",    to: "devise/registrations#edit",   as: :edit_user_registration
+    patch  "users",         to: "devise/registrations#update"
+    put    "users",         to: "devise/registrations#update"
+    delete "users",         to: "devise/registrations#destroy"
+
+    # Password recovery
+    get   "users/password/new",  to: "devise/passwords#new",    as: :new_user_password
+    post  "users/password",      to: "devise/passwords#create", as: :user_password
+    get   "users/password/edit", to: "devise/passwords#edit",   as: :edit_user_password
+    patch "users/password",      to: "devise/passwords#update"
+    put   "users/password",      to: "devise/passwords#update"
+  end
 
   resources :packagings
   resources :roles do

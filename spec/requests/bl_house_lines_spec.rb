@@ -98,7 +98,7 @@ RSpec.describe "BlHouseLines", type: :request do
       it "renders a response with 422 status (i.e. to display the 'new' template)" do
         sign_in user, scope: :user
         post bl_house_lines_url, params: { bl_house_line: invalid_attributes }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
   end
@@ -135,7 +135,7 @@ RSpec.describe "BlHouseLines", type: :request do
         sign_in user, scope: :user
         bl_house_line = create(:bl_house_line)
         patch bl_house_line_url(bl_house_line), params: { bl_house_line: invalid_attributes }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
   end
