@@ -38,6 +38,7 @@ es:
       role: Rol
       shipping_line: Línea Naviera
       port: Puerto
+      container: Contenedor
     attributes:
       user:
         email: Correo electrónico
@@ -55,6 +56,8 @@ es:
         country_code: País
         created_at: Fecha de creación
         updated_at: Fecha de actualización
+      container:
+        archivo_nr: Referencia
   date:
     abbr_day_names:
     - dom

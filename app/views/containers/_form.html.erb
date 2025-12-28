@@ -46,7 +46,11 @@
 
       <div>
         <%= form.label :status, "Status *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.select :status, Container.statuses.keys.map { |s| [status_nombre(s), s] }, {}, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:status].any? ? 'border-red-300' : ''}" %>
+        <%= form.select :status,
+            Container.statuses.keys.map { |s| [status_nombre(s), s] },
+            { prompt: "Seleccione estatus", selected: (container.status.presence || 'activo') },
+            class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:status].any? ? 'border-red-300' : ''}",
+            required: true %>
         <% if container.errors[:status].any? %>
           <p class="mt-1 text-sm text-red-600"><%= container.errors[:status].first %></p>
         <% end %>
@@ -54,7 +58,11 @@
 
       <div>
         <%= form.label :tipo_maniobra, "Tipo de Maniobra *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.select :tipo_maniobra, Container.tipo_maniobras.keys.map { |t| [tipo_maniobra_nombre(t), t] }, {}, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:tipo_maniobra].any? ? 'border-red-300' : ''}" %>
+        <%= form.select :tipo_maniobra,
+            Container.tipo_maniobras.keys.map { |t| [tipo_maniobra_nombre(t), t] },
+            { prompt: "Seleccione tipo de maniobra", selected: (container.tipo_maniobra.presence || 'importacion') },
+            class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:tipo_maniobra].any? ? 'border-red-300' : ''}",
+            required: true %>
         <% if container.errors[:tipo_maniobra].any? %>
           <p class="mt-1 text-sm text-red-600"><%= container.errors[:tipo_maniobra].first %></p>
         <% end %>
@@ -62,7 +70,7 @@
 
       <div>
         <%= form.label :consolidator_entity_id, "Consolidador *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.collection_select :consolidator_entity_id, @consolidators, :id, :name, { prompt: "Seleccione un consolidador" }, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:consolidator_entity].any? ? 'border-red-300' : ''}" %>
+        <%= form.collection_select :consolidator_entity_id, @consolidators, :id, :name, { prompt: "Seleccione un consolidador" }, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:consolidator_entity].any? ? 'border-red-300' : ''}", required: true %>
         <% if container.errors[:consolidator_entity].any? %>
           <p class="mt-1 text-sm text-red-600"><%= container.errors[:consolidator_entity].first %></p>
         <% end %>
@@ -70,15 +78,15 @@
 
       <div>
         <%= form.label :shipping_line_id, "Línea Naviera *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.collection_select :shipping_line_id, @shipping_lines, :id, :name, { prompt: "Seleccione una línea naviera" }, { class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:shipping_line].any? ? 'border-red-300' : ''}", data: { vessel_filter_target: "shippingLine", action: "change->vessel-filter#filterVessels" } } %>
+        <%= form.collection_select :shipping_line_id, @shipping_lines, :id, :name, { prompt: "Seleccione una línea naviera" }, { class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:shipping_line].any? ? 'border-red-300' : ''}", data: { vessel_filter_target: "shippingLine", action: "change->vessel-filter#filterVessels" }, required: true } %>
         <% if container.errors[:shipping_line].any? %>
           <p class="mt-1 text-sm text-red-600"><%= container.errors[:shipping_line].first %></p>
         <% end %>
       </div>
 
       <div>
-        <%= form.label :vessel_id, "Buque", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.collection_select :vessel_id, @vessels, :id, :name, { prompt: "Seleccione un buque", include_blank: true }, { class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200", data: { vessel_filter_target: "vessel" } } %>
+        <%= form.label :vessel_id, "Buque *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.collection_select :vessel_id, @vessels, :id, :name, { prompt: "Seleccione un buque" }, { class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200", data: { vessel_filter_target: "vessel" }, required: true } %>
       </div>
     </div>
   </div>
@@ -96,42 +104,42 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
       <div>
-        <%= form.label :bl_master, "BL Master", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.text_field :bl_master, placeholder: "BL-0001", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
+        <%= form.label :bl_master, "BL Master *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.text_field :bl_master, placeholder: "BL-0001", required: true, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
       </div>
 
       <div>
-        <%= form.label :fecha_arribo, "Fecha de Arribo", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.label :fecha_arribo, "Fecha de Arribo *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <%= form.date_field :fecha_arribo, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" %>
       </div>
 
       <div>
-        <%= form.label :port_id, "Puerto de Origen", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.label :port_id, "Puerto de Origen *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <%= form.collection_select :port_id, @ports, :id, :display_name, { prompt: "Seleccione un puerto" }, { class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" } %>
       </div>
 
       <div>
-        <%= form.label :viaje, "Viaje", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.label :viaje, "Viaje *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <%= form.text_field :viaje, placeholder: "V001", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
       </div>
 
       <div>
-        <%= form.label :recinto, "Recinto", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.label :recinto, "Recinto *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <%= form.select :recinto, [['SSA', 'SSA'], ['FRIMAN', 'FRIMAN']], { prompt: "Seleccione un recinto" }, { class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" } %>
       </div>
 
       <div>
-        <%= form.label :archivo_nr, "Referencia", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.text_field :archivo_nr, placeholder: "NR-0001", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
+        <%= form.label :archivo_nr, "Referencia *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.text_field :archivo_nr, placeholder: "NR-0001", required: true, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
       </div>
 
       <div>
-        <%= form.label :sello, "Sello", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.label :sello, "Sello *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <%= form.text_field :sello, placeholder: "SEAL12345", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
       </div>
 
       <div>
-        <%= form.label :cont_key, "Cont Key", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.label :cont_key, "Cont Key *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <%= form.text_field :cont_key, placeholder: "KEY0001", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
       </div>
     </div>
