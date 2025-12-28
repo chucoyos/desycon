@@ -62,7 +62,7 @@
       <%= form_with model: bl_house_line, url: customs_agents_revalidation_update_path(bl_house_line), method: :patch, data: { turbo_frame: "revalidation_modal" }, html: { multipart: true, class: "space-y-6" } do |form| %>
         <div data-revalidation-wizard-target="stepOne" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="p-4 rounded-xl border border-gray-100 bg-gray-50">
+            <div class="p-4 rounded-2xl border border-indigo-100 bg-indigo-50/70 shadow-md shadow-indigo-100 ring-1 ring-indigo-100">
               <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Agente asignado</p>
               <%= form.select :customs_agent_id,
                               options_from_collection_for_select(customs_agents, :id, :name, bl_house_line.customs_agent_id || current_user.entity_id),
@@ -72,7 +72,7 @@
                 <p class="text-xs text-indigo-600 mt-1">Lo asignaremos a tu agencia al enviar.</p>
               <% end %>
             </div>
-            <div class="p-4 rounded-xl border border-gray-100 bg-gray-50">
+            <div class="p-4 rounded-2xl border border-indigo-100 bg-indigo-50/70 shadow-md shadow-indigo-100 ring-1 ring-indigo-100">
               <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Cliente</p>
               <%= form.select :client_id,
                               options_from_collection_for_select(clients, :id, :name, bl_house_line.client_id),
@@ -82,15 +82,15 @@
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div class="p-3 rounded-lg border border-gray-100">
+            <div class="p-3 rounded-xl border border-indigo-50 bg-white shadow-sm shadow-indigo-50 ring-1 ring-indigo-50">
               <p class="text-xs text-gray-500">Contenedor</p>
               <p class="text-sm font-semibold text-gray-900"><%= bl_house_line.container&.number || 'Sin contenedor' %></p>
             </div>
-            <div class="p-3 rounded-lg border border-gray-100">
+            <div class="p-3 rounded-xl border border-indigo-50 bg-white shadow-sm shadow-indigo-50 ring-1 ring-indigo-50">
               <p class="text-xs text-gray-500">Partida</p>
               <p class="text-sm font-semibold text-gray-900"><%= bl_house_line.partida %></p>
             </div>
-            <div class="p-3 rounded-lg border border-gray-100">
+            <div class="p-3 rounded-xl border border-indigo-50 bg-white shadow-sm shadow-indigo-50 ring-1 ring-indigo-50">
               <p class="text-xs text-gray-500">Estado actual</p>
               <p class="text-sm font-semibold text-gray-900"><%= bl_house_line_status_nombre(bl_house_line.status) %></p>
             </div>
@@ -117,7 +117,7 @@
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
+            <div class="p-4 rounded-2xl border border-sky-100 bg-sky-50/60 shadow-md shadow-sky-100 ring-1 ring-sky-100">
               <%= form.label :bl_endosado_documento, "BL endosado", class: "block text-sm font-semibold text-gray-800 mb-1" %>
               <%= form.file_field :bl_endosado_documento, direct_upload: true, class: "block w-full text-sm text-gray-900 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 file:font-semibold file:cursor-pointer hover:file:bg-indigo-100" %>
               <% if bl_house_line.bl_endosado_documento.attached? %>
@@ -128,7 +128,7 @@
                 </div>
               <% end %>
             </div>
-            <div>
+            <div class="p-4 rounded-2xl border border-sky-100 bg-sky-50/60 shadow-md shadow-sky-100 ring-1 ring-sky-100">
               <%= form.label :liberacion_documento, "Liberacion", class: "block text-sm font-semibold text-gray-800 mb-1" %>
               <%= form.file_field :liberacion_documento, direct_upload: true, class: "block w-full text-sm text-gray-900 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 file:font-semibold file:cursor-pointer hover:file:bg-indigo-100" %>
               <% if bl_house_line.liberacion_documento.attached? %>
@@ -139,7 +139,7 @@
                 </div>
               <% end %>
             </div>
-            <div>
+            <div class="p-4 rounded-2xl border border-sky-100 bg-sky-50/60 shadow-md shadow-sky-100 ring-1 ring-sky-100">
               <%= form.label :encomienda_documento, "Encomienda", class: "block text-sm font-semibold text-gray-800 mb-1" %>
               <%= form.file_field :encomienda_documento, direct_upload: true, class: "block w-full text-sm text-gray-900 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 file:font-semibold file:cursor-pointer hover:file:bg-indigo-100" %>
               <% if bl_house_line.encomienda_documento.attached? %>
