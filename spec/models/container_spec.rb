@@ -418,6 +418,84 @@ RSpec.describe Container, type: :model do
         }.not_to change { container.container_status_histories.count }
       end
     end
+
+    describe 'viaje' do
+      it 'requires viaje' do
+        container.viaje = nil
+        expect(container).not_to be_valid
+        expect(container.errors[:viaje]).to_not be_empty
+      end
+
+      it 'limits viaje length to 50 chars' do
+        container.viaje = 'V' * 51
+        expect(container).not_to be_valid
+        expect(container.errors[:viaje]).to_not be_empty
+      end
+    end
+
+    describe 'recinto' do
+      it 'requires recinto' do
+        container.recinto = nil
+        expect(container).not_to be_valid
+        expect(container.errors[:recinto]).to_not be_empty
+      end
+
+      it 'limits recinto length to 100 chars' do
+        container.recinto = 'R' * 101
+        expect(container).not_to be_valid
+        expect(container.errors[:recinto]).to_not be_empty
+      end
+    end
+
+    describe 'archivo_nr' do
+      it 'requires archivo_nr' do
+        container.archivo_nr = nil
+        expect(container).not_to be_valid
+        expect(container.errors[:archivo_nr]).to_not be_empty
+      end
+
+      it 'limits archivo_nr length to 100 chars' do
+        container.archivo_nr = 'A' * 101
+        expect(container).not_to be_valid
+        expect(container.errors[:archivo_nr]).to_not be_empty
+      end
+    end
+
+    describe 'sello' do
+      it 'requires sello' do
+        container.sello = nil
+        expect(container).not_to be_valid
+        expect(container.errors[:sello]).to_not be_empty
+      end
+
+      it 'limits sello length to 50 chars' do
+        container.sello = 'S' * 51
+        expect(container).not_to be_valid
+        expect(container.errors[:sello]).to_not be_empty
+      end
+    end
+
+    describe 'cont_key' do
+      it 'requires cont_key' do
+        container.cont_key = nil
+        expect(container).not_to be_valid
+        expect(container.errors[:cont_key]).to_not be_empty
+      end
+
+      it 'limits cont_key length to 50 chars' do
+        container.cont_key = 'K' * 51
+        expect(container).not_to be_valid
+        expect(container.errors[:cont_key]).to_not be_empty
+      end
+    end
+
+    describe 'fecha_arribo' do
+      it 'requires fecha_arribo' do
+        container.fecha_arribo = nil
+        expect(container).not_to be_valid
+        expect(container.errors[:fecha_arribo]).to_not be_empty
+      end
+    end
   end
 
   describe 'Active Storage attachments' do
