@@ -36,6 +36,15 @@ document.addEventListener('turbo:before-stream-render', (event) => {
   console.log('Turbo stream render:', event.detail.newStream)
 })
 
+// Clear revalidation modal before navigation/snapshot to avoid cached flashes
+const clearRevalidationModal = () => {
+  const frame = document.getElementById('revalidation_modal')
+  if (frame) frame.innerHTML = ''
+}
+
+document.addEventListener('turbo:before-visit', clearRevalidationModal)
+document.addEventListener('turbo:before-cache', clearRevalidationModal)
+
 // Debug form submissions
 document.addEventListener('submit', (event) => {
   console.log('Form submitted:', event.target.action, event.target.method)
