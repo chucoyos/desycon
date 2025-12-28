@@ -3,6 +3,8 @@ class ContainerService < ApplicationRecord
   belongs_to :service_catalog
   belongs_to :billed_to_entity, class_name: "Entity", optional: true
 
+  before_validation :assign_default_billed_to_entity
+
   validates :service_catalog, presence: true
   validates :amount, presence: true, numericality: { greater_than: 0 }
   validates :currency, presence: true, inclusion: { in: [ "MXN" ] }
@@ -36,5 +38,13 @@ class ContainerService < ApplicationRecord
 
   def currency
     service_catalog&.currency
+  end
+
+  private
+
+  def assign_default_billed_to_entity
+    return if billed_to_entity_id.present?
+
+    self.billed_to_entity_id = container&.consolidator_entity_id || container&.consolidator_id
   end
 end

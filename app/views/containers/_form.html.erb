@@ -211,7 +211,7 @@
     </div>
 
     <div id="service-template" class="hidden">
-      <%= form.fields_for :container_services, ContainerService.new, child_index: 'NEW_RECORD' do |service_form| %>
+      <%= form.fields_for :container_services, ContainerService.new(billed_to_entity_id: container.consolidator_entity_id || container.consolidator_id), child_index: 'NEW_RECORD' do |service_form| %>
         <%= render 'service_fields', f: service_form %>
       <% end %>
     </div>
