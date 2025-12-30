@@ -1,4 +1,6 @@
-<%= form_with(model: entity, class: "space-y-6") do |form| %>
+<% show_actions = local_assigns.fetch(:show_actions, true) %>
+
+<%= form_with(model: entity, class: "space-y-6", id: "entity_form") do |form| %>
   <%= render "shared/error_messages", object: entity %>
 
   <!-- Basic Information -->
@@ -151,41 +153,7 @@
     </div>
   </div>
 
-  <% if entity.persisted? %>
-    <!-- Customs Agent Patents -->
-    <div id="patents-section" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" style="<%= 'display: none;' unless entity.is_customs_agent %>">
-      <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-        <div class="flex items-center justify-between">
-        <h3 class="text-base sm:text-lg font-semibold text-gray-900">Patentes Aduanales</h3>
-      </div>
-    </div>
-    <div class="px-4 sm:px-6 py-4">
-      <div id="patents-list" class="space-y-2 mb-3">
-        <% if entity.persisted? %>
-          <% entity.customs_agent_patents.select(&:persisted?).each do |patent| %>
-            <%= render partial: "customs_agent_patents/patent", locals: { patent: patent } %>
-          <% end %>
-        <% end %>
-      </div>
-      
-      <%= turbo_frame_tag "new_patent" %>
-      
-      <button type="button" 
-              id="add-patent-btn"
-              onclick="document.getElementById('new_patent').innerHTML = document.getElementById('patent-form-template').innerHTML; this.style.display = 'none';"
-              class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-150">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        Agregar Patente
-      </button>
-      
-      <template id="patent-form-template">
-        <%= render partial: 'customs_agent_patents/form' %>
-      </template>
-    </div>
-  </div>
-  <% else %>
+  <% unless entity.persisted? %>
     <!-- Customs Agent Patents for New Entities (Always rendered but hidden by default) -->
     <div id="patents-section" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" style="display: none;">
       <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
@@ -210,37 +178,7 @@
   <% end %>
 
   <!-- Addresses -->
-  <% if entity.persisted? %>
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-    <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-      <div class="flex items-center justify-between">
-        <h3 class="text-base sm:text-lg font-semibold text-gray-900">Direcciones</h3>
-        <button type="button"
-                id="toggle-addresses-btn"
-                class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors duration-150">
-          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-          </svg>
-          Agregar Dirección
-        </button>
-      </div>
-    </div>
-
-    <!-- Existing Addresses -->
-    <div id="addresses-list" class="px-4 sm:px-6 py-4 space-y-3">
-      <% entity.addresses.select(&:persisted?).each do |address| %>
-        <%= render partial: "entity_addresses/address", locals: { address: address } %>
-      <% end %>
-    </div>
-
-    <!-- New Address Form (Initially Hidden) -->
-    <div id="new-address-section" class="hidden px-4 sm:px-6 pb-4">
-      <%= turbo_frame_tag "new_address" do %>
-        <%= render partial: 'entity_addresses/form', locals: { entity: entity } %>
-      <% end %>
-    </div>
-  </div>
-  <% else %>
+  <% unless entity.persisted? %>
   <!-- Address fields for new entities (nested attributes) -->
   <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
     <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
@@ -362,29 +300,25 @@
         });
       }
 
-      // Toggle patents section based on customs agent checkbox
-      <% unless entity.persisted? %>
+      // Toggle patents section based on customs agent checkbox (new and edit)
       const customsAgentCheckbox = document.getElementById('entity_is_customs_agent');
       const patentsSection = document.getElementById('patents-section');
 
       if (customsAgentCheckbox && patentsSection) {
-        // Clone the checkbox to remove any existing event listeners
         const newCustomsAgentCheckbox = customsAgentCheckbox.cloneNode(true);
         customsAgentCheckbox.parentNode.replaceChild(newCustomsAgentCheckbox, customsAgentCheckbox);
 
-        function togglePatentsSection() {
+        const togglePatentsSection = () => {
           if (newCustomsAgentCheckbox.checked) {
             patentsSection.style.display = 'block';
           } else {
             patentsSection.style.display = 'none';
           }
-        }
+        };
 
         newCustomsAgentCheckbox.addEventListener('change', togglePatentsSection);
-        // Initial check
         togglePatentsSection();
       }
-      <% end %>
 
       // Toggle addresses form (only for persisted entities)
       <% if entity.persisted? %>
@@ -431,11 +365,13 @@
     initializeFormJavaScript();
   </script>
 
-  <!-- Form Actions -->
-  <div class="sticky bottom-6 mt-8 flex flex-wrap gap-3 glass-panel px-5 py-4">
-    <%= form.submit entity.persisted? ? 'Actualizar Entidad' : 'Crear Entidad',
-        class: "cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-teal-600 to-cyan-700 text-white text-sm font-semibold shadow-md shadow-teal-200 hover:from-teal-700 hover:to-cyan-800 transition" %>
-    <%= link_to "Cancelar", entities_path,
-        class: "cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition" %>
-  </div>
+  <% if show_actions %>
+    <!-- Form Actions -->
+    <div class="mt-8 flex flex-wrap gap-3 px-5 py-4">
+      <%= form.submit entity.persisted? ? 'Actualizar Entidad' : 'Crear Entidad',
+          class: "cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-teal-600 to-cyan-700 text-white text-sm font-semibold shadow-md shadow-teal-200 hover:from-teal-700 hover:to-cyan-800 transition" %>
+      <%= link_to "Cancelar", entities_path,
+          class: "cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition" %>
+    </div>
+  <% end %>
 <% end %>

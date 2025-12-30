@@ -16,5 +16,23 @@
     </div>
   </div>
 
-  <%= render "form", entity: @entity %>
+  <%= render "form", entity: @entity, show_actions: false %>
+
+  <% if @entity.persisted? %>
+    <div class="mt-4">
+      <%= render "entities/patents_editor", entity: @entity %>
+    </div>
+    <div class="pb-8">
+      <%= render "entities/addresses_editor", entity: @entity %>
+    </div>
+  <% end %>
+
+  <!-- Global actions bar placed after patents so it stays below content -->
+  <div class="mt-8 flex flex-wrap gap-3 px-5 py-4">
+    <%= button_tag 'Actualizar Entidad',
+        form: 'entity_form',
+        class: "cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-teal-600 to-cyan-700 text-white text-sm font-semibold shadow-md shadow-teal-200 hover:from-teal-700 hover:to-cyan-800 transition" %>
+    <%= link_to "Cancelar", entities_path,
+        class: "cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition" %>
+  </div>
 </div>

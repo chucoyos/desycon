@@ -1,0 +1,29 @@
+<div id="addresses_container" class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+    <div class="flex items-center justify-between">
+      <h3 class="text-base sm:text-lg font-semibold text-gray-900">Direcciones</h3>
+      <button type="button"
+              id="add-address-btn"
+              onclick="document.getElementById('new_address').innerHTML = document.getElementById('address-form-template').innerHTML; this.style.display = 'none';"
+              class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors duration-150">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        Agregar Dirección
+      </button>
+    </div>
+  </div>
+
+  <div class="px-4 sm:px-6 py-4 space-y-3">
+    <% entity.addresses.select(&:persisted?).each do |address| %>
+      <%= render partial: "entity_addresses/address", locals: { address: address } %>
+    <% end %>
+  </div>
+
+  <div class="px-4 sm:px-6 pb-4">
+    <%= turbo_frame_tag "new_address" %>
+    <template id="address-form-template">
+      <%= render partial: 'entity_addresses/form', locals: { entity: entity } %>
+    </template>
+  </div>
+</div>

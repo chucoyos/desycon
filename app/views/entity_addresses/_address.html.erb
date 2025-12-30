@@ -8,8 +8,9 @@
           </span>
         <% end %>
       </div>
-      <%= button_to entity_address_path(address.addressable, address),
+        <%= button_to entity_address_path(address.addressable, address),
           method: :delete,
+          params: { context: "edit" },
           form: { data: { turbo_confirm: "¿Eliminar esta dirección?" } },
           class: "p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150" do %>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">

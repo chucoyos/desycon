@@ -37,6 +37,8 @@ class EntitiesController < ApplicationController
   def edit
     # Ensure at least one address field is available for editing
     @entity.addresses.build if @entity.addresses.empty?
+    @entity.build_fiscal_profile unless @entity.fiscal_profile.present?
+    @entity.customs_agent_patents.build if @entity.is_customs_agent? && @entity.customs_agent_patents.empty?
     authorize @entity
   end
 
@@ -63,53 +65,72 @@ class EntitiesController < ApplicationController
   def update
     authorize @entity
 
+    # If no modal context, force HTML path (redirect) even if Turbo Drive is enabled
+    modal_context = params[:modal].present?
+
     respond_to do |format|
       if @entity.update(entity_params)
         @entity.reload # Reload to ensure associations are fresh
-        flash.now[:notice] = "Entidad actualizada exitosamente."
-        format.turbo_stream do
-          case params[:modal]
-          when "address"
-            render turbo_stream: [
-              turbo_stream.replace("addresses_container", partial: "entities/addresses_section", locals: { entity: @entity }),
-              turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
-              turbo_stream.replace("address-modal", partial: "entities/address_modal", locals: { entity: @entity })
-            ]
-          when "patent"
-            render turbo_stream: [
-              turbo_stream.replace("patents_container", partial: "entities/patents_section", locals: { entity: @entity }),
-              turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
-              turbo_stream.replace("patent-modal", partial: "entities/patent_modal", locals: { entity: @entity })
-            ]
-          when "fiscal"
-            render turbo_stream: [
-              turbo_stream.replace("fiscal_profile_container", partial: "entities/fiscal_profile_section", locals: { entity: @entity }),
-              turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
-              turbo_stream.replace("fiscal-modal", partial: "entities/fiscal_modal", locals: { entity: @entity })
-            ]
-          when "roles"
-            render turbo_stream: [
-              turbo_stream.replace("entity_show", template: "entities/show", locals: { entity: @entity }),
-              turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
-              turbo_stream.replace("roles-modal", partial: "entities/roles_modal", locals: { entity: @entity }),
-              turbo_stream.append("head", "<script>document.getElementById('roles-modal').classList.add('hidden');</script>")
-            ]
-          when "name"
-            render turbo_stream: [
-              turbo_stream.replace("entity_header", partial: "entities/header", locals: { entity: @entity }),
-              turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
-              turbo_stream.replace("name-modal", partial: "entities/name_modal", locals: { entity: @entity })
-            ]
-          else
-            render turbo_stream: [
-              turbo_stream.replace("entity_show", partial: "entities/show", locals: { entity: @entity }),
-              turbo_stream.remove("#{params[:modal]}-modal")
-            ]
+
+        if modal_context
+          format.turbo_stream do
+            flash.now[:notice] = "Entidad actualizada exitosamente."
+            case params[:modal]
+            when "address"
+              render turbo_stream: [
+                turbo_stream.replace("addresses_container", partial: "entities/addresses_section", locals: { entity: @entity }),
+                turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
+                turbo_stream.replace("address-modal", partial: "entities/address_modal", locals: { entity: @entity })
+              ]
+            when "patent"
+              render turbo_stream: [
+                turbo_stream.replace("patents_container", partial: "entities/patents_section", locals: { entity: @entity }),
+                turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
+                turbo_stream.replace("patent-modal", partial: "entities/patent_modal", locals: { entity: @entity })
+              ]
+            when "fiscal"
+              render turbo_stream: [
+                turbo_stream.replace("fiscal_profile_container", partial: "entities/fiscal_profile_section", locals: { entity: @entity }),
+                turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
+                turbo_stream.replace("fiscal-modal", partial: "entities/fiscal_modal", locals: { entity: @entity })
+              ]
+            when "roles"
+              render turbo_stream: [
+                turbo_stream.replace("entity_show", template: "entities/show", locals: { entity: @entity }),
+                turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
+                turbo_stream.replace("roles-modal", partial: "entities/roles_modal", locals: { entity: @entity })
+              ]
+            when "name"
+              render turbo_stream: [
+                turbo_stream.replace("entity_header", partial: "entities/header", locals: { entity: @entity }),
+                turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
+                turbo_stream.replace("name-modal", partial: "entities/name_modal", locals: { entity: @entity })
+              ]
+            else
+              render turbo_stream: [
+                turbo_stream.replace("entity_show", partial: "entities/show", locals: { entity: @entity }),
+                turbo_stream.remove("#{params[:modal]}-modal")
+              ]
+            end
           end
         end
+
+        format.html do
+          redirect_to @entity, notice: "Entidad actualizada exitosamente."
+        end
       else
-        format.turbo_stream do
-          render turbo_stream: turbo_stream.replace("#{params[:modal]}_form", partial: "entities/modal_form", locals: { entity: @entity, modal: params[:modal] })
+        @entity.build_fiscal_profile unless @entity.fiscal_profile
+        @entity.addresses.build if @entity.addresses.empty?
+        @entity.customs_agent_patents.build if @entity.is_customs_agent? && @entity.customs_agent_patents.empty?
+
+        if modal_context
+          format.turbo_stream do
+            render turbo_stream: turbo_stream.replace("#{params[:modal]}_form", partial: "entities/modal_form", locals: { entity: @entity, modal: params[:modal] })
+          end
+        end
+
+        format.html do
+          render :edit, status: :unprocessable_content
         end
       end
     end
