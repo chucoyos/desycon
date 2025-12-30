@@ -310,7 +310,7 @@
             <%= address_form.label :pais, "País", class: "block text-sm font-semibold text-gray-700 mb-2" %>
             <%= address_form.select :pais,
                 Address.paises_con_banderas.map { |display, code| [display, code] },
-                { include_blank: "Seleccionar país", selected: "MX" },
+              { include_blank: "Seleccionar país" },
                 class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
           </div>
 

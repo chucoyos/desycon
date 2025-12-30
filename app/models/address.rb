@@ -21,8 +21,12 @@ class Address < ApplicationRecord
     ISO3166::Country.all.map do |country|
       name = country.iso_short_name || country.translations["en"] || country.name
       emoji_flag = country_code_to_emoji(country.alpha2)
-      [ "#{emoji_flag} #{name}", country.alpha2 ]
-    end.sort_by { |display, code| display }
+      display = "#{emoji_flag} #{name}"
+      sort_key = I18n.transliterate(name).downcase
+      [ display, country.alpha2, sort_key ]
+    end
+    .sort_by { |(_display, _code, sort_key)| sort_key }
+    .map { |display, code, _sort_key| [display, code] }
   end
 
   def to_s
