@@ -26,7 +26,7 @@ class Address < ApplicationRecord
       [ display, country.alpha2, sort_key ]
     end
     .sort_by { |(_display, _code, sort_key)| sort_key }
-    .map { |display, code, _sort_key| [display, code] }
+    .map { |display, code, _sort_key| [ display, code ] }
   end
 
   def to_s
