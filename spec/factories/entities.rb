@@ -30,7 +30,7 @@ FactoryBot.define do
 
     trait :with_address do
       after(:create) do |entity|
-        create(:address, addressable: entity, tipo: 'fiscal') unless entity.addresses.any?
+        create(:address, addressable: entity, tipo: 'matriz') unless entity.addresses.any?
       end
     end
 
@@ -52,7 +52,7 @@ FactoryBot.define do
       consolidator
       after(:create) do |entity|
         create(:fiscal_profile, profileable: entity)
-        create(:address, addressable: entity, tipo: 'fiscal')
+        create(:address, addressable: entity, tipo: 'matriz')
       end
     end
   end

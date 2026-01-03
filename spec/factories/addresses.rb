@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :address do
     association :addressable, factory: :shipping_line
-    tipo { 'fiscal' }
+    tipo { 'matriz' }
     pais { 'MX' }
     sequence(:codigo_postal) { |n| format('%05d', 10000 + n) }
     estado { 'Ciudad de México' }
@@ -13,20 +13,12 @@ FactoryBot.define do
     numero_interior { nil }
     sequence(:email) { |n| "contacto#{n}@empresa.com" }
 
-    trait :envio do
-      tipo { 'envio' }
+    trait :sucursal do
+      tipo { 'sucursal' }
       estado { 'Veracruz' }
       municipio { 'Veracruz' }
       colonia { 'Puerto' }
       calle { 'Calle del Muelle' }
-    end
-
-    trait :almacen do
-      tipo { 'almacen' }
-      estado { 'Nuevo León' }
-      municipio { 'Monterrey' }
-      colonia { 'Industrial' }
-      calle { 'Parque Industrial' }
     end
 
     trait :sin_email do

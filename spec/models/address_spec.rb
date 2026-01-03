@@ -115,21 +115,17 @@ RSpec.describe Address, type: :model do
 
   describe 'scopes' do
     before do
-      create(:address, :envio)
-      create(:address, tipo: 'fiscal')
-      create(:address, :almacen)
+      create(:address, :sucursal)
+      create(:address, tipo: 'matriz')
+      create(:address, :sucursal)
     end
 
-    it 'filters fiscales addresses' do
-      expect(Address.fiscales.count).to eq(1)
+    it 'filters matriz addresses' do
+      expect(Address.matriz.count).to eq(1)
     end
 
-    it 'filters envio addresses' do
-      expect(Address.envio.count).to eq(1)
-    end
-
-    it 'filters almacenes addresses' do
-      expect(Address.almacenes.count).to eq(1)
+    it 'filters sucursales addresses' do
+      expect(Address.sucursales.count).to eq(2)
     end
 
     it 'finds by codigo_postal' do
@@ -163,8 +159,8 @@ RSpec.describe Address, type: :model do
     end
 
     it 'returns tipo_nombre' do
-      address.tipo = 'fiscal'
-      expect(address.tipo_nombre).to eq('Domicilio Fiscal')
+      address.tipo = 'matriz'
+      expect(address.tipo_nombre).to eq('Matriz')
     end
 
     it 'normalizes codigo_postal removing spaces' do

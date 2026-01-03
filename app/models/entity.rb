@@ -62,15 +62,15 @@ class Entity < ApplicationRecord
 
   # Address helper methods
   def fiscal_address
-    addresses.fiscales.first
+    addresses.matriz.first
   end
 
   def shipping_addresses
-    addresses.envio
+    addresses.sucursales
   end
 
   def warehouse_addresses
-    addresses.almacenes
+    addresses.sucursales
   end
 
   def build_fiscal_profile_if_needed
@@ -78,7 +78,7 @@ class Entity < ApplicationRecord
   end
 
   def build_fiscal_address_if_needed
-    addresses.build(tipo: "fiscal") if addresses.fiscales.empty?
+    addresses.build(tipo: "matriz") if addresses.matriz.empty?
   end
 
   private

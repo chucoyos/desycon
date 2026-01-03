@@ -117,7 +117,7 @@ RSpec.describe Consolidator, type: :model do
     describe '#fiscal_address' do
       it 'returns the fiscal address' do
         consolidator = create(:consolidator, :with_fiscal_address)
-        fiscal_addr = consolidator.entity.addresses.fiscales.first
+        fiscal_addr = consolidator.entity.addresses.matriz.first
         expect(consolidator.fiscal_address).to eq(fiscal_addr)
       end
 
@@ -129,9 +129,9 @@ RSpec.describe Consolidator, type: :model do
 
     describe '#shipping_addresses' do
       it 'returns only shipping addresses' do
-        create(:address, addressable: consolidator.entity, tipo: 'fiscal')
-        envio1 = create(:address, :envio, addressable: consolidator.entity)
-        envio2 = create(:address, :envio, addressable: consolidator.entity)
+        create(:address, addressable: consolidator.entity, tipo: 'matriz')
+        envio1 = create(:address, :sucursal, addressable: consolidator.entity)
+        envio2 = create(:address, :sucursal, addressable: consolidator.entity)
         expect(consolidator.shipping_addresses.count).to eq(2)
         expect(consolidator.shipping_addresses).to include(envio1, envio2)
       end
@@ -139,8 +139,8 @@ RSpec.describe Consolidator, type: :model do
 
     describe '#warehouse_addresses' do
       it 'returns only warehouse addresses' do
-        create(:address, addressable: consolidator.entity, tipo: 'fiscal')
-        almacen = create(:address, :almacen, addressable: consolidator.entity)
+        create(:address, addressable: consolidator.entity, tipo: 'matriz')
+        almacen = create(:address, :sucursal, addressable: consolidator.entity)
         expect(consolidator.warehouse_addresses.count).to eq(1)
         expect(consolidator.warehouse_addresses).to include(almacen)
       end
@@ -166,19 +166,19 @@ RSpec.describe Consolidator, type: :model do
     describe '#build_fiscal_address_if_needed' do
       it 'delegates to entity and builds fiscal address if none exists' do
         consolidator = create(:consolidator)
-        expect(consolidator.entity.addresses.fiscales).to be_empty
+        expect(consolidator.entity.addresses.matriz).to be_empty
         consolidator.build_fiscal_address_if_needed
-        fiscal_addresses = consolidator.entity.addresses.select { |a| a.tipo == 'fiscal' }
+        fiscal_addresses = consolidator.entity.addresses.select { |a| a.tipo == 'matriz' }
         expect(fiscal_addresses.count).to eq(1)
-        expect(fiscal_addresses.first.tipo).to eq('fiscal')
+        expect(fiscal_addresses.first.tipo).to eq('matriz')
       end
 
       it 'does not build if fiscal address already exists' do
-        create(:address, addressable: consolidator.entity, tipo: 'fiscal')
+        create(:address, addressable: consolidator.entity, tipo: 'matriz')
         consolidator.reload
         expect {
           consolidator.build_fiscal_address_if_needed
-        }.not_to change { consolidator.entity.addresses.fiscales.count }
+        }.not_to change { consolidator.entity.addresses.matriz.count }
       end
     end
   end
@@ -202,7 +202,7 @@ RSpec.describe Consolidator, type: :model do
       consolidator.entity.update(
         addresses_attributes: [
           {
-            tipo: 'fiscal',
+            tipo: 'matriz',
             pais: 'MX',
             codigo_postal: '06600',
             estado: 'CDMX',
@@ -212,7 +212,7 @@ RSpec.describe Consolidator, type: :model do
         ]
       )
       expect(consolidator.addresses.count).to eq(1)
-      expect(consolidator.addresses.first.tipo).to eq('fiscal')
+      expect(consolidator.addresses.first.tipo).to eq('matriz')
     end
   end
 end

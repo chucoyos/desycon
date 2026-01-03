@@ -3,10 +3,8 @@ class Address < ApplicationRecord
 
   # Tipos de dirección
   TIPOS = {
-    "fiscal" => "Domicilio Fiscal",
-    "envio" => "Dirección de Envío",
-    "almacen" => "Almacén",
-    "entrega" => "Entrega"
+    "matriz" => "Matriz",
+    "sucursal" => "Sucursal"
   }.freeze
 
   # Países usando la gema countries
@@ -81,9 +79,8 @@ class Address < ApplicationRecord
   before_validation :normalize_codigo_postal
 
   # Scopes
-  scope :fiscales, -> { where(tipo: "fiscal") }
-  scope :envio, -> { where(tipo: "envio") }
-  scope :almacenes, -> { where(tipo: "almacen") }
+  scope :matriz, -> { where(tipo: "matriz") }
+  scope :sucursales, -> { where(tipo: "sucursal") }
   scope :by_codigo_postal, ->(cp) { where(codigo_postal: cp) }
 
   private

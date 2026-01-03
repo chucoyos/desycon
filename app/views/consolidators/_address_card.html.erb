@@ -1,14 +1,10 @@
 <% has_errors = f.object.errors.any? %>
 <% 
   badge_classes = case f.object.tipo
-    when 'fiscal'
+    when 'matriz'
       'bg-blue-100 text-blue-800 border-blue-200'
-    when 'envio'
+    when 'sucursal'
       'bg-green-100 text-green-800 border-green-200'
-    when 'almacen'
-      'bg-purple-100 text-purple-800 border-purple-200'
-    when 'entrega'
-      'bg-orange-100 text-orange-800 border-orange-200'
     else
       'bg-gray-100 text-gray-800 border-gray-200'
   end

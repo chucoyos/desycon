@@ -18,7 +18,7 @@ FactoryBot.define do
 
     trait :with_shipping_address do
       after(:create) do |consolidator|
-        create(:address, :envio, addressable: consolidator.entity)
+        create(:address, :sucursal, addressable: consolidator.entity)
       end
     end
 

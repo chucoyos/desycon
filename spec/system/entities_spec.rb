@@ -42,7 +42,7 @@ RSpec.describe "Entities", type: :system do
 
       # Fill and submit address form
       within "#new_address" do
-        select "Domicilio Fiscal", from: "address_tipo"
+        select "Matriz", from: "address_tipo"
         fill_in "address_calle", with: "Nueva Calle"
         fill_in "address_numero_exterior", with: "123"
         fill_in "address_colonia", with: "Nueva Colonia"
