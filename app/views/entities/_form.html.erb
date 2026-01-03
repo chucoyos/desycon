@@ -86,15 +86,15 @@
                 id="toggle-fiscal-profile-btn"
                 class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors duration-150">
           <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
           </svg>
-          Mostrar
+          Ocultar
         </button>
       </div>
     </div>
 
-    <!-- Fiscal Profile Form (Initially Hidden) -->
-    <div id="fiscal-profile-section" class="hidden px-4 sm:px-6 py-4">
+    <!-- Fiscal Profile Form (Initially Visible) -->
+    <div id="fiscal-profile-section" class="px-4 sm:px-6 py-4">
       <% if entity.fiscal_profile %>
         <%= form.fields_for :fiscal_profile do |fp| %>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
