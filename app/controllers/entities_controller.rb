@@ -44,8 +44,8 @@ class EntitiesController < ApplicationController
   def create
     @entity = Entity.new(entity_params)
 
-    # Assign customs agent if current user is a customs agent
-    if current_user.customs_broker? && current_user.entity&.is_customs_agent?
+    # Assign customs agent if current user is a customs agent and no customs_agent is already assigned
+    if current_user.customs_broker? && current_user.entity&.is_customs_agent? && @entity.customs_agent_id.blank?
       @entity.customs_agent = current_user.entity
       @entity.is_client = true
       @entity.is_customs_agent = false
@@ -178,7 +178,7 @@ class EntitiesController < ApplicationController
     ]
 
     unless current_user.customs_broker?
-      permitted_attributes += [ :is_consolidator, :is_customs_agent, :is_forwarder, :is_client ]
+      permitted_attributes += [ :is_consolidator, :is_customs_agent, :is_forwarder, :is_client, :customs_agent_id ]
     end
 
     params.require(:entity).permit(permitted_attributes)

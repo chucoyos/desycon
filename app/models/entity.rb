@@ -7,6 +7,12 @@ class Entity < ApplicationRecord
   belongs_to :customs_agent, class_name: "Entity", optional: true
   has_many :clients, class_name: "Entity", foreign_key: "customs_agent_id", dependent: :nullify
 
+  # Relaciones con BL House Lines
+  has_many :bl_house_lines_as_customs_agent, class_name: "BlHouseLine", 
+           foreign_key: "customs_agent_id", dependent: :restrict_with_error
+  has_many :bl_house_lines_as_client, class_name: "BlHouseLine", 
+           foreign_key: "client_id", dependent: :restrict_with_error
+
   # Relaciones con perfiles específicos (opcionales)
   has_one :consolidator_profile, class_name: "Consolidator", dependent: :destroy
   has_one :forwarder_profile, class_name: "Forwarder", dependent: :destroy
@@ -30,7 +36,7 @@ class Entity < ApplicationRecord
   # Validaciones
   validates :name, presence: true
   validate :validate_addresses_if_present
-  validates_associated :fiscal_profile, if: -> { fiscal_profile.present? }
+  validate :validate_fiscal_profile
   validates_associated :customs_agent_patents
   validate :must_have_at_least_one_role
 
@@ -141,4 +147,16 @@ class Entity < ApplicationRecord
       client_profile.destroy
     end
   end
+
+  def validate_fiscal_profile
+    return unless fiscal_profile.present?
+
+    # Validar el fiscal_profile y mantener sus errores
+    unless fiscal_profile.valid?
+      # Agregar un error general a la entidad para que validates_associated no sea necesario
+      errors.add(:fiscal_profile, "no es válido")
+    end
+  end
+
+  private
 end

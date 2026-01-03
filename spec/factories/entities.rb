@@ -48,6 +48,12 @@ FactoryBot.define do
       end
     end
 
+    trait :client_of_customs_agent do
+      is_client { true }
+      is_customs_agent { false }
+      customs_agent { create(:entity, :customs_agent) }
+    end
+
     trait :complete do
       consolidator
       after(:create) do |entity|

@@ -149,4 +149,31 @@ RSpec.describe FiscalProfile, type: :model do
       expect(fiscal_profile.metodo_pago_nombre).to eq('Pago en una sola exhibición')
     end
   end
+
+  describe 'scoped uniqueness validation for customs agents' do
+    let(:customs_agent) { create(:entity, :customs_agent) }
+    let(:other_customs_agent) { create(:entity, :customs_agent) }
+    let(:client1) { create(:entity, customs_agent: customs_agent) }
+    let(:client2) { create(:entity, customs_agent: customs_agent) }
+    let(:client_of_other_agent) { create(:entity, customs_agent: other_customs_agent) }
+
+    it 'allows same RFC for clients of different customs agents' do
+      create(:fiscal_profile, profileable: client1, rfc: 'TEST123456XXX')
+      fiscal_profile = build(:fiscal_profile, profileable: client_of_other_agent, rfc: 'TEST123456XXX')
+      expect(fiscal_profile).to be_valid
+    end
+
+    it 'prevents same RFC for clients of same customs agent' do
+      create(:fiscal_profile, profileable: client1, rfc: 'TEST123456XXX')
+      fiscal_profile = build(:fiscal_profile, profileable: client2, rfc: 'TEST123456XXX')
+      expect(fiscal_profile).not_to be_valid
+      expect(fiscal_profile.errors[:rfc].first).to match(/ya existe un cliente con este RFC para/)
+    end
+
+    it 'allows update of same client' do
+      fiscal_profile = create(:fiscal_profile, profileable: client1, rfc: 'TEST123456XXX')
+      fiscal_profile.razon_social = 'Updated Name'
+      expect(fiscal_profile).to be_valid
+    end
+  end
 end

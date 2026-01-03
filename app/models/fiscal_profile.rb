@@ -83,13 +83,21 @@ class FiscalProfile < ApplicationRecord
   validates :razon_social, presence: true
   validates :razon_social, length: { maximum: 254 }
   validates :rfc, presence: true, length: { in: 12..13, message: "debe tener 12 caracteres (persona moral) o 13 caracteres (persona física)" },
-                  format: { with: /\A[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}\z/, message: "formato inválido" },
-                  uniqueness: { case_sensitive: false }
+                  format: { with: /\A[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}\z/, message: "formato inválido" }
   validates :regimen, presence: true, inclusion: { in: REGIMENES.keys }
   validates :uso_cfdi, inclusion: { in: USOS_CFDI.keys }, allow_blank: true
   validates :forma_pago, inclusion: { in: FORMAS_PAGO.keys }, allow_blank: true
   validates :metodo_pago, inclusion: { in: METODOS_PAGO.keys }, allow_blank: true
 
+  # Validación de unicidad: global para no-entities, scoped al agente aduanal para entities
+  validates :rfc, uniqueness: { 
+    case_sensitive: false,
+    unless: -> { profileable_type == 'Entity' && profileable&.customs_agent_id.present? }
+  }
+  
+  # Validación custom para unicidad del RFC dentro del scope del agente aduanal
+  validate :rfc_uniqueness_within_customs_agent_scope
+  
   # Normalización
   before_validation :normalize_rfc
 
@@ -120,5 +128,23 @@ class FiscalProfile < ApplicationRecord
 
   def normalize_rfc
     self.rfc = rfc&.upcase&.strip
+  end
+
+  def rfc_uniqueness_within_customs_agent_scope
+    return unless profileable_type == "Entity" && profileable&.customs_agent_id.present?
+
+    # Buscar otros perfiles fiscales con el mismo RFC
+    existing_profiles = FiscalProfile.joins("INNER JOIN entities ON entities.id = fiscal_profiles.profileable_id")
+                                   .where("fiscal_profiles.profileable_type = 'Entity'")
+                                   .where("UPPER(fiscal_profiles.rfc) = ?", rfc.upcase)
+                                   .where("entities.customs_agent_id = ?", profileable.customs_agent_id)
+
+    # Excluir el perfil actual si ya existe (para updates)
+    existing_profiles = existing_profiles.where.not(id: id) if persisted?
+
+    if existing_profiles.exists?
+      customs_agent_name = profileable.customs_agent&.name || "este agente aduanal"
+      errors.add(:rfc, "ya existe un cliente con este RFC para #{customs_agent_name}")
+    end
   end
 end
