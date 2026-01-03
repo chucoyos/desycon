@@ -79,7 +79,7 @@
 
   <!-- Customs Agent Assignment (Only for admins/executives) -->
   <% unless current_user.customs_broker? %>
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <div id="customs-agent-assignment-section" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" style="<%= entity.is_client ? '' : 'display: none;' %>">
     <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
       <h3 class="text-base sm:text-lg font-semibold text-gray-900">Asignación de Agente Aduanal</h3>
     </div>
@@ -352,6 +352,26 @@
 
         newCustomsAgentCheckbox.addEventListener('change', togglePatentsSection);
         togglePatentsSection();
+      }
+
+      // Toggle customs agent assignment section based on client checkbox (new and edit)
+      const clientCheckbox = document.getElementById('entity_is_client');
+      const customsAgentAssignmentSection = document.getElementById('customs-agent-assignment-section');
+
+      if (clientCheckbox && customsAgentAssignmentSection) {
+        const newClientCheckbox = clientCheckbox.cloneNode(true);
+        clientCheckbox.parentNode.replaceChild(newClientCheckbox, clientCheckbox);
+
+        const toggleCustomsAgentAssignmentSection = () => {
+          if (newClientCheckbox.checked) {
+            customsAgentAssignmentSection.style.display = 'block';
+          } else {
+            customsAgentAssignmentSection.style.display = 'none';
+          }
+        };
+
+        newClientCheckbox.addEventListener('change', toggleCustomsAgentAssignmentSection);
+        toggleCustomsAgentAssignmentSection();
       }
 
       // Toggle addresses form (only for persisted entities)
