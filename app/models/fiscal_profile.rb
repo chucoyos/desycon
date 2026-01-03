@@ -90,14 +90,14 @@ class FiscalProfile < ApplicationRecord
   validates :metodo_pago, inclusion: { in: METODOS_PAGO.keys }, allow_blank: true
 
   # Validación de unicidad: global para no-entities, scoped al agente aduanal para entities
-  validates :rfc, uniqueness: { 
+  validates :rfc, uniqueness: {
     case_sensitive: false,
-    unless: -> { profileable_type == 'Entity' && profileable&.customs_agent_id.present? }
+    unless: -> { profileable_type == "Entity" && profileable&.customs_agent_id.present? }
   }
-  
+
   # Validación custom para unicidad del RFC dentro del scope del agente aduanal
   validate :rfc_uniqueness_within_customs_agent_scope
-  
+
   # Normalización
   before_validation :normalize_rfc
 

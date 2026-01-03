@@ -8,9 +8,9 @@ class Entity < ApplicationRecord
   has_many :clients, class_name: "Entity", foreign_key: "customs_agent_id", dependent: :nullify
 
   # Relaciones con BL House Lines
-  has_many :bl_house_lines_as_customs_agent, class_name: "BlHouseLine", 
+  has_many :bl_house_lines_as_customs_agent, class_name: "BlHouseLine",
            foreign_key: "customs_agent_id", dependent: :restrict_with_error
-  has_many :bl_house_lines_as_client, class_name: "BlHouseLine", 
+  has_many :bl_house_lines_as_client, class_name: "BlHouseLine",
            foreign_key: "client_id", dependent: :restrict_with_error
 
   # Relaciones con perfiles específicos (opcionales)
