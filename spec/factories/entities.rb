@@ -1,10 +1,10 @@
 FactoryBot.define do
   factory :entity do
     sequence(:name) { |n| "Entidad #{n}" }
-    is_consolidator { true }
-    is_customs_agent { true }
+    is_consolidator { false }
+    is_customs_agent { false }
     is_forwarder { false }
-    is_client { false }
+    is_client { true }
 
     trait :consolidator do
       is_consolidator { true }

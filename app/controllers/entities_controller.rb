@@ -9,9 +9,17 @@ class EntitiesController < ApplicationController
     allowed = [ 10, 25, 50, 100 ]
     per = 10 unless allowed.include?(per)
     @per_page = per
+
     @entities = policy_scope(Entity).includes(:fiscal_profile, :addresses)
-                                    .order(:name)
-                                    .page(params[:page]).per(per)
+
+    # Aplicar filtros de búsqueda
+    @entities = @entities.where("name ILIKE ?", "%#{params[:name]}%") if params[:name].present?
+    @entities = @entities.where(is_consolidator: true) if params[:role] == "consolidator"
+    @entities = @entities.where(is_customs_agent: true) if params[:role] == "customs_agent"
+    @entities = @entities.where(is_forwarder: true) if params[:role] == "forwarder"
+    @entities = @entities.where(is_client: true) if params[:role] == "client"
+
+    @entities = @entities.order(:name).page(params[:page]).per(per)
     authorize Entity
   end
 
