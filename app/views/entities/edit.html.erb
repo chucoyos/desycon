@@ -1,4 +1,8 @@
-<% content_for :title, "Editar #{@entity.name}" %>
+<% 
+  page_title = current_user.customs_broker? ? "Editar Cliente" : "Editar Entidad"
+  button_text = current_user.customs_broker? ? "Actualizar Cliente" : "Actualizar Entidad"
+%>
+<% content_for :title, "#{page_title} #{@entity.name}" %>
 
 <div class="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
   <!-- Header -->
@@ -10,7 +14,7 @@
         </svg>
       </div>
       <div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Editar Entidad</h1>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900"><%= page_title %></h1>
         <p class="text-sm sm:text-base text-gray-500 mt-1"><%= @entity.name %></p>
       </div>
     </div>
@@ -29,7 +33,7 @@
 
   <!-- Global actions bar placed after patents so it stays below content -->
   <div class="mt-8 flex flex-wrap gap-3 px-5 py-4">
-    <%= button_tag 'Actualizar Entidad',
+    <%= button_tag button_text,
         form: 'entity_form',
         class: "cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-teal-600 to-cyan-700 text-white text-sm font-semibold shadow-md shadow-teal-200 hover:from-teal-700 hover:to-cyan-800 transition" %>
     <%= link_to "Cancelar", entities_path,

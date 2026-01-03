@@ -36,35 +36,40 @@
       <div>
         <label class="block text-sm font-semibold text-gray-700 mb-3">Roles</label>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <label class="relative flex items-start p-4 rounded-lg border-2 cursor-pointer hover:bg-purple-50 transition-colors duration-150 <%= entity.is_consolidator ? 'border-purple-500 bg-purple-50' : 'border-gray-200' %>">
-            <%= form.check_box :is_consolidator, class: "h-5 w-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500" %>
-            <div class="ml-3">
-              <span class="block text-sm font-medium text-gray-900">Consolidador</span>
-              <span class="block text-xs text-gray-500">Consolida carga de múltiples clientes</span>
-            </div>
-          </label>
+          <% unless current_user.customs_broker? %>
+            <label class="relative flex items-start p-4 rounded-lg border-2 cursor-pointer hover:bg-purple-50 transition-colors duration-150 <%= entity.is_consolidator ? 'border-purple-500 bg-purple-50' : 'border-gray-200' %>">
+              <%= form.check_box :is_consolidator, class: "h-5 w-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500" %>
+              <div class="ml-3">
+                <span class="block text-sm font-medium text-gray-900">Consolidador</span>
+                <span class="block text-xs text-gray-500">Consolida carga de múltiples clientes</span>
+              </div>
+            </label>
 
-          <label class="relative flex items-start p-4 rounded-lg border-2 cursor-pointer hover:bg-blue-50 transition-colors duration-150 <%= entity.is_customs_agent ? 'border-blue-500 bg-blue-50' : 'border-gray-200' %>">
-            <%= form.check_box :is_customs_agent, class: "h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" %>
-            <div class="ml-3">
-              <span class="block text-sm font-medium text-gray-900">Agente Aduanal</span>
-              <span class="block text-xs text-gray-500">Gestiona trámites aduanales</span>
-            </div>
-          </label>
+            <label class="relative flex items-start p-4 rounded-lg border-2 cursor-pointer hover:bg-blue-50 transition-colors duration-150 <%= entity.is_customs_agent ? 'border-blue-500 bg-blue-50' : 'border-gray-200' %>">
+              <%= form.check_box :is_customs_agent, class: "h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" %>
+              <div class="ml-3">
+                <span class="block text-sm font-medium text-gray-900">Agente Aduanal</span>
+                <span class="block text-xs text-gray-500">Gestiona trámites aduanales</span>
+              </div>
+            </label>
 
-          <label class="relative flex items-start p-4 rounded-lg border-2 cursor-pointer hover:bg-green-50 transition-colors duration-150 <%= entity.is_forwarder ? 'border-green-500 bg-green-50' : 'border-gray-200' %>">
-            <%= form.check_box :is_forwarder, class: "h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-500" %>
-            <div class="ml-3">
-              <span class="block text-sm font-medium text-gray-900">Forwarder</span>
-              <span class="block text-xs text-gray-500">Coordina transporte internacional</span>
-            </div>
-          </label>
+            <label class="relative flex items-start p-4 rounded-lg border-2 cursor-pointer hover:bg-green-50 transition-colors duration-150 <%= entity.is_forwarder ? 'border-green-500 bg-green-50' : 'border-gray-200' %>">
+              <%= form.check_box :is_forwarder, class: "h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-500" %>
+              <div class="ml-3">
+                <span class="block text-sm font-medium text-gray-900">Forwarder</span>
+                <span class="block text-xs text-gray-500">Coordina transporte internacional</span>
+              </div>
+            </label>
+          <% end %>
 
-          <label class="relative flex items-start p-4 rounded-lg border-2 cursor-pointer hover:bg-amber-50 transition-colors duration-150 <%= entity.is_client ? 'border-amber-500 bg-amber-50' : 'border-gray-200' %>">
-            <%= form.check_box :is_client, class: "h-5 w-5 text-amber-600 border-gray-300 rounded focus:ring-amber-500" %>
+          <label class="relative flex items-start p-4 rounded-lg border-2 cursor-pointer hover:bg-amber-50 transition-colors duration-150 <%= (entity.is_client || current_user.customs_broker?) ? 'border-amber-500 bg-amber-50' : 'border-gray-200' %>">
+            <%= form.check_box :is_client, 
+                class: "h-5 w-5 text-amber-600 border-gray-300 rounded focus:ring-amber-500",
+                disabled: current_user.customs_broker?,
+                checked: (entity.is_client || current_user.customs_broker?) %>
             <div class="ml-3">
               <span class="block text-sm font-medium text-gray-900">Cliente</span>
-              <span class="block text-xs text-gray-500">Contrata servicios de consolidación</span>
+              <span class="block text-xs text-gray-500">Cliente a facturar</span>
             </div>
           </label>
         </div>

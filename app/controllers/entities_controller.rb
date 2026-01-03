@@ -5,8 +5,7 @@ class EntitiesController < ApplicationController
   after_action :verify_authorized, except: :index
 
   def index
-    @entities = policy_scope(Entity).includes(:fiscal_profile)
-                                    .preload(:customs_agent_patents)
+    @entities = policy_scope(Entity).includes(:fiscal_profile, :addresses)
                                     .order(:name)
                                     .page(params[:page])
     authorize Entity
@@ -44,6 +43,16 @@ class EntitiesController < ApplicationController
 
   def create
     @entity = Entity.new(entity_params)
+
+    # Assign customs agent if current user is a customs agent
+    if current_user.customs_broker? && current_user.entity&.is_customs_agent?
+      @entity.customs_agent = current_user.entity
+      @entity.is_client = true
+      @entity.is_customs_agent = false
+      @entity.is_consolidator = false
+      @entity.is_forwarder = false
+    end
+
     authorize @entity
 
     # Handle duplicate addresses for new entities
@@ -154,12 +163,8 @@ class EntitiesController < ApplicationController
   end
 
   def entity_params
-    params.require(:entity).permit(
+    permitted_attributes = [
       :name,
-      :is_consolidator,
-      :is_customs_agent,
-      :is_forwarder,
-      :is_client,
       fiscal_profile_attributes: [
         :id, :rfc, :razon_social, :regimen, :uso_cfdi, :forma_pago, :metodo_pago, :_destroy
       ],
@@ -170,6 +175,12 @@ class EntitiesController < ApplicationController
       customs_agent_patents_attributes: [
         :id, :patent_number, :_destroy
       ]
-    )
+    ]
+
+    unless current_user.customs_broker?
+      permitted_attributes += [ :is_consolidator, :is_customs_agent, :is_forwarder, :is_client ]
+    end
+
+    params.require(:entity).permit(permitted_attributes)
   end
 end

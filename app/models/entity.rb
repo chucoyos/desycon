@@ -3,6 +3,10 @@ class Entity < ApplicationRecord
   has_many :addresses, as: :addressable, dependent: :destroy
   has_one :fiscal_profile, as: :profileable, dependent: :destroy
 
+  # Relación Agente Aduanal - Clientes
+  belongs_to :customs_agent, class_name: "Entity", optional: true
+  has_many :clients, class_name: "Entity", foreign_key: "customs_agent_id", dependent: :nullify
+
   # Relaciones con perfiles específicos (opcionales)
   has_one :consolidator_profile, class_name: "Consolidator", dependent: :destroy
   has_one :forwarder_profile, class_name: "Forwarder", dependent: :destroy

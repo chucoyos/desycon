@@ -1,14 +1,14 @@
 class EntityPolicy < ApplicationPolicy
   def index?
-    user.present? && !user.customs_broker?
+    user.present?
   end
 
   def show?
-    user.present? && !user.customs_broker?
+    user.present?
   end
 
   def create?
-    user.present? && !user.customs_broker?
+    user.present?
   end
 
   def new?
@@ -16,7 +16,7 @@ class EntityPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present? && !user.customs_broker?
+    user.present?
   end
 
   def edit?
@@ -28,13 +28,19 @@ class EntityPolicy < ApplicationPolicy
   end
 
   def new_address?
-    user.present? && !user.customs_broker?
+    user.present?
   end
 
   class Scope < Scope
     def resolve
-      if user.nil? || user.customs_broker?
+      if user.nil?
         scope.none
+      elsif user.customs_broker?
+        if user.entity&.is_customs_agent?
+          scope.where(customs_agent_id: user.entity.id)
+        else
+          scope.none
+        end
       else
         scope.all
       end

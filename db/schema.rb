@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_23_120010) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_02_205517) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -205,12 +205,14 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_23_120010) do
 
   create_table "entities", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.bigint "customs_agent_id"
     t.boolean "is_client", default: false
     t.boolean "is_consolidator", default: false
     t.boolean "is_customs_agent", default: false
     t.boolean "is_forwarder", default: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
+    t.index ["customs_agent_id"], name: "index_entities_on_customs_agent_id"
     t.index ["name"], name: "index_entities_on_name"
   end
 
@@ -347,6 +349,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_23_120010) do
   add_foreign_key "containers", "shipping_lines"
   add_foreign_key "containers", "vessels"
   add_foreign_key "customs_agent_patents", "entities"
+  add_foreign_key "entities", "entities", column: "customs_agent_id"
   add_foreign_key "forwarders", "entities"
   add_foreign_key "role_permissions", "permissions"
   add_foreign_key "role_permissions", "roles"

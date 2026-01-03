@@ -41,7 +41,7 @@ class BlHouseLinesController < ApplicationController
     @bl_house_lines = scope.page(params[:page]).per(params[:per] || 20)
 
     # Data for filters
-    @clients = Entity.clients.order(:name)
+    load_clients
     @customs_agents = available_customs_agents
   end
 
@@ -56,7 +56,7 @@ class BlHouseLinesController < ApplicationController
     @bl_house_line.container_id = params[:container_id] if params[:container_id].present?
     @customs_agents = available_customs_agents
     @service_catalogs = ServiceCatalog.for_bl_house_lines
-    @clients = Entity.clients.order(:name)
+    load_clients
     authorize @bl_house_line
   end
 
@@ -64,7 +64,7 @@ class BlHouseLinesController < ApplicationController
   def edit
     @customs_agents = available_customs_agents
     @service_catalogs = ServiceCatalog.for_bl_house_lines
-    @clients = Entity.clients.order(:name)
+    load_clients
     authorize @bl_house_line
   end
 
@@ -80,7 +80,7 @@ class BlHouseLinesController < ApplicationController
     else
       @customs_agents = available_customs_agents
       @service_catalogs = ServiceCatalog.for_bl_house_lines
-      @clients = Entity.clients.order(:name)
+      load_clients
       render :new, status: :unprocessable_entity
     end
   end
@@ -96,7 +96,7 @@ class BlHouseLinesController < ApplicationController
     else
       @customs_agents = available_customs_agents
       @service_catalogs = ServiceCatalog.for_bl_house_lines
-      @clients = Entity.clients.order(:name)
+      load_clients
       render :edit, status: :unprocessable_entity
     end
   end
@@ -110,6 +110,14 @@ class BlHouseLinesController < ApplicationController
   end
 
   private
+
+  def load_clients
+    if customs_agent_user?
+      @clients = current_user.entity.clients.order(:name)
+    else
+      @clients = Entity.clients.order(:name)
+    end
+  end
 
   def available_customs_agents
     return Entity.customs_agents unless current_user

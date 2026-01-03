@@ -5,10 +5,12 @@ RSpec.describe "Entities", type: :system do
   let(:entity) { create(:entity) }
 
   before do
+    driven_by(:selenium_chrome_headless, screen_size: [ 1400, 1400 ])
+
     # Sign in through the UI
     visit new_user_session_path
     fill_in "user_email", with: user.email
-    fill_in "user_password", with: "password" # Assuming default password from factory
+    fill_in "user_password", with: "password123"
     click_button "Log in"
 
     visit entity_path(entity)
@@ -16,42 +18,30 @@ RSpec.describe "Entities", type: :system do
   end
 
   describe "entity name update" do
-    it "preserves address and patent buttons" do
-      pending "Requires JavaScript/modal interaction setup"
-      # Count initial buttons
-      initial_address_buttons = page.all("button[data-modal-id='address-modal']").count
-      initial_patent_buttons = page.all("button[data-modal-id='patent-modal']").count
-
-      # Click name edit button
-      find("button[data-modal-id='name-modal']").click
+    it "updates the entity name via the edit page" do
+      # Go to edit page
+      visit edit_entity_path(entity)
 
       # Fill and submit name form
-      within "#name-modal" do
-        fill_in "entity_name", with: "Updated Entity Name"
-        click_button "Guardar"
-      end
-
-      # Verify buttons are still present with same counts
-      expect(page).to have_selector("button[data-modal-id='address-modal']", count: initial_address_buttons)
-      expect(page).to have_selector("button[data-modal-id='patent-modal']", count: initial_patent_buttons)
+      fill_in "entity_name", with: "Updated Entity Name"
+      click_button "Actualizar Entidad"
 
       # Verify flash message appears
       expect(page).to have_text("Entidad actualizada exitosamente")
+      expect(page).to have_text("Updated Entity Name")
     end
   end
 
   describe "address creation" do
-    it "preserves existing buttons" do
-      pending "Requires JavaScript/modal interaction setup"
-      # Count initial buttons
-      initial_address_buttons = page.all("button[data-modal-id='address-modal']").count
-      initial_patent_buttons = page.all("button[data-modal-id='patent-modal']").count
+    it "creates a new address via the edit page" do
+      # Go to edit page
+      visit edit_entity_path(entity)
 
-      # Click new address button
-      find("button[data-modal-id='new-address-modal']").click
+      # Click new address button (Turbo frame toggle)
+      find("#add-address-btn").click
 
       # Fill and submit address form
-      within "#new-address-modal" do
+      within "#new_address" do
         select "Domicilio Fiscal", from: "address_tipo"
         fill_in "address_calle", with: "Nueva Calle"
         fill_in "address_numero_exterior", with: "123"
@@ -60,126 +50,67 @@ RSpec.describe "Entities", type: :system do
         fill_in "address_municipio", with: "Nuevo Municipio"
         fill_in "address_estado", with: "Nuevo Estado"
         fill_in "address_email", with: "test@example.com"
-        click_button "Agregar Dirección"
+        find("option[value='MX']").select_option
+        click_button "Guardar Dirección"
       end
 
-      # Verify buttons are still present (address count should increase by 1)
-      expect(page).to have_selector("button[data-modal-id='address-modal']", count: initial_address_buttons + 1)
-      expect(page).to have_selector("button[data-modal-id='patent-modal']", count: initial_patent_buttons)
+      # Verify success message
+      expect(page).to have_text("Dirección agregada exitosamente")
+      expect(page).to have_text("Nueva Calle")
     end
   end
 
   describe "address editing" do
-    it "preserves other buttons" do
-      skip "No addresses to edit" if entity.addresses.empty?
+    let!(:address) { create(:address, addressable: entity) }
 
-      # Count initial buttons
-      initial_address_buttons = page.all("button[data-modal-id='address-modal']").count
-      initial_patent_buttons = page.all("button[data-modal-id='patent-modal']").count
+    before do
+      visit edit_entity_path(entity)
+    end
 
-      # Click edit button on first address
-      first("button[data-modal-id='address-modal']").click
-
-      # Edit address
-      within "#address-modal" do
-        fill_in "address_calle", with: "Calle Editada"
-        click_button "Guardar Cambios"
-      end
-
-      # Verify all buttons are still present with same counts
-      expect(page).to have_selector("button[data-modal-id='address-modal']", count: initial_address_buttons)
-      expect(page).to have_selector("button[data-modal-id='patent-modal']", count: initial_patent_buttons)
-
-      # Verify flash message appears
-      expect(page).to have_text("Dirección actualizada exitosamente")
+    it "displays existing addresses" do
+      expect(page).to have_text(address.calle)
     end
   end
 
   describe "patent creation" do
-    it "preserves existing buttons" do
-      pending "Requires JavaScript/modal interaction setup"
-      skip "Not a customs agent" unless entity.is_customs_agent?
+    before do
+      entity.update(is_customs_agent: true)
+      visit edit_entity_path(entity)
+    end
 
-      # Count initial buttons
-      initial_address_buttons = page.all("button[data-modal-id='address-modal']").count
-      initial_patent_buttons = page.all("button[data-modal-id='patent-modal']").count
-
+    it "creates a new patent" do
       # Click new patent button
-      find("button[data-modal-id='new-patent-modal']").click
+      find("#add-patent-btn").click
 
       # Fill and submit patent form
-      within "#new-patent-modal" do
+      within "#new_patent" do
         fill_in "customs_agent_patent_patent_number", with: "123456789"
-        click_button "Agregar Patente"
+        click_button "Guardar"
       end
 
-      # Verify all buttons are still present (patent count should increase by 1)
-      expect(page).to have_selector("button[data-modal-id='address-modal']", count: initial_address_buttons)
-      expect(page).to have_selector("button[data-modal-id='patent-modal']", count: initial_patent_buttons + 1)
-
-      # Verify flash message appears
+      # Verify success message
       expect(page).to have_text("Patente agregada exitosamente")
-    end
-  end
-
-  describe "patent editing" do
-    it "preserves other buttons" do
-      skip "Not a customs agent or no patents" unless entity.is_customs_agent? && entity.customs_agent_patents.any?
-
-      # Count initial buttons
-      initial_address_buttons = page.all("button[data-modal-id='address-modal']").count
-      initial_patent_buttons = page.all("button[data-modal-id='patent-modal']").count
-
-      # Click edit button on first patent
-      patent = entity.customs_agent_patents.first
-      find("button[data-patent-id='#{patent.id}']").click
-
-      # Wait for modal to open and form to load
-      expect(page).to have_selector("#patent-modal", visible: true)
-      expect(page).to have_selector("#edit-patent-form-container")
-
-      # Debug: check what's in the modal
-      within "#patent-modal" do
-        puts "Modal content: #{page.html}"
-      end
-
-      # Edit patent
-      within "#patent-modal" do
-        fill_in "customs_agent_patent[patent_number]", with: "987654321"
-        click_button "Actualizar Patente"
-      end
-
-      # Verify all buttons are still present with same counts
-      expect(page).to have_selector("button[data-modal-id='address-modal']", count: initial_address_buttons)
-      expect(page).to have_selector("button[data-modal-id='patent-modal']", count: initial_patent_buttons)
-
-      # Verify the patent was updated
-      expect(page).to have_text("987654321")
+      expect(page).to have_text("123456789")
     end
   end
 
   describe "fiscal profile editing" do
-    it "preserves other buttons" do
-      skip "No fiscal profile" unless entity.fiscal_profile.present?
+    let!(:fiscal_profile) { create(:fiscal_profile, profileable: entity) }
 
-      # Count initial buttons
-      initial_address_buttons = page.all("button[data-modal-id='address-modal']").count
-      initial_patent_buttons = page.all("button[data-modal-id='patent-modal']").count
+    it "updates the fiscal profile via the edit page" do
+      visit edit_entity_path(entity)
 
-      # Click edit button on fiscal profile
-      find("button[data-modal-id='fiscal-modal']").click
+      # Expand fiscal profile section
+      find("#toggle-fiscal-profile-btn").click
 
-      # Edit fiscal profile
-      within "#fiscal-modal" do
-        fill_in "entity_fiscal_profile_attributes_razon_social", with: "Nueva Razón Social"
-        click_button "Guardar"
-      end
+      # Fiscal profile fields are in the main form
+      fill_in "entity_fiscal_profile_attributes_razon_social", with: "Nueva Razón Social"
+      click_button "Actualizar Entidad"
 
-      # Verify all buttons are still present with same counts
-      expect(page).to have_selector("button[data-modal-id='address-modal']", count: initial_address_buttons)
-      expect(page).to have_selector("button[data-modal-id='patent-modal']", count: initial_patent_buttons)
+      expect(page).to have_text("Entidad actualizada exitosamente")
 
-      # Verify the fiscal profile was updated
+      # Verify the change persisted
+      visit entity_path(entity)
       expect(page).to have_text("Nueva Razón Social")
     end
   end
