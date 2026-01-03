@@ -5,9 +5,13 @@ class EntitiesController < ApplicationController
   after_action :verify_authorized, except: :index
 
   def index
+    per = params[:per].to_i
+    allowed = [ 10, 25, 50, 100 ]
+    per = 10 unless allowed.include?(per)
+    @per_page = per
     @entities = policy_scope(Entity).includes(:fiscal_profile, :addresses)
                                     .order(:name)
-                                    .page(params[:page])
+                                    .page(params[:page]).per(per)
     authorize Entity
   end
 

@@ -1,4 +1,4 @@
-<% 
+<%
   page_title = current_user.customs_broker? ? "Mis Clientes" : "Entidades"
   page_subtitle = current_user.customs_broker? ? "Gestión de mis clientes" : "Gestión de consolidadores, agentes aduanales, forwarders y clientes"
 %>
@@ -29,6 +29,11 @@
         <% end %>
       </div>
     </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="mt-6">
+    <%= render 'shared/tailwind_pagination', paginated: @entities %>
   </div>
 
   <!-- Desktop Table -->
@@ -174,6 +179,6 @@
 
   <!-- Pagination -->
   <div class="mt-6">
-    <%= paginate @entities %>
+    <%= render 'shared/tailwind_pagination', paginated: @entities %>
   </div>
 </div>

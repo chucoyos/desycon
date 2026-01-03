@@ -51,6 +51,8 @@ gem "pundit", "~> 2.4"
 
 # Countries and geographical data
 gem "countries", "~> 6.0"
+
+# Pagination library
 gem "kaminari", "~> 1.2"
 
 group :development, :test do
