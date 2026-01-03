@@ -100,9 +100,7 @@ RSpec.describe "Entities", type: :system do
     it "updates the fiscal profile via the edit page" do
       visit edit_entity_path(entity)
 
-      # Expand fiscal profile section
-      find("#toggle-fiscal-profile-btn").click
-
+      # Fiscal profile section is now expanded by default
       # Fiscal profile fields are in the main form
       fill_in "entity_fiscal_profile_attributes_razon_social", with: "Nueva Razón Social"
       click_button "Actualizar Entidad"
