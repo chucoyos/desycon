@@ -147,7 +147,7 @@ class CustomsAgentsController < ApplicationController
   end
 
   def revalidation_clients
-    Entity.clients.order(:name)
+    Entity.clients.where(customs_agent_id: current_user.entity_id).order(:name)
   end
 
   def ensure_customs_agent

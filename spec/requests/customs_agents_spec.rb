@@ -68,4 +68,20 @@ RSpec.describe "CustomsAgents", type: :request do
       end
     end
   end
+
+  describe "GET /revalidations" do
+    let(:headers) { { "Turbo-Frame" => "revalidation_modal" } }
+
+    it "returns http success when blhouse is found" do
+      sign_in customs_user, scope: :user
+      get customs_agents_revalidation_path, params: { blhouse: unassigned_bl_house_line.blhouse }, headers: headers
+      expect(response).to have_http_status(:success)
+    end
+
+    it "returns not found when blhouse is missing" do
+      sign_in customs_user, scope: :user
+      get customs_agents_revalidation_path, params: { blhouse: "NONEXISTENT" }, headers: headers
+      expect(response).to have_http_status(:not_found)
+    end
+  end
 end
