@@ -117,7 +117,8 @@ class CustomsAgentsController < ApplicationController
       :client_id,
       :bl_endosado_documento,
       :liberacion_documento,
-      :encomienda_documento
+      :encomienda_documento,
+      :pago_documento
     )
     permitted[:customs_agent_id] = sanitize_customs_agent_id(permitted[:customs_agent_id])
     permitted[:client_id] = sanitize_client_id(permitted[:client_id])

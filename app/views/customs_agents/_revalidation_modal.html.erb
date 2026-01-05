@@ -63,17 +63,17 @@
         <div data-revalidation-wizard-target="stepOne" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="p-4 rounded-2xl border border-indigo-100 bg-indigo-50/70 shadow-md shadow-indigo-100 ring-1 ring-indigo-100">
-              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Agente asignado</p>
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Asignar a:</p>
               <%= form.select :customs_agent_id,
                               options_from_collection_for_select(customs_agents, :id, :name, bl_house_line.customs_agent_id || current_user.entity_id),
                               {},
                               class: "mt-1 block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
               <% if bl_house_line.customs_agent_id.nil? %>
-                <p class="text-xs text-indigo-600 mt-1">Lo asignaremos a tu agencia al enviar.</p>
+                <p class="text-xs text-indigo-600 mt-1">Se solicitará la asignación al enviar.</p>
               <% end %>
             </div>
             <div class="p-4 rounded-2xl border border-indigo-100 bg-indigo-50/70 shadow-md shadow-indigo-100 ring-1 ring-indigo-100">
-              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Cliente</p>
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Facturar a:</p>
               <%= form.select :client_id,
                               options_from_collection_for_select(clients, :id, :name, bl_house_line.client_id),
                               { include_blank: "Selecciona cliente" },
@@ -147,6 +147,17 @@
                   <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
                   Cargado
                   <%= link_to "Ver", rails_blob_path(bl_house_line.encomienda_documento, disposition: "inline"), target: "_blank", class: "underline text-green-800" %>
+                </div>
+              <% end %>
+            </div>
+            <div class="p-4 rounded-2xl border border-sky-100 bg-sky-50/60 shadow-md shadow-sky-100 ring-1 ring-sky-100">
+              <%= form.label :pago_documento, "Pago", class: "block text-sm font-semibold text-gray-800 mb-1" %>
+              <%= form.file_field :pago_documento, direct_upload: true, class: "block w-full text-sm text-gray-900 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 file:font-semibold file:cursor-pointer hover:file:bg-indigo-100" %>
+              <% if bl_house_line.pago_documento.attached? %>
+                <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-800 text-xs font-semibold border border-green-200">
+                  <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                  Cargado
+                  <%= link_to "Ver", rails_blob_path(bl_house_line.pago_documento, disposition: "inline"), target: "_blank", class: "underline text-green-800" %>
                 </div>
               <% end %>
             </div>

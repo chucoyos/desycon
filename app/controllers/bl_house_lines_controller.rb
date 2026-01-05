@@ -12,7 +12,8 @@ class BlHouseLinesController < ApplicationController
         :bl_endosado_documento_attachment,
         :liberacion_documento_attachment,
         :encomienda_documento_attachment,
-        :bl_revalidado_documento_attachment
+        :bl_revalidado_documento_attachment,
+        :pago_documento_attachment
       )
 
     @status_filter_options = customs_agent_user? ? customs_agent_statuses : BlHouseLine.statuses.keys
@@ -158,7 +159,7 @@ class BlHouseLinesController < ApplicationController
     params.require(:bl_house_line).permit(
       :blhouse, :partida, :cantidad, :contiene, :marcas, :peso, :volumen,
       :customs_agent_id, :client_id, :container_id, :packaging_id, :status,
-      :bl_endosado_documento, :liberacion_documento, :bl_revalidado_documento, :encomienda_documento,
+      :bl_endosado_documento, :liberacion_documento, :bl_revalidado_documento, :encomienda_documento, :pago_documento,
       bl_house_line_services_attributes: [
         :id,
         :service_catalog_id,

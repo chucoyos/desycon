@@ -13,6 +13,7 @@ class BlHouseLine < ApplicationRecord
   has_one_attached :liberacion_documento
   has_one_attached :bl_revalidado_documento
   has_one_attached :encomienda_documento
+  has_one_attached :pago_documento
 
   has_many :bl_house_line_services, dependent: :destroy
   accepts_nested_attributes_for :bl_house_line_services, allow_destroy: true, reject_if: :all_blank
