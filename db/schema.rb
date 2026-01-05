@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_02_205517) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_05_070702) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -186,7 +186,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_02_205517) do
     t.string "viaje"
     t.index ["consolidator_id"], name: "index_containers_on_consolidator_id"
     t.index ["fecha_arribo"], name: "index_containers_on_fecha_arribo"
-    t.index ["number"], name: "index_containers_on_number", unique: true
+    t.index ["number", "bl_master"], name: "index_containers_on_number_and_bl_master", unique: true
     t.index ["port_id"], name: "index_containers_on_port_id"
     t.index ["shipping_line_id"], name: "index_containers_on_shipping_line_id"
     t.index ["status"], name: "index_containers_on_status"
