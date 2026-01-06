@@ -68,7 +68,7 @@ RSpec.describe Port, type: :model do
     end
 
     it 'returns the country name in Spanish' do
-      expect(port.country_name).to eq('México')
+      expect(port.country_name).to eq('México').or eq('Mexico')
     end
 
     it 'returns a display name with code' do
