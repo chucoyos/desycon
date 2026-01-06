@@ -198,7 +198,8 @@ RSpec.describe BlHouseLine, type: :model do
         "instrucciones_pendientes" => "instrucciones_pendientes",
         "pendiente_pagos_locales" => "pendiente_pagos_locales",
         "listo" => "listo",
-        "revalidado" => "revalidado"
+        "revalidado" => "revalidado",
+        "validar_documentos" => "validar_documentos"
       })
     end
   end

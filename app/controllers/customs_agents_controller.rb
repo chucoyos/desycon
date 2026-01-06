@@ -90,9 +90,7 @@ class CustomsAgentsController < ApplicationController
       render partial: "customs_agents/revalidation_not_found", status: :not_found and return
     end
 
-    assign_revalidation_agent(@bl_house_line)
-
-    if @bl_house_line.update(revalidation_params)
+    if @bl_house_line.update(revalidation_params.merge(status: :validar_documentos))
       render partial: "customs_agents/revalidation_success", locals: { bl_house_line: @bl_house_line }
     else
       render partial: "customs_agents/revalidation_modal", status: :unprocessable_entity, locals: { bl_house_line: @bl_house_line, customs_agents: revalidation_customs_agents, clients: revalidation_clients }
@@ -105,34 +103,18 @@ class CustomsAgentsController < ApplicationController
     BlHouseLine.where(customs_agent: [ current_user.entity, nil ])
   end
 
-  def assign_revalidation_agent(bl_house_line)
-    return if bl_house_line.customs_agent_id.present?
-
-    bl_house_line.customs_agent = current_user.entity
-  end
-
   def revalidation_params
     permitted = params.require(:bl_house_line).permit(
-      :customs_agent_id,
       :client_id,
       :bl_endosado_documento,
       :liberacion_documento,
       :encomienda_documento,
       :pago_documento
     )
-    permitted[:customs_agent_id] = sanitize_customs_agent_id(permitted[:customs_agent_id])
     permitted[:client_id] = sanitize_client_id(permitted[:client_id])
     permitted
   rescue ActionController::ParameterMissing
     {}
-  end
-
-  def sanitize_customs_agent_id(agent_id)
-    allowed_ids = revalidation_customs_agents.pluck(:id)
-    candidate = agent_id.presence&.to_i
-    return current_user.entity_id if candidate.blank?
-
-    allowed_ids.include?(candidate) ? candidate : current_user.entity_id
   end
 
   def sanitize_client_id(client_id)

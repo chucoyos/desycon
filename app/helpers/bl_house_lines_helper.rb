@@ -2,11 +2,11 @@ module BlHouseLinesHelper
   def bl_house_line_status_badge_class(status)
     case status
     when "activo"
-      "bg-green-100 text-green-800"
+      "bg-indigo-100 text-indigo-800"
     when "bl_original"
       "bg-blue-100 text-blue-800"
     when "documentos_ok"
-      "bg-yellow-100 text-yellow-800"
+      "bg-emerald-100 text-emerald-800"
     when "documentos_rechazados"
       "bg-red-100 text-red-800"
     when "despachado"
@@ -18,11 +18,13 @@ module BlHouseLinesHelper
     when "finalizado"
       "bg-gray-100 text-gray-800"
     when "instrucciones_pendientes"
-      "bg-indigo-100 text-indigo-800"
+      "bg-red-100 text-red-800"
     when "pendiente_pagos_locales"
       "bg-pink-100 text-pink-800"
     when "listo"
       "bg-emerald-100 text-emerald-800"
+    when "validar_documentos"
+      "bg-yellow-100 text-yellow-800"
     when "revalidado"
       "bg-cyan-100 text-cyan-800"
     else
@@ -54,6 +56,8 @@ module BlHouseLinesHelper
       '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>'.html_safe
     when "listo"
       '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'.html_safe
+    when "validar_documentos"
+      '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>'.html_safe
     when "revalidado"
       '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>'.html_safe
     else
@@ -73,6 +77,7 @@ module BlHouseLinesHelper
       "finalizado" => "Finalizado",
       "instrucciones_pendientes" => "Instrucciones Pendientes",
       "pendiente_pagos_locales" => "Pendiente Pagos Locales",
+      "validar_documentos" => "Validar Documentos",
       "listo" => "Listo",
       "revalidado" => "Revalidado"
     }[status] || status.humanize
