@@ -27,6 +27,12 @@ Rails.application.routes.draw do
     put   "users/password",      to: "devise/passwords#update"
   end
 
+  resources :notifications, only: [:index] do
+    member do
+      patch :mark_as_read
+    end
+  end
+
   resources :packagings
   resources :roles do
     member do

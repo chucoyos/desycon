@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_05_070702) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_07_082340) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -238,6 +238,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_05_070702) do
     t.index ["entity_id"], name: "index_forwarders_on_entity_id"
   end
 
+  create_table "notifications", force: :cascade do |t|
+    t.string "action"
+    t.bigint "actor_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "notifiable_id", null: false
+    t.string "notifiable_type", null: false
+    t.datetime "read_at"
+    t.bigint "recipient_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_notifications_on_actor_id"
+    t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
+    t.index ["recipient_id"], name: "index_notifications_on_recipient_id"
+  end
+
   create_table "packagings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "nombre"
@@ -351,6 +365,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_05_070702) do
   add_foreign_key "customs_agent_patents", "entities"
   add_foreign_key "entities", "entities", column: "customs_agent_id"
   add_foreign_key "forwarders", "entities"
+  add_foreign_key "notifications", "users", column: "actor_id"
+  add_foreign_key "notifications", "users", column: "recipient_id"
   add_foreign_key "role_permissions", "permissions"
   add_foreign_key "role_permissions", "roles"
   add_foreign_key "users", "entities"

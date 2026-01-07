@@ -10,6 +10,9 @@ class User < ApplicationRecord
   # Associations that reference users; prevent deletion when present
   has_many :container_status_histories, dependent: :restrict_with_error
   has_many :bl_house_line_status_histories, dependent: :restrict_with_error
+  
+  has_many :notifications, foreign_key: :recipient_id, dependent: :destroy
+  has_many :sent_notifications, class_name: "Notification", foreign_key: :actor_id, dependent: :destroy
 
   validates :role, presence: true
 

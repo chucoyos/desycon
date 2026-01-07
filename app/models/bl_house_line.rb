@@ -49,6 +49,7 @@ class BlHouseLine < ApplicationRecord
   before_save :assign_next_partida_number, if: -> { partida.blank? && container_id.present? }
   after_create :create_initial_status_history
   after_update :create_status_history, if: :saved_change_to_status?
+  after_update :notify_revalidation_request, if: -> { saved_change_to_status? && validar_documentos? }
   def documentos_completos?
     bl_endosado_documento.attached? && liberacion_documento.attached? && encomienda_documento.attached?
   end
@@ -117,5 +118,19 @@ class BlHouseLine < ApplicationRecord
       changed_at: Time.current,
       user: @current_user
     )
+  end
+
+  def notify_revalidation_request
+    recipients = User.joins(:role).where(roles: { name: [Role::ADMIN, Role::EXECUTIVE] })
+    actor = @current_user || (defined?(Current) && Current.respond_to?(:user) ? Current.user : nil)
+
+    recipients.each do |recipient|
+      Notification.create(
+        recipient: recipient,
+        actor: actor,
+        action: "solicitó revalidación",
+        notifiable: self
+      )
+    end
   end
 end
