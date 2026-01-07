@@ -1,15 +1,34 @@
-<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  <div class="mb-6 flex items-center justify-between">
-    <h1 class="text-2xl font-bold text-gray-900">Notificaciones</h1>
-  </div>
+<div class="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 py-10 flex justify-center items-stretch">
+  <div class="w-full px-4 sm:px-6 lg:px-8">
+    <div class="mb-8 overflow-hidden rounded-2xl bg-white shadow-xl shadow-slate-200/50 border border-slate-100">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-6 bg-gradient-to-r from-blue-600 to-blue-500 text-white">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] opacity-90">Notificaciones</p>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M15 17h5l-5 5v-5zM4.868 12.683A17.925 17.925 0 0112 21c7.962 0 12-1.21 12-2.683m-12 2.683a17.925 17.925 0 01-7.132-8.317M12 21c4.411 0 8-4.03 8-9s-3.589-9-8-9-8 4.03-8 9a9.06 9.06 0 001.832 5.445L4 21l7.868-2.317z"/>
+              </svg>
+            </span>
+            <h1 class="text-3xl font-bold leading-tight">Notificaciones</h1>
+          </div>
+          <p class="text-sm text-blue-100">Mantente al día con las actualizaciones importantes del sistema</p>
+        </div>
+      </div>
 
-  <div class="bg-white shadow overflow-hidden sm:rounded-md">
-    <div id="notifications_list" class="divide-y divide-gray-200">
       <% if @notifications.any? %>
-        <%= render partial: "notifications/notification", collection: @notifications %>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-5" id="notifications_list">
+          <%= render partial: "notifications/notification", collection: @notifications %>
+        </div>
       <% else %>
-        <div class="p-6 text-center text-gray-500">
-          No tienes notificaciones recientes.
+        <div class="p-10 text-center text-slate-600">
+          <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m8-5v2m0 0v2m0-2h2m-2 0h-2"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-slate-900 mb-2">No hay notificaciones</h3>
+          <p class="text-slate-500 text-sm">Las nuevas notificaciones aparecerán aquí automáticamente</p>
         </div>
       <% end %>
     </div>
