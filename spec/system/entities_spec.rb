@@ -100,6 +100,10 @@ RSpec.describe "Entities", type: :system do
     it "updates the fiscal profile via the edit page" do
       visit edit_entity_path(entity)
 
+      # Ensure the fiscal profile exists and is loaded
+      expect(entity.reload.fiscal_profile).to be_present
+      expect(page).to have_field("entity_fiscal_profile_attributes_razon_social")
+
       # Fiscal profile section is now expanded by default
       # Fiscal profile fields are in the main form
       fill_in "entity_fiscal_profile_attributes_razon_social", with: "Nueva Razón Social"
