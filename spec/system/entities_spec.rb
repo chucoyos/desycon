@@ -100,6 +100,9 @@ RSpec.describe "Entities", type: :system do
     it "updates the fiscal profile via the edit page" do
       visit edit_entity_path(entity)
 
+      # Ensure the page is fully loaded
+      expect(page).to have_content("Editar Entidad")
+
       # Ensure the fiscal profile exists and is loaded
       expect(entity.reload.fiscal_profile).to be_present
       expect(page).to have_field("entity_fiscal_profile_attributes_razon_social")
