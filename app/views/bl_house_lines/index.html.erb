@@ -144,16 +144,31 @@
               </td>
             </tr>
             <tr class="hidden bg-gray-50" data-expandable-row-target="content">
-              <td colspan="8" class="px-6 pb-6">
-                <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-                  <div class="p-4 sm:p-6 space-y-4">
-                    <div class="space-y-3">
-                      <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Documentos</div>
-                      <%= render partial: "customs_agents/documents_info", locals: { bl_house_line: bl_house_line } %>
-                    </div>
-                    <div class="space-y-3">
-                      <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Estatus</div>
-                      <%= render partial: "customs_agents/status_pipeline", locals: { bl_house_line: bl_house_line } %>
+              <td colspan="8" class="bg-blue-50">
+                <div class="px-4 py-8 sm:px-12 lg:px-12 lg:px-4 lg:mr-12">
+                  <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div class="p-6 sm:p-8 space-y-8">
+                      <div class="space-y-4">
+                        <div class="flex items-center justify-center gap-2">
+                           <div class="h-px w-8 bg-gray-300"></div>
+                           <div class="text-xs font-bold uppercase tracking-widest text-gray-500 text-center">Documentos</div>
+                           <div class="h-px w-8 bg-gray-300"></div>
+                        </div>
+                        <div class="flex justify-center w-full overflow-x-auto">
+                          <%= render partial: "customs_agents/documents_info", locals: { bl_house_line: bl_house_line } %>
+                        </div>
+                      </div>
+                      
+                      <div class="space-y-4">
+                         <div class="flex items-center justify-center gap-2">
+                           <div class="h-px w-8 bg-gray-300"></div>
+                           <div class="text-xs font-bold uppercase tracking-widest text-gray-500 text-center">Estatus</div>
+                           <div class="h-px w-8 bg-gray-300"></div>
+                        </div>
+                        <div class="w-full overflow-x-auto">
+                          <%= render partial: "customs_agents/status_pipeline", locals: { bl_house_line: bl_house_line } %>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
