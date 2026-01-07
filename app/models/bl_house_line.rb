@@ -121,7 +121,7 @@ class BlHouseLine < ApplicationRecord
   end
 
   def notify_revalidation_request
-    recipients = User.joins(:role).where(roles: { name: [Role::ADMIN, Role::EXECUTIVE] })
+    recipients = User.joins(:role).where(roles: { name: [ Role::ADMIN, Role::EXECUTIVE ] })
     actor = @current_user || (defined?(Current) && Current.respond_to?(:user) ? Current.user : nil)
 
     recipients.each do |recipient|

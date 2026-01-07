@@ -8,9 +8,9 @@ class NotificationsController < ApplicationController
   def mark_as_read
     @notification = current_user.notifications.find(params[:id])
     @notification.mark_as_read!
-    
+
     respond_to do |format|
-      format.turbo_stream { 
+      format.turbo_stream {
         render turbo_stream: [
           turbo_stream.replace(@notification, partial: "notifications/notification", locals: { notification: @notification }),
           turbo_stream.replace("notifications_count", partial: "notifications/count", locals: { unread_count: current_user.notifications.unread.count })

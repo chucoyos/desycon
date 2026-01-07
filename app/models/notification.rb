@@ -20,9 +20,9 @@ class Notification < ApplicationRecord
 
   def broadcast_to_recipient
     broadcast_replace_to(
-      "notifications_#{recipient_id}", 
-      target: "notifications_count", 
-      partial: "notifications/count", 
+      "notifications_#{recipient_id}",
+      target: "notifications_count",
+      partial: "notifications/count",
       locals: { unread_count: recipient.notifications.unread.count }
     )
     # Also optionally push to the list if they are on the index page
