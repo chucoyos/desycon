@@ -1,78 +1,99 @@
-<div id="<%= dom_id(notification) %>" class="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm shadow-slate-200/60 hover:-translate-y-0.5 hover:shadow-md transition transform <%= 'ring-2 ring-blue-100 border-blue-200' unless notification.read? %>">
-  <div class="flex items-start justify-between gap-3">
-    <div>
-      <p class="text-[11px] font-semibold uppercase tracking-wide text-blue-600">Notificación</p>
-      <div class="flex items-center gap-2">
-        <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-        </span>
+<div id="<%= dom_id(notification) %>" class="group relative flex flex-col h-full rounded-3xl bg-white transition-all duration-300 hover:shadow-lg hover:-translate-y-1 <%= notification.read? ? 'border border-slate-100 shadow-sm' : 'border-2 border-blue-100 shadow-md bg-blue-50/10' %>">
+  <!-- Card Header -->
+  <div class="px-6 pt-6 pb-2">
+    <div class="flex items-start justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div class="relative">
+          <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl <%= notification.read? ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-600' %> transition-colors">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0M3.124 7.5A8.969 8.969 0 015.292 3m13.416 0a8.969 8.969 0 012.168 4.5" />
+            </svg>
+          </span>
+          <% unless notification.read? %>
+            <span class="absolute -right-1 -top-1 flex h-4 w-4">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-4 w-4 bg-blue-500 border-2 border-white"></span>
+            </span>
+          <% end %>
+        </div>
         <div>
-          <%
-            actor = notification.actor
-            actor_name = if actor && actor.entity
-                           actor.entity.name
-                         elsif actor
-                           actor.email
-                         else
-                           "Sistema"
-                         end
-          %>
-          <h2 class="text-lg font-semibold text-slate-900 leading-tight"><%= actor_name %></h2>
-          <p class="text-sm text-slate-500"><%= notification.action %></p>
+          <div class="flex items-center gap-2 mb-1">
+            <%
+              actor = notification.actor
+              actor_name = if actor && actor.entity
+                             actor.entity.name
+                           elsif actor
+                             actor.email
+                           else
+                             "Sistema"
+                           end
+            %>
+            <h3 class="text-base font-bold text-slate-800"><%= actor_name %></h3>
+            <span class="text-xs font-medium text-slate-500 flex items-center gap-1">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <%= time_ago_in_words(notification.created_at)
+                  .gsub('alrededor de ', '')
+                  .gsub('menos de un minuto', '1m')
+                  .gsub(' minutos', 'm')
+                  .gsub(' minuto', 'm')
+                  .gsub(' horas', 'hr')
+                  .gsub(' hora', 'hr')
+                  .gsub(' días', 'd')
+                  .gsub(' día', 'd') %>
+            </span>
+          </div>
+          <p class="text-sm font-medium text-slate-600 leading-relaxed"><%= notification.action %></p>
         </div>
       </div>
+      
+      <!-- Option Menu (Optional, nice for cleaning up actions later) -->
     </div>
-    <% unless notification.read? %>
-      <div class="flex-shrink-0">
-        <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-          <span class="h-2 w-2 rounded-full bg-blue-500"></span>
-          Nuevo
-        </span>
+  </div>
+
+  <!-- Content / Context -->
+  <div class="px-6 py-2 flex-grow">
+    <% if notification.notifiable %>
+      <div class="mt-2 p-3 rounded-xl bg-slate-50 border border-slate-100 group-hover:border-slate-200 transition-colors">
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Referencia</p>
+        <%= link_to notification.notifiable, class: "group/item flex items-center justify-between" do %>
+          <div class="flex items-center gap-3">
+            <span class="p-2 rounded-lg bg-white border border-slate-100 text-slate-500">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </span>
+            <span class="text-sm font-semibold text-slate-700 group-hover/item:text-blue-600 transition-colors">
+              Partida <%= notification.notifiable.try(:blhouse) || notification.notifiable.id %>
+            </span>
+          </div>
+          <svg class="h-4 w-4 text-slate-300 group-hover/item:text-blue-500 group-hover/item:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        <% end %>
       </div>
     <% end %>
   </div>
 
-  <% if notification.notifiable %>
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Referencia</p>
-        <%= link_to notification.notifiable, class: "inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" do %>
+  <!-- Actions -->
+  <div class="mt-auto px-6 pb-6 pt-4 border-t border-slate-50">
+    <div class="flex items-center justify-end gap-3">
+      <% unless notification.read? %>
+        <%= button_to mark_as_read_notification_path(notification), method: :patch, class: "inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold shadow-md shadow-blue-200 hover:bg-blue-700 hover:shadow-lg transition-all active:scale-95", title: "Marcar como leído" do %>
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M9 5l7 7-7 7"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
           </svg>
-          <span>Partida <%= notification.notifiable.try(:blhouse) || notification.notifiable.id %></span>
+          <span>Leído</span>
         <% end %>
-      </div>
-      <div class="flex gap-2">
-        <p class="text-xs text-slate-500 flex items-center">
-          <svg class="w-4 h-4 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          <%= time_ago_in_words(notification.created_at) %>
-        </p>
-      </div>
-    </div>
-  <% else %>
-    <div class="flex items-center justify-end">
-      <p class="text-xs text-slate-500 flex items-center">
-        <svg class="w-4 h-4 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        <%= time_ago_in_words(notification.created_at) %>
-      </p>
-    </div>
-  <% end %>
+      <% end %>
 
-  <% unless notification.read? %>
-    <div class="flex justify-end">
-      <%= button_to mark_as_read_notification_path(notification), method: :patch, class: "inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700", title: "Marcar como leído" do %>
+      <%= button_to notification_path(notification), method: :delete, class: "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors active:scale-95", title: "Eliminar", form: { data: { turbo_confirm: "¿Eliminar esta notificación?" } } do %>
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M5 13l4 4L19 7"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
-        <span>Marcar como leído</span>
+        <span>Borrar</span>
       <% end %>
     </div>
-  <% end %>
+  </div>
 </div>
