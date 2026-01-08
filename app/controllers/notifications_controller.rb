@@ -52,8 +52,8 @@ class NotificationsController < ApplicationController
     if params[:search].present?
       search_term = "%#{params[:search]}%"
       @notifications = @notifications.joins("LEFT JOIN bl_house_lines ON bl_house_lines.id = notifications.notifiable_id AND notifications.notifiable_type = 'BlHouseLine'").where(
-        "notifications.action ILIKE ? OR bl_house_lines.blhouse ILIKE ?",
-        search_term, search_term
+        "bl_house_lines.blhouse ILIKE ?",
+        search_term
       )
     end
 
