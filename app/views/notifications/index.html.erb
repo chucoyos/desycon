@@ -38,7 +38,7 @@
           <%= form_with url: notifications_path, method: :get, class: "space-y-6" do |f| %>
             <%= hidden_field_tag :per, @per_page %>
 
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
               <!-- Search Filter -->
               <div class="space-y-2">
                 <label for="search" class="block text-sm font-medium text-gray-700 mb-2">
@@ -122,17 +122,22 @@
                     type: "date" %>
                 </div>
               </div>
-            </div>
 
-            <!-- Action Buttons -->
-            <div class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-6 border-t border-gray-200">
-              <%= f.submit "Buscar", class: "w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/25 transform active:scale-95 transition-all duration-150 cursor-pointer" %>
-              <%= link_to notifications_path, class: "w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-white text-gray-700 text-sm font-semibold rounded-xl border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-gray-500/25 active:bg-gray-100 transform active:scale-95 transition-all duration-150 shadow-sm hover:shadow-md" do %>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
-                </svg>
-                Limpiar
-              <% end %>
+              <!-- Action Buttons -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2 opacity-0">
+                  Acciones
+                </label>
+                <div class="flex flex-col sm:flex-row gap-3">
+                  <%= f.submit "Buscar", class: "flex-1 inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/25 transform active:scale-95 transition-all duration-150 cursor-pointer" %>
+                  <%= link_to notifications_path, class: "flex-1 inline-flex items-center justify-center px-6 py-3 bg-white text-gray-700 text-sm font-semibold rounded-xl border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-gray-500/25 active:bg-gray-100 transform active:scale-95 transition-all duration-150 shadow-sm hover:shadow-md" do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                    </svg>
+                    Limpiar
+                  <% end %>
+                </div>
+              </div>
             </div>
 
             <!-- Active Filters Display -->
