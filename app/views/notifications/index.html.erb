@@ -1,5 +1,6 @@
 <div class="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 py-10 flex justify-center items-stretch">
   <div class="w-full px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
     <div class="mb-8 overflow-hidden rounded-2xl bg-white shadow-xl shadow-slate-200/50 border border-slate-100">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-6 bg-gradient-to-r from-blue-600 to-blue-500 text-white">
         <div>
@@ -15,7 +16,135 @@
           <p class="text-sm text-blue-100">Mantente al día con las actualizaciones importantes del sistema</p>
         </div>
       </div>
+    </div>
 
+    <!-- Filters - Material Design Inspired -->
+    <div class="mb-8">
+      <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <!-- Filter Header -->
+        <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+          <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-blue-600">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">Filtros de búsqueda</h3>
+          </div>
+        </div>
+
+        <!-- Filter Form -->
+        <div class="p-6">
+          <%= form_with url: notifications_path, method: :get, class: "space-y-6" do |f| %>
+            <%= hidden_field_tag :per, @per_page %>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              <!-- Search Filter -->
+              <div class="space-y-2">
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-2">
+                  Buscar
+                </label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-400">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                  </div>
+                  <%= f.text_field :search, value: params[:search],
+                    placeholder: "BlHouse",
+                    class: "block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-500 shadow-sm" %>
+                </div>
+              </div>
+
+              <!-- Read Status Filter -->
+              <div class="space-y-2">
+                <label for="read_status" class="block text-sm font-medium text-gray-700 mb-2">
+                  Estado de lectura
+                </label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-400">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                  </div>
+                  <%= f.select :read_status, options_for_select([
+                    ["Todos", ""],
+                    ["Leídas", "read"],
+                    ["No leídas", "unread"]
+                  ], params[:read_status]), {},
+                  class: "block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 shadow-sm appearance-none" %>
+                  <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-400">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Type Filter -->
+              <div class="space-y-2">
+                <label for="action_type" class="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo de acción
+                </label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-400">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
+                    </svg>
+                  </div>
+                  <%= f.select :action_type, options_for_select([
+                    ["Todos los tipos", ""],
+                    ["Revalidado", "revalidado"],
+                    ["Solicitó revalidación", "solicitó revalidación"]
+                  ], params[:action_type]), {},
+                  class: "block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 shadow-sm appearance-none" %>
+                  <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-400">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Date Range Filter -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Rango de fechas
+                </label>
+                <div class="grid grid-cols-2 gap-2">
+                  <%= f.text_field :start_date, value: params[:start_date],
+                    placeholder: "Desde",
+                    class: "block w-full px-3 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-500 shadow-sm",
+                    type: "date" %>
+                  <%= f.text_field :end_date, value: params[:end_date],
+                    placeholder: "Hasta",
+                    class: "block w-full px-3 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-500 shadow-sm",
+                    type: "date" %>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+              <div class="flex items-center gap-3">
+                <%= link_to notifications_path, class: "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200" do %>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Limpiar filtros
+                <% end %>
+              </div>
+              <div class="flex items-center gap-3">
+                <%= f.submit "Buscar", class: "inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-medium rounded-lg shadow-sm hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="mb-8 overflow-hidden rounded-2xl bg-white shadow-xl shadow-slate-200/50 border border-slate-100">
       <% if @notifications.any? %>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-5" id="notifications_list">
           <%= render partial: "notifications/notification", collection: @notifications %>
@@ -31,6 +160,11 @@
           <p class="text-slate-500 text-sm">Las nuevas notificaciones aparecerán aquí automáticamente</p>
         </div>
       <% end %>
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-6">
+      <%= render 'shared/tailwind_pagination', paginated: @notifications %>
     </div>
   </div>
 </div>
