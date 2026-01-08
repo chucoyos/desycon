@@ -1,0 +1,112 @@
+class RevalidationPdf
+  def initialize(bl_house_line)
+    @bl_house_line = bl_house_line
+  end
+
+  def render
+    Prawn::Document.new(page_size: "A4", margin: [ 50, 50, 50, 50 ]) do |pdf|
+      # Header
+      pdf.font_size 14
+      pdf.text "REVALIDACIÓN ELECTRÓNICA", align: :center, style: :bold
+      pdf.move_down 10
+      pdf.text "FOLIO NÚMERO: #{@bl_house_line.id}", align: :center, style: :bold
+      pdf.move_down 20
+
+      # Customs office info
+      pdf.font_size 12
+      pdf.text "ADUANA DE MANZANILLO", align: :center, style: :bold
+      pdf.move_down 10
+      pdf.text "C. ADMINISTRADOR DE LA ADUANA MARITIMA DE MANZANILLO", align: :center
+      pdf.text "P R E S E N T E.", align: :center
+      pdf.move_down 20
+
+      # Legal text
+      pdf.font_size 10
+      pdf.text "De conformidad en los artículos 36-A Fracción I inciso B, 40 y 41 de la ley aduanera en vigor, declaramos bajo protesta de decir verdad que #{consolidator_name} ha sido designado como el consignatario de las mercancias amparada por el conocimiento de embarque indicado a bajo en detalle."
+      pdf.move_down 10
+      pdf.text "Como diferentes Agentes Aduanales o sus representantes procederan al retiro de dichas mercancias, cedemos los derechos a la empresa que abajo se menciona, para que proceda a su despacho y retiro de las mercancias en el recinto fiscal autorizado."
+      pdf.move_down 20
+
+      # Data table
+      pdf.font_size 12
+      pdf.text "Datos Generales", style: :bold
+      pdf.move_down 10
+
+      data = [
+        [ "BL House:", @bl_house_line.blhouse ],
+        [ "Cantidad:", @bl_house_line.cantidad ],
+        [ "Embalaje:", packaging_name ],
+        [ "Contiene:", @bl_house_line.contiene ],
+        [ "Peso:", "#{@bl_house_line.peso} KG" ],
+        [ "Volumen:", "#{@bl_house_line.volumen} M³" ],
+        [ "Agente Aduanal:", customs_agent_name ],
+        [ "Patente:", patent_number ],
+        [ "Consolidador:", consolidator_name ],
+        [ "Estatus:", status_name ],
+        [ "Master BL:", master_bl ],
+        [ "Linea:", shipping_line_name ],
+        [ "Buque:", vessel_name ],
+        [ "Viaje:", voyage ],
+        [ "Recinto:", terminal_name ]
+      ]
+
+      pdf.table(data, width: pdf.bounds.width) do |table|
+        table.cells.padding = 8
+        table.cells.borders = [ :bottom ]
+        table.cells.border_width = 0.5
+        table.cells.border_color = "CCCCCC"
+
+        # Header style
+        table.columns(0).font_style = :bold
+        table.columns(0).background_color = "F5F5F5"
+      end
+
+      # Footer
+      pdf.move_down 30
+      pdf.font_size 8
+      pdf.text "Documento generado electrónicamente el #{Time.current.strftime('%d/%m/%Y %H:%M')}", align: :center
+    end.render
+  end
+
+  private
+
+  def consolidator_name
+    @bl_house_line.container&.consolidator&.name || "N/A"
+  end
+
+  def packaging_name
+    @bl_house_line.packaging&.nombre || "N/A"
+  end
+
+  def customs_agent_name
+    @bl_house_line.customs_agent&.name || "N/A"
+  end
+
+  def patent_number
+    @bl_house_line.customs_agent&.customs_agent_patents&.first&.patent_number || "N/A"
+  end
+
+  def status_name
+    I18n.t("activerecord.attributes.bl_house_line.status.#{@bl_house_line.status}", default: @bl_house_line.status.humanize)
+  end
+
+  def master_bl
+    @bl_house_line.container&.bl_master || "N/A"
+  end
+
+  def shipping_line_name
+    @bl_house_line.container&.shipping_line&.name || "N/A"
+  end
+
+  def vessel_name
+    @bl_house_line.container&.vessel&.name || "N/A"
+  end
+
+  def voyage
+    @bl_house_line.container&.viaje || "N/A"
+  end
+
+  def terminal_name
+    @bl_house_line.container&.recinto || "N/A"
+  end
+end

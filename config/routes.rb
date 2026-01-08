@@ -33,6 +33,8 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :revalidations, only: [ :show ]
+
   resources :packagings
   resources :roles do
     member do

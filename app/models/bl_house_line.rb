@@ -50,6 +50,7 @@ class BlHouseLine < ApplicationRecord
   after_create :create_initial_status_history
   after_update :create_status_history, if: :saved_change_to_status?
   after_update :notify_revalidation_request, if: -> { saved_change_to_status? && validar_documentos? }
+  after_update :notify_customs_agent_revalidation, if: -> { saved_change_to_status? && revalidado? }
   def documentos_completos?
     bl_endosado_documento.attached? && liberacion_documento.attached? && encomienda_documento.attached?
   end
@@ -129,6 +130,22 @@ class BlHouseLine < ApplicationRecord
         recipient: recipient,
         actor: actor,
         action: "solicitó revalidación",
+        notifiable: self
+      )
+    end
+  end
+
+  def notify_customs_agent_revalidation
+    return unless customs_agent_id.present?
+
+    recipients = User.where(entity_id: customs_agent_id)
+    actor = @current_user || (defined?(Current) && Current.respond_to?(:user) ? Current.user : nil)
+
+    recipients.each do |recipient|
+      Notification.create(
+        recipient: recipient,
+        actor: actor,
+        action: "revalidado",
         notifiable: self
       )
     end
