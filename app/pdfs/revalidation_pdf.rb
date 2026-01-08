@@ -10,7 +10,7 @@ class RevalidationPdf
       pdf.text "REVALIDACIÓN ELECTRÓNICA", align: :center, style: :bold
       pdf.move_down 10
       pdf.text "FOLIO NÚMERO: #{@bl_house_line.id}", align: :center, style: :bold
-      pdf.move_down 20
+      pdf.move_down 10
 
       # Customs office info
       pdf.font_size 12
@@ -22,9 +22,9 @@ class RevalidationPdf
 
       # Legal text
       pdf.font_size 10
-      pdf.text "De conformidad en los artículos 36-A Fracción I inciso B, 40 y 41 de la ley aduanera en vigor, declaramos bajo protesta de decir verdad que #{consolidator_name} ha sido designado como el consignatario de las mercancias amparada por el conocimiento de embarque indicado a bajo en detalle."
+      pdf.text "De conformidad con los artículos 36-A Fracción I inciso B, 40 y 41 de la Ley Aduanera vigente, declaramos bajo protesta de decir verdad que #{consolidator_name} ha sido designado como el consignatario de las mercancías amparadas bajo el conocimiento de embarque que se detalla a continuación."
       pdf.move_down 10
-      pdf.text "Como diferentes Agentes Aduanales o sus representantes procederan al retiro de dichas mercancias, cedemos los derechos a la empresa que abajo se menciona, para que proceda a su despacho y retiro de las mercancias en el recinto fiscal autorizado."
+      pdf.text "En virtud de lo anterior, y toda vez que diversos Agentes Aduanales o sus representantes debidamente acreditados procederán al retiro de dichas mercancías, por medio de la presente CEDEMOS LOS DERECHOS a la empresa que se menciona al calce, para que proceda con el despacho y el retiro de las mercancías del recinto fiscal autorizado."
       pdf.move_down 20
 
       # Data table
@@ -62,7 +62,7 @@ class RevalidationPdf
       end
 
       # Footer
-      pdf.move_down 30
+      pdf.move_down 10
       pdf.font_size 8
       pdf.text "Documento generado electrónicamente el #{Time.current.strftime('%d/%m/%Y %H:%M')}", align: :center
     end.render
@@ -71,7 +71,10 @@ class RevalidationPdf
   private
 
   def consolidator_name
-    @bl_house_line.container&.consolidator&.name || "N/A"
+    container = @bl_house_line.container
+    return "N/A" unless container
+
+    container.consolidator_entity&.name || container.consolidator&.name || "N/A"
   end
 
   def packaging_name
