@@ -89,6 +89,11 @@
               <span class="text-sm font-semibold text-slate-700 group-hover/item:text-blue-600 transition-colors">
                 Revalidación 
                 <p>Partida: <%= notification.notifiable.try(:blhouse) || notification.notifiable.id %></p>
+                <% if notification.notifiable.respond_to?(:status) %>
+                  <p class="text-xs font-normal text-slate-500 mt-0.5">
+                    Estatus: <%= bl_house_line_status_nombre(notification.notifiable.status) %>
+                  </p>
+                <% end %>
               </span>
             </div>
             <svg class="h-4 w-4 text-slate-300 group-hover/item:text-blue-500 group-hover/item:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,6 +109,11 @@
               <span class="text-sm font-semibold text-slate-700 group-hover/item:text-blue-600 transition-colors">
                 Validar Solicitud
                 <p>Partida: <%= notification.notifiable.try(:blhouse) || notification.notifiable.id %></p>
+                <% if notification.notifiable.respond_to?(:status) %>
+                  <p class="text-xs font-normal text-slate-500 mt-0.5">
+                    Estatus: <%= bl_house_line_status_nombre(notification.notifiable.status) %>
+                  </p>
+                <% end %>
               </span>
             </div>
             <svg class="h-4 w-4 text-slate-300 group-hover/item:text-blue-500 group-hover/item:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
