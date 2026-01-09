@@ -5,7 +5,7 @@ RSpec.describe "Notifications UI", type: :system do
   let(:user) { User.create!(email: "test_user@example.com", password: "password123", password_confirmation: "password123", role: role) }
   let(:customs_agent) { User.create!(email: "customs@example.com", password: "password123", password_confirmation: "password123", role: role) }
   let(:entity) { Entity.find_or_create_by(name: "Test Entity") { |e| e.is_client = true } }
-  let(:bl_house_line) { BlHouseLine.create!(blhouse: "TEST#{rand(1000)}", partida: rand(100), cantidad: 1, contiene: "test", client: entity, status: "revalidado") }
+  let(:bl_house_line) { BlHouseLine.create!(blhouse: "TEST#{rand(1000)}", partida: rand(1..100), cantidad: 1, contiene: "test", client: entity, status: "revalidado") }
 
   before do
     driven_by(:selenium_chrome_headless)
