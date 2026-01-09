@@ -111,7 +111,7 @@
                            <% 
                               # Pre-fetch all patents for all agents to enable client-side filtering
                               # Group them by agent_id for easy display
-                              all_patents = CustomsAgentPatent.includes(:entity).where(entity_id: agents.pluck(:id)).order(:patent_number)
+                              all_patents = CustomsAgentPatent.where(entity_id: agents.pluck(:id)).order(:patent_number)
                            %>
                            <select name="bl_house_line[customs_agent_patent_id]" id="bl_house_line_customs_agent_patent_id" 
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
