@@ -279,16 +279,25 @@ class BlHouseLinesController < ApplicationController
   end
 
   def notify_customs_agent(action)
-    unless @bl_house_line.customs_agent_id
-      Rails.logger.warn "BlHouseLine #{@bl_house_line.id} has no customs_agent_id. Notification '#{action}' not sent."
+    if @bl_house_line.customs_agent_id
+      # Notify all users belonging to the customs agent entity
+      receivers = User.where(entity_id: @bl_house_line.customs_agent_id)
+    elsif action == "Correcciones Solicitadas"
+      # For corrections, notify the user who requested the revalidation
+      revalidation_history = @bl_house_line.bl_house_line_status_histories.where(status: "validar_documentos").order(created_at: :asc).first
+      if revalidation_history && revalidation_history.user
+        receivers = [ revalidation_history.user ]
+      else
+        Rails.logger.warn "BlHouseLine #{@bl_house_line.id} has no revalidation history. Notification '#{action}' not sent."
+        return
+      end
+    else
+      Rails.logger.warn "BlHouseLine #{@bl_house_line.id} has no customs_agent_id and action is not 'Correcciones Solicitadas'. Notification '#{action}' not sent."
       return
     end
 
-    # Notify all users belonging to the customs agent entity
-    receivers = User.where(entity_id: @bl_house_line.customs_agent_id)
-
     if receivers.empty?
-      Rails.logger.warn "No users found for entity_id: #{@bl_house_line.customs_agent_id}. Notification '#{action}' not sent."
+      Rails.logger.warn "No receivers found for notification '#{action}' on BlHouseLine #{@bl_house_line.id}."
       return
     end
 
