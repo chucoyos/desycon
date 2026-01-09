@@ -41,6 +41,10 @@ class BlHouseLinePolicy < ApplicationPolicy
     user.present? && !user.customs_broker?
   end
 
+  def approve_revalidation?
+    user.present? && user.admin_or_executive?
+  end
+
   class Scope < Scope
     def resolve
       if user.nil?

@@ -58,7 +58,12 @@ Rails.application.routes.draw do
   resources :vessels
   resources :consolidators
   resources :containers
-  resources :bl_house_lines
+  resources :bl_house_lines do
+    member do
+      get :revalidation_approval
+      patch :approve_revalidation
+    end
+  end
   resources :service_catalogs
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

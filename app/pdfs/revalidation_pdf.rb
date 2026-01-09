@@ -86,7 +86,11 @@ class RevalidationPdf
   end
 
   def patent_number
-    @bl_house_line.customs_agent&.customs_agent_patents&.first&.patent_number || "N/A"
+    if @bl_house_line.respond_to?(:customs_agent_patent) && @bl_house_line.customs_agent_patent.present?
+      @bl_house_line.customs_agent_patent.patent_number
+    else
+      @bl_house_line.customs_agent&.customs_agent_patents&.first&.patent_number || "N/A"
+    end
   end
 
   def status_name

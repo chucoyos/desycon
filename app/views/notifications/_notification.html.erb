@@ -1,4 +1,8 @@
-<div id="<%= dom_id(notification) %>" class="group relative flex flex-col h-full rounded-3xl bg-white transition-all duration-300 hover:shadow-lg hover:-translate-y-1 <%= notification.read? ? 'border border-slate-100 shadow-sm' : 'border-2 border-blue-100 shadow-md bg-blue-50/10' %>">
+<div id="<%= dom_id(notification) %>" 
+     data-controller="notification"
+     data-notification-url-value="<%= mark_as_read_notification_path(notification) %>"
+     data-notification-read-value="<%= notification.read? %>"
+     class="group relative flex flex-col h-full rounded-3xl bg-white transition-all duration-300 hover:shadow-lg hover:-translate-y-1 <%= notification.read? ? 'border border-slate-100 shadow-sm' : 'border-2 border-blue-100 shadow-md bg-blue-50/10' %>">
   <!-- Card Header -->
   <div class="px-6 pt-6 pb-2">
     <div class="flex items-start justify-between gap-4">
@@ -77,7 +81,7 @@
           Referencia
         </p>
         <% if notification.action == "revalidado" %>
-          <%= link_to revalidation_path(notification.notifiable, format: :pdf), target: "_blank", class: "group/item flex items-center justify-between" do %>
+          <%= link_to revalidation_path(notification.notifiable, format: :pdf), target: "_blank", data: { action: "click->notification#markAsRead" }, class: "group/item flex items-center justify-between" do %>
             <div class="flex items-center gap-3">
               <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -91,6 +95,53 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
             </svg>
           <% end %>
+        <% elsif notification.action == "solicitó revalidación" || notification.action == "solicito_revalidacion" %>
+          <%= link_to revalidation_approval_bl_house_line_path(notification.notifiable), data: { turbo_frame: "approval_modal", action: "click->notification#markAsRead" }, class: "group/item flex items-center justify-between" do %>
+             <div class="flex items-center gap-3">
+              <svg class="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span class="text-sm font-semibold text-slate-700 group-hover/item:text-blue-600 transition-colors">
+                Validar Solicitud
+                <p>Partida: <%= notification.notifiable.try(:blhouse) || notification.notifiable.id %></p>
+              </span>
+            </div>
+            <svg class="h-4 w-4 text-slate-300 group-hover/item:text-blue-500 group-hover/item:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+            </svg>
+          <% end %>
+        <% elsif notification.action == "Correcciones Solicitadas" || notification.action == "Documentación Aprobada" %>
+            <% 
+               # Fetch the observation from history that matches the notification time (approx) or is relevant
+               # Since notifications are created immediately after history updates, usually the latest history
+               # will contain the relevant observation.
+               latest_history = notification.notifiable.bl_house_line_status_histories.order(created_at: :desc).first
+               observation_text = latest_history&.observations
+            %>
+            <%= link_to notification.notifiable, data: { action: "click->notification#markAsRead" }, class: "group/item block" do %>
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-3">
+                        <svg class="h-5 w-5 <%= notification.action == 'Correcciones Solicitadas' ? 'text-red-500' : 'text-blue-500' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <% if notification.action == 'Correcciones Solicitadas' %>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                             <% else %>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                             <% end %>
+                        </svg>
+                        <span class="text-sm font-semibold text-slate-700 group-hover/item:text-blue-600 transition-colors">
+                            Partida <%= notification.notifiable.try(:blhouse) || notification.notifiable.id %>
+                        </span>
+                    </div>
+                     <svg class="h-4 w-4 text-slate-300 group-hover/item:text-blue-500 group-hover/item:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </div>
+                <% if observation_text.present? %>
+                    <div class="mt-2 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200/60 italic leading-relaxed">
+                        "<%= observation_text %>"
+                    </div>
+                <% end %>
+            <% end %>
         <% else %>
           <%= link_to notification.notifiable, class: "group/item flex items-center justify-between" do %>
             <div class="flex items-center gap-3">

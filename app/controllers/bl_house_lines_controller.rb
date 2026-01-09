@@ -1,6 +1,6 @@
 class BlHouseLinesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_bl_house_line, only: %i[show edit update destroy]
+  before_action :set_bl_house_line, only: %i[show edit update destroy revalidation_approval approve_revalidation]
   after_action :verify_authorized, except: :index
 
   # GET /bl_house_lines
@@ -110,6 +110,84 @@ class BlHouseLinesController < ApplicationController
     redirect_to bl_house_lines_url, notice: "Partida eliminada correctamente."
   end
 
+  # GET /bl_house_lines/1/revalidation_approval
+  def revalidation_approval
+    authorize @bl_house_line, :approve_revalidation?
+    @customs_agents = Entity.customs_agents.order(:name)
+    respond_to do |format|
+      format.html
+      format.turbo_stream
+    end
+  end
+
+  # PATCH /bl_house_lines/1/approve_revalidation
+  def approve_revalidation
+    authorize @bl_house_line, :approve_revalidation?
+
+    decision = params[:decision]
+    @bl_house_line.assign_attributes(revalidation_params)
+
+    if decision == "reject"
+      @bl_house_line.status = "instrucciones_pendientes"
+      if @bl_house_line.save
+        add_history_observation(params[:observations])
+        notify_customs_agent("Correcciones Solicitadas")
+
+        respond_to do |format|
+          format.turbo_stream { render turbo_stream: turbo_stream.replace("approval_modal", partial: "bl_house_lines/approval/modal_closed") }
+          format.html { redirect_to bl_house_lines_path, notice: "Instrucciones enviadas." }
+        end
+      else
+        render :revalidation_approval, status: :unprocessable_entity
+      end
+
+    elsif decision == "assign"
+      # If we are assigning, it implies documents are OK.
+      @bl_house_line.status = "documentos_ok"
+
+      # Ensure attributes are assigned
+      @bl_house_line.assign_attributes(revalidation_params)
+
+      if @bl_house_line.save
+        begin
+          date_str = params[:tentative_date]
+          time_period = params[:time_period]
+
+          if date_str.present?
+             full_observation = "FECHA TENTATIVA PARA EL INICIO DE REVALIDACION EL DIA #{date_str} POR LA #{time_period}."
+             # Use a safer history lookup or create one if missing
+             history = @bl_house_line.bl_house_line_status_histories.order(created_at: :desc).first
+             if history
+               history.update(observations: full_observation)
+             else
+               # Fallback: create history if callback somehow failed
+               @bl_house_line.bl_house_line_status_histories.create(
+                 status: @bl_house_line.status,
+                 changed_at: Time.current,
+                 user: current_user,
+                 observations: full_observation
+               )
+             end
+          end
+
+          notify_customs_agent("Documentación Aprobada")
+
+          respond_to do |format|
+             format.turbo_stream { render turbo_stream: turbo_stream.replace("approval_modal", partial: "bl_house_lines/approval/modal_closed") }
+             format.html { redirect_to bl_house_lines_path, notice: "Revalidación aprobada y agente asignado." }
+          end
+        rescue => e
+          Rails.logger.error "Error in approve_revalidation (assign): #{e.message}"
+          @bl_house_line.errors.add(:base, "Ocurrió un error al procesar la aprobación: #{e.message}")
+          render :revalidation_approval, status: :unprocessable_entity
+        end
+      else
+        Rails.logger.warn "Validation errors in approve_revalidation: #{@bl_house_line.errors.full_messages}"
+        render :revalidation_approval, status: :unprocessable_entity
+      end
+    end
+  end
+
   private
 
   def load_clients
@@ -181,6 +259,46 @@ class BlHouseLinesController < ApplicationController
     @bl_house_line.container = container
     if params[:bl_master].present? && container.bl_master.blank?
       container.update(bl_master: params[:bl_master])
+    end
+  end
+
+  def revalidation_params
+    if params[:bl_house_line].present?
+      params.require(:bl_house_line).permit(:customs_agent_patent_id, :customs_agent_id)
+    else
+      {}
+    end
+  end
+
+  def add_history_observation(observation)
+    return if observation.blank?
+    history = @bl_house_line.bl_house_line_status_histories.order(created_at: :desc).first
+    if history
+      history.update(observations: observation)
+    end
+  end
+
+  def notify_customs_agent(action)
+    unless @bl_house_line.customs_agent_id
+      Rails.logger.warn "BlHouseLine #{@bl_house_line.id} has no customs_agent_id. Notification '#{action}' not sent."
+      return
+    end
+
+    # Notify all users belonging to the customs agent entity
+    receivers = User.where(entity_id: @bl_house_line.customs_agent_id)
+
+    if receivers.empty?
+      Rails.logger.warn "No users found for entity_id: #{@bl_house_line.customs_agent_id}. Notification '#{action}' not sent."
+      return
+    end
+
+    receivers.each do |receiver|
+      Notification.create!(
+        recipient: receiver,
+        actor: current_user,
+        notifiable: @bl_house_line,
+        action: action
+      )
     end
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_07_082340) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_09_023342) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -84,6 +84,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_07_082340) do
     t.bigint "changed_by_id"
     t.string "changed_by_type"
     t.datetime "created_at", null: false
+    t.text "observations"
     t.string "previous_status"
     t.string "status"
     t.datetime "updated_at", null: false
@@ -101,6 +102,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_07_082340) do
     t.text "contiene"
     t.datetime "created_at", null: false
     t.bigint "customs_agent_id"
+    t.bigint "customs_agent_patent_id"
     t.text "marcas"
     t.bigint "packaging_id"
     t.integer "partida"
@@ -111,6 +113,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_07_082340) do
     t.index ["client_id"], name: "index_bl_house_lines_on_client_id"
     t.index ["container_id"], name: "index_bl_house_lines_on_container_id"
     t.index ["customs_agent_id"], name: "index_bl_house_lines_on_customs_agent_id"
+    t.index ["customs_agent_patent_id"], name: "index_bl_house_lines_on_customs_agent_patent_id"
     t.index ["packaging_id"], name: "index_bl_house_lines_on_packaging_id"
   end
 
@@ -348,6 +351,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_07_082340) do
   add_foreign_key "bl_house_line_services", "service_catalogs"
   add_foreign_key "bl_house_line_status_histories", "bl_house_lines"
   add_foreign_key "bl_house_lines", "containers"
+  add_foreign_key "bl_house_lines", "customs_agent_patents"
   add_foreign_key "bl_house_lines", "entities", column: "client_id"
   add_foreign_key "bl_house_lines", "entities", column: "customs_agent_id"
   add_foreign_key "bl_house_lines", "packagings"

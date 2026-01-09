@@ -1,0 +1,44 @@
+<div>
+  <h3 class="text-base font-semibold leading-6 text-gray-900">Asignar Patente y Fecha</h3>
+  <div class="mt-2">
+     <p class="text-sm text-gray-500">Seleccione la patente del agente aduanal y establezca la fecha tentativa de revalidación.</p>
+  </div>
+
+  <%= form_with model: bl_house_line, url: approve_revalidation_bl_house_line_path(bl_house_line), method: :patch do |f| %>
+     <div class="mt-4 space-y-4">
+        <div>
+           <%= f.label :customs_agent_patent_id, "Patente de Agente Aduanal", class: "block text-sm font-medium text-gray-700" %>
+           <!-- Finding patents for the assigned customs agent -->
+           <% patents = bl_house_line.customs_agent&.customs_agent_patents&.map { |p| [p.patent_number, p.id] } || [] %>
+           <% if patents.empty? %>
+             <p class="text-sm text-red-600 mt-1">El Agente Aduanal asignado no tiene patentes registradas.</p>
+           <% else %>
+             <%= f.select :customs_agent_patent_id, patents, { prompt: "Seleccione una patente" }, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+           <% end %>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+           <div>
+              <%= label_tag :tentative_date, "Fecha Tentativa", class: "block text-sm font-medium text-gray-700" %>
+              <%= date_field_tag :tentative_date, nil, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm", required: true %>
+           </div>
+           <div>
+              <%= label_tag :time_period, "Horario", class: "block text-sm font-medium text-gray-700" %>
+              <%= select_tag :time_period, options_for_select(["MAÑANA", "TARDE"]), class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+           </div>
+        </div>
+     </div>
+
+     <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-gray-100 pt-6">
+        <button type="button" class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:w-auto" onclick="this.closest('.relative.z-50').remove()">Cancelar</button>
+        
+        <%= button_tag name: "decision", value: "back", type: "submit", formnovalidate: true, class: "inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:w-auto" do %>
+          <- Volver
+        <% end %>
+
+        <%= button_tag name: "decision", value: "assign", type: "submit", class: "inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:w-auto" do %>
+          Finalizar Aprobación
+        <% end %>
+     </div>
+  <% end %>
+</div>

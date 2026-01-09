@@ -1,6 +1,7 @@
 class BlHouseLine < ApplicationRecord
   # Relationships
   belongs_to :customs_agent, class_name: "Entity", optional: true
+  belongs_to :customs_agent_patent, optional: true
   belongs_to :client, class_name: "Entity", optional: true
   belongs_to :container, optional: true
   belongs_to :packaging, optional: true
@@ -36,6 +37,7 @@ class BlHouseLine < ApplicationRecord
   }
 
   # Validations
+
   validates :blhouse, presence: true
   validates :partida, presence: true, numericality: { only_integer: true, greater_than: 0 }, unless: -> { container_id.present? && partida.blank? }
   validates :partida, uniqueness: { scope: :container_id, message: "debe ser único dentro del contenedor" }, if: :container_id?
@@ -43,16 +45,38 @@ class BlHouseLine < ApplicationRecord
   validates :peso, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :volumen, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
+  attr_accessor :skip_revalidation_notification
+
   # Callbacks
   before_create :capture_current_user
   before_update :capture_current_user
   before_save :assign_next_partida_number, if: -> { partida.blank? && container_id.present? }
   after_create :create_initial_status_history
   after_update :create_status_history, if: :saved_change_to_status?
-  after_update :notify_revalidation_request, if: -> { saved_change_to_status? && validar_documentos? }
+  after_update :notify_revalidation_request, if: -> { !skip_revalidation_notification && saved_change_to_status? && validar_documentos? }
   after_update :notify_customs_agent_revalidation, if: -> { saved_change_to_status? && revalidado? }
   def documentos_completos?
     bl_endosado_documento.attached? && liberacion_documento.attached? && encomienda_documento.attached?
+  end
+
+  def notify_revalidation_request
+    role_names = [ Role::ADMIN, Role::EXECUTIVE ]
+    recipients = User.joins(:role).where(roles: { name: role_names })
+
+    if recipients.empty?
+      Rails.logger.warn "No recipients found for revalidation notification. Roles searched: #{role_names}"
+    end
+
+    actor = @current_user || (defined?(Current) && Current.respond_to?(:user) ? Current.user : nil)
+
+    recipients.each do |recipient|
+      Notification.create(
+        recipient: recipient,
+        actor: actor,
+        action: "solicitó revalidación",
+        notifiable: self
+      )
+    end
   end
 
   private
@@ -121,19 +145,7 @@ class BlHouseLine < ApplicationRecord
     )
   end
 
-  def notify_revalidation_request
-    recipients = User.joins(:role).where(roles: { name: [ Role::ADMIN, Role::EXECUTIVE ] })
-    actor = @current_user || (defined?(Current) && Current.respond_to?(:user) ? Current.user : nil)
 
-    recipients.each do |recipient|
-      Notification.create(
-        recipient: recipient,
-        actor: actor,
-        action: "solicitó revalidación",
-        notifiable: self
-      )
-    end
-  end
 
   def notify_customs_agent_revalidation
     return unless customs_agent_id.present?

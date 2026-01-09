@@ -27,7 +27,8 @@ class CustomsAgentsController < ApplicationController
                                :bl_endosado_documento_attachment,
                                :liberacion_documento_attachment,
                                :bl_revalidado_documento_attachment,
-                               :encomienda_documento_attachment
+                               :encomienda_documento_attachment,
+                               :pago_documento_attachment
                              )
                              .order(created_at: :desc)
 
@@ -90,7 +91,16 @@ class CustomsAgentsController < ApplicationController
       render partial: "customs_agents/revalidation_not_found", status: :not_found and return
     end
 
-    if @bl_house_line.update(revalidation_params.merge(status: :validar_documentos))
+    @bl_house_line.skip_revalidation_notification = true
+
+    # Ensure the line is assigned to the current customs agent
+    update_params = revalidation_params.merge(
+      status: :validar_documentos,
+      customs_agent_id: current_user.entity_id
+    )
+
+    if @bl_house_line.update(update_params)
+      @bl_house_line.notify_revalidation_request
       render partial: "customs_agents/revalidation_success", locals: { bl_house_line: @bl_house_line }
     else
       render partial: "customs_agents/revalidation_modal", status: :unprocessable_entity, locals: { bl_house_line: @bl_house_line, customs_agents: revalidation_customs_agents, clients: revalidation_clients }

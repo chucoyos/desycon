@@ -26,6 +26,6 @@ class Notification < ApplicationRecord
       locals: { unread_count: recipient.notifications.unread.count }
     )
     # Also optionally push to the list if they are on the index page
-    # broadcast_prepend_to "notifications_#{recipient_id}", target: "notifications_list", partial: "notifications/notification", locals: { notification: self }
+    broadcast_prepend_to "notifications_#{recipient_id}", target: "notifications_list", partial: "notifications/notification", locals: { notification: self }
   end
 end
