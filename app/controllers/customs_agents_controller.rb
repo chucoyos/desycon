@@ -93,13 +93,7 @@ class CustomsAgentsController < ApplicationController
 
     @bl_house_line.skip_revalidation_notification = true
 
-    # Ensure the line is assigned to the current customs agent
-    update_params = revalidation_params.merge(
-      status: :validar_documentos,
-      customs_agent_id: current_user.entity_id
-    )
-
-    if @bl_house_line.update(update_params)
+    if @bl_house_line.update(revalidation_params.merge(status: :validar_documentos))
       @bl_house_line.notify_revalidation_request
       render partial: "customs_agents/revalidation_success", locals: { bl_house_line: @bl_house_line }
     else
