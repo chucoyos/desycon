@@ -8,7 +8,7 @@ class CustomsAgentsController < ApplicationController
 
     search_blhouse = params[:revalidation_blhouse].presence || params[:blhouse].presence
 
-    if search_blhouse
+    if search_blhouse && params[:blhouse].present?
       bl_house_line = revalidation_scope.where("LOWER(blhouse) = ?", search_blhouse.strip.downcase).first
       if bl_house_line
         redirect_to edit_bl_house_line_path(bl_house_line)

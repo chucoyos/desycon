@@ -319,4 +319,15 @@
   </div>
 </div>
 
+<% if params[:revalidation_blhouse].present? %>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.querySelector('form[data-turbo-frame="revalidation_modal"]');
+      if (form) {
+        form.requestSubmit();
+      }
+    });
+  </script>
+<% end %>
+
 <turbo-frame id="revalidation_modal"></turbo-frame>
