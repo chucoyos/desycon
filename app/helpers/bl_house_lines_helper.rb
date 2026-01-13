@@ -66,6 +66,8 @@ module BlHouseLinesHelper
   end
 
   def bl_house_line_status_nombre(status)
+    return "Desconocido" if status.nil?
+
     {
       "activo" => "Activo",
       "bl_original" => "BL Original",

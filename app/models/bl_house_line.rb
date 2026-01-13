@@ -12,7 +12,6 @@ class BlHouseLine < ApplicationRecord
   # Document attachments
   has_one_attached :bl_endosado_documento
   has_one_attached :liberacion_documento
-  has_one_attached :bl_revalidado_documento
   has_one_attached :encomienda_documento
   has_one_attached :pago_documento
 

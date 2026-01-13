@@ -26,7 +26,6 @@ class CustomsAgentsController < ApplicationController
                                :bl_house_line_status_histories,
                                :bl_endosado_documento_attachment,
                                :liberacion_documento_attachment,
-                               :bl_revalidado_documento_attachment,
                                :encomienda_documento_attachment,
                                :pago_documento_attachment
                              )

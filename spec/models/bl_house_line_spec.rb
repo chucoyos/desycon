@@ -219,7 +219,6 @@ RSpec.describe BlHouseLine, type: :model do
     it 'returns true when all documents are attached' do
       bl_house_line.bl_endosado_documento.attach(io: StringIO.new('test'), filename: 'test.pdf')
       bl_house_line.liberacion_documento.attach(io: StringIO.new('test'), filename: 'test.pdf')
-      bl_house_line.bl_revalidado_documento.attach(io: StringIO.new('test'), filename: 'test.pdf')
       bl_house_line.encomienda_documento.attach(io: StringIO.new('test'), filename: 'test.pdf')
       expect(bl_house_line.documentos_completos?).to be_truthy
     end

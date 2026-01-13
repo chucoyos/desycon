@@ -232,20 +232,6 @@
       </div>
 
       <div>
-        <%= form.label :bl_revalidado_documento, "BL Revalidado", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <% if is_customs_agent %>
-          <div class="w-full px-4 py-3 rounded-lg border border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed text-sm">
-            No puede adjuntar BL revalidado
-          </div>
-        <% else %>
-          <%= form.file_field :bl_revalidado_documento, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100" %>
-        <% end %>
-        <% if bl_house_line.persisted? && bl_house_line.bl_revalidado_documento.attached? %>
-          <p class="mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.bl_revalidado_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
-        <% end %>
-      </div>
-
-      <div>
         <%= form.label :encomienda_documento, "Encomienda", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <%= form.file_field :encomienda_documento, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100" %>
         <% if bl_house_line.persisted? && bl_house_line.encomienda_documento.attached? %>
