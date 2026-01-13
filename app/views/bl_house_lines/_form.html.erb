@@ -85,6 +85,7 @@
   </div>
 
   <!-- Información de Agente Aduanal y Cliente -->
+  <% if bl_house_line.persisted? %>
   <div class="bg-white shadow-md rounded-xl p-5 sm:p-6 border border-gray-100">
     <div class="flex items-center gap-3 mb-5">
       <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-600 shadow-sm">
@@ -107,6 +108,7 @@
       </div>
     </div>
   </div>
+  <% end %>
 
   <!-- Detalles de Cantidad y Embalaje -->
   <div class="bg-white shadow-md rounded-xl p-5 sm:p-6 border border-gray-100">
