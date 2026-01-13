@@ -321,12 +321,14 @@
 
 <% if params[:revalidation_blhouse].present? %>
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('turbo:load', function() {
       const form = document.querySelector('form[data-turbo-frame="revalidation_modal"]');
       if (form) {
-        form.requestSubmit();
+        setTimeout(function() {
+          form.requestSubmit();
+        }, 50);
       }
-    });
+    }, { once: true });
   </script>
 <% end %>
 
