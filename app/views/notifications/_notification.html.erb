@@ -54,7 +54,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
               <span class="font-bold text-green-700 uppercase tracking-wide">¡Revalidado!</span>
-            <% elsif notification.action == "solicitó revalidación" %>
+            <% elsif ["solicitó revalidación", "solicito_revalidacion", "revalidation_approval", "Solicitó Revalidación"].include?(notification.action) %>
               <svg class="h-5 w-5 text-orange-600 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
               </svg>
@@ -100,7 +100,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
             </svg>
           <% end %>
-        <% elsif notification.action == "solicitó revalidación" || notification.action == "solicito_revalidacion" %>
+        <% elsif ["solicitó revalidación", "solicito_revalidacion", "revalidation_approval", "Solicitó Revalidación"].include?(notification.action) %>
           <%= link_to revalidation_approval_bl_house_line_path(notification.notifiable), data: { turbo_frame: "approval_modal", action: "click->notification#markAsRead" }, class: "group/item flex items-center justify-between" do %>
              <div class="flex items-center gap-3">
               <svg class="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
