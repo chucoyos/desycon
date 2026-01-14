@@ -35,6 +35,14 @@ export default class extends Controller {
     this.showStep(1)
   }
 
+  confirmReject(event) {
+    const message = "¿Confirmas que deseas marcar la revalidación con instrucciones pendientes? Esto notificará al agente para corregir.";
+    if (!window.confirm(message)) {
+        event.preventDefault()
+        event.stopPropagation()
+    }
+  }
+
   showStep(step) {
     const isStep1 = (step === 1)
     

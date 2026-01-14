@@ -109,7 +109,7 @@
                   </div>
 
                   <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                    <%= button_tag name: "decision", value: "reject", type: "submit", class: "inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 sm:w-auto" do %>
+                    <%= button_tag name: "decision", value: "reject", type: "submit", class: "inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 sm:w-auto", data: { action: "click->approval-wizard#confirmReject" } do %>
                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                       </svg>
