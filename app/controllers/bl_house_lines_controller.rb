@@ -224,13 +224,10 @@ class BlHouseLinesController < ApplicationController
   def set_bl_house_line
     if action_name == "show"
       includes_associations = [
-        { bl_house_line_status_histories: :user }
+        { bl_house_line_status_histories: :user },
+        { bl_house_line_services: [ :service_catalog, :billed_to_entity ] }
       ]
 
-      # Only include services for non-customs agents
-      unless customs_agent_user?
-        includes_associations << { bl_house_line_services: [ :service_catalog, :billed_to_entity ] }
-      end
 
       @bl_house_line = BlHouseLine.includes(includes_associations).find(params[:id])
     else

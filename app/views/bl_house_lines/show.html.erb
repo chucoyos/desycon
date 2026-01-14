@@ -66,6 +66,7 @@
             <% end %>
           </div>
         </div>
+        <% unless is_customs_agent %>
         <div class="flex items-center gap-2">
           <%= link_to edit_bl_house_line_path(@bl_house_line), class: "inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 shadow-sm hover:shadow-md transition-all duration-200" do %>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,6 +75,7 @@
             <span class="hidden sm:inline">Editar</span>
           <% end %>
         </div>
+        <% end %>
       </div>
     </div>
   </div>
@@ -222,7 +224,6 @@
     <div class="space-y-6">
 
   <!-- Servicios -->
-  <% unless is_customs_agent %>
   <div class="bg-white shadow-sm rounded-xl p-5 border border-gray-100 mb-6">
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
@@ -283,7 +284,6 @@
       <p class="text-sm text-gray-500">No hay servicios registrados.</p>
     <% end %>
   </div>
-  <% end %>
       
 
   <!-- Documentos -->
