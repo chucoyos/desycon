@@ -1,4 +1,5 @@
 require 'rails_helper'
+require 'securerandom'
 
 RSpec.describe Container, type: :model do
   describe 'associations' do
@@ -354,6 +355,8 @@ RSpec.describe Container, type: :model do
           filename: 'tarja.pdf',
           content_type: 'application/pdf'
         )
+        container.reload
+        container.update!(status: 'activo')
         expect(container.puede_desconsolidar?).to be true
       end
     end
@@ -495,6 +498,57 @@ RSpec.describe Container, type: :model do
         expect(container).not_to be_valid
         expect(container.errors[:fecha_arribo]).to_not be_empty
       end
+    end
+  end
+
+  describe 'tarja attachment processing' do
+    let(:customs_agent) { create(:entity, :customs_agent) }
+    let(:container) { create(:container, status: 'validar_documentos') }
+    let(:packaging) { create(:packaging, nombre: "Empaque Especial #{SecureRandom.hex(3)}") }
+    let!(:line_ok) { create(:bl_house_line, container: container, customs_agent: customs_agent, packaging: packaging, status: 'documentos_ok') }
+    let!(:line_other) { create(:bl_house_line, container: container, customs_agent: customs_agent, packaging: packaging, status: 'activo') }
+    let!(:agent_user) { create(:user, :customs_broker, entity: customs_agent) }
+
+    around do |example|
+      previous_user = Current.user
+      Current.user = agent_user
+      example.run
+      Current.user = previous_user
+    end
+
+    it 'changes container status to desconsolidado when tarja attached' do
+      expect {
+        container.tarja_documento.attach(
+          io: StringIO.new('Tarja content'),
+          filename: 'tarja.pdf',
+          content_type: 'application/pdf'
+        )
+        container.reload
+      }.to change { container.reload.status }.from('validar_documentos').to('desconsolidado')
+    end
+
+    it 'marks document-ready BL lines as revalidado' do
+      container.tarja_documento.attach(
+        io: StringIO.new('Tarja content'),
+        filename: 'tarja.pdf',
+        content_type: 'application/pdf'
+      )
+
+      expect(line_ok.reload.status).to eq('revalidado')
+      expect(line_other.reload.status).to eq('activo')
+    end
+
+    it 'notifies requesting customs agent users' do
+      expect {
+        container.tarja_documento.attach(
+          io: StringIO.new('Tarja content'),
+          filename: 'tarja.pdf',
+          content_type: 'application/pdf'
+        )
+        container.reload
+      }.to change {
+        Notification.where(recipient: agent_user, notifiable: line_ok, action: 'revalidado').count
+      }.by(1)
     end
   end
 

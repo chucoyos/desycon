@@ -14,6 +14,8 @@ class Container < ApplicationRecord
   has_one_attached :bl_master_documento
   has_one_attached :tarja_documento
 
+  attr_accessor :tarja_documento_attached_via_setter
+
   # Nested attributes
   accepts_nested_attributes_for :container_services, allow_destroy: true, reject_if: :all_blank
 
@@ -68,6 +70,7 @@ class Container < ApplicationRecord
   before_update :capture_current_user
   after_create :create_initial_status_history
   after_update :create_status_history, if: :saved_change_to_status?
+  after_commit :handle_tarja_uploaded, if: :tarja_documento_recently_attached?
 
   # Métodos de conveniencia
   def to_s
@@ -122,6 +125,11 @@ class Container < ApplicationRecord
     @skip_auto_history = false
   end
 
+  def tarja_documento=(attachable)
+    super
+    self.tarja_documento_attached_via_setter = true if attachable.present?
+  end
+
   private
 
   def capture_current_user
@@ -161,5 +169,31 @@ class Container < ApplicationRecord
         user: @current_user
       )
     end
+  end
+
+  def tarja_documento_recently_attached?
+    return false unless tarja_documento.attached?
+
+    flag = tarja_documento_attached_via_setter
+    self.tarja_documento_attached_via_setter = false
+
+    attachment_changes = tarja_documento_attachment&.previous_changes
+
+    flag || attachment_changes.present?
+  end
+
+  def handle_tarja_uploaded
+    return if status_desconsolidado?
+
+    current_actor = @current_user || (defined?(Current) && Current.respond_to?(:user) ? Current.user : nil)
+
+    cambiar_status!(:desconsolidado, current_actor, "Tarja adjunta automáticamente")
+
+    bl_house_lines
+      .where(status: BlHouseLine.statuses[:documentos_ok])
+      .find_each do |line|
+        next if line.revalidado?
+        line.revalidado!
+      end
   end
 end
