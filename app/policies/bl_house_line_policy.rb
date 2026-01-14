@@ -21,6 +21,10 @@ class BlHouseLinePolicy < ApplicationPolicy
     user.present? && (!user.customs_broker? || owned_by_customs_agent? || record.customs_agent.nil?)
   end
 
+  def documents?
+    show?
+  end
+
   def create?
     user.present? && !user.customs_broker?
   end

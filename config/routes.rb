@@ -62,6 +62,7 @@ Rails.application.routes.draw do
     member do
       get :revalidation_approval
       patch :approve_revalidation
+      get :documents
     end
   end
   resources :service_catalogs

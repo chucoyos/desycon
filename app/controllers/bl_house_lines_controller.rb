@@ -1,6 +1,6 @@
 class BlHouseLinesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_bl_house_line, only: %i[show edit update destroy revalidation_approval approve_revalidation]
+  before_action :set_bl_house_line, only: %i[show edit update destroy revalidation_approval approve_revalidation documents]
   after_action :verify_authorized, except: :index
 
   # GET /bl_house_lines
@@ -185,6 +185,12 @@ class BlHouseLinesController < ApplicationController
         render :revalidation_approval, status: :unprocessable_entity
       end
     end
+  end
+
+  # GET /bl_house_lines/1/documents
+  def documents
+    authorize @bl_house_line
+    # This logic allows downloading multiple documents related to the revalidation.
   end
 
   private

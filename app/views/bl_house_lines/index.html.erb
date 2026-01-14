@@ -133,6 +133,13 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                     </svg>
                   <% end %>
+                  <% if bl_house_line.revalidado? %>
+                    <%= link_to documents_bl_house_line_path(bl_house_line), class: "p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors", title: "Descargar Documentos", data: { turbo_frame: "revalidation_modal", action: "click->expandable-row#stop" } do %>
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V18a2 2 0 01-2 2z"/>
+                      </svg>
+                    <% end %>
+                  <% end %>
                   <% if policy(bl_house_line).destroy? %>
                     <%= button_to bl_house_line, method: :delete, class: "p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors inline-flex", title: "Eliminar", data: { turbo_confirm: "¿Estás seguro de eliminar esta partida?", action: "click->expandable-row#stop" } do %>
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,6 +235,13 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
               </svg>
             <% end %>
+            <% if bl_house_line.revalidado? %>
+              <%= link_to documents_bl_house_line_path(bl_house_line), class: "p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors", title: "Descargar Documentos", data: { turbo_frame: "revalidation_modal" } do %>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V18a2 2 0 01-2 2z"/>
+                </svg>
+              <% end %>
+            <% end %>
             <% if policy(bl_house_line).destroy? %>
               <%= button_to bl_house_line, method: :delete, class: "p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors inline-flex", title: "Eliminar", data: { turbo_confirm: "¿Estás seguro?" } do %>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,3 +270,4 @@
 </div>
 
 <turbo-frame id="approval_modal"></turbo-frame>
+<turbo-frame id="revalidation_modal"></turbo-frame>

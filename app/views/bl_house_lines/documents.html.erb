@@ -1,0 +1,79 @@
+<turbo-frame id="revalidation_modal">
+  <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" 
+           onclick="document.getElementById('revalidation_modal').innerHTML=''"></div>
+
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+      <div class="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+              <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+              <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                Documentos de Revalidación
+              </h3>
+              <p class="text-sm text-gray-500 mt-1">Bl House: <%= @bl_house_line.blhouse %></p>
+              
+              <div class="mt-6 space-y-3">
+                <!-- Revalidación PDF -->
+                <%= link_to revalidation_path(@bl_house_line, format: :pdf), target: "_blank", class: "flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200" do %>
+                  <div class="flex items-center gap-3">
+                     <svg class="h-8 w-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                       <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0111.414 2.586L15 6.172A2 2 0 0115.586 7.586V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                     </svg>
+                     <span class="font-medium text-gray-900">Revalidación PDF</span>
+                  </div>
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                  </svg>
+                <% end %>
+
+                <!-- Master BL -->
+                <% if @bl_house_line.container&.bl_master_documento&.attached? %>
+                   <%= link_to rails_blob_path(@bl_house_line.container.bl_master_documento, disposition: "attachment"), target: "_blank", class: "flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200" do %>
+                    <div class="flex items-center gap-3">
+                       <svg class="h-8 w-8 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" />
+                          <path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+                       </svg>
+                       <span class="font-medium text-gray-900">Master BL</span>
+                    </div>
+                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                  <% end %>
+                <% end %>
+
+                 <!-- Tarja -->
+                <% if @bl_house_line.container&.tarja_documento&.attached? %>
+                   <%= link_to rails_blob_path(@bl_house_line.container.tarja_documento, disposition: "attachment"), target: "_blank", class: "flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200" do %>
+                    <div class="flex items-center gap-3">
+                       <svg class="h-8 w-8 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M5 4a3 3 0 00-3 3v6a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H5zm-1 9v-1h5v2H5a1 1 0 01-1-1zm7 1h4a1 1 0 001-1v-1h-5v2zm0-4h5V8h-5v2zM9 8H4v2h5V8z" clip-rule="evenodd" />
+                       </svg>
+                       <span class="font-medium text-gray-900">Tarja</span>
+                    </div>
+                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" onclick="document.getElementById('revalidation_modal').innerHTML=''">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</turbo-frame>
