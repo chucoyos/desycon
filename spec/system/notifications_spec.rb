@@ -81,12 +81,12 @@ RSpec.describe "Notifications UI", type: :system do
   end
 
   describe "PDF download for revalidation" do
-    it "provides working PDF download link" do
+    it "provides link to documents modal" do
       Notification.create!(recipient: user, actor: user, notifiable: bl_house_line, action: "revalidado")
 
       visit notifications_path
 
-      expect(page).to have_link(href: revalidation_path(bl_house_line, format: :pdf))
+      expect(page).to have_link(href: documents_bl_house_line_path(bl_house_line))
     end
   end
 
