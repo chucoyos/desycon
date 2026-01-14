@@ -112,7 +112,12 @@ class BlHouseLinesController < ApplicationController
   # GET /bl_house_lines/1/revalidation_approval
   def revalidation_approval
     authorize @bl_house_line, :approve_revalidation?
-    @customs_agents = Entity.customs_agents.order(:name)
+    @requesting_agent = requesting_customs_agent
+    @customs_agents = Entity.customs_agents.order(:name).to_a
+    if @requesting_agent.present?
+      @customs_agents.delete(@requesting_agent)
+      @customs_agents.unshift(@requesting_agent)
+    end
     respond_to do |format|
       format.html
       format.turbo_stream
@@ -141,18 +146,19 @@ class BlHouseLinesController < ApplicationController
       end
 
     elsif decision == "assign"
-      # If we are assigning, it implies documents are OK.
-      @bl_house_line.status = "documentos_ok"
+      tarja_present = @bl_house_line.container&.tarja_documento&.attached?
+      @bl_house_line.status = tarja_present ? "revalidado" : "documentos_ok"
 
       # Ensure attributes are assigned
       @bl_house_line.assign_attributes(revalidation_params)
 
       if @bl_house_line.save
         begin
-          date_str = params[:tentative_date]
-          time_period = params[:time_period]
+          unless tarja_present
+            date_str = params[:tentative_date]
+            time_period = params[:time_period]
 
-          if date_str.present?
+            if date_str.present?
              full_observation = "FECHA TENTATIVA PARA EL INICIO DE REVALIDACION EL DIA #{date_str} POR LA #{time_period}."
              # Use a safer history lookup or create one if missing
              history = @bl_house_line.bl_house_line_status_histories.order(created_at: :desc).first
@@ -167,12 +173,21 @@ class BlHouseLinesController < ApplicationController
                  observations: full_observation
                )
              end
+            end
           end
 
           notify_customs_agent("Documentación Aprobada")
 
+          success_message = tarja_present ? "Partida marcada como Revalidada." : "Partida lista con Documentos OK."
+
           respond_to do |format|
-             format.turbo_stream { render turbo_stream: turbo_stream.replace("approval_modal", partial: "bl_house_lines/approval/modal_closed") }
+             format.turbo_stream do
+               render turbo_stream: turbo_stream.replace(
+                 "approval_modal",
+                 partial: "bl_house_lines/approval/modal_success",
+                 locals: { bl_house_line: @bl_house_line, success_message: success_message }
+               )
+             end
              format.html { redirect_to bl_house_lines_path, notice: "Revalidación aprobada y agente asignado." }
           end
         rescue => e
@@ -311,5 +326,18 @@ class BlHouseLinesController < ApplicationController
         action: action
       )
     end
+  end
+
+  def requesting_customs_agent
+    return @bl_house_line.customs_agent if @bl_house_line.customs_agent.present?
+
+    revalidation_history = @bl_house_line
+      .bl_house_line_status_histories
+      .where(status: "validar_documentos")
+      .order(created_at: :desc)
+      .first
+
+    candidate = revalidation_history&.user&.entity
+    candidate if candidate&.is_customs_agent?
   end
 end

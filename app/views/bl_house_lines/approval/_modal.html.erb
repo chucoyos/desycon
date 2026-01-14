@@ -19,6 +19,20 @@
         </div>
         
         <div id="step_content">
+          <% container = bl_house_line.container %>
+          <% tarja_present = container&.tarja_documento&.attached? %>
+          <% requesting_agent = (@requesting_agent || bl_house_line.customs_agent) %>
+          <% available_agents = (@customs_agents || Entity.customs_agents.order(:name)).to_a %>
+          <% if requesting_agent.present? %>
+            <% available_agents.delete_if { |agent| agent.id == requesting_agent.id } %>
+            <% available_agents.unshift(requesting_agent) %>
+          <% end %>
+          <% agent_options = available_agents.map do |agent|
+               label = agent.name
+               label += " (solicitante)" if requesting_agent.present? && agent.id == requesting_agent.id
+               [label, agent.id]
+             end %>
+
            <%= form_with model: bl_house_line, url: approve_revalidation_bl_house_line_path(bl_house_line), method: :patch, id: "approval_form" do |f| %>
              
              <!-- Error Display -->
@@ -86,9 +100,9 @@
              </div>
 
              <!-- STEP 2 -->
-             <div data-approval-wizard-target="step2" class="hidden" 
-                  data-controller="dependent-select" 
-                  data-dependent-select-param-value="id">
+               <div data-approval-wizard-target="step2" class="hidden" 
+                 data-controller="dependent-select" 
+                 data-dependent-select-param-value="id">
                 <h3 class="text-base font-semibold leading-6 text-gray-900">Asignar Patente y Fecha</h3>
                 <div class="mt-2">
                    <p class="text-sm text-gray-500">Seleccione el agente aduanal, su patente y establezca la fecha tentativa.</p>
@@ -98,20 +112,20 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                            <%= f.label :customs_agent_id, "Agente Aduanal", class: "block text-sm font-medium text-gray-700" %>
-                           <% agents = Entity.customs_agents.order(:name) %>
-                           <%= f.collection_select :customs_agent_id, agents, :id, :name, 
-                               { prompt: "Seleccione Agente" }, 
-                               { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                                 required: true,
-                                 data: { dependent_select_target: "source", action: "change->dependent-select#filter" } } 
+                             <%= select_tag "bl_house_line[customs_agent_id]",
+                               options_for_select(agent_options, bl_house_line.customs_agent_id || requesting_agent&.id),
+                               class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                             data: { dependent_select_target: "source", action: "change->dependent-select#filter" },
+                             required: true,
+                             id: "bl_house_line_customs_agent_id"
                            %>
                         </div>
                         <div>
                            <%= f.label :customs_agent_patent_id, "Patente de Agente Aduanal", class: "block text-sm font-medium text-gray-700" %>
-                           <% 
-                              # Pre-fetch all patents for all agents to enable client-side filtering
-                              # Group them by agent_id for easy display
-                              all_patents = CustomsAgentPatent.where(entity_id: agents.pluck(:id)).order(:patent_number)
+                          <% 
+                            # Pre-fetch all patents for all agents to enable client-side filtering
+                            # Group them by agent_id for easy display
+                              all_patents = CustomsAgentPatent.where(entity_id: available_agents.map(&:id)).order(:patent_number)
                            %>
                            <select name="bl_house_line[customs_agent_patent_id]" id="bl_house_line_customs_agent_patent_id" 
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
@@ -129,16 +143,28 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                       <div>
-                          <%= label_tag :tentative_date, "Fecha Tentativa", class: "block text-sm font-medium text-gray-700" %>
-                          <%= date_field_tag :tentative_date, nil, required: true, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+                      <% if tarja_present %>
+                       <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 flex items-start gap-2">
+                        <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                          <p class="font-semibold">Tarja cargada</p>
+                          <p>Al finalizar se avanzará directamente a Revalidado, sin requerir fecha tentativa.</p>
+                        </div>
                        </div>
-                       <div>
-                          <%= label_tag :time_period, "Horario", class: "block text-sm font-medium text-gray-700" %>
-                          <%= select_tag :time_period, options_for_select(["MAÑANA", "TARDE"]), class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+                      <% else %>
+                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div>
+                           <%= label_tag :tentative_date, "Fecha Tentativa", class: "block text-sm font-medium text-gray-700" %>
+                           <%= date_field_tag :tentative_date, nil, required: true, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+                         </div>
+                         <div>
+                           <%= label_tag :time_period, "Horario", class: "block text-sm font-medium text-gray-700" %>
+                           <%= select_tag :time_period, options_for_select(["MAÑANA", "TARDE"]), class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+                         </div>
                        </div>
-                    </div>
+                      <% end %>
                  </div>
 
                  <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-gray-100 pt-6">
