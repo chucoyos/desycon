@@ -1,11 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = [ "step1", "step2" ]
+  static targets = [ "step1", "step2", "validation", "continueButton" ]
   static values = { initialStep: Number, returnUrl: String }
 
   connect() {
     this.showStep(this.hasInitialStepValue ? this.initialStepValue : 1)
+    this.updateContinueState()
   }
 
   close(event) {
@@ -25,8 +26,11 @@ export default class extends Controller {
     }
   }
 
-  next(event) {
+  handleNext(event) {
     event.preventDefault()
+    if (!this.allValidated()) {
+      return
+    }
     this.showStep(2)
   }
 
@@ -68,5 +72,20 @@ export default class extends Controller {
         input.removeAttribute("disabled")
       }
     })
+  }
+
+  updateContinueState() {
+    if (!this.hasContinueButtonTarget) return
+    const enabled = this.allValidated()
+    this.continueButtonTarget.toggleAttribute("disabled", !enabled)
+    this.continueButtonTarget.classList.toggle("opacity-60", !enabled)
+    this.continueButtonTarget.classList.toggle("cursor-not-allowed", !enabled)
+  }
+
+  allValidated() {
+    if (!this.hasValidationTarget) return true
+    const boxes = this.validationTargets
+    if (!boxes.length) return true
+    return boxes.every(cb => cb.checked)
   }
 }

@@ -154,6 +154,11 @@ class BlHouseLinesController < ApplicationController
       @bl_house_line.assign_attributes(revalidation_params)
       @bl_house_line.assign_attributes(document_validation_flags)
 
+      unless documents_validated?(@bl_house_line)
+        @bl_house_line.errors.add(:base, "Debes marcar todos los documentos como validados antes de continuar.")
+        return render :revalidation_approval, status: :unprocessable_entity
+      end
+
       if @bl_house_line.save
         begin
           unless tarja_present
@@ -310,6 +315,12 @@ class BlHouseLinesController < ApplicationController
     end
 
     flags
+  end
+
+  def documents_validated?(record)
+    BlHouseLine::DOCUMENT_FIELDS.all? do |doc|
+      record.respond_to?("#{doc}_validated") && record.public_send("#{doc}_validated")
+    end
   end
 
   def add_history_observation(observation)

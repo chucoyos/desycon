@@ -108,7 +108,7 @@
                         <% if current_user.admin_or_executive? %>
                           <div class="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm text-slate-700 ring-1 ring-slate-100">
                             <%= hidden_field_tag "bl_house_line[#{doc}_validated]", 0 %>
-                            <%= check_box_tag "bl_house_line[#{doc}_validated]", 1, validated, class: "h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" %>
+                            <%= check_box_tag "bl_house_line[#{doc}_validated]", 1, validated, class: "h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500", data: { approval_wizard_target: "validation", action: "change->approval-wizard#updateContinueState" } %>
                             <label class="text-sm font-medium text-slate-800">Marcar como validado</label>
                           </div>
                         <% end %>
@@ -131,7 +131,7 @@
                       Instrucciones pendientes
                     <% end %>
 
-                    <button type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:w-auto" data-action="click->approval-wizard#next">
+                    <button type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:w-auto disabled:opacity-60 disabled:cursor-not-allowed" data-approval-wizard-target="continueButton" data-action="click->approval-wizard#handleNext">
                       Continuar con asignación
                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
