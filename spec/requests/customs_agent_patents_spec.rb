@@ -26,9 +26,9 @@ RSpec.describe "CustomsAgentPatents", type: :request do
     context "as owner customs agent" do
       before { sign_in customs_agent_user, scope: :user }
 
-      it "returns http success" do
+      it "redirects due to lack of permissions" do
         get entity_customs_agent_patents_path(customs_agent_entity)
-        expect(response).to have_http_status(:success)
+        expect(response).to have_http_status(:redirect)
       end
     end
 
@@ -59,11 +59,11 @@ RSpec.describe "CustomsAgentPatents", type: :request do
     context "as owner customs agent" do
       before { sign_in customs_agent_user, scope: :user }
 
-      it "creates a new patent and redirects to patents index" do
+      it "does not create a patent and redirects away" do
         expect {
           post entity_customs_agent_patents_path(customs_agent_entity), params: { customs_agent_patent: valid_attributes }
-        }.to change(CustomsAgentPatent, :count).by(1)
-        expect(response).to redirect_to(entity_customs_agent_patents_path(customs_agent_entity))
+        }.not_to change(CustomsAgentPatent, :count)
+        expect(response).to have_http_status(:redirect)
       end
     end
   end
@@ -85,11 +85,12 @@ RSpec.describe "CustomsAgentPatents", type: :request do
     context "as owner customs agent" do
       before { sign_in customs_agent_user, scope: :user }
 
-      it "updates the patent and redirects to patents index" do
+      it "does not update the patent and redirects away" do
+        original_number = patent.patent_number
         patch entity_customs_agent_patent_path(customs_agent_entity, patent), params: { customs_agent_patent: new_attributes }
         patent.reload
-        expect(patent.patent_number).to eq("8888")
-        expect(response).to redirect_to(entity_customs_agent_patents_path(customs_agent_entity))
+        expect(patent.patent_number).to eq(original_number)
+        expect(response).to have_http_status(:redirect)
       end
     end
   end
@@ -111,13 +112,12 @@ RSpec.describe "CustomsAgentPatents", type: :request do
     context "as owner customs agent" do
       before { sign_in customs_agent_user, scope: :user }
 
-      it "destroys the patent and redirects back" do
-        # Simulate coming from patents index
+      it "does not destroy the patent and redirects away" do
         headers = { "HTTP_REFERER" => entity_customs_agent_patents_path(customs_agent_entity) }
         expect {
           delete entity_customs_agent_patent_path(customs_agent_entity, patent), headers: headers
-        }.to change(CustomsAgentPatent, :count).by(-1)
-        expect(response).to redirect_to(entity_customs_agent_patents_path(customs_agent_entity))
+        }.not_to change(CustomsAgentPatent, :count)
+        expect(response).to have_http_status(:redirect)
       end
     end
   end
