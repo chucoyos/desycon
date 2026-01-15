@@ -75,18 +75,25 @@
                 <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   <% [ :bl_endosado_documento, :liberacion_documento, :encomienda_documento, :pago_documento ].each do |doc| %>
                     <% document_attached = bl_house_line.send(doc).attached? %>
+                    <% validated = bl_house_line.document_validated?(doc) %>
                     <div class="group relative overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/60 p-4 shadow-sm transition hover:shadow-lg">
-                      <div class="flex items-center gap-3">
-                        <div class="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-                          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c.5304 0 1.0391-.2107 1.4142-.5858C13.7893 10.0391 14 9.5304 14 9s-.2107-1.0391-.5858-1.4142C13.0391 7.2107 12.5304 7 12 7s-1.0391.2107-1.4142.5858C10.2107 7.9609 10 8.4696 10 9s.2107 1.0391.5858 1.4142C10.9609 10.7893 11.4696 11 12 11z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14v2a2.5 2.5 0 01-2.5 2.5h-10A2.5 2.5 0 014.5 16v-2" />
-                          </svg>
+                      <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c.5304 0 1.0391-.2107 1.4142-.5858C13.7893 10.0391 14 9.5304 14 9s-.2107-1.0391-.5858-1.4142C13.0391 7.2107 12.5304 7 12 7s-1.0391.2107-1.4142.5858C10.2107 7.9609 10 8.4696 10 9s.2107 1.0391.5858 1.4142C10.9609 10.7893 11.4696 11 12 11z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 14v2a2.5 2.5 0 01-2.5 2.5h-10A2.5 2.5 0 014.5 16v-2" />
+                            </svg>
+                          </div>
+                          <h4 class="text-sm font-semibold text-slate-900"><%= doc.to_s.humanize.gsub('_', ' ').titleize %></h4>
                         </div>
-                        <h4 class="text-sm font-semibold text-slate-900"><%= doc.to_s.humanize.gsub('_', ' ').titleize %></h4>
+                        <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold <%= validated ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' : 'bg-slate-100 text-slate-600' %>">
+                          <span class="h-2 w-2 rounded-full <%= validated ? 'bg-emerald-500' : 'bg-slate-400' %>"></span>
+                          <%= validated ? 'Validado' : 'Sin validar' %>
+                        </span>
                       </div>
 
-                      <div class="mt-4">
+                      <div class="mt-4 space-y-3">
                         <% if document_attached %>
                           <%= link_to "Ver documento", rails_blob_path(bl_house_line.send(doc), disposition: "preview"), target: "_blank", class: "inline-flex items-center justify-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-indigo-600 shadow-sm ring-1 ring-inset ring-indigo-100 transition hover:bg-indigo-50 hover:text-indigo-700" %>
                         <% else %>
@@ -96,6 +103,14 @@
                             </svg>
                             No adjunto
                           </span>
+                        <% end %>
+
+                        <% if current_user.admin_or_executive? %>
+                          <div class="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm text-slate-700 ring-1 ring-slate-100">
+                            <%= hidden_field_tag "bl_house_line[#{doc}_validated]", 0 %>
+                            <%= check_box_tag "bl_house_line[#{doc}_validated]", 1, validated, class: "h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" %>
+                            <label class="text-sm font-medium text-slate-800">Marcar como validado</label>
+                          </div>
                         <% end %>
                       </div>
                     </div>

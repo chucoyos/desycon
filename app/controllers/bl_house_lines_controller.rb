@@ -130,6 +130,7 @@ class BlHouseLinesController < ApplicationController
 
     decision = params[:decision]
     @bl_house_line.assign_attributes(revalidation_params)
+    @bl_house_line.assign_attributes(document_validation_flags)
 
     if decision == "reject"
       @bl_house_line.status = "instrucciones_pendientes"
@@ -149,8 +150,9 @@ class BlHouseLinesController < ApplicationController
       tarja_present = @bl_house_line.container&.tarja_documento&.attached?
       @bl_house_line.status = tarja_present ? "revalidado" : "documentos_ok"
 
-      # Ensure attributes are assigned
+      # Ensure attributes are assigned (including validation flags)
       @bl_house_line.assign_attributes(revalidation_params)
+      @bl_house_line.assign_attributes(document_validation_flags)
 
       if @bl_house_line.save
         begin
@@ -281,10 +283,33 @@ class BlHouseLinesController < ApplicationController
 
   def revalidation_params
     if params[:bl_house_line].present?
-      params.require(:bl_house_line).permit(:customs_agent_patent_id, :customs_agent_id)
+      params.require(:bl_house_line).permit(
+        :customs_agent_patent_id,
+        :customs_agent_id,
+        :bl_endosado_documento_validated,
+        :liberacion_documento_validated,
+        :encomienda_documento_validated,
+        :pago_documento_validated
+      )
     else
       {}
     end
+  end
+
+  def document_validation_flags
+    return {} unless params[:bl_house_line].present?
+
+    caster = ActiveModel::Type::Boolean.new
+    flags = {}
+
+    BlHouseLine::DOCUMENT_FIELDS.each do |doc|
+      param_key = "#{doc}_validated"
+      next unless params[:bl_house_line].key?(param_key)
+
+      flags[param_key] = caster.cast(params[:bl_house_line][param_key])
+    end
+
+    flags
   end
 
   def add_history_observation(observation)

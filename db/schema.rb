@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_09_023342) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_14_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -95,6 +95,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_09_023342) do
   end
 
   create_table "bl_house_lines", force: :cascade do |t|
+    t.boolean "bl_endosado_documento_validated", default: false, null: false
     t.string "blhouse"
     t.integer "cantidad"
     t.bigint "client_id"
@@ -103,8 +104,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_09_023342) do
     t.datetime "created_at", null: false
     t.bigint "customs_agent_id"
     t.bigint "customs_agent_patent_id"
+    t.boolean "encomienda_documento_validated", default: false, null: false
+    t.boolean "liberacion_documento_validated", default: false, null: false
     t.text "marcas"
     t.bigint "packaging_id"
+    t.boolean "pago_documento_validated", default: false, null: false
     t.integer "partida"
     t.decimal "peso"
     t.string "status"

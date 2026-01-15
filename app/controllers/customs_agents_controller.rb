@@ -92,7 +92,9 @@ class CustomsAgentsController < ApplicationController
 
     @bl_house_line.skip_revalidation_notification = true
 
-    if @bl_house_line.update(revalidation_params.merge(status: :validar_documentos))
+    sanitized_params = revalidation_params(@bl_house_line)
+
+    if @bl_house_line.update(sanitized_params.merge(status: :validar_documentos))
       @bl_house_line.notify_revalidation_request
       render partial: "customs_agents/revalidation_success", locals: { bl_house_line: @bl_house_line }
     else
@@ -106,7 +108,7 @@ class CustomsAgentsController < ApplicationController
     BlHouseLine.where(customs_agent: [ current_user.entity, nil ])
   end
 
-  def revalidation_params
+  def revalidation_params(bl_house_line = nil)
     permitted = params.require(:bl_house_line).permit(
       :client_id,
       :bl_endosado_documento,
@@ -115,6 +117,15 @@ class CustomsAgentsController < ApplicationController
       :pago_documento
     )
     permitted[:client_id] = sanitize_client_id(permitted[:client_id])
+
+    if bl_house_line
+      BlHouseLine::DOCUMENT_FIELDS.each do |doc|
+        if bl_house_line.document_validated?(doc)
+          permitted.delete(doc)
+        end
+      end
+    end
+
     permitted
   rescue ActionController::ParameterMissing
     {}

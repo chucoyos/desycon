@@ -306,6 +306,9 @@
           </svg>
           <div>
             <p class="text-sm font-semibold text-gray-900">BL Endosado</p>
+            <% if @bl_house_line.document_validated?(:bl_endosado_documento) %>
+              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">Validado</span>
+            <% end %>
             <p class="text-xs text-gray-500" title="<%= @bl_house_line.bl_endosado_documento.filename if @bl_house_line.bl_endosado_documento.attached? %>">
               <% if @bl_house_line.bl_endosado_documento.attached? %>
                 <%= truncate_filename(@bl_house_line.bl_endosado_documento.filename, max_length: 25) %>
@@ -333,6 +336,9 @@
           </svg>
           <div>
             <p class="text-sm font-semibold text-gray-900">Liberación</p>
+            <% if @bl_house_line.document_validated?(:liberacion_documento) %>
+              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">Validado</span>
+            <% end %>
             <p class="text-xs text-gray-500" title="<%= @bl_house_line.liberacion_documento.filename if @bl_house_line.liberacion_documento.attached? %>">
               <% if @bl_house_line.liberacion_documento.attached? %>
                 <%= truncate_filename(@bl_house_line.liberacion_documento.filename, max_length: 25) %>
@@ -360,6 +366,9 @@
           </svg>
           <div>
             <p class="text-sm font-semibold text-gray-900">Encomienda</p>
+            <% if @bl_house_line.document_validated?(:encomienda_documento) %>
+              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">Validado</span>
+            <% end %>
             <p class="text-xs text-gray-500" title="<%= @bl_house_line.encomienda_documento.filename if @bl_house_line.encomienda_documento.attached? %>">
               <% if @bl_house_line.encomienda_documento.attached? %>
                 <%= truncate_filename(@bl_house_line.encomienda_documento.filename, max_length: 25) %>
@@ -387,6 +396,9 @@
           </svg>
           <div>
             <p class="text-sm font-semibold text-gray-900">Pago</p>
+            <% if @bl_house_line.document_validated?(:pago_documento) %>
+              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-100">Validado</span>
+            <% end %>
             <p class="text-xs text-gray-500" title="<%= @bl_house_line.pago_documento.filename if @bl_house_line.pago_documento.attached? %>">
               <% if @bl_house_line.pago_documento.attached? %>
                 <%= truncate_filename(@bl_house_line.pago_documento.filename, max_length: 25) %>

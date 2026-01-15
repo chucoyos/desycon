@@ -15,6 +15,8 @@ class BlHouseLine < ApplicationRecord
   has_one_attached :encomienda_documento
   has_one_attached :pago_documento
 
+  DOCUMENT_FIELDS = %i[bl_endosado_documento liberacion_documento encomienda_documento pago_documento].freeze
+
   has_many :bl_house_line_services, dependent: :destroy
   accepts_nested_attributes_for :bl_house_line_services, allow_destroy: true, reject_if: :all_blank
 
@@ -56,6 +58,11 @@ class BlHouseLine < ApplicationRecord
   after_update :notify_customs_agent_revalidation, if: -> { saved_change_to_status? && revalidado? }
   def documentos_completos?
     bl_endosado_documento.attached? && liberacion_documento.attached? && encomienda_documento.attached?
+  end
+
+  def document_validated?(doc_sym)
+    flag_attribute = "#{doc_sym}_validated".to_sym
+    respond_to?(flag_attribute) && public_send(flag_attribute)
   end
 
   def notify_revalidation_request

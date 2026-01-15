@@ -58,11 +58,15 @@ export default class extends Controller {
   toggleInputs(container, disabled) {
     const inputs = container.querySelectorAll("input, select, textarea, button[type='submit']")
     inputs.forEach(input => {
-        if (disabled) {
-            input.setAttribute("disabled", "disabled")
-        } else {
-            input.removeAttribute("disabled")
-        }
+      // Keep hidden inputs and validation checkboxes enabled so their values are submitted
+      if (input.type === "hidden") return
+      if (input.name && input.name.endsWith("_validated]")) return
+
+      if (disabled) {
+        input.setAttribute("disabled", "disabled")
+      } else {
+        input.removeAttribute("disabled")
+      }
     })
   }
 }
