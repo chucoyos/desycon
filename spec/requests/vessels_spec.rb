@@ -2,9 +2,8 @@ require 'rails_helper'
 
 RSpec.describe "Vessels", type: :request do
   let(:admin) { create(:user, :admin) }
-  let(:shipping_line) { create(:shipping_line) }
-  let(:valid_attributes) { { name: "Test Vessel", shipping_line_id: shipping_line.id } }
-  let(:invalid_attributes) { { name: nil, shipping_line_id: nil } }
+  let(:valid_attributes) { { name: "Test Vessel" } }
+  let(:invalid_attributes) { { name: nil } }
 
   before do
     sign_in admin, scope: :user
@@ -12,7 +11,7 @@ RSpec.describe "Vessels", type: :request do
 
   describe "GET /index" do
     it "renders a successful response" do
-      create(:vessel, shipping_line: shipping_line)
+      create(:vessel)
       get vessels_url
       expect(response).to be_successful
     end
@@ -20,7 +19,7 @@ RSpec.describe "Vessels", type: :request do
 
   describe "GET /show" do
     it "renders a successful response" do
-      vessel = create(:vessel, shipping_line: shipping_line)
+      vessel = create(:vessel)
       get vessel_url(vessel)
       expect(response).to be_successful
     end
@@ -35,7 +34,7 @@ RSpec.describe "Vessels", type: :request do
 
   describe "GET /edit" do
     it "renders a successful response" do
-      vessel = create(:vessel, shipping_line: shipping_line)
+      vessel = create(:vessel)
       get edit_vessel_url(vessel)
       expect(response).to be_successful
     end
@@ -74,14 +73,14 @@ RSpec.describe "Vessels", type: :request do
       let(:new_attributes) { { name: "Updated Vessel" } }
 
       it "updates the requested vessel" do
-        vessel = create(:vessel, shipping_line: shipping_line)
+        vessel = create(:vessel)
         patch vessel_url(vessel), params: { vessel: new_attributes }
         vessel.reload
         expect(vessel.name).to eq("Updated Vessel")
       end
 
       it "redirects to the vessel" do
-        vessel = create(:vessel, shipping_line: shipping_line)
+        vessel = create(:vessel)
         patch vessel_url(vessel), params: { vessel: new_attributes }
         vessel.reload
         expect(response).to redirect_to(vessel_url(vessel))
@@ -90,7 +89,7 @@ RSpec.describe "Vessels", type: :request do
 
     context "with invalid parameters" do
       it "renders a response with 422 status" do
-        vessel = create(:vessel, shipping_line: shipping_line)
+        vessel = create(:vessel)
         patch vessel_url(vessel), params: { vessel: invalid_attributes }
         expect(response).to have_http_status(:unprocessable_content)
       end
@@ -99,14 +98,14 @@ RSpec.describe "Vessels", type: :request do
 
   describe "DELETE /destroy" do
     it "destroys the requested vessel" do
-      vessel = create(:vessel, shipping_line: shipping_line)
+      vessel = create(:vessel)
       expect {
         delete vessel_url(vessel)
       }.to change(Vessel, :count).by(-1)
     end
 
     it "redirects to the vessels list" do
-      vessel = create(:vessel, shipping_line: shipping_line)
+      vessel = create(:vessel)
       delete vessel_url(vessel)
       expect(response).to redirect_to(vessels_url)
     end

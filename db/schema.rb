@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_14_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_15_123000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -341,11 +341,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_14_000000) do
   create_table "vessels", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
-    t.bigint "shipping_line_id", null: false
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_vessels_on_name", unique: true
-    t.index ["shipping_line_id", "name"], name: "index_vessels_on_shipping_line_and_name"
-    t.index ["shipping_line_id"], name: "index_vessels_on_shipping_line_id"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
@@ -379,5 +376,4 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_14_000000) do
   add_foreign_key "role_permissions", "roles"
   add_foreign_key "users", "entities"
   add_foreign_key "users", "roles"
-  add_foreign_key "vessels", "shipping_lines"
 end

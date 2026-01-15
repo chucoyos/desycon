@@ -10,11 +10,9 @@ class VesselsController < ApplicationController
     allowed = [ 10, 25, 50, 100 ]
     per = 10 unless allowed.include?(per)
     @per_page = per
-    vessels = policy_scope(Vessel).includes(:shipping_line)
+    vessels = policy_scope(Vessel)
     vessels = vessels.where("name ILIKE ?", "%#{params[:search]}%") if params[:search].present?
-    vessels = vessels.where(shipping_line_id: params[:shipping_line_id]) if params[:shipping_line_id].present?
     @vessels = vessels.alphabetical.page(params[:page]).per(per)
-    @shipping_lines = ShippingLine.alphabetical
   end
 
   # GET /vessels/1 or /vessels/1.json
@@ -87,6 +85,6 @@ class VesselsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def vessel_params
-      params.require(:vessel).permit(:name, :shipping_line_id)
+      params.require(:vessel).permit(:name)
     end
 end

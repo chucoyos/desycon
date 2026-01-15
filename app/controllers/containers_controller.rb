@@ -131,7 +131,7 @@ class ContainersController < ApplicationController
     @vessels = Vessel.alphabetical
     @ports = Port.alphabetical
     @service_catalogs = ServiceCatalog.for_containers
-    @vessels_json = Vessel.all.select(:id, :name, :shipping_line_id).map { |v| { id: v.id, name: v.name, shipping_line_id: v.shipping_line_id } }.to_json
+    @vessels_json = Vessel.all.select(:id, :name).map { |v| { id: v.id, name: v.name } }.to_json
   end
 
   def per

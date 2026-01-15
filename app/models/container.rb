@@ -3,7 +3,7 @@ class Container < ApplicationRecord
   belongs_to :consolidator, optional: true  # Mantener temporalmente para compatibilidad
   belongs_to :consolidator_entity, class_name: "Entity", optional: true
   belongs_to :shipping_line
-  belongs_to :vessel, optional: true
+  belongs_to :vessel
   belongs_to :port, optional: true
 
   has_many :container_status_histories, dependent: :destroy
@@ -82,7 +82,7 @@ class Container < ApplicationRecord
   end
 
   def nombre_linea_naviera
-    shipping_line.name
+    shipping_line&.name || "Sin asignar"
   end
 
   def nombre_consolidador
