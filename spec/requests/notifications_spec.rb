@@ -75,6 +75,6 @@ RSpec.describe "Notifications", type: :request do
     entity = Entity.find_or_create_by(name: "Test Entity") do |e|
       e.is_client = true
     end
-    BlHouseLine.create!(blhouse: "TEST#{rand(1000)}", partida: rand(100), cantidad: 1, contiene: "test", client: entity)
+    BlHouseLine.create!(blhouse: "TEST#{rand(1000)}", partida: rand(1..100), cantidad: 1, contiene: "test", client: entity)
   end
 end
