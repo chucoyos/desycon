@@ -25,6 +25,8 @@ es:
       update?: "No tienes permiso para actualizar esta línea naviera."
       edit?: "No tienes permiso para editar esta línea naviera."
       destroy?: "No tienes permiso para eliminar esta línea naviera."
+    entity_policy:
+      manage_patents?: "No tienes permiso para gestionar patentes aduanales."
   
   activerecord:
     errors:

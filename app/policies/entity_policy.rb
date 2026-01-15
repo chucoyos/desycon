@@ -32,8 +32,7 @@ class EntityPolicy < ApplicationPolicy
   end
 
   def manage_patents?
-    return true if user.admin?
-    user.present? && user.customs_broker? && user.entity == record
+    user.present? && user.admin_or_executive?
   end
 
   class Scope < Scope

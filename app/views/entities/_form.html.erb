@@ -187,7 +187,7 @@
     </div>
   </div>
 
-  <% unless entity.persisted? %>
+  <% if !entity.persisted? && policy(entity).manage_patents? %>
     <!-- Customs Agent Patents for New Entities (Always rendered but hidden by default) -->
     <div id="patents-section" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" style="display: none;">
       <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
