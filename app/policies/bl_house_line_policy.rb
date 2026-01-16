@@ -18,7 +18,13 @@ class BlHouseLinePolicy < ApplicationPolicy
   end
 
   def show?
-    user.present? && (!user.customs_broker? || owned_by_customs_agent? || record.customs_agent.nil?)
+    return false unless user.present?
+
+    return true unless user.customs_broker?
+
+    return false if record.hidden_from_customs_agent?
+
+    owned_by_customs_agent? || record.customs_agent.nil?
   end
 
   def documents?
@@ -34,7 +40,13 @@ class BlHouseLinePolicy < ApplicationPolicy
   end
 
   def update?
-    user.present? && (!user.customs_broker? || owned_by_customs_agent? || record.customs_agent.nil?)
+    return false unless user.present?
+
+    return true unless user.customs_broker?
+
+    return false if record.hidden_from_customs_agent?
+
+    owned_by_customs_agent? || record.customs_agent.nil?
   end
 
   def edit?
@@ -55,7 +67,7 @@ class BlHouseLinePolicy < ApplicationPolicy
         scope.none
       elsif user.customs_broker?
         # For customs brokers, return only BL House Lines assigned to their entity
-        scope.where(customs_agent: user.entity)
+        scope.where(customs_agent: user.entity, hidden_from_customs_agent: false)
       else
         scope.all
       end

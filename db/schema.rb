@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_15_123000) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_16_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -105,6 +105,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_15_123000) do
     t.bigint "customs_agent_id"
     t.bigint "customs_agent_patent_id"
     t.boolean "encomienda_documento_validated", default: false, null: false
+    t.boolean "hidden_from_customs_agent", default: false, null: false
     t.boolean "liberacion_documento_validated", default: false, null: false
     t.text "marcas"
     t.bigint "packaging_id"
@@ -118,6 +119,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_15_123000) do
     t.index ["container_id"], name: "index_bl_house_lines_on_container_id"
     t.index ["customs_agent_id"], name: "index_bl_house_lines_on_customs_agent_id"
     t.index ["customs_agent_patent_id"], name: "index_bl_house_lines_on_customs_agent_patent_id"
+    t.index ["hidden_from_customs_agent"], name: "index_bl_house_lines_on_hidden_from_customs_agent"
     t.index ["packaging_id"], name: "index_bl_house_lines_on_packaging_id"
   end
 

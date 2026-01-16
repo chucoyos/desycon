@@ -46,6 +46,8 @@ class BlHouseLine < ApplicationRecord
   validates :peso, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :volumen, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
+  scope :visible_to_customs_agent, -> { where(hidden_from_customs_agent: false) }
+
   attr_accessor :skip_revalidation_notification
 
   # Callbacks

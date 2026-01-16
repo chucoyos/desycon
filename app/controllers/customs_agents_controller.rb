@@ -20,6 +20,7 @@ class CustomsAgentsController < ApplicationController
 
     # Listing scope: only BL House Lines assigned to this agent
     base_scope = BlHouseLine.where(customs_agent: current_user.entity)
+                 .visible_to_customs_agent
                              .includes(
                                :container,
                                :client,
@@ -105,7 +106,7 @@ class CustomsAgentsController < ApplicationController
   private
 
   def revalidation_lookup_scope
-    BlHouseLine.where(customs_agent: [ current_user.entity, nil ])
+    BlHouseLine.visible_to_customs_agent.where(customs_agent: [ current_user.entity, nil ])
   end
 
   def revalidation_params(bl_house_line = nil)

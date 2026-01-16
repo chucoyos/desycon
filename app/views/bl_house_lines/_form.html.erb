@@ -81,6 +81,18 @@
           <p class="mt-1 text-sm text-red-600"><%= bl_house_line.errors[:status].first %></p>
         <% end %>
       </div>
+
+      <% unless is_customs_agent %>
+        <div class="flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+          <div class="pt-1">
+            <%= form.check_box :hidden_from_customs_agent, class: "h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500" %>
+          </div>
+          <div>
+            <%= form.label :hidden_from_customs_agent, "Ocultar al agente aduanal", class: "text-sm font-semibold text-amber-900" %>
+            <p class="text-xs text-amber-700">Si se marca, la partida no aparecerá en el dashboard ni en la búsqueda del agente aduanal.</p>
+          </div>
+        </div>
+      <% end %>
     </div>
   </div>
 

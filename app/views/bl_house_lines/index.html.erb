@@ -144,6 +144,21 @@
                           </svg>
                           Editar
                         <% end %>
+
+                        <%= button_to bl_house_line_path(bl_house_line, bl_house_line: { hidden_from_customs_agent: !bl_house_line.hidden_from_customs_agent }), method: :patch, class: "flex items-center gap-3 w-full px-4 py-2.5 text-sm #{bl_house_line.hidden_from_customs_agent? ? 'text-emerald-700 hover:bg-emerald-50' : 'text-amber-700 hover:bg-amber-50'} transition-colors", form: { data: { turbo_confirm: bl_house_line.hidden_from_customs_agent? ? nil : "Ocultar esta partida al agente aduanal?" } }, role: "menuitem" do %>
+                          <% if bl_house_line.hidden_from_customs_agent? %>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Mostrar al agente
+                          <% else %>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.973 9.973 0 013.478-5.568m3.065-1.72A9.956 9.956 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-1.249 2.592m-4.764-1.35a3 3 0 11-4.358-4.358" />
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" />
+                            </svg>
+                            Ocultar al agente
+                          <% end %>
+                        <% end %>
                       <% end %>
 
                       <% if policy(bl_house_line).approve_revalidation? %>
@@ -257,6 +272,20 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
               </svg>
+            <% end %>
+            <% unless current_user&.customs_broker? %>
+              <%= button_to bl_house_line_path(bl_house_line, bl_house_line: { hidden_from_customs_agent: !bl_house_line.hidden_from_customs_agent }), method: :patch, class: "p-2 #{bl_house_line.hidden_from_customs_agent? ? 'text-emerald-700 hover:bg-emerald-50' : 'text-amber-700 hover:bg-amber-50'} rounded-lg transition-colors", form: { data: { turbo_confirm: bl_house_line.hidden_from_customs_agent? ? nil : 'Ocultar esta partida al agente aduanal?' } }, title: (bl_house_line.hidden_from_customs_agent? ? "Mostrar al agente" : "Ocultar al agente") do %>
+                <% if bl_house_line.hidden_from_customs_agent? %>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                <% else %>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.973 9.973 0 013.478-5.568m3.065-1.72A9.956 9.956 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-1.249 2.592m-4.764-1.35a3 3 0 11-4.358-4.358" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" />
+                  </svg>
+                <% end %>
+              <% end %>
             <% end %>
             <% unless current_user&.customs_broker? %>
               <%= link_to edit_bl_house_line_path(bl_house_line), class: "p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors", title: "Editar" do %>
