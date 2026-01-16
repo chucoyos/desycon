@@ -38,6 +38,15 @@ class BlHouseLinesController < ApplicationController
       scope = scope.where(status: params[:status])
     end
 
+    if params[:hidden].present? && !customs_agent_user?
+      case params[:hidden]
+      when "hidden"
+        scope = scope.where(hidden_from_customs_agent: true)
+      when "visible"
+        scope = scope.where(hidden_from_customs_agent: false)
+      end
+    end
+
     @bl_house_lines = scope.page(params[:page]).per(params[:per] || 20)
 
     # Data for filters
