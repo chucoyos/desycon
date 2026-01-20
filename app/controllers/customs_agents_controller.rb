@@ -62,7 +62,7 @@ class CustomsAgentsController < ApplicationController
     search_blhouse = params[:revalidation_blhouse].to_s.strip.downcase.presence || params[:blhouse].to_s.strip.downcase.presence
 
     unless turbo_frame_request?
-      redirect_to customs_agents_dashboard_path(revalidation_blhouse: search_blhouse), alert: "Solicita la revalidación desde el dashboard." and return
+      redirect_to customs_agents_dashboard_path(revalidation_blhouse: search_blhouse) and return
     end
 
     if search_blhouse.blank?
