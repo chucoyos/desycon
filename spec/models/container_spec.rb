@@ -448,6 +448,30 @@ RSpec.describe Container, type: :model do
         expect(container).not_to be_valid
         expect(container.errors[:recinto]).to_not be_empty
       end
+
+      context 'when tipo_maniobra is importacion and destination port is mapped' do
+        let(:manzanillo) { create(:port, :manzanillo) }
+
+        it 'allows a recinto listed for the destination port' do
+          valid_container = build(:container, destination_port: manzanillo, recinto: 'CONTECON', tipo_maniobra: 'importacion')
+
+          expect(valid_container).to be_valid
+        end
+
+        it 'rejects a recinto not listed for the destination port' do
+          invalid_container = build(:container, destination_port: manzanillo, recinto: 'FRIMAN', tipo_maniobra: 'importacion')
+
+          expect(invalid_container).not_to be_valid
+          expect(invalid_container.errors[:recinto]).to include('no es válido para el puerto de destino seleccionado')
+        end
+      end
+
+      it 'allows recinto when destination port has no mapping' do
+        unmapped_port = create(:port, name: 'Puerto Nuevo', code: 'MXPNO')
+        valid_container = build(:container, destination_port: unmapped_port, recinto: 'FRIMAN', tipo_maniobra: 'importacion')
+
+        expect(valid_container).to be_valid
+      end
     end
 
     describe 'archivo_nr' do

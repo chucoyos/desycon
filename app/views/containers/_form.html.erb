@@ -154,7 +154,15 @@
 
       <div>
         <%= form.label :recinto, "Recinto *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.select :recinto, [['SSA', 'SSA'], ['FRIMAN', 'FRIMAN']], { prompt: "Seleccione un recinto" }, { class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" } %>
+        <%= form.select :recinto,
+              recinto_options_for_select(container),
+              { prompt: "Seleccione un recinto" },
+              class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200",
+              data: {
+                recinto_mapping: Container::RECINTO_OPTIONS_BY_DESTINATION.to_json,
+                destination_port_field: "container_destination_port_id",
+                tipo_maniobra_field: "container_tipo_maniobra"
+              } %>
       </div>
 
       <div>
@@ -260,6 +268,78 @@
     <%= form.submit(container.persisted? ? "Actualizar Contenedor" : "Crear Contenedor", class: "cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold shadow-md shadow-indigo-100/60 hover:from-blue-700 hover:to-blue-800 transition") %>
   </div>
 <% end %>
+
+<script>
+  const initRecintoOptions = () => {
+    const recintoSelect = document.getElementById('container_recinto');
+    const destinationSelect = document.getElementById('container_destination_port_id');
+    const tipoSelect = document.getElementById('container_tipo_maniobra');
+
+    if (!recintoSelect || recintoSelect.dataset.initialized === 'true') return;
+    recintoSelect.dataset.initialized = 'true';
+
+    const mapping = JSON.parse(recintoSelect.dataset.recintoMapping || '{}');
+    const union = Array.from(new Set(Object.values(mapping).flat()));
+
+    const normalize = (text) =>
+      (text || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+
+    const findKey = (name) => {
+      const normalized = normalize(name);
+      return Object.keys(mapping).find((key) => normalized.includes(key));
+    };
+
+    const buildOptions = (portName, tipo) => {
+      if (tipo !== 'importacion') return union;
+
+      const key = findKey(portName);
+      return key ? mapping[key] : union;
+    };
+
+    const renderOptions = () => {
+      const tipo = tipoSelect?.value || 'importacion';
+      const portText = destinationSelect?.selectedOptions?.[0]?.text || destinationSelect?.value || '';
+      const currentValue = recintoSelect.value;
+
+      const options = buildOptions(portText, tipo);
+
+      recintoSelect.innerHTML = '';
+
+      const prompt = document.createElement('option');
+      prompt.value = '';
+      prompt.textContent = 'Seleccione un recinto';
+      recintoSelect.appendChild(prompt);
+
+      options.forEach((recinto) => {
+        const opt = document.createElement('option');
+        opt.value = recinto;
+        opt.textContent = recinto;
+        recintoSelect.appendChild(opt);
+      });
+
+      if (currentValue && !options.includes(currentValue)) {
+        const currentOpt = document.createElement('option');
+        currentOpt.value = currentValue;
+        currentOpt.textContent = `${currentValue} (actual)`;
+        recintoSelect.appendChild(currentOpt);
+      }
+
+      recintoSelect.value = currentValue || '';
+    };
+
+    destinationSelect?.addEventListener('change', renderOptions);
+    tipoSelect?.addEventListener('change', renderOptions);
+
+    renderOptions();
+  };
+
+  document.addEventListener('turbo:load', initRecintoOptions);
+  document.addEventListener('DOMContentLoaded', initRecintoOptions);
+</script>
 
 <script>
   const initContainerServices = () => {

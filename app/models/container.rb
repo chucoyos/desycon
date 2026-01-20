@@ -43,6 +43,13 @@ class Container < ApplicationRecord
     ft40: "40"
   }, prefix: true
 
+  RECINTO_OPTIONS_BY_DESTINATION = {
+    "manzanillo" => [ "CONTECON", "SSA", "OCUPA", "TIMSA" ],
+    "veracruz" => [ "ICAVE", "CICE" ],
+    "altamira" => [ "ATP", "IPM" ],
+    "lazaro cardenas" => [ "LCTPC TERMINAL PORTUARIA DE CONTENEDORES (HPH)", "APM TERMINALS" ]
+  }.freeze
+
   # Validaciones
   validates :number,
             presence: true,
@@ -66,6 +73,8 @@ class Container < ApplicationRecord
   validates :cont_key, length: { maximum: 50 }, presence: true
   validates :vessel, presence: true
   validates :fecha_arribo, presence: true
+
+  validate :recinto_matches_destination_for_import, if: :tipo_maniobra_importacion?
 
   # Normalización
   before_validation :normalize_number
@@ -107,6 +116,25 @@ class Container < ApplicationRecord
     port&.display_name
   end
 
+  def self.recinto_options_for_port(port:, tipo_maniobra: "importacion")
+    return [] unless tipo_maniobra.to_s == "importacion"
+
+    key = recinto_destination_key(port)
+    key ? RECINTO_OPTIONS_BY_DESTINATION[key] : []
+  end
+
+  def self.recinto_destination_key(port)
+    return nil if port.nil?
+
+    raw_name = port.respond_to?(:name) ? port.name : port
+    normalized = ActiveSupport::Inflector.transliterate(raw_name.to_s).downcase
+    RECINTO_OPTIONS_BY_DESTINATION.keys.find { |key| normalized.include?(key) }
+  end
+
+  def self.recinto_union
+    RECINTO_OPTIONS_BY_DESTINATION.values.flatten.uniq
+  end
+
   # Obtener el último status history
   def last_status_change
     container_status_histories.order(fecha_actualizacion: :desc).first
@@ -145,6 +173,16 @@ class Container < ApplicationRecord
   end
 
   private
+
+  def recinto_matches_destination_for_import
+    key = Container.recinto_destination_key(destination_port)
+    return if key.nil?
+
+    allowed = Container.recinto_options_for_port(port: destination_port, tipo_maniobra: tipo_maniobra)
+    return if allowed.include?(recinto)
+
+    errors.add(:recinto, "no es válido para el puerto de destino seleccionado")
+  end
 
   def capture_current_user
     @current_user = defined?(Current) && Current.respond_to?(:user) ? Current.user : nil
