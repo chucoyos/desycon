@@ -3,6 +3,8 @@ FactoryBot.define do
     sequence(:number) { |n| "CONT#{n.to_s.rjust(7, '0')}" }
     status { 'activo' }
     tipo_maniobra { 'importacion' }
+    container_type { 'estandar' }
+    size_ft { 'ft40' }
     association :shipping_line
     association :port
     association :vessel

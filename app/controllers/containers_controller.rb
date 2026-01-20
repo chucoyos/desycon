@@ -95,6 +95,8 @@ class ContainersController < ApplicationController
       :number,
       :status,
       :tipo_maniobra,
+      :container_type,
+      :size_ft,
       :consolidator_entity_id,
       :shipping_line_id,
       :vessel_id,
