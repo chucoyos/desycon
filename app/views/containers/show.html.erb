@@ -102,6 +102,10 @@
             <dd class="text-base font-medium text-gray-900"><%= @container.port&.display_name || '-' %></dd>
           </div>
           <div class="bg-gray-50/50 rounded-lg p-4">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Puerto de Destino</dt>
+            <dd class="text-base font-medium text-gray-900"><%= @container.destination_port&.display_name || '-' %></dd>
+          </div>
+          <div class="bg-gray-50/50 rounded-lg p-4">
             <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Viaje</dt>
             <dd class="text-base font-medium text-gray-900 font-mono"><%= @container.viaje || '-' %></dd>
           </div>

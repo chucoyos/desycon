@@ -101,6 +101,7 @@ class ContainersController < ApplicationController
       :shipping_line_id,
       :vessel_id,
       :port_id,
+      :destination_port_id,
       :bl_master,
       :fecha_arribo,
       :viaje,

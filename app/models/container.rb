@@ -5,6 +5,7 @@ class Container < ApplicationRecord
   belongs_to :shipping_line
   belongs_to :vessel
   belongs_to :port, optional: true
+  belongs_to :destination_port, class_name: "Port", optional: true
 
   has_many :container_status_histories, dependent: :destroy
   has_many :container_services, dependent: :destroy
