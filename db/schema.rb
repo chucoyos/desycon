@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_20_130001) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_20_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -176,6 +176,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_20_130001) do
   end
 
   create_table "containers", force: :cascade do |t|
+    t.string "almacen"
     t.string "archivo_nr"
     t.string "bl_master"
     t.bigint "consolidator_entity_id"

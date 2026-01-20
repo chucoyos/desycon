@@ -50,6 +50,13 @@ class Container < ApplicationRecord
     "lazaro cardenas" => [ "LCTPC TERMINAL PORTUARIA DE CONTENEDORES (HPH)", "APM TERMINALS" ]
   }.freeze
 
+  ALMACEN_OPTIONS_BY_DESTINATION = {
+    "manzanillo" => [ "SSA", "OCUPA", "TIMSA", "FRIMAN", "HAZESA" ],
+    "veracruz" => [ "CICE", "CICE LA OPCION MAS COMPLETA ", "CIF", "GOLMEX" ],
+    "altamira" => [ "SERVICIOS CARRIER INTERPUERTOS" ],
+    "lazaro cardenas" => [ "UTTSA RECINTO 173", "LCTPC RECINTO 200" ]
+  }.freeze
+
   # Validaciones
   validates :number,
             presence: true,
@@ -68,6 +75,7 @@ class Container < ApplicationRecord
 
   validates :viaje, length: { maximum: 50 }, presence: true
   validates :recinto, length: { maximum: 100 }, presence: true
+  validates :almacen, length: { maximum: 100 }, presence: true
   validates :archivo_nr, length: { maximum: 100 }, presence: true
   validates :sello, length: { maximum: 50 }, presence: true
   validates :cont_key, length: { maximum: 50 }, presence: true
@@ -75,6 +83,7 @@ class Container < ApplicationRecord
   validates :fecha_arribo, presence: true
 
   validate :recinto_matches_destination_for_import, if: :tipo_maniobra_importacion?
+  validate :almacen_matches_destination_for_import, if: :tipo_maniobra_importacion?
 
   # Normalización
   before_validation :normalize_number
@@ -135,6 +144,17 @@ class Container < ApplicationRecord
     RECINTO_OPTIONS_BY_DESTINATION.values.flatten.uniq
   end
 
+  def self.almacen_options_for_port(port:, tipo_maniobra: "importacion")
+    return [] unless tipo_maniobra.to_s == "importacion"
+
+    key = recinto_destination_key(port)
+    key ? ALMACEN_OPTIONS_BY_DESTINATION[key] : []
+  end
+
+  def self.almacen_union
+    ALMACEN_OPTIONS_BY_DESTINATION.values.flatten.uniq
+  end
+
   # Obtener el último status history
   def last_status_change
     container_status_histories.order(fecha_actualizacion: :desc).first
@@ -182,6 +202,16 @@ class Container < ApplicationRecord
     return if allowed.include?(recinto)
 
     errors.add(:recinto, "no es válido para el puerto de destino seleccionado")
+  end
+
+  def almacen_matches_destination_for_import
+    key = Container.recinto_destination_key(destination_port)
+    return if key.nil?
+
+    allowed = Container.almacen_options_for_port(port: destination_port, tipo_maniobra: tipo_maniobra)
+    return if allowed.include?(almacen)
+
+    errors.add(:almacen, "no es válido para el puerto de destino seleccionado")
   end
 
   def capture_current_user

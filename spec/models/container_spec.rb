@@ -453,13 +453,13 @@ RSpec.describe Container, type: :model do
         let(:manzanillo) { create(:port, :manzanillo) }
 
         it 'allows a recinto listed for the destination port' do
-          valid_container = build(:container, destination_port: manzanillo, recinto: 'CONTECON', tipo_maniobra: 'importacion')
+          valid_container = build(:container, destination_port: manzanillo, recinto: 'CONTECON', almacen: 'SSA', tipo_maniobra: 'importacion')
 
           expect(valid_container).to be_valid
         end
 
         it 'rejects a recinto not listed for the destination port' do
-          invalid_container = build(:container, destination_port: manzanillo, recinto: 'FRIMAN', tipo_maniobra: 'importacion')
+          invalid_container = build(:container, destination_port: manzanillo, recinto: 'FRIMAN', almacen: 'SSA', tipo_maniobra: 'importacion')
 
           expect(invalid_container).not_to be_valid
           expect(invalid_container.errors[:recinto]).to include('no es válido para el puerto de destino seleccionado')
@@ -468,7 +468,45 @@ RSpec.describe Container, type: :model do
 
       it 'allows recinto when destination port has no mapping' do
         unmapped_port = create(:port, name: 'Puerto Nuevo', code: 'MXPNO')
-        valid_container = build(:container, destination_port: unmapped_port, recinto: 'FRIMAN', tipo_maniobra: 'importacion')
+        valid_container = build(:container, destination_port: unmapped_port, recinto: 'FRIMAN', almacen: 'GOLMEX', tipo_maniobra: 'importacion')
+
+        expect(valid_container).to be_valid
+      end
+    end
+
+    describe 'almacen' do
+      it 'requires almacen' do
+        container.almacen = nil
+        expect(container).not_to be_valid
+        expect(container.errors[:almacen]).to_not be_empty
+      end
+
+      it 'limits almacen length to 100 chars' do
+        container.almacen = 'A' * 101
+        expect(container).not_to be_valid
+        expect(container.errors[:almacen]).to_not be_empty
+      end
+
+      context 'when tipo_maniobra is importacion and destination port is mapped' do
+        let(:manzanillo) { create(:port, :manzanillo) }
+
+        it 'allows an almacen listed for the destination port' do
+          valid_container = build(:container, destination_port: manzanillo, almacen: 'SSA', recinto: 'CONTECON', tipo_maniobra: 'importacion')
+
+          expect(valid_container).to be_valid
+        end
+
+        it 'rejects an almacen not listed for the destination port' do
+          invalid_container = build(:container, destination_port: manzanillo, almacen: 'GOLMEX', recinto: 'CONTECON', tipo_maniobra: 'importacion')
+
+          expect(invalid_container).not_to be_valid
+          expect(invalid_container.errors[:almacen]).to include('no es válido para el puerto de destino seleccionado')
+        end
+      end
+
+      it 'allows almacen when destination port has no mapping' do
+        unmapped_port = create(:port, name: 'Puerto Nuevo', code: 'MXPNO')
+        valid_container = build(:container, destination_port: unmapped_port, almacen: 'GOLMEX', recinto: 'FRIMAN', tipo_maniobra: 'importacion')
 
         expect(valid_container).to be_valid
       end

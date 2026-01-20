@@ -25,6 +25,7 @@ FactoryBot.define do
     fecha_arribo { Date.today + rand(7..30).days }
     viaje { "V#{rand(100..999)}" }
     recinto { Container.recinto_union.sample }
+    almacen { Container.almacen_union.sample }
     archivo_nr { "NR-#{rand(1000..9999)}" }
     sello { "SEAL#{rand(10000..99999)}" }
     cont_key { "KEY#{rand(1000..9999)}" }

@@ -106,6 +106,7 @@ class ContainersController < ApplicationController
       :fecha_arribo,
       :viaje,
       :recinto,
+      :almacen,
       :archivo_nr,
       :sello,
       :cont_key,

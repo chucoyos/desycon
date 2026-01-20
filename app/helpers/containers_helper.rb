@@ -102,6 +102,20 @@ module ContainersHelper
     pairs
   end
 
+  def almacen_options_for_select(container)
+    tipo = container.tipo_maniobra.presence || "importacion"
+    options = Container.almacen_options_for_port(port: container.destination_port, tipo_maniobra: tipo)
+    options = Container.almacen_union if options.empty?
+
+    pairs = options.map { |almacen| [ almacen, almacen ] }
+
+    if container.almacen.present? && pairs.none? { |(_, value)| value == container.almacen }
+      pairs.unshift([ container.almacen, container.almacen ])
+    end
+
+    pairs
+  end
+
   def truncate_filename(filename, max_length: 30)
     return filename if filename.to_s.length <= max_length
 
