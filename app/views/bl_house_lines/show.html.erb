@@ -121,6 +121,11 @@
           <%= @bl_house_line.status.humanize %>
         </span>
       </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Fecha de Despacho</label>
+        <p class="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg"><%= @bl_house_line.fecha_despacho ? l(@bl_house_line.fecha_despacho, format: :long) : "No especificado" %></p>
+      </div>
     </div>
   </div>
 

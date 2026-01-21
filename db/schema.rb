@@ -105,6 +105,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_20_140000) do
     t.bigint "customs_agent_id"
     t.bigint "customs_agent_patent_id"
     t.boolean "encomienda_documento_validated", default: false, null: false
+    t.date "fecha_despacho"
     t.boolean "hidden_from_customs_agent", default: false, null: false
     t.boolean "liberacion_documento_validated", default: false, null: false
     t.text "marcas"
