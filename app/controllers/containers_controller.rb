@@ -104,6 +104,7 @@ class ContainersController < ApplicationController
       :destination_port_id,
       :bl_master,
       :fecha_arribo,
+      :fecha_descarga,
       :fecha_transferencia,
       :viaje,
       :recinto,

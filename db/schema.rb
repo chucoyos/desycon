@@ -187,6 +187,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_20_140000) do
     t.datetime "created_at", null: false
     t.bigint "destination_port_id"
     t.date "fecha_arribo"
+    t.date "fecha_descarga"
     t.datetime "fecha_transferencia"
     t.string "number", null: false
     t.bigint "port_id"
