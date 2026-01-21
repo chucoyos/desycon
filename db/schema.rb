@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_21_124000) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_21_133000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -183,10 +183,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_21_124000) do
     t.string "bl_master"
     t.bigint "consolidator_entity_id"
     t.bigint "consolidator_id"
-    t.string "cont_key"
     t.string "container_type"
     t.datetime "created_at", null: false
     t.bigint "destination_port_id"
+    t.string "ejecutivo"
     t.date "fecha_arribo"
     t.date "fecha_descarga"
     t.date "fecha_desconsolidacion"

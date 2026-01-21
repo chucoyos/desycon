@@ -113,7 +113,7 @@ class ContainersController < ApplicationController
       :almacen,
       :archivo_nr,
       :sello,
-      :cont_key,
+      :ejecutivo,
       :bl_master_documento,
       :tarja_documento,
       container_services_attributes: [

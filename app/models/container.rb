@@ -78,7 +78,7 @@ class Container < ApplicationRecord
   validates :almacen, length: { maximum: 100 }, presence: true
   validates :archivo_nr, length: { maximum: 100 }, presence: true
   validates :sello, length: { maximum: 50 }, presence: true
-  validates :cont_key, length: { maximum: 50 }, presence: true
+  validates :ejecutivo, length: { maximum: 50 }, presence: true
   validates :vessel, presence: true
   validates :fecha_arribo, presence: true
 

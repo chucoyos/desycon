@@ -540,17 +540,17 @@ RSpec.describe Container, type: :model do
       end
     end
 
-    describe 'cont_key' do
-      it 'requires cont_key' do
-        container.cont_key = nil
+    describe 'ejecutivo' do
+      it 'requires ejecutivo' do
+        container.ejecutivo = nil
         expect(container).not_to be_valid
-        expect(container.errors[:cont_key]).to_not be_empty
+        expect(container.errors[:ejecutivo]).to_not be_empty
       end
 
-      it 'limits cont_key length to 50 chars' do
-        container.cont_key = 'K' * 51
+      it 'limits ejecutivo length to 50 chars' do
+        container.ejecutivo = 'E' * 51
         expect(container).not_to be_valid
-        expect(container.errors[:cont_key]).to_not be_empty
+        expect(container.errors[:ejecutivo]).to_not be_empty
       end
     end
 

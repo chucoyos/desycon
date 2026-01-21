@@ -28,7 +28,7 @@ FactoryBot.define do
     almacen { Container.almacen_union.sample }
     archivo_nr { "NR-#{rand(1000..9999)}" }
     sello { "SEAL#{rand(10000..99999)}" }
-    cont_key { "KEY#{rand(1000..9999)}" }
+    ejecutivo { "Ejecutivo #{rand(1000..9999)}" }
 
     trait :with_vessel do
       association :vessel
