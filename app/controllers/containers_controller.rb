@@ -105,6 +105,8 @@ class ContainersController < ApplicationController
       :bl_master,
       :fecha_arribo,
       :fecha_descarga,
+      :fecha_desconsolidacion,
+      :fecha_revalidacion_bl_master,
       :fecha_transferencia,
       :viaje,
       :recinto,
