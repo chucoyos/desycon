@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_20_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_21_124000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -98,6 +98,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_20_140000) do
     t.boolean "bl_endosado_documento_validated", default: false, null: false
     t.string "blhouse"
     t.integer "cantidad"
+    t.string "clase_imo"
     t.bigint "client_id"
     t.bigint "container_id"
     t.text "contiene"

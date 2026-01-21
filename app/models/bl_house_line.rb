@@ -17,6 +17,19 @@ class BlHouseLine < ApplicationRecord
 
   DOCUMENT_FIELDS = %i[bl_endosado_documento liberacion_documento encomienda_documento pago_documento].freeze
 
+  CLASE_IMO_LABELS = {
+    clase_0: "Clase 0: No peligroso",
+    clase_1: "Clase 1: Explosivos",
+    clase_2: "Clase 2: Gases",
+    clase_3: "Clase 3: Líquidos inflamables",
+    clase_4: "Clase 4: Sólidos inflamables",
+    clase_5: "Clase 5: Oxidantes",
+    clase_6: "Clase 6: Tóxicos",
+    clase_7: "Clase 7: Radiactivos",
+    clase_8: "Clase 8: Corrosivos",
+    clase_9: "Clase 9: Misceláneos"
+  }.freeze
+
   has_many :bl_house_line_services, dependent: :destroy
   accepts_nested_attributes_for :bl_house_line_services, allow_destroy: true, reject_if: :all_blank
 
@@ -36,6 +49,8 @@ class BlHouseLine < ApplicationRecord
     revalidado: "revalidado",
     validar_documentos: "validar_documentos"
   }
+
+  enum :clase_imo, CLASE_IMO_LABELS.keys.index_with(&:to_s)
 
   # Validations
 
@@ -85,6 +100,12 @@ class BlHouseLine < ApplicationRecord
         notifiable: self
       )
     end
+  end
+
+  def clase_imo_label
+    return nil if clase_imo.blank?
+
+    CLASE_IMO_LABELS[clase_imo.to_sym]
   end
 
   private
