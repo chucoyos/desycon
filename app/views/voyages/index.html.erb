@@ -1,15 +1,23 @@
 <% content_for :title, "Viajes" %>
 
-<div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">Viajes</h1>
-      <p class="text-sm text-gray-600">Gestione los viajes disponibles para asociar contenedores.</p>
+<div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="flex items-start gap-3">
+      <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg text-white">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 20h18M3 14h18M5 9l7-5 7 5M5 9v5m14-5v5" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-blue-600">Operaciones</p>
+        <h1 class="text-3xl font-bold text-gray-900">Viajes</h1>
+        <p class="text-sm text-gray-600">Administre los viajes y su información clave para asociar contenedores.</p>
+      </div>
     </div>
     <% if policy(Voyage).create? %>
-      <%= link_to new_voyage_path, class: "inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 shadow-sm hover:shadow-md transition-all duration-200" do %>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+      <%= link_to new_voyage_path, class: "inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200" do %>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6" />
         </svg>
         Nuevo viaje
       <% end %>
@@ -20,10 +28,9 @@
     <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-visible">
       <div class="overflow-x-auto lg:overflow-visible">
         <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+          <thead class="bg-gray-50/80">
             <tr>
               <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Viaje</th>
-              <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo</th>
               <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Buque</th>
               <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Origen</th>
               <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Destino</th>
@@ -34,17 +41,73 @@
           </thead>
           <tbody class="bg-white divide-y divide-gray-100">
             <% @voyages.each do |voyage| %>
-              <tr class="hover:bg-gray-50">
-                <td class="px-4 py-3 text-sm font-medium text-gray-900 font-mono"><%= voyage.viaje %></td>
-                <td class="px-4 py-3 text-sm text-gray-700"><%= voyage.voyage_type&.titleize %></td>
-                <td class="px-4 py-3 text-sm text-gray-700"><%= voyage.vessel&.name || "-" %></td>
-                <td class="px-4 py-3 text-sm text-gray-700"><%= voyage.origin_port&.display_name || "-" %></td>
-                <td class="px-4 py-3 text-sm text-gray-700"><%= voyage.destination_port&.display_name || "-" %></td>
-                <td class="px-4 py-3 text-sm text-gray-700"><%= voyage.eta ? l(voyage.eta, format: :long) : "-" %></td>
-                <td class="px-4 py-3 text-sm text-gray-700"><%= voyage.ata ? l(voyage.ata, format: :long) : "-" %></td>
+              <tr class="hover:bg-indigo-50/40 transition-colors duration-150">
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shadow-inner">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6l7 4-7 4-7-4 7-4z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-gray-900 font-mono"><%= voyage.viaje %></span>
+                        <% if voyage.voyage_type.present? %>
+                          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <%= voyage.voyage_type.titleize %>
+                          </span>
+                        <% end %>
+                      </div>
+                      <p class="text-xs text-gray-500">ID interno para asociación</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-800">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M5 10l7-6 7 6" />
+                    </svg>
+                    <%= voyage.vessel&.name || "Sin buque" %>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-800">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                    </svg>
+                    <%= voyage.origin_port&.display_name || "Sin origen" %>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-800">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                    </svg>
+                    <%= voyage.destination_port&.display_name || "Sin destino" %>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-800">
+                  <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-blue-100 bg-blue-50 text-blue-700">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span><%= voyage.eta ? l(voyage.eta, format: :long) : "-" %></span>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-800">
+                  <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-slate-200 bg-slate-50 text-slate-700">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span><%= voyage.ata ? l(voyage.ata, format: :long) : "-" %></span>
+                  </div>
+                </td>
                 <td class="px-4 py-3 text-sm text-right text-gray-700 whitespace-nowrap">
                   <div class="relative inline-block text-left" data-controller="dropdown">
-                    <button type="button" class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none" data-action="click->dropdown#toggle" title="Opciones">
+                    <button type="button" class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors focus:outline-none" data-action="click->dropdown#toggle" title="Opciones">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
                       </svg>
@@ -84,12 +147,19 @@
       </div>
     </div>
   <% else %>
-    <div class="text-center bg-white border border-dashed border-gray-200 rounded-xl p-10">
-      <h3 class="text-base font-semibold text-gray-900 mb-1">No hay viajes registrados</h3>
-      <p class="text-sm text-gray-600 mb-4">Cree el primer viaje para poder asociarlo a contenedores.</p>
-      <% if policy(Voyage).create? %>
-        <%= link_to "Crear viaje", new_voyage_path, class: "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all duration-200" %>
-      <% end %>
+    <div class="text-center bg-white border border-dashed border-gray-200 rounded-xl p-10 shadow-sm">
+      <div class="flex flex-col items-center gap-2">
+        <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 class="text-base font-semibold text-gray-900">No hay viajes registrados</h3>
+        <p class="text-sm text-gray-600 mb-2">Cree el primer viaje para poder asociarlo a contenedores.</p>
+        <% if policy(Voyage).create? %>
+          <%= link_to "Crear viaje", new_voyage_path, class: "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all duration-200" %>
+        <% end %>
+      </div>
     </div>
   <% end %>
 </div>
