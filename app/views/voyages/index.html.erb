@@ -73,7 +73,12 @@
 
   <div class="flex items-center justify-between flex-wrap gap-4">
     <div class="text-sm text-gray-600">
-      <%= page_entries_info(@voyages, entry_name: "viaje") if @voyages.respond_to?(:current_page) %>
+      <% if @voyages.respond_to?(:current_page) && @voyages.total_count.present? %>
+        <% from = @voyages.offset_value + 1 %>
+        <% to = [@voyages.offset_value + @voyages.limit_value, @voyages.total_count].min %>
+        <% total = @voyages.total_count %>
+        Mostrando <span class="font-semibold text-gray-800"><%= from %></span> a <span class="font-semibold text-gray-800"><%= to %></span> de <span class="font-semibold text-gray-800"><%= total %></span> viajes
+      <% end %>
     </div>
     <%= render 'shared/tailwind_pagination', paginated: @voyages %>
   </div>
