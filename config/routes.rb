@@ -56,6 +56,7 @@ Rails.application.routes.draw do
 
   resources :shipping_lines
   resources :vessels
+  resources :voyages
   resources :consolidators
   resources :containers
   resources :bl_house_lines do

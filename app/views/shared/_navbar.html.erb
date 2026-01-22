@@ -44,6 +44,12 @@
                   </svg>
                   Buques
                 <% end %>
+                <%= link_to voyages_path, class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors", role: "menuitem" do %>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18m-2 4H5m12 4H7m-2 4h14"/>
+                  </svg>
+                  Viajes
+                <% end %>
                 <%= link_to ports_path, class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors", role: "menuitem" do %>
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
@@ -174,6 +180,12 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
               </svg>
               Buques
+            <% end %>
+            <%= link_to voyages_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18m-2 4H5m12 4H7m-2 4h14" />
+              </svg>
+              Viajes
             <% end %>
             <%= link_to ports_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

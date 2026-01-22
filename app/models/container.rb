@@ -4,8 +4,34 @@ class Container < ApplicationRecord
   belongs_to :consolidator_entity, class_name: "Entity", optional: true
   belongs_to :shipping_line
   belongs_to :vessel
-  belongs_to :port, optional: true
-  belongs_to :destination_port, class_name: "Port", optional: true
+  belongs_to :voyage
+
+  delegate :destination_port, :origin_port, to: :voyage, allow_nil: true
+
+  # Compatibility setters to allow assigning ports directly on container in legacy code/specs
+  def destination_port=(port)
+    self.voyage ||= Voyage.new(vessel: vessel)
+    voyage.destination_port = port
+  end
+
+  def origin_port=(port)
+    self.voyage ||= Voyage.new(vessel: vessel)
+    voyage.origin_port = port
+  end
+
+  def viaje=(code)
+    self.voyage ||= Voyage.new(vessel: vessel)
+    voyage.viaje = code
+  end
+
+  # Legacy accessors
+  def port
+    origin_port
+  end
+
+  def port=(port)
+    self.origin_port = port
+  end
 
   has_many :container_status_histories, dependent: :destroy
   has_many :container_services, dependent: :destroy
@@ -68,12 +94,13 @@ class Container < ApplicationRecord
   validates :bl_master, presence: true, length: { maximum: 100 }
   validates :status, presence: true, inclusion: { in: statuses.keys }
   validates :tipo_maniobra, presence: true, inclusion: { in: tipo_maniobras.keys }
+  validates :viaje, presence: true, length: { maximum: 50 }
   validates :container_type, presence: true, inclusion: { in: container_types.keys }
   validates :size_ft, presence: true, inclusion: { in: size_fts.keys }
   validates :consolidator_entity, presence: true
   validates :shipping_line, presence: true
 
-  validates :viaje, length: { maximum: 50 }, presence: true
+  validates :voyage, presence: true
   validates :recinto, length: { maximum: 100 }, presence: true
   validates :almacen, length: { maximum: 100 }, presence: true
   validates :archivo_nr, length: { maximum: 100 }, presence: true
@@ -121,8 +148,12 @@ class Container < ApplicationRecord
     consolidator_entity&.name || consolidator&.name || "Sin asignar"
   end
 
-  def nombre_puerto
-    port&.display_name
+  def nombre_puerto_origen
+    voyage&.origin_port&.display_name
+  end
+
+  def viaje
+    voyage&.viaje
   end
 
   def self.recinto_options_for_port(port:, tipo_maniobra: "importacion")
@@ -195,20 +226,22 @@ class Container < ApplicationRecord
   private
 
   def recinto_matches_destination_for_import
-    key = Container.recinto_destination_key(destination_port)
+    dest_port = voyage&.destination_port
+    key = Container.recinto_destination_key(dest_port)
     return if key.nil?
 
-    allowed = Container.recinto_options_for_port(port: destination_port, tipo_maniobra: tipo_maniobra)
+    allowed = Container.recinto_options_for_port(port: dest_port, tipo_maniobra: tipo_maniobra)
     return if allowed.include?(recinto)
 
     errors.add(:recinto, "no es válido para el puerto de destino seleccionado")
   end
 
   def almacen_matches_destination_for_import
-    key = Container.recinto_destination_key(destination_port)
+    dest_port = voyage&.destination_port
+    key = Container.recinto_destination_key(dest_port)
     return if key.nil?
 
-    allowed = Container.almacen_options_for_port(port: destination_port, tipo_maniobra: tipo_maniobra)
+    allowed = Container.almacen_options_for_port(port: dest_port, tipo_maniobra: tipo_maniobra)
     return if allowed.include?(almacen)
 
     errors.add(:almacen, "no es válido para el puerto de destino seleccionado")

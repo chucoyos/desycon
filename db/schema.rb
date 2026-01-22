@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_21_133000) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_21_143000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -185,7 +185,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_21_133000) do
     t.bigint "consolidator_id"
     t.string "container_type"
     t.datetime "created_at", null: false
-    t.bigint "destination_port_id"
     t.string "ejecutivo"
     t.date "fecha_arribo"
     t.date "fecha_descarga"
@@ -193,7 +192,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_21_133000) do
     t.date "fecha_revalidacion_bl_master"
     t.datetime "fecha_transferencia"
     t.string "number", null: false
-    t.bigint "port_id"
     t.string "recinto"
     t.string "sello"
     t.bigint "shipping_line_id", null: false
@@ -202,18 +200,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_21_133000) do
     t.string "tipo_maniobra", null: false
     t.datetime "updated_at", null: false
     t.bigint "vessel_id"
-    t.string "viaje"
+    t.bigint "voyage_id"
     t.index ["consolidator_id"], name: "index_containers_on_consolidator_id"
     t.index ["container_type"], name: "index_containers_on_container_type"
-    t.index ["destination_port_id"], name: "index_containers_on_destination_port_id"
     t.index ["fecha_arribo"], name: "index_containers_on_fecha_arribo"
     t.index ["number", "bl_master"], name: "index_containers_on_number_and_bl_master", unique: true
-    t.index ["port_id"], name: "index_containers_on_port_id"
     t.index ["shipping_line_id"], name: "index_containers_on_shipping_line_id"
     t.index ["size_ft"], name: "index_containers_on_size_ft"
     t.index ["status"], name: "index_containers_on_status"
     t.index ["tipo_maniobra"], name: "index_containers_on_tipo_maniobra"
     t.index ["vessel_id"], name: "index_containers_on_vessel_id"
+    t.index ["voyage_id"], name: "index_containers_on_voyage_id"
   end
 
   create_table "customs_agent_patents", force: :cascade do |t|
@@ -360,6 +357,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_21_133000) do
     t.index ["name"], name: "index_vessels_on_name", unique: true
   end
 
+  create_table "voyages", force: :cascade do |t|
+    t.date "ata"
+    t.datetime "created_at", null: false
+    t.bigint "destination_port_id"
+    t.date "eta"
+    t.date "fin_operacion"
+    t.date "inicio_operacion"
+    t.bigint "origin_port_id"
+    t.datetime "updated_at", null: false
+    t.bigint "vessel_id", null: false
+    t.string "viaje", null: false
+    t.string "voyage_type", null: false
+    t.index ["destination_port_id"], name: "index_voyages_on_destination_port_id"
+    t.index ["origin_port_id"], name: "index_voyages_on_origin_port_id"
+    t.index ["vessel_id", "viaje"], name: "index_voyages_on_vessel_id_and_viaje", unique: true
+    t.index ["vessel_id"], name: "index_voyages_on_vessel_id"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "bl_house_line_services", "bl_house_lines"
@@ -379,10 +394,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_21_133000) do
   add_foreign_key "container_status_histories", "containers"
   add_foreign_key "container_status_histories", "users"
   add_foreign_key "containers", "entities", column: "consolidator_entity_id", name: "containers_consolidator_entity_id_fkey"
-  add_foreign_key "containers", "ports"
-  add_foreign_key "containers", "ports", column: "destination_port_id"
   add_foreign_key "containers", "shipping_lines"
   add_foreign_key "containers", "vessels"
+  add_foreign_key "containers", "voyages"
   add_foreign_key "customs_agent_patents", "entities"
   add_foreign_key "entities", "entities", column: "customs_agent_id"
   add_foreign_key "forwarders", "entities"
@@ -392,4 +406,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_21_133000) do
   add_foreign_key "role_permissions", "roles"
   add_foreign_key "users", "entities"
   add_foreign_key "users", "roles"
+  add_foreign_key "voyages", "ports", column: "destination_port_id"
+  add_foreign_key "voyages", "ports", column: "origin_port_id"
+  add_foreign_key "voyages", "vessels"
 end

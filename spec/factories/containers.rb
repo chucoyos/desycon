@@ -6,8 +6,8 @@ FactoryBot.define do
     container_type { 'estandar' }
     size_ft { 'ft40' }
     association :shipping_line
-    association :port
     association :vessel
+    association :voyage
 
     # Use NEW consolidator_entity association (Entity with consolidator role)
     # The old consolidator association will be removed in future migrations
@@ -23,7 +23,8 @@ FactoryBot.define do
 
     bl_master { "BL-#{rand(1000..9999)}" }
     fecha_arribo { Date.today + rand(7..30).days }
-    viaje { "V#{rand(100..999)}" }
+    # viaje is delegated to voyage; keep helper for specs using method
+    viaje { voyage&.viaje || "V#{rand(100..999)}" }
     recinto { Container.recinto_union.sample }
     almacen { Container.almacen_union.sample }
     archivo_nr { "NR-#{rand(1000..9999)}" }

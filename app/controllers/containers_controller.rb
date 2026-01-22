@@ -84,7 +84,7 @@ class ContainersController < ApplicationController
       :consolidator_entity,
       :shipping_line,
       :vessel,
-      :port,
+      :voyage,
       container_services: [ :service_catalog, :billed_to_entity ],
       container_status_histories: :user
     ).find(params[:id])
@@ -100,15 +100,13 @@ class ContainersController < ApplicationController
       :consolidator_entity_id,
       :shipping_line_id,
       :vessel_id,
-      :port_id,
-      :destination_port_id,
+      :voyage_id,
       :bl_master,
       :fecha_arribo,
       :fecha_descarga,
       :fecha_desconsolidacion,
       :fecha_revalidacion_bl_master,
       :fecha_transferencia,
-      :viaje,
       :recinto,
       :almacen,
       :archivo_nr,
@@ -137,7 +135,11 @@ class ContainersController < ApplicationController
     end
     @shipping_lines = ShippingLine.alphabetical
     @vessels = Vessel.alphabetical
-    @ports = Port.alphabetical
+    @voyages = if @container&.vessel_id
+      Voyage.where(vessel_id: @container.vessel_id).order(:viaje)
+    else
+      Voyage.none
+    end
     @service_catalogs = ServiceCatalog.for_containers
     @vessels_json = Vessel.all.select(:id, :name).map { |v| { id: v.id, name: v.name } }.to_json
   end

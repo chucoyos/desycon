@@ -138,18 +138,23 @@
       </div>
 
       <div>
-        <%= form.label :port_id, "Puerto de Origen *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.collection_select :port_id, @ports, :id, :display_name, { prompt: "Seleccione un puerto" }, { class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" } %>
-      </div>
-
-      <div>
-        <%= form.label :destination_port_id, "Puerto de Destino *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.collection_select :destination_port_id, @ports, :id, :display_name, { prompt: "Seleccione un puerto" }, { class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" } %>
-      </div>
-
-      <div>
-        <%= form.label :viaje, "Viaje *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.text_field :viaje, placeholder: "V001", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
+        <%= form.label :voyage_id, "Viaje *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <% voyage_options = @voyages.map do |voyage|
+             [
+               "#{voyage.viaje} — #{voyage.origin_port&.display_name || 'Sin origen'} → #{voyage.destination_port&.display_name || 'Sin destino'}",
+               voyage.id,
+               { data: { origin_port: voyage.origin_port&.display_name, destination_port: voyage.destination_port&.display_name } }
+             ]
+           end %>
+        <%= form.select :voyage_id,
+              options_for_select(voyage_options, container.voyage_id),
+              { prompt: "Seleccione un viaje" },
+              class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200",
+              required: true,
+              data: {
+                voyages_url: voyages_path(format: :json),
+                vessel_field: "container_vessel_id"
+              } %>
       </div>
 
       <div>
@@ -160,7 +165,7 @@
               class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200",
               data: {
                 recinto_mapping: Container::RECINTO_OPTIONS_BY_DESTINATION.to_json,
-                destination_port_field: "container_destination_port_id",
+                voyage_field: "container_voyage_id",
                 tipo_maniobra_field: "container_tipo_maniobra"
               } %>
       </div>
@@ -178,7 +183,7 @@
               class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200",
               data: {
                 almacen_mapping: Container::ALMACEN_OPTIONS_BY_DESTINATION.to_json,
-                destination_port_field: "container_destination_port_id",
+                voyage_field: "container_voyage_id",
                 tipo_maniobra_field: "container_tipo_maniobra"
               } %>
       </div>
@@ -303,42 +308,39 @@
 <% end %>
 
 <script>
-  const initMappedSelect = (selectId, mappingDataAttr, promptText) => {
+  const normalize = (text) =>
+    (text || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+
+  const getDestinationPortName = (voyageSelect) => voyageSelect?.selectedOptions?.[0]?.dataset.destinationPort || '';
+
+  const buildMappedSelect = (selectId, mappingDataAttr, promptText) => {
     const select = document.getElementById(selectId);
-    const destinationSelect = document.getElementById('container_destination_port_id');
+    const voyageSelect = document.getElementById('container_voyage_id');
     const tipoSelect = document.getElementById('container_tipo_maniobra');
 
-    if (!select || select.dataset.initialized === 'true') return;
+    if (!select || select.dataset.initialized === 'true') return () => {};
     select.dataset.initialized = 'true';
 
     const mapping = JSON.parse(select.dataset[mappingDataAttr] || '{}');
     const union = Array.from(new Set(Object.values(mapping).flat()));
-
-    const normalize = (text) =>
-      (text || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim();
 
     const findKey = (name) => {
       const normalized = normalize(name);
       return Object.keys(mapping).find((key) => normalized.includes(key));
     };
 
-    const buildOptions = (portName, tipo) => {
-      if (tipo !== 'importacion') return union;
-
-      const key = findKey(portName);
-      return key ? mapping[key] : union;
-    };
-
     const renderOptions = () => {
       const tipo = tipoSelect?.value || 'importacion';
-      const portText = destinationSelect?.selectedOptions?.[0]?.text || destinationSelect?.value || '';
+      const destinationName = getDestinationPortName(voyageSelect);
       const currentValue = select.value;
 
-      const options = buildOptions(portText, tipo);
+      const options = tipo === 'importacion'
+        ? (findKey(destinationName) ? mapping[findKey(destinationName)] : union)
+        : union;
 
       select.innerHTML = '';
 
@@ -364,19 +366,87 @@
       select.value = currentValue || '';
     };
 
-    destinationSelect?.addEventListener('change', renderOptions);
+    voyageSelect?.addEventListener('change', renderOptions);
     tipoSelect?.addEventListener('change', renderOptions);
 
     renderOptions();
+
+    return renderOptions;
+  };
+
+  const initVoyageLoading = () => {
+    const voyageSelect = document.getElementById('container_voyage_id');
+    if (!voyageSelect || voyageSelect.dataset.initialized === 'true') return;
+
+    const vesselSelectId = voyageSelect.dataset.vesselField;
+    const vesselSelect = vesselSelectId ? document.getElementById(vesselSelectId) : null;
+    const voyagesUrl = voyageSelect.dataset.voyagesUrl;
+
+    voyageSelect.dataset.initialized = 'true';
+
+    const setVoyageOptions = (voyages) => {
+      const currentValue = voyageSelect.value;
+      voyageSelect.innerHTML = '';
+
+      const prompt = document.createElement('option');
+      prompt.value = '';
+      prompt.textContent = 'Seleccione un viaje';
+      voyageSelect.appendChild(prompt);
+
+      voyages.forEach((voyage) => {
+        const opt = document.createElement('option');
+        opt.value = voyage.id;
+        const originName = voyage.origin_port_display || voyage.origin_port_name || voyage.origin_port || 'Sin origen';
+        const destinationName = voyage.destination_port_display || voyage.destination_port_name || voyage.destination_port || 'Sin destino';
+        opt.textContent = `${voyage.viaje} — ${originName} → ${destinationName}`;
+        opt.dataset.originPort = originName;
+        opt.dataset.destinationPort = destinationName;
+        voyageSelect.appendChild(opt);
+      });
+
+      if (!voyages.some((voyage) => String(voyage.id) === currentValue)) {
+        voyageSelect.value = '';
+      } else {
+        voyageSelect.value = currentValue;
+      }
+
+      voyageSelect.dispatchEvent(new Event('change'));
+    };
+
+    const fetchVoyages = async (vesselId) => {
+      if (!voyagesUrl || !vesselId) {
+        setVoyageOptions([]);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${voyagesUrl}?vessel_id=${vesselId}`);
+        if (!response.ok) throw new Error('Error al cargar viajes');
+        const data = await response.json();
+        setVoyageOptions(data || []);
+      } catch (error) {
+        console.error(error);
+        setVoyageOptions([]);
+      }
+    };
+
+    vesselSelect?.addEventListener('change', (event) => {
+      fetchVoyages(event.target.value);
+    });
   };
 
   const initRecintoAndAlmacenOptions = () => {
-    initMappedSelect('container_recinto', 'recintoMapping', 'Seleccione un recinto');
-    initMappedSelect('container_almacen', 'almacenMapping', 'Seleccione un almacén');
+    const renderRecinto = buildMappedSelect('container_recinto', 'recintoMapping', 'Seleccione un recinto');
+    const renderAlmacen = buildMappedSelect('container_almacen', 'almacenMapping', 'Seleccione un almacén');
   };
 
-  document.addEventListener('turbo:load', initRecintoAndAlmacenOptions);
-  document.addEventListener('DOMContentLoaded', initRecintoAndAlmacenOptions);
+  const initContainerForm = () => {
+    initVoyageLoading();
+    initRecintoAndAlmacenOptions();
+  };
+
+  document.addEventListener('turbo:load', initContainerForm);
+  document.addEventListener('DOMContentLoaded', initContainerForm);
 </script>
 
 <script>

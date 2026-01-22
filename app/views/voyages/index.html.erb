@@ -1,0 +1,65 @@
+<% content_for :title, "Viajes" %>
+
+<div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Viajes</h1>
+      <p class="text-sm text-gray-600">Gestione los viajes disponibles para asociar contenedores.</p>
+    </div>
+    <% if policy(Voyage).create? %>
+      <%= link_to new_voyage_path, class: "inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 shadow-sm hover:shadow-md transition-all duration-200" do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+        </svg>
+        Nuevo viaje
+      <% end %>
+    <% end %>
+  </div>
+
+  <% if @voyages.any? %>
+    <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Viaje</th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo</th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Buque</th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Origen</th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Destino</th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ETA</th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ATA</th>
+              <th scope="col" class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-100">
+            <% @voyages.each do |voyage| %>
+              <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 text-sm font-medium text-gray-900 font-mono"><%= voyage.viaje %></td>
+                <td class="px-4 py-3 text-sm text-gray-700"><%= voyage.voyage_type&.titleize %></td>
+                <td class="px-4 py-3 text-sm text-gray-700"><%= voyage.vessel&.name || "-" %></td>
+                <td class="px-4 py-3 text-sm text-gray-700"><%= voyage.origin_port&.display_name || "-" %></td>
+                <td class="px-4 py-3 text-sm text-gray-700"><%= voyage.destination_port&.display_name || "-" %></td>
+                <td class="px-4 py-3 text-sm text-gray-700"><%= voyage.eta ? l(voyage.eta, format: :long) : "-" %></td>
+                <td class="px-4 py-3 text-sm text-gray-700"><%= voyage.ata ? l(voyage.ata, format: :long) : "-" %></td>
+                <td class="px-4 py-3 text-sm text-right text-gray-700 space-x-2 whitespace-nowrap">
+                  <%= link_to "Ver", voyage_path(voyage), class: "text-blue-600 hover:text-blue-800 font-semibold" %>
+                  <%= link_to "Editar", edit_voyage_path(voyage), class: "text-gray-700 hover:text-gray-900" %>
+                  <%= button_to "Eliminar", voyage_path(voyage), method: :delete, data: { confirm: "¿Eliminar este viaje? Se debe mover primero los contenedores asociados." }, class: "text-red-600 hover:text-red-800" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% else %>
+    <div class="text-center bg-white border border-dashed border-gray-200 rounded-xl p-10">
+      <h3 class="text-base font-semibold text-gray-900 mb-1">No hay viajes registrados</h3>
+      <p class="text-sm text-gray-600 mb-4">Cree el primer viaje para poder asociarlo a contenedores.</p>
+      <% if policy(Voyage).create? %>
+        <%= link_to "Crear viaje", new_voyage_path, class: "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all duration-200" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
