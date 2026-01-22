@@ -1,64 +1,150 @@
 <% content_for :title, "Viaje #{@voyage.viaje}" %>
 
-<div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-  <div class="mb-4 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <%= link_to voyages_path, class: "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-blue-700 hover:bg-blue-50 transition-all duration-200 group" do %>
-        <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+<div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex items-start gap-3">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-lg">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 20h18M3 14h18M5 9l7-5 7 5M5 9v5m14-5v5" />
         </svg>
-        <span>Volver a viajes</span>
-      <% end %>
-      <h1 class="text-2xl font-bold text-gray-900">Viaje <%= @voyage.viaje %></h1>
+      </div>
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-blue-600">Detalle de viaje</p>
+        <h1 class="text-3xl font-bold text-gray-900 leading-tight">Viaje <%= @voyage.viaje %></h1>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <% if @voyage.voyage_type.present? %>
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <%= @voyage.voyage_type.titleize %>
+            </span>
+          <% end %>
+          <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M5 10l7-6 7 6" />
+            </svg>
+            <%= @voyage.vessel&.name || "Sin buque" %>
+          </span>
+        </div>
+      </div>
     </div>
-    <div class="flex items-center gap-2">
-      <%= link_to edit_voyage_path(@voyage), class: "inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 shadow-sm hover:shadow-md transition-all duration-200" do %>
+    <div class="flex flex-wrap items-center gap-2">
+      <%= link_to voyages_path, class: "inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition" do %>
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Volver
+      <% end %>
+      <%= link_to edit_voyage_path(@voyage), class: "inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition" do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
         </svg>
         Editar
       <% end %>
-      <%= button_to "Eliminar", voyage_path(@voyage), method: :delete, data: { confirm: "¿Eliminar este viaje? Se debe mover primero los contenedores asociados." }, class: "inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 shadow-sm hover:shadow-md transition-all duration-200" %>
+      <%= button_to voyage_path(@voyage), method: :delete, data: { turbo_confirm: "¿Eliminar este viaje? Se debe mover primero los contenedores asociados." }, class: "inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold text-white bg-red-600 hover:bg-red-700 shadow-md hover:shadow-lg transition" do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+        Eliminar
+      <% end %>
     </div>
   </div>
 
-  <div class="bg-white shadow-sm rounded-xl p-5 sm:p-6 border border-gray-100">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-      <div class="bg-gray-50/50 rounded-lg p-4">
-        <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Código de viaje</dt>
-        <dd class="text-base font-medium text-gray-900 font-mono"><%= @voyage.viaje %></dd>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M5 10l7-6 7 6" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-widest text-blue-600">Información general</p>
+          <p class="text-sm text-gray-600">Datos clave del viaje y sus puertos.</p>
+        </div>
       </div>
-      <div class="bg-gray-50/50 rounded-lg p-4">
-        <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Tipo</dt>
-        <dd class="text-base font-medium text-gray-900"><%= @voyage.voyage_type&.titleize %></dd>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Código de viaje</p>
+          <p class="text-base font-semibold text-gray-900 font-mono"><%= @voyage.viaje %></p>
+        </div>
+        <div class="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Tipo</p>
+          <p class="text-base font-semibold text-gray-900"><%= @voyage.voyage_type&.titleize || "-" %></p>
+        </div>
+        <div class="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Buque</p>
+          <p class="text-base font-semibold text-gray-900"><%= @voyage.vessel&.name || "-" %></p>
+        </div>
+        <div class="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Puerto de origen</p>
+          <p class="text-base font-semibold text-gray-900"><%= @voyage.origin_port&.display_name || "-" %></p>
+        </div>
+        <div class="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Puerto de destino</p>
+          <p class="text-base font-semibold text-gray-900"><%= @voyage.destination_port&.display_name || "-" %></p>
+        </div>
       </div>
-      <div class="bg-gray-50/50 rounded-lg p-4">
-        <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Buque</dt>
-        <dd class="text-base font-medium text-gray-900"><%= @voyage.vessel&.name || "-" %></dd>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-widest text-amber-600">Fechas</p>
+          <p class="text-sm text-gray-600">Hitos del viaje y operación.</p>
+        </div>
       </div>
-      <div class="bg-gray-50/50 rounded-lg p-4">
-        <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Puerto de origen</dt>
-        <dd class="text-base font-medium text-gray-900"><%= @voyage.origin_port&.display_name || "-" %></dd>
-      </div>
-      <div class="bg-gray-50/50 rounded-lg p-4">
-        <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Puerto de destino</dt>
-        <dd class="text-base font-medium text-gray-900"><%= @voyage.destination_port&.display_name || "-" %></dd>
-      </div>
-      <div class="bg-gray-50/50 rounded-lg p-4">
-        <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">ETA</dt>
-        <dd class="text-base font-medium text-gray-900"><%= @voyage.eta ? l(@voyage.eta, format: :long) : "-" %></dd>
-      </div>
-      <div class="bg-gray-50/50 rounded-lg p-4">
-        <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">ATA</dt>
-        <dd class="text-base font-medium text-gray-900"><%= @voyage.ata ? l(@voyage.ata, format: :long) : "-" %></dd>
-      </div>
-      <div class="bg-gray-50/50 rounded-lg p-4">
-        <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Inicio de operación</dt>
-        <dd class="text-base font-medium text-gray-900"><%= @voyage.inicio_operacion ? l(@voyage.inicio_operacion, format: :long) : "-" %></dd>
-      </div>
-      <div class="bg-gray-50/50 rounded-lg p-4">
-        <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Fin de operación</dt>
-        <dd class="text-base font-medium text-gray-900"><%= @voyage.fin_operacion ? l(@voyage.fin_operacion, format: :long) : "-" %></dd>
+      <div class="space-y-3">
+        <div class="flex items-start gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/40">
+          <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">ETA</p>
+            <p class="text-base font-semibold text-gray-900"><%= @voyage.eta ? l(@voyage.eta, format: :long) : "-" %></p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/40">
+          <div class="w-9 h-9 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">ATA</p>
+            <p class="text-base font-semibold text-gray-900"><%= @voyage.ata ? l(@voyage.ata, format: :long) : "-" %></p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/40">
+          <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-8 4h10a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Inicio de operación</p>
+            <p class="text-base font-semibold text-gray-900"><%= @voyage.inicio_operacion ? l(@voyage.inicio_operacion, format: :long) : "-" %></p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/40">
+          <div class="w-9 h-9 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-8 4h10a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Fin de operación</p>
+            <p class="text-base font-semibold text-gray-900"><%= @voyage.fin_operacion ? l(@voyage.fin_operacion, format: :long) : "-" %></p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
