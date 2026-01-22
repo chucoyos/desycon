@@ -3,41 +3,72 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["source", "target"]
   static values = {
-    param: String
+    param: String,
+    sourceSelector: String
   }
 
   connect() {
+    this.boundFilter = this.filter.bind(this)
+    this.attachExternalListener()
     this.filter()
   }
 
+  disconnect() {
+    this.detachExternalListener()
+  }
+
+  get sourceElement() {
+    if (this.hasSourceTarget) return this.sourceTarget
+    if (this.hasSourceSelectorValue) return document.querySelector(this.sourceSelectorValue)
+    return null
+  }
+
+  attachExternalListener() {
+    if (this.hasSourceTarget) return
+    if (!this.hasSourceSelectorValue) return
+
+    const el = this.sourceElement
+    if (!el) return
+
+    el.addEventListener("change", this.boundFilter)
+    this.externalSource = el
+  }
+
+  detachExternalListener() {
+    if (this.externalSource) {
+      this.externalSource.removeEventListener("change", this.boundFilter)
+      this.externalSource = null
+    }
+  }
+
   filter() {
-    const selectedValue = this.sourceTarget.value.toString()
-    
-    // Reset target select
-    this.targetTarget.value = ""
-    
-    // Show/hide options based on data-group matching selected value
+    const source = this.sourceElement
+    const selectedValue = source?.value?.toString() || ""
+    const currentValue = this.targetTarget.value
+    let hasVisibleSelection = false
+
     Array.from(this.targetTarget.options).forEach(option => {
       const group = option.dataset.group
-      
-      // Always show placeholder (empty value)
-      if (!option.value) {
-        option.hidden = false
-        return
-      }
-      
-      if (group === selectedValue) {
+      const isPlaceholder = !option.value
+      const matchesGroup = !!selectedValue && group === selectedValue
+
+      if (isPlaceholder) {
         option.hidden = false
         option.disabled = false
-      } else {
-        option.hidden = true
-        option.disabled = true
+        hasVisibleSelection ||= currentValue === ""
+        return
+      }
+
+      option.hidden = !matchesGroup
+      option.disabled = !matchesGroup
+
+      if (matchesGroup && option.value === currentValue) {
+        hasVisibleSelection = true
       }
     })
 
-    // If current value is now hidden, reset selection
-    if (this.targetTarget.selectedOptions[0].hidden) {
-        this.targetTarget.value = ""
+    if (!hasVisibleSelection) {
+      this.targetTarget.value = ""
     }
   }
 }
