@@ -83,7 +83,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
             </svg>
           </div>
-          <%= form.collection_select :origin_port_id, @ports, :id, :display_name, { prompt: "Seleccione puerto" }, class: "w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white" %>
+          <%= form.collection_select :origin_port_id, @ports, :id, :display_name, { prompt: "Seleccione origen" }, class: "w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white" %>
         </div>
       </div>
 
@@ -95,7 +95,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
             </svg>
           </div>
-          <%= form.collection_select :destination_port_id, @ports, :id, :display_name, { prompt: "Seleccione puerto" }, class: "w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white" %>
+          <%= form.collection_select :destination_port_id, @ports, :id, :display_name, { prompt: "Seleccione destino" }, class: "w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white" %>
         </div>
       </div>
 

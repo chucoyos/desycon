@@ -24,6 +24,60 @@
     <% end %>
   </div>
 
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+    <div class="flex items-center gap-2 mb-4">
+      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Filtros de búsqueda</h2>
+    </div>
+    <%= form_with url: voyages_path, method: :get, local: true, class: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4" do %>
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-2">Buscar viaje</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-3 flex items-center text-blue-500">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <%= text_field_tag :search, params[:search], placeholder: "Código de viaje...", class: "w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition" %>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-2">Buque</label>
+        <%= select_tag :vessel_id, options_from_collection_for_select(@vessels, :id, :name, params[:vessel_id]), include_blank: "Todos", class: "w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition bg-white" %>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-2">Tipo</label>
+        <%= select_tag :voyage_type, options_for_select([['Todos', '']] + Voyage.voyage_types.keys.map { |t| [t.titleize, t] }, params[:voyage_type]), class: "w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition bg-white" %>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-2">Origen</label>
+        <%= select_tag :origin_port_id, options_from_collection_for_select(@ports, :id, :display_name, params[:origin_port_id]), include_blank: "Todos", class: "w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition bg-white" %>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-2">Destino</label>
+        <%= select_tag :destination_port_id, options_from_collection_for_select(@ports, :id, :display_name, params[:destination_port_id]), include_blank: "Todos", class: "w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition bg-white" %>
+      </div>
+
+      <div class="md:col-span-2 lg:col-span-3 xl:col-span-5 flex flex-wrap items-center gap-2">
+        <%= submit_tag "Filtrar", class: "px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md cursor-pointer" %>
+        <%= link_to "Limpiar", voyages_path, class: "px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors" %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div class="text-sm text-gray-600">
+      <%= page_entries_info(@voyages, entry_name: "viaje") if @voyages.respond_to?(:current_page) %>
+    </div>
+    <%= render 'shared/tailwind_pagination', paginated: @voyages %>
+  </div>
+
   <% if @voyages.any? %>
     <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-visible">
       <div class="overflow-x-auto lg:overflow-visible">
@@ -162,4 +216,8 @@
       </div>
     </div>
   <% end %>
+
+  <div class="mt-6 flex justify-end">
+    <%= render 'shared/tailwind_pagination', paginated: @voyages %>
+  </div>
 </div>

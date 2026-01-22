@@ -7,17 +7,26 @@ class VoyagesController < ApplicationController
   def index
     voyages = policy_scope(Voyage)
 
-    if params[:vessel_id].present?
-      voyages = voyages.where(vessel_id: params[:vessel_id])
+    voyages = voyages.where(vessel_id: params[:vessel_id]) if params[:vessel_id].present?
+    voyages = voyages.where(voyage_type: params[:voyage_type]) if params[:voyage_type].present?
+    voyages = voyages.where(origin_port_id: params[:origin_port_id]) if params[:origin_port_id].present?
+    voyages = voyages.where(destination_port_id: params[:destination_port_id]) if params[:destination_port_id].present?
+    if params[:search].present?
+      voyages = voyages.where("voyages.viaje ILIKE ?", "%#{params[:search].strip}%")
     end
 
-    @voyages = voyages.includes(:vessel, :origin_port, :destination_port).order(:viaje)
+    per_page = params[:per].to_i.positive? ? params[:per].to_i : 10
+
+    voyages_with_associations = voyages.includes(:vessel, :origin_port, :destination_port).order(:viaje)
+    @voyages = voyages_with_associations.page(params[:page]).per(per_page)
+    @vessels = Vessel.alphabetical
+    @ports = Port.alphabetical
     authorize Voyage
 
     respond_to do |format|
       format.html
       format.json do
-        render json: @voyages.map { |voyage|
+        render json: voyages_with_associations.map { |voyage|
           {
             id: voyage.id,
             viaje: voyage.viaje,
