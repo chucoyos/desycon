@@ -75,7 +75,7 @@ end
 
 group :development, :test do
   # RSpec para el framework de pruebas
-  gem "rspec-rails", "~> 6.0"
+  gem "rspec-rails", "~> 8.0"
 
   # Factory Bot para generar datos de prueba
   gem "factory_bot_rails", "~> 6.4"
