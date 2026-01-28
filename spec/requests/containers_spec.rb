@@ -5,11 +5,6 @@ RSpec.describe "Containers", type: :request do
   let(:consolidator_entity) { create(:entity, :consolidator) }
   let(:shipping_line) { create(:shipping_line) }
 
-  before do
-    # Mock Pundit authorization
-    allow_any_instance_of(ContainerPolicy).to receive(:destroy?).and_return(true)
-  end
-
   let(:valid_attributes) {
     {
       number: "CONT001234",
@@ -91,8 +86,57 @@ RSpec.describe "Containers", type: :request do
 
         delete container_url(container)
         expect(response).to redirect_to(containers_url)
-        expect(flash[:alert]).to eq("No se puede eliminar el contenedor porque tiene registros asociados (líneas BL).")
+        expect(flash[:alert]).to eq("No se puede eliminar el contenedor porque tiene partidas asociadas.")
       end
+    end
+  end
+
+  describe "DELETE /containers/:id/destroy_all_bl_house_lines" do
+    before { sign_in user, scope: :user }
+
+    it "deletes all BL house lines when none have attachments" do
+      container = create(:container)
+      create_list(:bl_house_line, 3, container: container)
+
+      expect {
+        delete destroy_all_bl_house_lines_container_path(container)
+      }.to change { container.reload.bl_house_lines.count }.from(3).to(0)
+
+      expect(response).to redirect_to(container_path(container))
+      expect(flash[:notice]).to eq("Todas las partidas fueron eliminadas correctamente.")
+    end
+
+    it "does not delete any BL house line when at least one has attachments" do
+      container = create(:container)
+      lines = create_list(:bl_house_line, 2, container: container)
+
+      # Attach a document to one line
+      lines.first.bl_endosado_documento.attach(
+        io: StringIO.new("doc"),
+        filename: "bl.pdf",
+        content_type: "application/pdf"
+      )
+
+      expect {
+        delete destroy_all_bl_house_lines_container_path(container)
+      }.not_to change { container.reload.bl_house_lines.count }
+
+      expect(response).to redirect_to(container_path(container))
+      expect(flash[:alert]).to eq("No se pueden eliminar las partidas porque alguna tiene documentos adjuntos.")
+    end
+
+    it "requires authorization (admin/executive)" do
+      non_admin = create(:user, :customs_broker)
+      sign_in non_admin, scope: :user
+      container = create(:container)
+      create(:bl_house_line, container: container)
+
+      expect {
+        delete destroy_all_bl_house_lines_container_path(container)
+      }.not_to change { container.reload.bl_house_lines.count }
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:alert]).to be_present
     end
   end
 end

@@ -1,5 +1,5 @@
 FactoryBot.define do
   factory :packaging do
-    nombre { "MyString" }
+    sequence(:nombre) { |n| "Packaging #{n}" }
   end
 end
