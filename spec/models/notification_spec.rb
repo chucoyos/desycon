@@ -5,7 +5,19 @@ RSpec.describe Notification, type: :model do
   let(:user) { User.create!(email: "test_user@example.com", password: "password123", password_confirmation: "password123", role: role) }
   let(:actor) { User.create!(email: "test_actor@example.com", password: "password123", password_confirmation: "password123", role: role) }
   let(:entity) { Entity.create!(name: "Test Entity", is_client: true) }
-  let(:bl_house_line) { BlHouseLine.create!(blhouse: "TEST001", partida: 1, cantidad: 1, contiene: "test", client: entity) }
+  let(:bl_house_line) do
+    BlHouseLine.create!(
+      blhouse: "TEST001",
+      partida: 1,
+      cantidad: 1,
+      contiene: "test",
+      marcas: "test",
+      peso: 1.0,
+      volumen: 1.0,
+      packaging: create(:packaging),
+      client: entity
+    )
+  end
 
   describe "associations" do
     it "belongs to recipient" do

@@ -8,7 +8,17 @@ RSpec.describe NotificationsController, type: :controller do
     entity = Entity.find_or_create_by(name: "Test Entity") do |e|
       e.is_client = true
     end
-    BlHouseLine.create!(blhouse: "TEST#{rand(1000)}", partida: rand(100) + 1, cantidad: 1, contiene: "test", client: entity)
+    BlHouseLine.create!(
+      blhouse: "TEST#{rand(1000)}",
+      partida: rand(100) + 1,
+      cantidad: 1,
+      contiene: "test",
+      marcas: "test",
+      peso: 1.0,
+      volumen: 1.0,
+      packaging: create(:packaging),
+      client: entity
+    )
   end
 
   let(:notification) { Notification.create!(recipient: user, actor: user, notifiable: create_bl_house_line, action: "test") }

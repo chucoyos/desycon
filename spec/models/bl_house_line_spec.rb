@@ -70,6 +70,9 @@ RSpec.describe BlHouseLine, type: :model do
           cantidad: 10,
           contiene: "Test content",
           marcas: "Test marks",
+          peso: 1.0,
+          volumen: 1.0,
+          packaging: create(:packaging),
           container: container
         )
         expect(bl_house_line.partida).to eq(1)
@@ -82,6 +85,9 @@ RSpec.describe BlHouseLine, type: :model do
           cantidad: 10,
           contiene: "Test content",
           marcas: "Test marks",
+          peso: 1.0,
+          volumen: 1.0,
+          packaging: create(:packaging),
           container: container
         )
         BlHouseLine.create!(
@@ -89,16 +95,22 @@ RSpec.describe BlHouseLine, type: :model do
           partida: 3,
           cantidad: 10,
           contiene: "Test content",
-          marcas: "Test marks",
-          container: container
+            marcas: "Test marks",
+            peso: 1.0,
+            volumen: 1.0,
+            packaging: create(:packaging),
+            container: container
         )
 
         bl_house_line = BlHouseLine.create!(
           blhouse: "BLH003",
           cantidad: 10,
           contiene: "Test content",
-          marcas: "Test marks",
-          container: container
+            marcas: "Test marks",
+            peso: 1.0,
+            volumen: 1.0,
+            packaging: create(:packaging),
+            container: container
         )
         expect(bl_house_line.partida).to eq(4)
       end
@@ -110,6 +122,9 @@ RSpec.describe BlHouseLine, type: :model do
           cantidad: 10,
           contiene: "Test content",
           marcas: "Test marks",
+          peso: 1.0,
+          volumen: 1.0,
+          packaging: create(:packaging),
           container: container
         )
         expect(bl_house_line.partida).to eq(5)
@@ -122,6 +137,9 @@ RSpec.describe BlHouseLine, type: :model do
           cantidad: 10,
           contiene: "Test content",
           marcas: "Test marks",
+          peso: 1.0,
+          volumen: 1.0,
+          packaging: create(:packaging),
           container: container
         )
 
@@ -129,8 +147,11 @@ RSpec.describe BlHouseLine, type: :model do
           blhouse: "BLH002",
           cantidad: 10,
           contiene: "Test content",
-          marcas: "Test marks",
-          container: other_container
+            marcas: "Test marks",
+            peso: 1.0,
+            volumen: 1.0,
+            packaging: create(:packaging),
+            container: other_container
         )
         expect(bl_house_line.partida).to eq(1)
       end

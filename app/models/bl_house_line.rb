@@ -58,8 +58,11 @@ class BlHouseLine < ApplicationRecord
   validates :partida, presence: true, numericality: { only_integer: true, greater_than: 0 }, unless: -> { container_id.present? && partida.blank? }
   validates :partida, uniqueness: { scope: :container_id, message: "debe ser único dentro del contenedor" }, if: :container_id?
   validates :cantidad, presence: true, numericality: { only_integer: true, greater_than: 0 }
-  validates :peso, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
-  validates :volumen, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :packaging, presence: true
+  validates :contiene, presence: true
+  validates :marcas, presence: true
+  validates :peso, presence: true, numericality: { greater_than_or_equal_to: 0 }
+  validates :volumen, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
   scope :visible_to_customs_agent, -> { where(hidden_from_customs_agent: false) }
 
