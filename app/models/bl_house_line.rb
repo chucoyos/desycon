@@ -193,5 +193,4 @@ class BlHouseLine < ApplicationRecord
       user: @current_user
     )
   end
-
 end
