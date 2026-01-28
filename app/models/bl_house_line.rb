@@ -63,6 +63,7 @@ class BlHouseLine < ApplicationRecord
   validates :marcas, presence: true
   validates :peso, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :volumen, presence: true, numericality: { greater_than_or_equal_to: 0 }
+  validates :tipo_imo, length: { maximum: 4 }, allow_blank: true
 
   scope :visible_to_customs_agent, -> { where(hidden_from_customs_agent: false) }
 

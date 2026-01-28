@@ -226,6 +226,11 @@
         <p class="text-gray-900 font-semibold"><%= @bl_house_line.clase_imo_label || "No especificado" %></p>
       </div>
 
+      <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+        <label class="block text-sm font-medium text-gray-700 mb-2 uppercase tracking-wider">Tipo IMO</label>
+        <p class="text-gray-900 font-semibold"><%= @bl_house_line.tipo_imo.presence || "No especificado" %></p>
+      </div>
+
       <div class="md:col-span-3 bg-gray-50 rounded-xl p-4 border border-gray-200">
         <label class="block text-sm font-medium text-gray-700 mb-2 uppercase tracking-wider">Contiene</label>
         <p class="text-gray-900"><%= @bl_house_line.contiene.presence || "No especificado" %></p>
