@@ -58,7 +58,11 @@ Rails.application.routes.draw do
   resources :vessels
   resources :voyages
   resources :consolidators
-  resources :containers
+  resources :containers do
+    member do
+      delete :destroy_all_bl_house_lines
+    end
+  end
   resources :bl_house_lines do
     member do
       get :revalidation_approval

@@ -166,6 +166,16 @@
               </svg>
               <span class="hidden sm:inline">Nueva Partida</span>
             <% end %>
+            <% can_bulk_delete = @container.bl_house_lines.any? && !@bl_house_lines_docs_present %>
+            <%= button_to destroy_all_bl_house_lines_container_path(@container), method: :delete,
+                  form: { data: { turbo_confirm: "¿Eliminar todas las partidas? Solo es posible si ninguna tiene documentos adjuntos." } },
+                  class: "inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border #{can_bulk_delete ? 'border-red-200 text-red-700 bg-red-50 hover:bg-red-100 cursor-pointer' : 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'} transition-all duration-200",
+                  disabled: !can_bulk_delete do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/>
+              </svg>
+              <span class="hidden sm:inline">Eliminar todas</span>
+            <% end %>
             <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
               <%= @container.bl_house_lines.count %> <%= @container.bl_house_lines.count == 1 ? 'partida' : 'partidas' %>
             </span>

@@ -223,6 +223,14 @@ class Container < ApplicationRecord
     self.tarja_documento_attached_via_setter = true if attachable.present?
   end
 
+  def any_bl_house_line_with_attachments?
+    bl_house_lines.any?(&:documents_attached?)
+  end
+
+  def can_bulk_delete_bl_house_lines?
+    bl_house_lines.any? && !any_bl_house_line_with_attachments?
+  end
+
   private
 
   def recinto_matches_destination_for_import

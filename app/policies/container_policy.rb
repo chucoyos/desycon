@@ -27,6 +27,10 @@ class ContainerPolicy < ApplicationPolicy
     user.present? && user.admin_or_executive?
   end
 
+  def destroy_all_bl_house_lines?
+    destroy?
+  end
+
   class Scope < Scope
     def resolve
       if user.nil? || user.customs_broker?

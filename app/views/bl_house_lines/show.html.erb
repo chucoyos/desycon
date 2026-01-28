@@ -74,6 +74,16 @@
             </svg>
             <span class="hidden sm:inline">Editar</span>
           <% end %>
+          <% if current_user.admin_or_executive? %>
+            <%= button_to bl_house_line_path(@bl_house_line), method: :delete,
+                  form: { data: { turbo_confirm: "¿Eliminar esta partida? Esta acción no se puede deshacer." } },
+                  class: "inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border border-red-200 text-red-700 bg-red-50 hover:bg-red-100 shadow-sm transition-all duration-200 cursor-pointer" do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/>
+              </svg>
+              <span class="hidden sm:inline">Eliminar Partida</span>
+            <% end %>
+          <% end %>
         </div>
         <% end %>
       </div>

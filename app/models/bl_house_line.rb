@@ -108,6 +108,26 @@ class BlHouseLine < ApplicationRecord
     CLASE_IMO_LABELS[clase_imo.to_sym]
   end
 
+  def documents_attached?
+    DOCUMENT_FIELDS.any? { |field| public_send(field).attached? }
+  end
+
+  def notify_customs_agent_revalidation
+    return unless customs_agent_id.present?
+
+    recipients = User.where(entity_id: customs_agent_id)
+    actor = @current_user || (defined?(Current) && Current.respond_to?(:user) ? Current.user : nil)
+
+    recipients.each do |recipient|
+      Notification.create(
+        recipient: recipient,
+        actor: actor,
+        action: "revalidado",
+        notifiable: self
+      )
+    end
+  end
+
   private
 
   def assign_next_partida_number
@@ -174,21 +194,4 @@ class BlHouseLine < ApplicationRecord
     )
   end
 
-
-
-  def notify_customs_agent_revalidation
-    return unless customs_agent_id.present?
-
-    recipients = User.where(entity_id: customs_agent_id)
-    actor = @current_user || (defined?(Current) && Current.respond_to?(:user) ? Current.user : nil)
-
-    recipients.each do |recipient|
-      Notification.create(
-        recipient: recipient,
-        actor: actor,
-        action: "revalidado",
-        notifiable: self
-      )
-    end
-  end
 end

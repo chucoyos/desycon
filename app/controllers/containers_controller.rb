@@ -2,7 +2,7 @@ class ContainersController < ApplicationController
   before_action :authenticate_user!
   after_action :verify_authorized, except: :index
   before_action :set_container, only: %i[edit update destroy]
-  before_action :set_container_for_show, only: %i[show]
+  before_action :set_container_for_show, only: %i[show destroy_all_bl_house_lines]
 
   def index
     @containers = policy_scope(Container)
@@ -69,7 +69,18 @@ class ContainersController < ApplicationController
     if @container.destroy
       redirect_to containers_url, notice: "Contenedor eliminado exitosamente."
     else
-      redirect_to containers_url, alert: "No se puede eliminar el contenedor porque tiene registros asociados (líneas BL)."
+      redirect_to containers_url, alert: "No se puede eliminar el contenedor porque tiene partidas asociadas."
+    end
+  end
+
+  def destroy_all_bl_house_lines
+    authorize @container
+
+    if @container.any_bl_house_line_with_attachments?
+      redirect_to @container, alert: "No se pueden eliminar las partidas porque alguna tiene documentos adjuntos."
+    else
+      @container.bl_house_lines.destroy_all
+      redirect_to @container, notice: "Todas las partidas fueron eliminadas correctamente."
     end
   end
 
@@ -88,6 +99,9 @@ class ContainersController < ApplicationController
       container_services: [ :service_catalog, :billed_to_entity ],
       container_status_histories: :user
     ).find(params[:id])
+
+    bl_ids = @container.bl_house_lines.pluck(:id)
+    @bl_house_lines_docs_present = bl_ids.any? && ActiveStorage::Attachment.where(record_type: "BlHouseLine", record_id: bl_ids).exists?
   end
 
   def container_params
