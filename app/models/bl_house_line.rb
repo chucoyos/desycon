@@ -39,7 +39,7 @@ class BlHouseLine < ApplicationRecord
 
   # Validations
 
-  validates :blhouse, presence: true
+  validates :blhouse, presence: true, uniqueness: { case_sensitive: false, scope: :container_id, message: "ya existe" }
   validates :partida, presence: true, numericality: { only_integer: true, greater_than: 0 }, unless: -> { container_id.present? && partida.blank? }
   validates :partida, uniqueness: { scope: :container_id, message: "debe ser único dentro del contenedor" }, if: :container_id?
   validates :cantidad, presence: true, numericality: { only_integer: true, greater_than: 0 }
