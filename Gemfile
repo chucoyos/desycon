@@ -59,6 +59,10 @@ gem "countries", "~> 6.0"
 # Pagination library
 gem "kaminari", "~> 1.2"
 
+# Importación de archivos XLSX/CSV
+gem "roo", "~> 2.10"
+gem "csv"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

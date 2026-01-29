@@ -1,4 +1,7 @@
 class BlHouseLinesController < ApplicationController
+  IMPORT_ROW_LIMIT = 500
+  IMPORT_SIZE_LIMIT = 2.megabytes
+
   before_action :authenticate_user!
   before_action :set_bl_house_line, only: %i[show edit update destroy revalidation_approval approve_revalidation documents]
   after_action :verify_authorized, except: :index
@@ -108,6 +111,36 @@ class BlHouseLinesController < ApplicationController
       load_clients
       render :edit, status: :unprocessable_entity
     end
+  end
+
+  # POST /containers/:id/bl_house_lines/import
+  def import_from_container
+    @container = Container.find(params[:id])
+    authorize BlHouseLine
+
+    file = params[:file]
+    if file.blank?
+      return redirect_to container_path(@container), alert: "Selecciona un archivo XLSX o CSV."
+    end
+
+    set_current_user_for_import
+
+    result = BlHouseLines::ImportService.new(
+      container: @container,
+      file: file,
+      current_user: current_user,
+      row_limit: IMPORT_ROW_LIMIT,
+      size_limit: IMPORT_SIZE_LIMIT
+    ).call
+
+    notice = "Importación completada: #{result.created_count} partidas creadas."
+    alert = result.errors.any? ? "Errores: #{result.errors.join(' | ')}" : nil
+
+    redirect_to container_path(@container), notice: notice, alert: alert
+  rescue BlHouseLines::ImportService::ImportError => e
+    redirect_to container_path(@container), alert: e.message
+  ensure
+    clear_current_user_after_import
   end
 
   # DELETE /bl_house_lines/1
@@ -232,6 +265,18 @@ class BlHouseLinesController < ApplicationController
     else
       @clients = Entity.clients.order(:name)
     end
+  end
+
+  def set_current_user_for_import
+    return unless defined?(Current) && Current.respond_to?(:user=)
+
+    Current.user = current_user
+  end
+
+  def clear_current_user_after_import
+    return unless defined?(Current) && Current.respond_to?(:user=)
+
+    Current.user = nil
   end
 
   def available_customs_agents

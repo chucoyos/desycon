@@ -61,6 +61,7 @@ Rails.application.routes.draw do
   resources :containers do
     member do
       delete :destroy_all_bl_house_lines
+      post :import_bl_house_lines, to: "bl_house_lines#import_from_container"
     end
   end
   resources :bl_house_lines do

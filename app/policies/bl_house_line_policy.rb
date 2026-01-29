@@ -57,6 +57,10 @@ class BlHouseLinePolicy < ApplicationPolicy
     user.present? && !user.customs_broker?
   end
 
+  def import_from_container?
+    create?
+  end
+
   def approve_revalidation?
     user.present? && user.admin_or_executive?
   end
