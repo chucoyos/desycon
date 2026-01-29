@@ -205,7 +205,7 @@
               </div>
               <div class="flex flex-wrap items-center gap-2">
                 <%= form_with url: import_bl_house_lines_container_path(@container), method: :post, html: { multipart: true, class: "flex flex-wrap items-center gap-2" } do |f| %>
-                  <%= f.file_field :file, accept: ".xlsx,.csv", class: "block w-56 text-sm text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 shadow-inner file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500" %>
+                  <%= f.file_field :file, accept: ".xlsx,.csv", class: "cursor-pointer block w-56 text-sm text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 shadow-inner file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500" %>
                   <%= f.submit "Importar", class: "cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-700 hover:bg-green-800 shadow-sm transition-all duration-200" %>
                 <% end %>
               </div>

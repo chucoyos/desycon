@@ -38,7 +38,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
       <div>
         <%= form.label :number, "Número *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.text_field :number, autofocus: true, required: true, placeholder: "CONT001", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:number].any? ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}" %>
+        <%= form.text_field :number, autofocus: true, required: true, maxlength: 11, placeholder: "Ej: WHSU5349856", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:number].any? ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}" %>
         <% if container.errors[:number].any? %>
           <p class="mt-1 text-sm text-red-600"><%= container.errors[:number].first %></p>
         <% end %>
@@ -129,7 +129,7 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
       <div>
         <%= form.label :bl_master, "BL Master *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.text_field :bl_master, placeholder: "BL-0001", required: true, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
+        <%= form.text_field :bl_master, maxlength: 20, placeholder: "Ej: BL-0001", required: true, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
       </div>
 
       <div>
@@ -190,17 +190,17 @@
 
       <div>
         <%= form.label :archivo_nr, "Referencia *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.text_field :archivo_nr, placeholder: "NR-0001", required: true, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
+        <%= form.text_field :archivo_nr, placeholder: "Ej: NR-0001", required: true, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
       </div>
 
       <div>
         <%= form.label :sello, "Sello *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.text_field :sello, placeholder: "SEAL12345", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
+        <%= form.text_field :sello, placeholder: "Ej: SEAL12345", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
       </div>
 
       <div>
         <%= form.label :ejecutivo, "Ejecutivo *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <%= form.text_field :ejecutivo, placeholder: "Ejecutivo", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
+        <%= form.text_field :ejecutivo, placeholder: "Ej: Juan Pérez", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-mono" %>
       </div>
 
       <div>
