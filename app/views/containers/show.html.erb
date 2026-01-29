@@ -149,17 +149,22 @@
       </section>
 
       <!-- Partidas -->
+
       <section id="partidas" class="bg-white shadow-sm rounded-xl p-5 sm:p-6 border border-gray-100">
-        <div class="flex items-center justify-between mb-5">
-          <div class="flex items-center gap-3">
-            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-green-600 shadow-sm">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-              </svg>
+        <!-- Encabezado: icono, título, contador y botones en una sola fila -->
+        <div class="flex flex-col gap-2 mb-5">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-green-600 shadow-sm">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+              </div>
+              <h2 class="text-xl font-bold text-gray-900 whitespace-nowrap">Partidas</h2>
+              <span class="ml-2 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                <%= @container.bl_house_lines.count %> <%= @container.bl_house_lines.count == 1 ? 'partida' : 'partidas' %>
+              </span>
             </div>
-            <h2 class="text-xl font-bold text-gray-900">Partidas</h2>
-          </div>
-          <div class="flex flex-col gap-2 w-full">
             <div class="flex flex-wrap items-center gap-2">
               <%= link_to new_bl_house_line_path(container_id: @container.id), class: "inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 shadow-sm hover:shadow-md transition-all duration-200" do %>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -177,35 +182,32 @@
                 </svg>
                 <span class="hidden sm:inline">Eliminar todas</span>
               <% end %>
-              <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                <%= @container.bl_house_lines.count %> <%= @container.bl_house_lines.count == 1 ? 'partida' : 'partidas' %>
-              </span>
             </div>
+          </div>
 
-            <div class="mt-12 w-full">
-              <div class="w-full rounded-lg border border-gray-200 bg-white shadow-sm p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div class="flex items-center gap-2 text-sm text-gray-800">
-                  <div class="w-9 h-9 rounded-full bg-green-50 text-green-700 flex items-center justify-center shadow-inner">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 12a4 4 0 100-8 4 4 0 000 8zm0 0v4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p class="font-semibold text-gray-900">Importar partidas</p>
-                  </div>
-                  <button type="button" title="Formatos: XLSX/CSV. Límite: 2 MB y 500 filas. Columnas requeridas: blhouse, cantidad, embalaje, contiene, marcas, peso, volumen (clase_imo, tipo_imo opcionales)." class="p-2 rounded-full text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors" aria-label="Ayuda sobre importación">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M12 14a4 4 0 10-4-4" />
-                    </svg>
-                  </button>
+          <!-- Segunda fila: sección de importar partidas -->
+          <div class="w-full">
+            <div class="w-full rounded-lg border border-gray-200 bg-white shadow-sm p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-2">
+              <div class="flex items-center gap-2 text-sm text-gray-800">
+                <div class="w-9 h-9 rounded-full bg-green-50 text-green-700 flex items-center justify-center shadow-inner">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 12a4 4 0 100-8 4 4 0 000 8zm0 0v4" />
+                  </svg>
                 </div>
-
-                <div class="flex flex-wrap items-center gap-2">
-                  <%= form_with url: import_bl_house_lines_container_path(@container), method: :post, html: { multipart: true, class: "flex flex-wrap items-center gap-2" } do |f| %>
-                    <%= f.file_field :file, accept: ".xlsx,.csv", class: "block w-56 text-sm text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 shadow-inner file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500" %>
-                    <%= f.submit "Importar", class: "cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-700 hover:bg-green-800 shadow-sm transition-all duration-200" %>
-                  <% end %>
+                <div>
+                  <p class="font-semibold text-gray-900">Importar partidas</p>
                 </div>
+                <button type="button" title="Formatos: XLSX/CSV. Límite: 2 MB y 500 filas. Columnas requeridas: blhouse, cantidad, embalaje, contiene, marcas, peso, volumen (clase_imo, tipo_imo opcionales)." class="p-2 rounded-full text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors" aria-label="Ayuda sobre importación">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M12 14a4 4 0 10-4-4" />
+                  </svg>
+                </button>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <%= form_with url: import_bl_house_lines_container_path(@container), method: :post, html: { multipart: true, class: "flex flex-wrap items-center gap-2" } do |f| %>
+                  <%= f.file_field :file, accept: ".xlsx,.csv", class: "block w-56 text-sm text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-2 shadow-inner file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500" %>
+                  <%= f.submit "Importar", class: "cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-green-700 hover:bg-green-800 shadow-sm transition-all duration-200" %>
+                <% end %>
               </div>
             </div>
           </div>
