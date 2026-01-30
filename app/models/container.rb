@@ -111,6 +111,7 @@ class Container < ApplicationRecord
 
   validate :recinto_matches_destination_for_import, if: :tipo_maniobra_importacion?
   validate :almacen_matches_destination_for_import, if: -> { tipo_maniobra_importacion? && almacen.present? }
+  validate :require_documents_for_desconsolidado, if: :status_changing_to_desconsolidado?
 
   # Normalización
   before_validation :normalize_number
@@ -198,7 +199,7 @@ class Container < ApplicationRecord
 
   # Verificar si puede ser desconsolidado
   def puede_desconsolidar?
-    status_activo? && documentos_completos?
+    (status_activo? || status_validar_documentos?) && documentos_completos?
   end
 
   # Cambiar status con historial
@@ -307,6 +308,7 @@ class Container < ApplicationRecord
 
   def handle_tarja_uploaded
     return if status_desconsolidado?
+    return unless documentos_completos?
 
     current_actor = @current_user || (defined?(Current) && Current.respond_to?(:user) ? Current.user : nil)
 
@@ -318,5 +320,15 @@ class Container < ApplicationRecord
         next if line.revalidado?
         line.revalidado!
       end
+  end
+
+  def status_changing_to_desconsolidado?
+    status == "desconsolidado" && (new_record? || will_save_change_to_status?)
+  end
+
+  def require_documents_for_desconsolidado
+    return if documentos_completos?
+
+    errors.add(:base, "Debe adjuntar tanto el BL Master como la Tarja para cambiar el estatus a desconsolidado.")
   end
 end

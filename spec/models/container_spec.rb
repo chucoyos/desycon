@@ -334,7 +334,7 @@ RSpec.describe Container, type: :model do
 
     describe '#puede_desconsolidar?' do
       it 'returns false when status is not activo' do
-        container.update!(status: 'desconsolidado')
+        container.update!(status: 'validar_documentos')
         expect(container.puede_desconsolidar?).to be false
       end
 
@@ -577,7 +577,7 @@ RSpec.describe Container, type: :model do
       Current.user = previous_user
     end
 
-    it 'changes container status to desconsolidado when tarja attached' do
+    it 'does not change status to desconsolidado when only tarja is attached (BL master missing)' do
       expect {
         container.tarja_documento.attach(
           io: StringIO.new('Tarja content'),
@@ -585,21 +585,21 @@ RSpec.describe Container, type: :model do
           content_type: 'application/pdf'
         )
         container.reload
-      }.to change { container.reload.status }.from('validar_documentos').to('desconsolidado')
+      }.not_to change { container.reload.status }
     end
 
-    it 'marks document-ready BL lines as revalidado' do
+    it 'does not revalidate BL lines when BL master is missing' do
       container.tarja_documento.attach(
         io: StringIO.new('Tarja content'),
         filename: 'tarja.pdf',
         content_type: 'application/pdf'
       )
 
-      expect(line_ok.reload.status).to eq('revalidado')
+      expect(line_ok.reload.status).to eq('documentos_ok')
       expect(line_other.reload.status).to eq('activo')
     end
 
-    it 'notifies requesting customs agent users' do
+    it 'does not notify customs agent users when BL master is missing' do
       expect {
         container.tarja_documento.attach(
           io: StringIO.new('Tarja content'),
@@ -607,9 +607,9 @@ RSpec.describe Container, type: :model do
           content_type: 'application/pdf'
         )
         container.reload
-      }.to change {
+      }.not_to change {
         Notification.where(recipient: agent_user, notifiable: line_ok, action: 'revalidado').count
-      }.by(1)
+      }
     end
   end
 
