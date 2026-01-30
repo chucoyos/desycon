@@ -102,7 +102,7 @@ class Container < ApplicationRecord
 
   validates :voyage, presence: true
   validates :recinto, length: { maximum: 100 }, presence: true
-  validates :almacen, length: { maximum: 100 }, presence: true
+  validates :almacen, length: { maximum: 100 }, allow_blank: true
   validates :archivo_nr, length: { maximum: 100 }, presence: true
   validates :sello, length: { maximum: 50 }, presence: true
   validates :ejecutivo, length: { maximum: 50 }, presence: true
@@ -110,7 +110,7 @@ class Container < ApplicationRecord
   validates :fecha_arribo, presence: true
 
   validate :recinto_matches_destination_for_import, if: :tipo_maniobra_importacion?
-  validate :almacen_matches_destination_for_import, if: :tipo_maniobra_importacion?
+  validate :almacen_matches_destination_for_import, if: -> { tipo_maniobra_importacion? && almacen.present? }
 
   # Normalización
   before_validation :normalize_number

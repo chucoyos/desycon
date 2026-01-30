@@ -475,10 +475,9 @@ RSpec.describe Container, type: :model do
     end
 
     describe 'almacen' do
-      it 'requires almacen' do
+      it 'permite que almacen quede en blanco' do
         container.almacen = nil
-        expect(container).not_to be_valid
-        expect(container.errors[:almacen]).to_not be_empty
+        expect(container).to be_valid
       end
 
       it 'limits almacen length to 100 chars' do
