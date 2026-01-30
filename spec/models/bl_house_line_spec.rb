@@ -225,6 +225,37 @@ RSpec.describe BlHouseLine, type: :model do
     end
   end
 
+  describe 'asignación electrónica de carga service' do
+    let!(:catalog) { create(:service_catalog, name: "Asignación electrónica de carga", applies_to: "bl_house_line", amount: 950.0, currency: "MXN") }
+    let(:bl_house_line) { create(:bl_house_line, status: "documentos_ok") }
+
+    it 'creates the service when status changes to revalidado' do
+      expect {
+        bl_house_line.update!(status: "revalidado")
+      }.to change { bl_house_line.reload.bl_house_line_services.count }.by(1)
+
+      service = bl_house_line.bl_house_line_services.last
+      expect(service.service_catalog).to eq(catalog)
+      expect(service.billed_to_entity_id).to eq(bl_house_line.client_id)
+    end
+
+    it 'does not duplicate the service on subsequent saves' do
+      bl_house_line.update!(status: "revalidado")
+
+      expect {
+        bl_house_line.update!(status: "revalidado")
+      }.not_to change { bl_house_line.reload.bl_house_line_services.count }
+    end
+
+    it 'skips creation if the catalog entry is missing' do
+      catalog.destroy
+
+      expect {
+        bl_house_line.update!(status: "revalidado")
+      }.not_to change { bl_house_line.reload.bl_house_line_services.count }
+    end
+  end
+
   describe '#documentos_completos?' do
     let(:bl_house_line) { create(:bl_house_line) }
 

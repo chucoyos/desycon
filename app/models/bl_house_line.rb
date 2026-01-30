@@ -63,6 +63,7 @@ class BlHouseLine < ApplicationRecord
   after_update :create_status_history, if: :saved_change_to_status?
   after_update :notify_revalidation_request, if: -> { !skip_revalidation_notification && saved_change_to_status? && validar_documentos? }
   after_update :notify_customs_agent_revalidation, if: -> { saved_change_to_status? && revalidado? }
+  after_update :ensure_asignacion_electronica_service, if: -> { saved_change_to_status? && revalidado? }
   def documentos_completos?
     bl_endosado_documento.attached? && liberacion_documento.attached? && encomienda_documento.attached?
   end
@@ -110,6 +111,17 @@ class BlHouseLine < ApplicationRecord
         notifiable: self
       )
     end
+  end
+
+  def ensure_asignacion_electronica_service
+    catalog = ServiceCatalog.find_by(name: "Asignación electrónica de carga", applies_to: "bl_house_line")
+    return unless catalog
+
+    bl_house_line_services.find_or_create_by(service_catalog: catalog) do |service|
+      service.billed_to_entity_id ||= client_id
+    end
+  rescue StandardError => e
+    Rails.logger.error("Failed to create asignación electrónica de carga service for BL #{id}: #{e.message}")
   end
 
   private
