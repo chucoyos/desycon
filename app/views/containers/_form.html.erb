@@ -141,9 +141,9 @@
         <%= form.label :voyage_id, "Viaje *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <% voyage_options = @voyages.map do |voyage|
              [
-               "#{voyage.viaje} — #{voyage.origin_port&.display_name || 'Sin origen'} → #{voyage.destination_port&.display_name || 'Sin destino'}",
+               "#{voyage.viaje} — #{voyage.destination_port&.display_name || 'Sin destino'}",
                voyage.id,
-               { data: { origin_port: voyage.origin_port&.display_name, destination_port: voyage.destination_port&.display_name } }
+               { data: { destination_port: voyage.destination_port&.display_name } }
              ]
            end %>
         <%= form.select :voyage_id,
@@ -155,6 +155,11 @@
                 voyages_url: voyages_path(format: :json),
                 vessel_field: "container_vessel_id"
               } %>
+      </div>
+
+      <div>
+        <%= form.label :origin_port_id, "Puerto de origen *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <%= form.collection_select :origin_port_id, @ports, :id, :display_name, { prompt: "Seleccione origen" }, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200", required: true %>
       </div>
 
       <div>
@@ -397,10 +402,8 @@
       voyages.forEach((voyage) => {
         const opt = document.createElement('option');
         opt.value = voyage.id;
-        const originName = voyage.origin_port_display || voyage.origin_port_name || voyage.origin_port || 'Sin origen';
         const destinationName = voyage.destination_port_display || voyage.destination_port_name || voyage.destination_port || 'Sin destino';
-        opt.textContent = `${voyage.viaje} — ${originName} → ${destinationName}`;
-        opt.dataset.originPort = originName;
+        opt.textContent = `${voyage.viaje} —> ${destinationName}`;
         opt.dataset.destinationPort = destinationName;
         voyageSelect.appendChild(opt);
       });

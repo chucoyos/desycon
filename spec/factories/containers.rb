@@ -8,6 +8,7 @@ FactoryBot.define do
     association :shipping_line
     association :vessel
     association :voyage
+    association :origin_port, factory: :port
 
     # Use NEW consolidator_entity association (Entity with consolidator role)
     # The old consolidator association will be removed in future migrations

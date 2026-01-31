@@ -1,6 +1,5 @@
 class Voyage < ApplicationRecord
   belongs_to :vessel
-  belongs_to :origin_port, class_name: "Port", optional: true
   belongs_to :destination_port, class_name: "Port", optional: true
 
   has_many :containers, dependent: :restrict_with_error

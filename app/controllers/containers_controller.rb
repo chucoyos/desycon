@@ -115,6 +115,7 @@ class ContainersController < ApplicationController
       :shipping_line_id,
       :vessel_id,
       :voyage_id,
+      :origin_port_id,
       :bl_master,
       :fecha_arribo,
       :fecha_descarga,
@@ -154,6 +155,7 @@ class ContainersController < ApplicationController
     else
       Voyage.none
     end
+    @ports = Port.alphabetical
     @service_catalogs = ServiceCatalog.for_containers
     @vessels_json = Vessel.all.select(:id, :name).map { |v| { id: v.id, name: v.name } }.to_json
   end

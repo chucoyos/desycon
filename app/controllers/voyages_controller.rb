@@ -9,7 +9,6 @@ class VoyagesController < ApplicationController
 
     voyages = voyages.where(vessel_id: params[:vessel_id]) if params[:vessel_id].present?
     voyages = voyages.where(voyage_type: params[:voyage_type]) if params[:voyage_type].present?
-    voyages = voyages.where(origin_port_id: params[:origin_port_id]) if params[:origin_port_id].present?
     voyages = voyages.where(destination_port_id: params[:destination_port_id]) if params[:destination_port_id].present?
     if params[:search].present?
       voyages = voyages.where("voyages.viaje ILIKE ?", "%#{params[:search].strip}%")
@@ -17,7 +16,7 @@ class VoyagesController < ApplicationController
 
     per_page = params[:per].to_i.positive? ? params[:per].to_i : 10
 
-    voyages_with_associations = voyages.includes(:vessel, :origin_port, :destination_port).order(:viaje)
+    voyages_with_associations = voyages.includes(:vessel, :destination_port).order(:viaje)
     @voyages = voyages_with_associations.page(params[:page]).per(per_page)
     @vessels = Vessel.alphabetical
     @ports = Port.alphabetical
@@ -34,9 +33,6 @@ class VoyagesController < ApplicationController
             destination_port_id: voyage.destination_port_id,
             destination_port_name: voyage.destination_port&.name,
             destination_port_display: voyage.destination_port&.display_name,
-            origin_port_id: voyage.origin_port_id,
-            origin_port_name: voyage.origin_port&.name,
-            origin_port_display: voyage.origin_port&.display_name,
             ata: voyage.ata,
             eta: voyage.eta,
             inicio_operacion: voyage.inicio_operacion,
@@ -116,7 +112,6 @@ class VoyagesController < ApplicationController
       :eta,
       :inicio_operacion,
       :fin_operacion,
-      :origin_port_id,
       :destination_port_id,
       :vessel_id
     )

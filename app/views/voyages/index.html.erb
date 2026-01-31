@@ -55,11 +55,6 @@
       </div>
 
       <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-2">Origen</label>
-        <%= select_tag :origin_port_id, options_from_collection_for_select(@ports, :id, :display_name, params[:origin_port_id]), include_blank: "Todos", class: "w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition bg-white" %>
-      </div>
-
-      <div>
         <label class="block text-xs font-semibold text-gray-600 mb-2">Destino</label>
         <%= select_tag :destination_port_id, options_from_collection_for_select(@ports, :id, :display_name, params[:destination_port_id]), include_blank: "Todos", class: "w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition bg-white" %>
       </div>
@@ -91,7 +86,6 @@
             <tr>
               <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Viaje</th>
               <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Buque</th>
-              <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Origen</th>
               <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Destino</th>
               <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ETA</th>
               <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ATA</th>
@@ -130,14 +124,6 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M5 10l7-6 7 6" />
                     </svg>
                     <%= voyage.vessel&.name || "Sin buque" %>
-                  </div>
-                </td>
-                <td class="px-4 py-3 text-sm text-gray-800">
-                  <div class="flex items-center gap-2">
-                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-                    </svg>
-                    <%= voyage.origin_port&.display_name || "Sin origen" %>
                   </div>
                 </td>
                 <td class="px-4 py-3 text-sm text-gray-800">

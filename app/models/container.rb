@@ -5,18 +5,14 @@ class Container < ApplicationRecord
   belongs_to :shipping_line
   belongs_to :vessel
   belongs_to :voyage
+  belongs_to :origin_port, class_name: "Port", optional: false
 
-  delegate :destination_port, :origin_port, to: :voyage, allow_nil: true
+  delegate :destination_port, to: :voyage, allow_nil: true
 
   # Compatibility setters to allow assigning ports directly on container in legacy code/specs
   def destination_port=(port)
     self.voyage ||= Voyage.new(vessel: vessel)
     voyage.destination_port = port
-  end
-
-  def origin_port=(port)
-    self.voyage ||= Voyage.new(vessel: vessel)
-    voyage.origin_port = port
   end
 
   def viaje=(code)
@@ -25,14 +21,6 @@ class Container < ApplicationRecord
   end
 
   # Legacy accessors
-  def port
-    origin_port
-  end
-
-  def port=(port)
-    self.origin_port = port
-  end
-
   has_many :container_status_histories, dependent: :destroy
   has_many :container_services, dependent: :destroy
   has_many :bl_house_lines, dependent: :restrict_with_error
@@ -108,10 +96,12 @@ class Container < ApplicationRecord
   validates :ejecutivo, length: { maximum: 50 }, presence: true
   validates :vessel, presence: true
   validates :fecha_arribo, presence: true
+  validates :origin_port, presence: true
 
   validate :recinto_matches_destination_for_import, if: :tipo_maniobra_importacion?
   validate :almacen_matches_destination_for_import, if: -> { tipo_maniobra_importacion? && almacen.present? }
   validate :require_documents_for_desconsolidado, if: :status_changing_to_desconsolidado?
+  validate :destination_port_present
 
   # Normalización
   before_validation :normalize_number
@@ -150,7 +140,16 @@ class Container < ApplicationRecord
   end
 
   def nombre_puerto_origen
-    voyage&.origin_port&.display_name
+    origin_port&.display_name
+  end
+
+  # Legacy accessors used in views/tests
+  def port
+    origin_port
+  end
+
+  def port=(port)
+    self.origin_port = port
   end
 
   def viaje
@@ -258,6 +257,12 @@ class Container < ApplicationRecord
 
   def capture_current_user
     @current_user = defined?(Current) && Current.respond_to?(:user) ? Current.user : nil
+  end
+
+  def destination_port_present
+    return if voyage&.destination_port.present?
+
+    errors.add(:destination_port, "no puede estar en blanco")
   end
 
   def normalize_number

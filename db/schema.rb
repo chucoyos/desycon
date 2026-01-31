@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_27_093000) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_31_221000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -193,6 +193,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_27_093000) do
     t.date "fecha_revalidacion_bl_master"
     t.datetime "fecha_transferencia"
     t.string "number", null: false
+    t.bigint "origin_port_id"
     t.string "recinto"
     t.string "sello"
     t.bigint "shipping_line_id", null: false
@@ -206,6 +207,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_27_093000) do
     t.index ["container_type"], name: "index_containers_on_container_type"
     t.index ["fecha_arribo"], name: "index_containers_on_fecha_arribo"
     t.index ["number", "bl_master"], name: "index_containers_on_number_and_bl_master", unique: true
+    t.index ["origin_port_id"], name: "index_containers_on_origin_port_id"
     t.index ["shipping_line_id"], name: "index_containers_on_shipping_line_id"
     t.index ["size_ft"], name: "index_containers_on_size_ft"
     t.index ["status"], name: "index_containers_on_status"
@@ -365,13 +367,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_27_093000) do
     t.date "eta"
     t.date "fin_operacion"
     t.date "inicio_operacion"
-    t.bigint "origin_port_id"
     t.datetime "updated_at", null: false
     t.bigint "vessel_id", null: false
     t.string "viaje", null: false
     t.string "voyage_type", null: false
     t.index ["destination_port_id"], name: "index_voyages_on_destination_port_id"
-    t.index ["origin_port_id"], name: "index_voyages_on_origin_port_id"
     t.index ["vessel_id", "viaje"], name: "index_voyages_on_vessel_id_and_viaje", unique: true
     t.index ["vessel_id"], name: "index_voyages_on_vessel_id"
   end
@@ -395,6 +395,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_27_093000) do
   add_foreign_key "container_status_histories", "containers"
   add_foreign_key "container_status_histories", "users"
   add_foreign_key "containers", "entities", column: "consolidator_entity_id", name: "containers_consolidator_entity_id_fkey"
+  add_foreign_key "containers", "ports", column: "origin_port_id"
   add_foreign_key "containers", "shipping_lines"
   add_foreign_key "containers", "vessels"
   add_foreign_key "containers", "voyages"
@@ -408,6 +409,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_27_093000) do
   add_foreign_key "users", "entities"
   add_foreign_key "users", "roles"
   add_foreign_key "voyages", "ports", column: "destination_port_id"
-  add_foreign_key "voyages", "ports", column: "origin_port_id"
   add_foreign_key "voyages", "vessels"
 end
