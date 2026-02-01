@@ -54,7 +54,7 @@ gem "devise", "~> 4.9"
 gem "pundit", "~> 2.4"
 
 # Countries and geographical data
-gem "countries", "~> 6.0"
+gem "countries", "~> 8.1"
 
 # Pagination library
 gem "kaminari", "~> 1.2"
