@@ -58,4 +58,24 @@ RSpec.describe BlHouseLines::ImportService do
       expect(container.bl_house_lines.pluck(:blhouse)).to match_array(%w[BL1 BL2])
     end
   end
+
+  context "when imo fields are blank" do
+    let(:csv_content) do
+      <<~CSV
+        blhouse,cantidad,embalaje,contiene,marcas,peso,volumen,clase_imo,tipo_imo
+        BL1,1,Caja,Contenido,Marca,10,1.2,,
+      CSV
+    end
+
+    it "defaults clase_imo and tipo_imo to 0" do
+      service = described_class.new(container: container, file: uploaded_csv(csv_content), current_user: user)
+
+      result = service.call
+
+      expect(result.errors).to be_empty
+      line = container.bl_house_lines.first
+      expect(line.clase_imo).to eq("0")
+      expect(line.tipo_imo).to eq("0")
+    end
+  end
 end

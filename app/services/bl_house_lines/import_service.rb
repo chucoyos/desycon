@@ -148,8 +148,8 @@ module BlHouseLines
         marcas: attrs[:marcas],
         peso: safe_decimal(attrs[:peso]),
         volumen: safe_decimal(attrs[:volumen]),
-        clase_imo: attrs[:clase_imo],
-        tipo_imo: attrs[:tipo_imo],
+        clase_imo: default_imo_value(attrs[:clase_imo]),
+        tipo_imo: default_imo_value(attrs[:tipo_imo]),
         packaging: packaging,
         container: @container,
         status: "activo"
@@ -176,6 +176,10 @@ module BlHouseLines
 
     def file_extension
       File.extname(@file.original_filename.to_s).delete_prefix(".").downcase
+    end
+
+    def default_imo_value(value)
+      value.presence || "0"
     end
   end
 end
