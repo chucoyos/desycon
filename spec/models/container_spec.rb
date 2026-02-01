@@ -552,14 +552,6 @@ RSpec.describe Container, type: :model do
         expect(container.errors[:ejecutivo]).to_not be_empty
       end
     end
-
-    describe 'fecha_arribo' do
-      it 'requires fecha_arribo' do
-        container.fecha_arribo = nil
-        expect(container).not_to be_valid
-        expect(container.errors[:fecha_arribo]).to_not be_empty
-      end
-    end
   end
 
   describe 'tarja attachment processing' do

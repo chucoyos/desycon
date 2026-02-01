@@ -117,7 +117,6 @@ class ContainersController < ApplicationController
       :voyage_id,
       :origin_port_id,
       :bl_master,
-      :fecha_arribo,
       :fecha_descarga,
       :fecha_desconsolidacion,
       :fecha_revalidacion_bl_master,

@@ -23,7 +23,6 @@ FactoryBot.define do
     end
 
     bl_master { "BL-#{rand(1000..9999)}" }
-    fecha_arribo { Date.today + rand(7..30).days }
     # viaje is delegated to voyage; keep helper for specs using method
     viaje { voyage&.viaje || "V#{rand(100..999)}" }
     recinto { Container.recinto_union.sample }

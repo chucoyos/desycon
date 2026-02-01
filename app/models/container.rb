@@ -95,7 +95,6 @@ class Container < ApplicationRecord
   validates :sello, length: { maximum: 50 }, presence: true
   validates :ejecutivo, length: { maximum: 50 }, presence: true
   validates :vessel, presence: true
-  validates :fecha_arribo, presence: true
   validates :origin_port, presence: true
 
   validate :recinto_matches_destination_for_import, if: :tipo_maniobra_importacion?
@@ -112,7 +111,6 @@ class Container < ApplicationRecord
   scope :by_consolidator, ->(entity_id) { where(consolidator_entity_id: entity_id) }
   scope :by_shipping_line, ->(shipping_line_id) { where(shipping_line_id: shipping_line_id) }
   scope :recent, -> { order(created_at: :desc) }
-  scope :by_fecha_arribo, -> { order(fecha_arribo: :desc) }
   scope :with_associations, -> { includes(:consolidator_entity, :shipping_line) }
 
   # Callbacks para historial de status
