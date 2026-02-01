@@ -47,7 +47,7 @@ class RevalidationPdf
         [ "Linea:", shipping_line_name ],
         [ "Buque:", vessel_name ],
         [ "Viaje:", voyage ],
-        [ "Recinto:", terminal_name ]
+        [ "Recinto:", almacen_name.presence || terminal_name.presence || "N/A" ]
       ]
 
       pdf.table(data, width: pdf.bounds.width) do |table|
@@ -111,6 +111,10 @@ class RevalidationPdf
 
   def voyage
     @bl_house_line.container&.viaje || "N/A"
+  end
+
+  def almacen_name
+    @bl_house_line.container&.almacen || "N/A"
   end
 
   def terminal_name
