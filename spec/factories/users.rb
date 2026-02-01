@@ -5,6 +5,10 @@ FactoryBot.define do
     password_confirmation { "password123" }
     association :role
 
+    trait :disabled do
+      disabled { true }
+    end
+
     trait :admin do
       association :role, :admin
     end

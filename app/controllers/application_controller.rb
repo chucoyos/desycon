@@ -9,6 +9,7 @@ class ApplicationController < ActionController::Base
 
   # Set current user for Current attributes
   before_action :set_current_user
+  before_action :redirect_disabled_user
 
   # Redirect based on user role after sign in
   def after_sign_in_path_for(resource)
@@ -26,6 +27,19 @@ class ApplicationController < ActionController::Base
 
   def set_current_user
     Current.user = current_user
+  end
+
+  def redirect_disabled_user
+    return unless current_user
+    return if devise_controller?
+    return if controller_path == "blocked_users"
+    return if current_user.role&.admin?
+
+    if current_user.disabled?
+      flash[:alert] = "Tu cuenta está deshabilitada. Contacta al administrador para recuperar el acceso."
+      sign_out current_user
+      redirect_to blocked_users_path and return
+    end
   end
 
   def user_not_authorized(exception)

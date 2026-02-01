@@ -29,4 +29,18 @@ RSpec.describe User, type: :model do
       expect { user.destroy }.to change(User, :count).by(-1)
     end
   end
+
+  describe 'disabled flag' do
+    it 'defaults to enabled' do
+      user = create(:user)
+      expect(user.disabled).to be(false)
+    end
+
+    it 'prevents disabling admin users' do
+      user = build(:user, :admin, disabled: true)
+
+      expect(user).not_to be_valid
+      expect(user.errors[:disabled]).not_to be_empty
+    end
+  end
 end

@@ -1,0 +1,23 @@
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+  <div class="bg-white shadow-lg rounded-2xl max-w-xl w-full p-8 border border-gray-100">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-2xl font-semibold text-gray-900">Acceso deshabilitado</h1>
+        <p class="text-sm text-gray-600">Tu cuenta está deshabilitada. Contacta al administrador para restaurar el acceso.</p>
+      </div>
+    </div>
+
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 text-sm mb-6">
+      <p>Por seguridad, tu sesión ha sido cerrada. Cuando el administrador habilite tu cuenta, inicia sesión nuevamente.</p>
+    </div>
+
+    <div class="flex justify-end">
+      <%= link_to "Ir a inicio de sesión", root_path, class: "inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors" %>
+    </div>
+  </div>
+</div>

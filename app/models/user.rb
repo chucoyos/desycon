@@ -15,6 +15,10 @@ class User < ApplicationRecord
   has_many :sent_notifications, class_name: "Notification", foreign_key: :actor_id, dependent: :destroy
 
   validates :role, presence: true
+  validates :disabled, inclusion: { in: [ true, false ] }
+  validate :admin_cannot_be_disabled
+
+  before_validation :ensure_admin_stays_enabled
 
   # Override Devise password validation to allow blank when updating
   validates :password, presence: true, if: :password_required?
@@ -33,6 +37,17 @@ class User < ApplicationRecord
   end
 
   private
+
+  def admin_cannot_be_disabled
+    return unless role&.admin?
+    return unless disabled?
+
+    errors.add(:disabled, "no puede activarse para cuentas admin")
+  end
+
+  def ensure_admin_stays_enabled
+    self.disabled = false if role&.admin?
+  end
 
   # Only require password when creating a new user
   def password_required?
