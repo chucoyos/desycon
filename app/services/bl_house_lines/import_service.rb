@@ -38,22 +38,34 @@ module BlHouseLines
     def call
       validate_file!
 
-      result = Result.new(created_count: 0, errors: [])
+      lines_to_import = []
+      errors = []
 
       each_row_with_index do |row_attrs, index|
         break if index >= @row_limit
 
         line = build_line(row_attrs)
-        if line.save
-          result.created_count += 1
+
+        if line.valid?
+          lines_to_import << line
         else
-          result.errors << "Fila #{index + 2}: #{line.errors.full_messages.to_sentence}"
+          errors << "Fila #{index + 2}: #{line.errors.full_messages.to_sentence}"
         end
       rescue ImportError => e
-        result.errors << "Fila #{index + 2}: #{e.message}"
+        errors << "Fila #{index + 2}: #{e.message}"
       end
 
-      result
+      return Result.new(created_count: 0, errors: errors) if errors.any?
+
+      created_count = 0
+      BlHouseLine.transaction do
+        lines_to_import.each do |line|
+          line.save!
+          created_count += 1
+        end
+      end
+
+      Result.new(created_count: created_count, errors: [])
     end
 
     private
