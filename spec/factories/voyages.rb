@@ -4,7 +4,7 @@ FactoryBot.define do
     voyage_type { 'arribo' }
     association :vessel
     association :destination_port, factory: :port
-    eta { Date.today + 7.days }
-    ata { Date.today + 10.days }
+    eta { Time.current + 7.days }
+    ata { Time.current + 10.days }
   end
 end

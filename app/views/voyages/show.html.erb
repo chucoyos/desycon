@@ -105,7 +105,12 @@
           </div>
           <div>
             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">ETA</p>
-            <p class="text-base font-semibold text-gray-900"><%= @voyage.eta ? l(@voyage.eta, format: :long) : "-" %></p>
+            <% if @voyage.eta.present? %>
+              <p class="text-base font-semibold text-gray-900"><%= l(@voyage.eta, format: :long) %></p>
+              <p class="text-xs text-gray-500 mt-0.5">Hora local · <%= Time.zone.tzinfo.identifier %></p>
+            <% else %>
+              <p class="text-base font-semibold text-gray-900">-</p>
+            <% end %>
           </div>
         </div>
         <div class="flex items-start gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/40">
@@ -116,7 +121,12 @@
           </div>
           <div>
             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">ATA</p>
-            <p class="text-base font-semibold text-gray-900"><%= @voyage.ata ? l(@voyage.ata, format: :long) : "-" %></p>
+            <% if @voyage.ata.present? %>
+              <p class="text-base font-semibold text-gray-900"><%= l(@voyage.ata, format: :long) %></p>
+              <p class="text-xs text-gray-500 mt-0.5">Hora local · <%= Time.zone.tzinfo.identifier %></p>
+            <% else %>
+              <p class="text-base font-semibold text-gray-900">-</p>
+            <% end %>
           </div>
         </div>
         <div class="flex items-start gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/40">
@@ -127,7 +137,12 @@
           </div>
           <div>
             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Inicio de operación</p>
-            <p class="text-base font-semibold text-gray-900"><%= @voyage.inicio_operacion ? l(@voyage.inicio_operacion, format: :long) : "-" %></p>
+            <% if @voyage.inicio_operacion.present? %>
+              <p class="text-base font-semibold text-gray-900"><%= l(@voyage.inicio_operacion, format: :long) %></p>
+              <p class="text-xs text-gray-500 mt-0.5">Hora local · <%= Time.zone.tzinfo.identifier %></p>
+            <% else %>
+              <p class="text-base font-semibold text-gray-900">-</p>
+            <% end %>
           </div>
         </div>
         <div class="flex items-start gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/40">
@@ -138,7 +153,12 @@
           </div>
           <div>
             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Fin de operación</p>
-            <p class="text-base font-semibold text-gray-900"><%= @voyage.fin_operacion ? l(@voyage.fin_operacion, format: :long) : "-" %></p>
+            <% if @voyage.fin_operacion.present? %>
+              <p class="text-base font-semibold text-gray-900"><%= l(@voyage.fin_operacion, format: :long) %></p>
+              <p class="text-xs text-gray-500 mt-0.5">Hora local · <%= Time.zone.tzinfo.identifier %></p>
+            <% else %>
+              <p class="text-base font-semibold text-gray-900">-</p>
+            <% end %>
           </div>
         </div>
       </div>
