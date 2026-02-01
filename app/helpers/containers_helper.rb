@@ -58,36 +58,6 @@ module ContainersHelper
     }[tipo] || tipo.humanize
   end
 
-  def container_type_nombre(tipo)
-    {
-      "estandar" => "Estándar",
-      "high_cube" => "High Cube",
-      "otro" => "Otro"
-    }[tipo] || tipo.to_s.humanize
-  end
-
-  def container_type_badge_class(tipo)
-    case tipo
-    when "estandar"
-      "bg-sky-100 text-sky-800 border-sky-200"
-    when "high_cube"
-      "bg-indigo-100 text-indigo-800 border-indigo-200"
-    when "otro"
-      "bg-gray-100 text-gray-800 border-gray-200"
-    else
-      "bg-gray-100 text-gray-800 border-gray-200"
-    end
-  end
-
-  def size_ft_label(size_ft)
-    value = Container.size_fts[size_ft] || size_ft
-
-    {
-      "20" => "20 ft",
-      "40" => "40 ft"
-    }[value.to_s] || value.to_s
-  end
-
   def recinto_options_for_select(container)
     tipo = container.tipo_maniobra.presence || "importacion"
     options = Container.recinto_options_for_port(port: container.destination_port, tipo_maniobra: tipo)

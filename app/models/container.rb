@@ -46,17 +46,6 @@ class Container < ApplicationRecord
     exportacion: "exportacion"
   }, prefix: true
 
-  enum :container_type, {
-    estandar: "estandar",
-    high_cube: "high_cube",
-    otro: "otro"
-  }, prefix: true
-
-  enum :size_ft, {
-    ft20: "20",
-    ft40: "40"
-  }, prefix: true
-
   RECINTO_OPTIONS_BY_DESTINATION = {
     "manzanillo" => [ "CONTECON", "SSA", "OCUPA", "TIMSA" ],
     "veracruz" => [ "ICAVE", "CICE" ],
@@ -83,8 +72,7 @@ class Container < ApplicationRecord
   validates :status, presence: true, inclusion: { in: statuses.keys }
   validates :tipo_maniobra, presence: true, inclusion: { in: tipo_maniobras.keys }
   validates :viaje, presence: true, length: { maximum: 50 }
-  validates :container_type, presence: true, inclusion: { in: container_types.keys }
-  validates :size_ft, presence: true, inclusion: { in: size_fts.keys }
+  validates :type_size, presence: true, length: { maximum: 50 }
   validates :consolidator_entity, presence: true
   validates :shipping_line, presence: true
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_01_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_01_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -184,7 +184,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_01_100000) do
     t.string "bl_master"
     t.bigint "consolidator_entity_id"
     t.bigint "consolidator_id"
-    t.string "container_type"
     t.datetime "created_at", null: false
     t.string "ejecutivo"
     t.date "fecha_descarga"
@@ -196,20 +195,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_01_100000) do
     t.string "recinto"
     t.string "sello"
     t.bigint "shipping_line_id", null: false
-    t.string "size_ft"
     t.string "status", default: "activo", null: false
     t.string "tipo_maniobra", null: false
+    t.string "type_size"
     t.datetime "updated_at", null: false
     t.bigint "vessel_id"
     t.bigint "voyage_id"
     t.index ["consolidator_id"], name: "index_containers_on_consolidator_id"
-    t.index ["container_type"], name: "index_containers_on_container_type"
     t.index ["number", "bl_master"], name: "index_containers_on_number_and_bl_master", unique: true
     t.index ["origin_port_id"], name: "index_containers_on_origin_port_id"
     t.index ["shipping_line_id"], name: "index_containers_on_shipping_line_id"
-    t.index ["size_ft"], name: "index_containers_on_size_ft"
     t.index ["status"], name: "index_containers_on_status"
     t.index ["tipo_maniobra"], name: "index_containers_on_tipo_maniobra"
+    t.index ["type_size"], name: "index_containers_on_type_size"
     t.index ["vessel_id"], name: "index_containers_on_vessel_id"
     t.index ["voyage_id"], name: "index_containers_on_voyage_id"
   end
