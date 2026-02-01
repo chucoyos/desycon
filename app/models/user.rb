@@ -18,8 +18,6 @@ class User < ApplicationRecord
   validates :disabled, inclusion: { in: [ true, false ] }
   validate :admin_cannot_be_disabled
 
-  before_validation :ensure_admin_stays_enabled
-
   # Override Devise password validation to allow blank when updating
   validates :password, presence: true, if: :password_required?
   validates :password_confirmation, presence: true, if: :password_required?
@@ -43,10 +41,6 @@ class User < ApplicationRecord
     return unless disabled?
 
     errors.add(:disabled, "no puede activarse para cuentas admin")
-  end
-
-  def ensure_admin_stays_enabled
-    self.disabled = false if role&.admin?
   end
 
   # Only require password when creating a new user

@@ -1,6 +1,6 @@
 class CustomDeviseFailure < Devise::FailureApp
   def redirect_url
-    root_path
+    new_user_session_path
   end
 
   def respond

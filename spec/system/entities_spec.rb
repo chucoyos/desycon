@@ -7,11 +7,8 @@ RSpec.describe "Entities", type: :system do
   before do
     driven_by(:selenium_chrome_headless, screen_size: [ 1400, 1400 ])
 
-    # Sign in through the UI
-    visit new_user_session_path
-    fill_in "user_email", with: user.email
-    fill_in "user_password", with: "password123"
-    click_button "Log in"
+    # Sign in using Warden helpers to keep the session active across requests
+    login_as(user, scope: :user)
 
     visit entity_path(entity)
     entity.reload # Ensure associations are loaded
