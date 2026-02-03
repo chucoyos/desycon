@@ -6,6 +6,7 @@ module Admin
 
     def index
       @roles = Role.order(:name)
+      @entities = Entity.order(:name)
 
       @users = policy_scope(User).includes(:role, :entity)
 
@@ -15,6 +16,10 @@ module Admin
 
       if params[:role_id].present?
         @users = @users.where(role_id: params[:role_id])
+      end
+
+      if params[:entity_id].present?
+        @users = @users.where(entity_id: params[:entity_id])
       end
 
       case params[:disabled]
