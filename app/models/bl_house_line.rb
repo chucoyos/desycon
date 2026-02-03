@@ -1,4 +1,8 @@
 class BlHouseLine < ApplicationRecord
+  # Default values
+  attribute :clase_imo, :string, default: "0"
+  attribute :tipo_imo, :string, default: "0"
+
   # Relationships
   belongs_to :customs_agent, class_name: "Entity", optional: true
   belongs_to :customs_agent_patent, optional: true
