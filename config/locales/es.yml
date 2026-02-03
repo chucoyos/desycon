@@ -17,6 +17,14 @@ es:
   # Pundit authorization messages
   pundit:
     default: "No tienes permiso para realizar esta acción."
+    container_policy:
+      index?: "No tienes permiso para ver contenedores."
+      show?: "No tienes permiso para ver este contenedor."
+      create?: "No tienes permiso para crear contenedores."
+      new?: "No tienes permiso para crear contenedores."
+      update?: "No tienes permiso para actualizar este contenedor."
+      edit?: "No tienes permiso para editar este contenedor."
+      destroy?: "No tienes permiso para eliminar este contenedor."
     shipping_line_policy:
       index?: "No tienes permiso para ver las líneas navieras."
       show?: "No tienes permiso para ver esta línea naviera."
