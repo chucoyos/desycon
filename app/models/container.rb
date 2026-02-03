@@ -107,6 +107,7 @@ class Container < ApplicationRecord
   after_create :create_initial_status_history
   after_update :create_status_history, if: :saved_change_to_status?
   after_commit :handle_tarja_uploaded, if: :tarja_documento_recently_attached?
+  after_commit :ensure_coordination_service_on_desconsolidado, on: :update, if: :status_changed_to_desconsolidado?
 
   # Métodos de conveniencia
   def to_s
@@ -321,5 +322,18 @@ class Container < ApplicationRecord
     return if documentos_completos?
 
     errors.add(:base, "Debe adjuntar tanto el BL Master como la Tarja para cambiar el estatus a desconsolidado.")
+  end
+
+  def status_changed_to_desconsolidado?
+    saved_change_to_status? && status_desconsolidado?
+  end
+
+  def ensure_coordination_service_on_desconsolidado
+    service = ServiceCatalog.active.find_by(code: "CONT-COOR", applies_to: "container") ||
+              ServiceCatalog.active.find_by(name: "Coordinación de contenedor a almacén", applies_to: "container")
+    return unless service
+    return if container_services.exists?(service_catalog_id: service.id)
+
+    container_services.create!(service_catalog: service)
   end
 end
