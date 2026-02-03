@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_01_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_03_091500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -229,6 +229,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_01_120000) do
     t.boolean "is_customs_agent", default: false
     t.boolean "is_forwarder", default: false
     t.string "name", null: false
+    t.boolean "requires_bl_endosado_documento", default: true, null: false
+    t.boolean "requires_encomienda_documento", default: true, null: false
+    t.boolean "requires_liberacion_documento", default: true, null: false
+    t.boolean "requires_pago_documento", default: true, null: false
     t.datetime "updated_at", null: false
     t.index ["customs_agent_id"], name: "index_entities_on_customs_agent_id"
     t.index ["name"], name: "index_entities_on_name"

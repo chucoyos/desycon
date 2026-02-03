@@ -177,6 +177,10 @@ class EntitiesController < ApplicationController
   def entity_params
     permitted_attributes = [
       :name,
+      :requires_bl_endosado_documento,
+      :requires_liberacion_documento,
+      :requires_encomienda_documento,
+      :requires_pago_documento,
       fiscal_profile_attributes: [
         :id, :rfc, :razon_social, :regimen, :uso_cfdi, :forma_pago, :metodo_pago, :_destroy
       ],

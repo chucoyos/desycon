@@ -101,6 +101,19 @@ class BlHouseLine < ApplicationRecord
     DOCUMENT_FIELDS.any? { |field| public_send(field).attached? }
   end
 
+  def required_revalidation_documents
+    agent = customs_agent
+    return DOCUMENT_FIELDS unless agent
+
+    required = []
+    required << :bl_endosado_documento if agent.respond_to?(:requires_bl_endosado_documento?) ? agent.requires_bl_endosado_documento? : true
+    required << :liberacion_documento if agent.respond_to?(:requires_liberacion_documento?) ? agent.requires_liberacion_documento? : true
+    required << :encomienda_documento if agent.respond_to?(:requires_encomienda_documento?) ? agent.requires_encomienda_documento? : true
+    required << :pago_documento if agent.respond_to?(:requires_pago_documento?) ? agent.requires_pago_documento? : true
+
+    required.presence || DOCUMENT_FIELDS
+  end
+
   def notify_customs_agent_revalidation
     return unless customs_agent_id.present?
 

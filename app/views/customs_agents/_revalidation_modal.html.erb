@@ -108,111 +108,47 @@
             <button type="button" class="text-sm text-indigo-700 hover:text-indigo-900" data-action="click->revalidation-wizard#goToSummary">Volver al paso 1</button>
           </div>
 
+          <% document_labels = {
+               bl_endosado_documento: "BL endosado",
+               liberacion_documento: "Liberación",
+               encomienda_documento: "Encomienda",
+               pago_documento: "Pago"
+             } %>
+          <% required_docs = bl_house_line.required_revalidation_documents %>
+
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="p-4 rounded-2xl border border-sky-100 bg-sky-50/60 shadow-md shadow-sky-100 ring-1 ring-sky-100">
-              <%= form.label :bl_endosado_documento, "BL endosado", class: "block text-sm font-semibold text-gray-800 mb-1" %>
-              <% validated = bl_house_line.document_validated?(:bl_endosado_documento) %>
-              <% if validated %>
-                <div class="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">
-                  <span class="mt-1 inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
-                  <div class="text-xs font-semibold">Documento validado por ejecutivo/admin.</div>
-                </div>
-                <% if bl_house_line.bl_endosado_documento.attached? %>
-                  <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-800 text-xs font-semibold border border-green-200">
-                    <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                    Cargado
-                    <%= link_to "Ver", rails_blob_path(bl_house_line.bl_endosado_documento, disposition: "inline"), target: "_blank", class: "underline text-green-800" %>
+            <% required_docs.each do |doc_field| %>
+              <% label = document_labels[doc_field] || doc_field.to_s.humanize %>
+              <% attachment = bl_house_line.public_send(doc_field) %>
+              <% validated = bl_house_line.document_validated?(doc_field) %>
+
+              <div class="p-4 rounded-2xl border border-sky-100 bg-sky-50/60 shadow-md shadow-sky-100 ring-1 ring-sky-100">
+                <%= form.label doc_field, label, class: "block text-sm font-semibold text-gray-800 mb-1" %>
+
+                <% if validated %>
+                  <div class="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">
+                    <span class="mt-1 inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
+                    <div class="text-xs font-semibold">Documento validado por ejecutivo/admin.</div>
                   </div>
+                  <% if attachment.attached? %>
+                    <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-800 text-xs font-semibold border border-green-200">
+                      <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                      Cargado
+                      <%= link_to "Ver", rails_blob_path(attachment, disposition: "inline"), target: "_blank", class: "underline text-green-800" %>
+                    </div>
+                  <% end %>
+                <% else %>
+                  <%= form.file_field doc_field, direct_upload: true, class: "block w-full text-sm text-gray-900 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 file:font-semibold file:cursor-pointer hover:file:bg-indigo-100" %>
+                  <% if attachment.attached? %>
+                    <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-800 text-xs font-semibold border border-green-200">
+                      <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                      Cargado
+                      <%= link_to "Ver", rails_blob_path(attachment, disposition: "inline"), target: "_blank", class: "underline text-green-800" %>
+                    </div>
+                  <% end %>
                 <% end %>
-              <% else %>
-                <%= form.file_field :bl_endosado_documento, direct_upload: true, class: "block w-full text-sm text-gray-900 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 file:font-semibold file:cursor-pointer hover:file:bg-indigo-100" %>
-                <% if bl_house_line.bl_endosado_documento.attached? %>
-                  <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-800 text-xs font-semibold border border-green-200">
-                    <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                    Cargado
-                    <%= link_to "Ver", rails_blob_path(bl_house_line.bl_endosado_documento, disposition: "inline"), target: "_blank", class: "underline text-green-800" %>
-                  </div>
-                <% end %>
-              <% end %>
-            </div>
-            <div class="p-4 rounded-2xl border border-sky-100 bg-sky-50/60 shadow-md shadow-sky-100 ring-1 ring-sky-100">
-              <%= form.label :liberacion_documento, "Liberacion", class: "block text-sm font-semibold text-gray-800 mb-1" %>
-              <% validated = bl_house_line.document_validated?(:liberacion_documento) %>
-              <% if validated %>
-                <div class="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">
-                  <span class="mt-1 inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
-                  <div class="text-xs font-semibold">Documento validado por ejecutivo/admin.</div>
-                </div>
-                <% if bl_house_line.liberacion_documento.attached? %>
-                  <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-800 text-xs font-semibold border border-green-200">
-                    <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                    Cargado
-                    <%= link_to "Ver", rails_blob_path(bl_house_line.liberacion_documento, disposition: "inline"), target: "_blank", class: "underline text-green-800" %>
-                  </div>
-                <% end %>
-              <% else %>
-                <%= form.file_field :liberacion_documento, direct_upload: true, class: "block w-full text-sm text-gray-900 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 file:font-semibold file:cursor-pointer hover:file:bg-indigo-100" %>
-                <% if bl_house_line.liberacion_documento.attached? %>
-                  <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-800 text-xs font-semibold border border-green-200">
-                    <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                    Cargado
-                    <%= link_to "Ver", rails_blob_path(bl_house_line.liberacion_documento, disposition: "inline"), target: "_blank", class: "underline text-green-800" %>
-                  </div>
-                <% end %>
-              <% end %>
-            </div>
-            <div class="p-4 rounded-2xl border border-sky-100 bg-sky-50/60 shadow-md shadow-sky-100 ring-1 ring-sky-100">
-              <%= form.label :encomienda_documento, "Encomienda", class: "block text-sm font-semibold text-gray-800 mb-1" %>
-              <% validated = bl_house_line.document_validated?(:encomienda_documento) %>
-              <% if validated %>
-                <div class="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">
-                  <span class="mt-1 inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
-                  <div class="text-xs font-semibold">Documento validado por ejecutivo/admin.</div>
-                </div>
-                <% if bl_house_line.encomienda_documento.attached? %>
-                  <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-800 text-xs font-semibold border border-green-200">
-                    <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                    Cargado
-                    <%= link_to "Ver", rails_blob_path(bl_house_line.encomienda_documento, disposition: "inline"), target: "_blank", class: "underline text-green-800" %>
-                  </div>
-                <% end %>
-              <% else %>
-                <%= form.file_field :encomienda_documento, direct_upload: true, class: "block w-full text-sm text-gray-900 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 file:font-semibold file:cursor-pointer hover:file:bg-indigo-100" %>
-                <% if bl_house_line.encomienda_documento.attached? %>
-                  <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-800 text-xs font-semibold border border-green-200">
-                    <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                    Cargado
-                    <%= link_to "Ver", rails_blob_path(bl_house_line.encomienda_documento, disposition: "inline"), target: "_blank", class: "underline text-green-800" %>
-                  </div>
-                <% end %>
-              <% end %>
-            </div>
-            <div class="p-4 rounded-2xl border border-sky-100 bg-sky-50/60 shadow-md shadow-sky-100 ring-1 ring-sky-100">
-              <%= form.label :pago_documento, "Pago", class: "block text-sm font-semibold text-gray-800 mb-1" %>
-              <% validated = bl_house_line.document_validated?(:pago_documento) %>
-              <% if validated %>
-                <div class="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700">
-                  <span class="mt-1 inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
-                  <div class="text-xs font-semibold">Documento validado por ejecutivo/admin.</div>
-                </div>
-                <% if bl_house_line.pago_documento.attached? %>
-                  <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-800 text-xs font-semibold border border-green-200">
-                    <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                    Cargado
-                    <%= link_to "Ver", rails_blob_path(bl_house_line.pago_documento, disposition: "inline"), target: "_blank", class: "underline text-green-800" %>
-                  </div>
-                <% end %>
-              <% else %>
-                <%= form.file_field :pago_documento, direct_upload: true, class: "block w-full text-sm text-gray-900 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 file:font-semibold file:cursor-pointer hover:file:bg-indigo-100" %>
-                <% if bl_house_line.pago_documento.attached? %>
-                  <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-800 text-xs font-semibold border border-green-200">
-                    <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                    Cargado
-                    <%= link_to "Ver", rails_blob_path(bl_house_line.pago_documento, disposition: "inline"), target: "_blank", class: "underline text-green-800" %>
-                  </div>
-                <% end %>
-              <% end %>
-            </div>
+              </div>
+            <% end %>
           </div>
 
           <div class="flex items-start justify-between gap-4 p-4 rounded-xl bg-indigo-50 border border-indigo-100">
