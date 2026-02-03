@@ -135,7 +135,7 @@ RSpec.describe "Containers", type: :request do
         delete destroy_all_bl_house_lines_container_path(container)
       }.not_to change { container.reload.bl_house_lines.count }
 
-      expect(response).to redirect_to(root_path)
+      expect(response).to redirect_to(customs_agents_dashboard_path)
       expect(flash[:alert]).to be_present
     end
   end

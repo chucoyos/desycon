@@ -13,11 +13,7 @@ class ApplicationController < ActionController::Base
 
   # Redirect based on user role after sign in
   def after_sign_in_path_for(resource)
-    if resource.customs_broker? && resource.entity&.is_customs_agent?
-      customs_agents_dashboard_path
-    else
-      containers_path
-    end
+    default_signed_in_path(resource)
   end
 
   # Pundit: catch authorization errors
@@ -45,6 +41,16 @@ class ApplicationController < ActionController::Base
   def user_not_authorized(exception)
     policy_name = exception.policy.class.to_s.underscore
     flash[:alert] = t "pundit.#{policy_name}.#{exception.query}", default: :default
-    redirect_back(fallback_location: root_path)
+    redirect_back(fallback_location: default_signed_in_path)
+  end
+
+  def default_signed_in_path(user = current_user)
+    return root_path unless user
+
+    if user.customs_broker? && user.entity&.is_customs_agent?
+      customs_agents_dashboard_path
+    else
+      containers_path
+    end
   end
 end
