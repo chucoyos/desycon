@@ -5,9 +5,26 @@ module Admin
     after_action :verify_authorized, except: :index
 
     def index
+      @roles = Role.order(:name)
+
       @users = policy_scope(User).includes(:role, :entity)
-                                 .order(:email)
-                                 .page(params[:page])
+
+      if params[:search].present?
+        @users = @users.where("users.email ILIKE ?", "%#{params[:search]}%")
+      end
+
+      if params[:role_id].present?
+        @users = @users.where(role_id: params[:role_id])
+      end
+
+      case params[:disabled]
+      when "enabled"
+        @users = @users.where(disabled: false)
+      when "disabled"
+        @users = @users.where(disabled: true)
+      end
+
+      @users = @users.order(:email).page(params[:page])
       authorize User
     end
 
