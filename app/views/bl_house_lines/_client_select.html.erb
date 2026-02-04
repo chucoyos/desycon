@@ -1,0 +1,6 @@
+<%= select_tag 'reassign[new_client_id]',
+  options_from_collection_for_select(clients, :id, :name, selected_client_id),
+  prompt: "Selecciona un cliente",
+  required: true,
+  class: "w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+%>

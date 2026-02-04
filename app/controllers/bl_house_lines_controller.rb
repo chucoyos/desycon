@@ -3,7 +3,7 @@ class BlHouseLinesController < ApplicationController
   IMPORT_SIZE_LIMIT = 2.megabytes
 
   before_action :authenticate_user!
-  before_action :set_bl_house_line, only: %i[show edit update destroy revalidation_approval approve_revalidation documents]
+  before_action :set_bl_house_line, only: %i[show edit update destroy revalidation_approval approve_revalidation documents reassign perform_reassign reassign_patents]
   after_action :verify_authorized, except: :index
 
   # GET /bl_house_lines
@@ -257,6 +257,68 @@ class BlHouseLinesController < ApplicationController
     # This logic allows downloading multiple documents related to the revalidation.
   end
 
+  # GET /bl_house_lines/1/reassign
+  def reassign
+    authorize @bl_house_line, :reassign?
+    load_reassign_collections
+  end
+
+  # PATCH /bl_house_lines/1/perform_reassign
+  def perform_reassign
+    authorize @bl_house_line, :perform_reassign?
+
+    service = BlHouseLines::ReassignService.new(
+      bl_house_line: @bl_house_line,
+      new_customs_agent_id: reassign_params[:new_customs_agent_id],
+      new_customs_agent_patent_id: reassign_params[:new_customs_agent_patent_id],
+      new_client_id: reassign_params[:new_client_id],
+      hide_original: reassign_params[:hide_original],
+      current_user: current_user
+    )
+
+    service.call
+
+    redirect_to bl_house_lines_path, notice: "Partida reasignada correctamente."
+  rescue StandardError => e
+    Rails.logger.error("Failed to reassign BL House Line ##{@bl_house_line.id}: #{e.message}")
+    flash.now[:alert] = "No se pudo reasignar la partida: #{e.message}"
+    load_reassign_collections
+    render :reassign, status: :unprocessable_entity
+  end
+
+  # GET /bl_house_lines/1/reassign_patents
+  def reassign_patents
+    authorize @bl_house_line, :reassign?
+    load_reassign_collections
+
+    render turbo_stream: [
+      turbo_stream.replace(
+        "patent_select",
+        view_context.turbo_frame_tag("patent_select") do
+          view_context.render(
+            partial: "bl_house_lines/patent_select",
+            locals: {
+              patents: @customs_agent_patents,
+              selected_patent_id: params[:selected_patent_id]
+            }
+          )
+        end
+      ),
+      turbo_stream.replace(
+        "client_select",
+        view_context.turbo_frame_tag("client_select") do
+          view_context.render(
+            partial: "bl_house_lines/client_select",
+            locals: {
+              clients: @clients,
+              selected_client_id: params[:selected_client_id]
+            }
+          )
+        end
+      )
+    ]
+  end
+
   private
 
   def load_clients
@@ -343,6 +405,20 @@ class BlHouseLinesController < ApplicationController
     end
   end
 
+  def reassign_params
+    raw = params.require(:reassign).permit(
+      :new_customs_agent_id,
+      :new_customs_agent_patent_id,
+      :new_client_id,
+      :hide_original
+    )
+
+    raw[:new_client_id] = raw[:new_client_id].presence || (raise ActionController::ParameterMissing, :new_client_id)
+
+    raw[:hide_original] = ActiveModel::Type::Boolean.new.cast(raw.fetch(:hide_original, true))
+    raw
+  end
+
   def revalidation_params
     if params[:bl_house_line].present?
       params.require(:bl_house_line).permit(
@@ -358,10 +434,9 @@ class BlHouseLinesController < ApplicationController
     end
   end
 
+
   def document_validation_flags
     return {} unless params[:bl_house_line].present?
-
-    caster = ActiveModel::Type::Boolean.new
     flags = {}
 
     BlHouseLine::DOCUMENT_FIELDS.each do |doc|
@@ -432,5 +507,20 @@ class BlHouseLinesController < ApplicationController
 
     candidate = revalidation_history&.user&.entity
     candidate if candidate&.is_customs_agent?
+  end
+
+  def load_reassign_collections
+    @customs_agents = Entity.customs_agents.order(:name)
+    selected_agent_id = params[:agent_id] || params.dig(:reassign, :new_customs_agent_id) || @bl_house_line.customs_agent_id
+    @clients = if selected_agent_id.present?
+      Entity.clients.where(customs_agent_id: selected_agent_id).order(:name)
+    else
+      Entity.none
+    end
+    @customs_agent_patents = if selected_agent_id.present?
+      CustomsAgentPatent.where(entity_id: selected_agent_id).order(:patent_number)
+    else
+      CustomsAgentPatent.none
+    end
   end
 end

@@ -69,6 +69,9 @@ Rails.application.routes.draw do
       get :revalidation_approval
       patch :approve_revalidation
       get :documents
+      get :reassign
+      patch :perform_reassign
+      get :reassign_patents
     end
   end
   resources :service_catalogs
@@ -88,6 +91,8 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "home#index"
 
-  # Catch-all for unmatched routes
-  match "*unmatched", to: "application#not_found", via: :all
+  # Catch-all for unmatched routes (skip ActiveStorage and built-in rails paths)
+  match "*unmatched", to: "application#not_found", via: :all, constraints: lambda { |req|
+    !req.path.start_with?("/rails/active_storage")
+  }
 end

@@ -1,0 +1,5 @@
+<%= select_tag 'reassign[new_customs_agent_patent_id]',
+  options_from_collection_for_select(patents, :id, :patent_number, selected_patent_id),
+  include_blank: "Selecciona una patente",
+  class: "w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+%>

@@ -65,6 +65,14 @@ class BlHouseLinePolicy < ApplicationPolicy
     user.present? && user.admin_or_executive?
   end
 
+  def reassign?
+    user.present? && user.admin_or_executive?
+  end
+
+  def perform_reassign?
+    reassign?
+  end
+
   class Scope < Scope
     def resolve
       if user.nil?
