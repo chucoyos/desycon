@@ -19,6 +19,11 @@ class ApplicationController < ActionController::Base
   # Pundit: catch authorization errors
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
+  # Catch-all 404 handler for unmatched routes
+  def not_found
+    render file: Rails.root.join("public", "404.html"), status: :not_found, layout: false
+  end
+
   private
 
   def set_current_user

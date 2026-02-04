@@ -87,4 +87,7 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   root "home#index"
+
+  # Catch-all for unmatched routes
+  match "*unmatched", to: "application#not_found", via: :all
 end
