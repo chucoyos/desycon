@@ -201,51 +201,77 @@ class BlHouseLinesController < ApplicationController
         return render :revalidation_approval, status: :unprocessable_entity
       end
 
-      if @bl_house_line.save
-        begin
-          unless tarja_present
-            date_str = params[:tentative_date]
-            time_period = params[:time_period]
+      container = @bl_house_line.container
 
-            if date_str.present?
-             full_observation = "FECHA TENTATIVA PARA EL INICIO DE REVALIDACION EL DIA #{date_str} POR LA #{time_period}."
-             # Use a safer history lookup or create one if missing
-             history = @bl_house_line.bl_house_line_status_histories.order(created_at: :desc).first
-             if history
-               history.update(observations: full_observation)
-             else
-               # Fallback: create history if callback somehow failed
-               @bl_house_line.bl_house_line_status_histories.create(
-                 status: @bl_house_line.status,
-                 changed_at: Time.current,
-                 user: current_user,
-                 observations: full_observation
-               )
-             end
+      tentative_date = params[:fecha_tentativa_desconsolidacion].presence || params[:tentative_date].presence
+      tentative_turno = params[:tentativa_turno].presence || params[:time_period].presence
+
+      unless tarja_present
+        if tentative_date.blank?
+          @bl_house_line.errors.add(:base, "Debes capturar la fecha tentativa de desconsolidación.")
+          return render :revalidation_approval, status: :unprocessable_entity
+        end
+
+        if container
+          container.assign_attributes(
+            fecha_tentativa_desconsolidacion: tentative_date,
+            tentativa_turno: tentative_turno.presence
+          )
+        end
+      end
+
+      begin
+        ActiveRecord::Base.transaction do
+          @bl_house_line.save!
+          container.save! if container&.changed?
+        end
+
+        unless tarja_present
+          if tentative_date.present?
+            turno_label = case tentative_turno.to_s.downcase
+            when "manana", "mañana" then "MAÑANA"
+            when "tarde" then "TARDE"
+            else tentative_turno.to_s.upcase.presence || "MAÑANA"
+            end
+
+            full_observation = "FECHA TENTATIVA PARA EL INICIO DE REVALIDACION EL DIA #{tentative_date} POR LA #{turno_label}."
+            history = @bl_house_line.bl_house_line_status_histories.order(created_at: :desc).first
+            if history
+              history.update(observations: full_observation)
+            else
+              @bl_house_line.bl_house_line_status_histories.create(
+                status: @bl_house_line.status,
+                changed_at: Time.current,
+                user: current_user,
+                observations: full_observation
+              )
             end
           end
-
-          notify_customs_agent("Documentación Aprobada")
-
-          success_message = tarja_present ? "Partida marcada como Revalidada." : "Partida lista con Documentos OK."
-
-          respond_to do |format|
-             format.turbo_stream do
-               render turbo_stream: turbo_stream.replace(
-                 "approval_modal",
-                 partial: "bl_house_lines/approval/modal_success",
-                 locals: { bl_house_line: @bl_house_line, success_message: success_message }
-               )
-             end
-             format.html { redirect_to bl_house_lines_path, notice: "Revalidación aprobada y agente asignado." }
-          end
-        rescue => e
-          Rails.logger.error "Error in approve_revalidation (assign): #{e.message}"
-          @bl_house_line.errors.add(:base, "Ocurrió un error al procesar la aprobación: #{e.message}")
-          render :revalidation_approval, status: :unprocessable_entity
         end
-      else
-        Rails.logger.warn "Validation errors in approve_revalidation: #{@bl_house_line.errors.full_messages}"
+
+        notify_customs_agent("Documentación Aprobada")
+
+        success_message = tarja_present ? "Partida marcada como Revalidada." : "Partida lista con Documentos OK."
+
+        respond_to do |format|
+           format.turbo_stream do
+             render turbo_stream: turbo_stream.replace(
+               "approval_modal",
+               partial: "bl_house_lines/approval/modal_success",
+               locals: { bl_house_line: @bl_house_line, success_message: success_message }
+             )
+           end
+           format.html { redirect_to bl_house_lines_path, notice: "Revalidación aprobada y agente asignado." }
+        end
+      rescue ActiveRecord::RecordInvalid => e
+        Rails.logger.warn "Validation errors in approve_revalidation: #{e.record.errors.full_messages}"
+        if e.record != @bl_house_line
+          @bl_house_line.errors.add(:base, e.record.errors.full_messages.to_sentence)
+        end
+        render :revalidation_approval, status: :unprocessable_entity
+      rescue => e
+        Rails.logger.error "Error in approve_revalidation (assign): #{e.message}"
+        @bl_house_line.errors.add(:base, "Ocurrió un error al procesar la aprobación: #{e.message}")
         render :revalidation_approval, status: :unprocessable_entity
       end
     end
@@ -438,12 +464,13 @@ class BlHouseLinesController < ApplicationController
   def document_validation_flags
     return {} unless params[:bl_house_line].present?
     flags = {}
+    boolean_caster = ActiveModel::Type::Boolean.new
 
     BlHouseLine::DOCUMENT_FIELDS.each do |doc|
       param_key = "#{doc}_validated"
       next unless params[:bl_house_line].key?(param_key)
 
-      flags[param_key] = caster.cast(params[:bl_house_line][param_key])
+      flags[param_key] = boolean_caster.cast(params[:bl_house_line][param_key])
     end
 
     flags

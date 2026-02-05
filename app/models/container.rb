@@ -29,7 +29,7 @@ class Container < ApplicationRecord
   has_one_attached :bl_master_documento
   has_one_attached :tarja_documento
 
-  attr_accessor :tarja_documento_attached_via_setter
+  attr_accessor :tarja_documento_attached_via_setter, :bl_master_documento_attached_via_setter
 
   # Nested attributes
   accepts_nested_attributes_for :container_services, allow_destroy: true, reject_if: :all_blank
@@ -37,9 +37,14 @@ class Container < ApplicationRecord
   # Enums
   enum :status, {
     activo: "activo",
-    validar_documentos: "validar_documentos",
+    bl_revalidado: "bl_revalidado",
+    fecha_tentativa_desconsolidacion: "fecha_tentativa_desconsolidacion",
+    cita_transferencia: "cita_transferencia",
+    descargado: "descargado",
     desconsolidado: "desconsolidado"
   }, prefix: true
+
+  enum :tentativa_turno, { manana: 0, tarde: 1 }, prefix: true
 
   enum :tipo_maniobra, {
     importacion: "importacion",
@@ -104,10 +109,14 @@ class Container < ApplicationRecord
   # Callbacks para historial de status
   before_create :capture_current_user
   before_update :capture_current_user
+  before_save :auto_set_status_from_fields
+
   after_create :create_initial_status_history
   after_update :create_status_history, if: :saved_change_to_status?
   after_commit :handle_tarja_uploaded, if: :tarja_documento_recently_attached?
+  after_commit :handle_bl_master_uploaded, if: :bl_master_documento_recently_attached?
   after_commit :ensure_coordination_service_on_desconsolidado, on: :update, if: :status_changed_to_desconsolidado?
+  after_commit :propagate_bl_house_lines_on_desconsolidado, on: :update, if: :status_changed_to_desconsolidado?
 
   # Métodos de conveniencia
   def to_s
@@ -185,7 +194,7 @@ class Container < ApplicationRecord
 
   # Verificar si puede ser desconsolidado
   def puede_desconsolidar?
-    (status_activo? || status_validar_documentos?) && documentos_completos?
+    !status_desconsolidado? && documentos_completos?
   end
 
   # Cambiar status con historial
@@ -208,6 +217,11 @@ class Container < ApplicationRecord
   def tarja_documento=(attachable)
     super
     self.tarja_documento_attached_via_setter = true if attachable.present?
+  end
+
+  def bl_master_documento=(attachable)
+    super
+    self.bl_master_documento_attached_via_setter = true if attachable.present?
   end
 
   def any_bl_house_line_with_attachments?
@@ -287,6 +301,39 @@ class Container < ApplicationRecord
     end
   end
 
+  def auto_set_status_from_fields
+    return if status_desconsolidado?
+
+    target = target_status_from_fields
+    return if target.nil?
+
+    self.status = target if status != target
+  end
+
+  def target_status_from_fields
+    return :desconsolidado if documentos_completos?
+    return :descargado if fecha_descarga.present?
+    return :cita_transferencia if fecha_transferencia.present?
+    return :fecha_tentativa_desconsolidacion if fecha_tentativa_desconsolidacion.present?
+    return :bl_revalidado if bl_master_documento.attached? || fecha_revalidacion_bl_master.present?
+
+    :activo
+  end
+
+  def status_rank(key)
+    status_order.index(key.to_s) || -1
+  end
+
+  def status_order
+    %w[activo bl_revalidado fecha_tentativa_desconsolidacion cita_transferencia descargado desconsolidado]
+  end
+
+  def advance_status!(new_status, actor, observaciones)
+    return if status_rank(new_status) <= status_rank(status)
+
+    cambiar_status!(new_status, actor, observaciones)
+  end
+
   def tarja_documento_recently_attached?
     return false unless tarja_documento.attached?
 
@@ -298,20 +345,32 @@ class Container < ApplicationRecord
     flag || attachment_changes.present?
   end
 
+  def bl_master_documento_recently_attached?
+    return false unless bl_master_documento.attached?
+
+    flag = bl_master_documento_attached_via_setter
+    self.bl_master_documento_attached_via_setter = false
+
+    attachment_changes = bl_master_documento_attachment&.previous_changes
+
+    flag || attachment_changes.present?
+  end
+
   def handle_tarja_uploaded
     return if status_desconsolidado?
     return unless documentos_completos?
 
     current_actor = @current_user || (defined?(Current) && Current.respond_to?(:user) ? Current.user : nil)
 
-    cambiar_status!(:desconsolidado, current_actor, "Tarja adjunta automáticamente")
+    advance_status!(:desconsolidado, current_actor, "Tarja adjunta automáticamente")
 
-    bl_house_lines
-      .where(status: BlHouseLine.statuses[:documentos_ok])
-      .find_each do |line|
-        next if line.revalidado?
-        line.revalidado!
-      end
+    propagate_bl_house_lines_on_desconsolidado
+  end
+
+  def handle_bl_master_uploaded
+    return if status_desconsolidado?
+    current_actor = @current_user || (defined?(Current) && Current.respond_to?(:user) ? Current.user : nil)
+    advance_status!(:bl_revalidado, current_actor, "BL Master adjunto")
   end
 
   def status_changing_to_desconsolidado?
@@ -326,6 +385,18 @@ class Container < ApplicationRecord
 
   def status_changed_to_desconsolidado?
     saved_change_to_status? && status_desconsolidado?
+  end
+
+  def propagate_bl_house_lines_on_desconsolidado
+    bl_house_lines
+      .where(status: BlHouseLine.statuses[:documentos_ok])
+      .find_each do |line|
+        line.with_lock do
+          next if line.revalidado?
+          line.revalidado!
+          line.ensure_asignacion_electronica_service
+        end
+      end
   end
 
   def ensure_coordination_service_on_desconsolidado

@@ -3,8 +3,14 @@ module ContainersHelper
     case status
     when "activo"
       "bg-blue-100 text-blue-800 border-blue-200"
-    when "validar_documentos"
-      "bg-yellow-100 text-yellow-800 border-yellow-200"
+    when "bl_revalidado"
+      "bg-indigo-100 text-indigo-800 border-indigo-200"
+    when "fecha_tentativa_desconsolidacion"
+      "bg-amber-100 text-amber-800 border-amber-200"
+    when "cita_transferencia"
+      "bg-purple-100 text-purple-800 border-purple-200"
+    when "descargado"
+      "bg-teal-100 text-teal-800 border-teal-200"
     when "desconsolidado"
       "bg-green-100 text-green-800 border-green-200"
     else
@@ -16,8 +22,14 @@ module ContainersHelper
     case status
     when "activo"
       '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>'.html_safe
-    when "validar_documentos"
-      '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>'.html_safe
+    when "bl_revalidado"
+      '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8m0 0l-3-3m3 3l3-3M5 13l4 4L19 7"/></svg>'.html_safe
+    when "fecha_tentativa_desconsolidacion"
+      '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>'.html_safe
+    when "cita_transferencia"
+      '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>'.html_safe
+    when "descargado"
+      '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582c2.797 0 4.196 0 5.305-.481a6 6 0 002.632-2.632C13 4.778 13 3.378 13 0.582V0"/></svg>'.html_safe
     when "desconsolidado"
       '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'.html_safe
     end
@@ -46,7 +58,10 @@ module ContainersHelper
   def status_nombre(status)
     {
       "activo" => "Activo",
-      "validar_documentos" => "Validar Documentos",
+      "bl_revalidado" => "BL Revalidado",
+      "fecha_tentativa_desconsolidacion" => "Fecha Tentativa Desconsolidación",
+      "cita_transferencia" => "Cita de Transferencia",
+      "descargado" => "Descargado",
       "desconsolidado" => "Desconsolidado"
     }[status] || status.humanize
   end

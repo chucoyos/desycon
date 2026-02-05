@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_03_091500) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_04_120500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -189,6 +189,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_03_091500) do
     t.date "fecha_descarga"
     t.date "fecha_desconsolidacion"
     t.date "fecha_revalidacion_bl_master"
+    t.date "fecha_tentativa_desconsolidacion"
     t.datetime "fecha_transferencia"
     t.string "number", null: false
     t.bigint "origin_port_id"
@@ -196,16 +197,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_03_091500) do
     t.string "sello"
     t.bigint "shipping_line_id", null: false
     t.string "status", default: "activo", null: false
+    t.integer "tentativa_turno"
     t.string "tipo_maniobra", null: false
     t.string "type_size"
     t.datetime "updated_at", null: false
     t.bigint "vessel_id"
     t.bigint "voyage_id"
     t.index ["consolidator_id"], name: "index_containers_on_consolidator_id"
+    t.index ["fecha_tentativa_desconsolidacion"], name: "index_containers_on_fecha_tentativa_desconsolidacion"
     t.index ["number", "bl_master"], name: "index_containers_on_number_and_bl_master", unique: true
     t.index ["origin_port_id"], name: "index_containers_on_origin_port_id"
     t.index ["shipping_line_id"], name: "index_containers_on_shipping_line_id"
     t.index ["status"], name: "index_containers_on_status"
+    t.index ["tentativa_turno"], name: "index_containers_on_tentativa_turno"
     t.index ["tipo_maniobra"], name: "index_containers_on_tipo_maniobra"
     t.index ["type_size"], name: "index_containers_on_type_size"
     t.index ["vessel_id"], name: "index_containers_on_vessel_id"

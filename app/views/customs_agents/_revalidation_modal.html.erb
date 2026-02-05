@@ -69,7 +69,10 @@
                               options_from_collection_for_select(clients, :id, :name, bl_house_line.client_id),
                               { include_blank: "Selecciona cliente" },
                               class: "mt-1 block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500",
-                              disabled: bl_house_line.persisted? && bl_house_line.client_id.present? %>
+                              disabled: bl_house_line.persisted? && bl_house_line.client_id.present?,
+                              required: true,
+                              data: { revalidation_wizard_target: "clientSelect" } %>
+              <p class="mt-1 text-xs text-red-600 hidden" data-revalidation-wizard-target="clientError">Selecciona un cliente antes de continuar.</p>
             </div>
           </div>
 

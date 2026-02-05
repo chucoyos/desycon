@@ -4,6 +4,8 @@ export default class extends Controller {
   static targets = [
     "stepOne",
     "stepTwo",
+    "clientSelect",
+    "clientError",
     "progressFill",
     "stepBadgeOne",
     "stepBadgeTwo",
@@ -16,6 +18,7 @@ export default class extends Controller {
 
   goToDocuments(event) {
     event.preventDefault()
+    if (!this.clientValid()) return
     this.showStep(2)
   }
 
@@ -56,5 +59,27 @@ export default class extends Controller {
     element.classList.toggle("bg-indigo-50", !active)
     element.classList.toggle("border", !active)
     element.classList.toggle("border-indigo-200", !active)
+  }
+
+  clientValid() {
+    if (!this.hasClientSelectTarget) return true
+
+    const select = this.clientSelectTarget
+    const disabled = select.disabled
+    const valid = disabled || (select.value && select.value.trim() !== "")
+
+    if (this.hasClientErrorTarget) {
+      this.clientErrorTarget.classList.toggle("hidden", valid)
+    }
+
+    select.classList.toggle("border-red-300", !valid)
+    select.classList.toggle("focus:border-red-500", !valid)
+    select.classList.toggle("focus:ring-red-500", !valid)
+
+    if (!valid) {
+      select.focus()
+    }
+
+    return valid
   }
 }
