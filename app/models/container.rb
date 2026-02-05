@@ -202,6 +202,7 @@ class Container < ApplicationRecord
     transaction do
       # Marcador para evitar que el callback cree un historial duplicado
       @skip_auto_history = true
+      @skip_auto_status = true
       update!(status: new_status)
       container_status_histories.create!(
         status: new_status,
@@ -212,6 +213,7 @@ class Container < ApplicationRecord
     end
   ensure
     @skip_auto_history = false
+    @skip_auto_status = false
   end
 
   def tarja_documento=(attachable)
@@ -302,12 +304,14 @@ class Container < ApplicationRecord
   end
 
   def auto_set_status_from_fields
+    return if @skip_auto_status
     return if status_desconsolidado?
+    return if changed_attributes.key?("status") # Don't override if status was explicitly changed
 
     target = target_status_from_fields
     return if target.nil?
 
-    self.status = target if status != target
+    self.status = target
   end
 
   def target_status_from_fields

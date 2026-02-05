@@ -159,7 +159,10 @@ RSpec.describe Container, type: :model do
     it 'defines status enum with correct values' do
       expect(Container.statuses).to eq({
         'activo' => 'activo',
-        'validar_documentos' => 'validar_documentos',
+        'bl_revalidado' => 'bl_revalidado',
+        'fecha_tentativa_desconsolidacion' => 'fecha_tentativa_desconsolidacion',
+        'cita_transferencia' => 'cita_transferencia',
+        'descargado' => 'descargado',
         'desconsolidado' => 'desconsolidado'
       })
     end
@@ -174,7 +177,7 @@ RSpec.describe Container, type: :model do
     it 'provides query methods for status' do
       container = create(:container, status: 'activo')
       expect(container.status_activo?).to be true
-      expect(container.status_validar_documentos?).to be false
+      expect(container.status_bl_revalidado?).to be false
     end
 
     it 'provides query methods for tipo_maniobra' do
@@ -189,11 +192,11 @@ RSpec.describe Container, type: :model do
       container = create(:container, status: 'activo')
 
       expect {
-        container.update!(status: 'validar_documentos')
+        container.update!(status: 'bl_revalidado')
       }.to change { container.container_status_histories.count }.by(1)
 
       history = container.container_status_histories.last
-      expect(history.status).to eq('validar_documentos')
+      expect(history.status).to eq('bl_revalidado')
     end
 
     it 'does not duplicate status history when using cambiar_status!' do
@@ -201,7 +204,7 @@ RSpec.describe Container, type: :model do
       user = create(:user)
 
       expect {
-        container.cambiar_status!('validar_documentos', user, 'Test')
+        container.cambiar_status!('bl_revalidado', user, 'Test')
       }.to change { container.container_status_histories.count }.by(1)
     end
   end
@@ -209,7 +212,13 @@ RSpec.describe Container, type: :model do
   describe 'scopes' do
     before do
       @container1 = create(:container, status: 'activo', tipo_maniobra: 'importacion')
-      @container2 = create(:container, status: 'validar_documentos', tipo_maniobra: 'exportacion')
+      @container2 = create(:container, tipo_maniobra: 'exportacion')
+      @container2.bl_master_documento.attach(
+        io: StringIO.new('test'),
+        filename: 'bl.pdf',
+        content_type: 'application/pdf'
+      )
+      @container2.save! # This will trigger auto_set_status_from_fields to set status to bl_revalidado
       @container3 = create(:container, status: 'activo', tipo_maniobra: 'importacion')
     end
 
@@ -334,7 +343,7 @@ RSpec.describe Container, type: :model do
 
     describe '#puede_desconsolidar?' do
       it 'returns false when status is not activo' do
-        container.update!(status: 'validar_documentos')
+        container.update!(status: 'bl_revalidado')
         expect(container.puede_desconsolidar?).to be false
       end
 
@@ -343,7 +352,7 @@ RSpec.describe Container, type: :model do
         expect(container.puede_desconsolidar?).to be false
       end
 
-      it 'returns true when status is activo and documents complete' do
+      it 'returns false when documents are complete (status becomes desconsolidado)' do
         container.update!(status: 'activo')
         container.bl_master_documento.attach(
           io: StringIO.new('test'),
@@ -356,8 +365,8 @@ RSpec.describe Container, type: :model do
           content_type: 'application/pdf'
         )
         container.reload
-        container.update!(status: 'activo')
-        expect(container.puede_desconsolidar?).to be true
+        expect(container.status).to eq('desconsolidado')
+        expect(container.puede_desconsolidar?).to be false
       end
     end
 
@@ -383,26 +392,26 @@ RSpec.describe Container, type: :model do
 
       it 'changes status and creates history' do
         expect {
-          container.cambiar_status!('validar_documentos', user, 'Documentos pendientes')
+          container.cambiar_status!('bl_revalidado', user, 'Documentos pendientes')
         }.to change { container.container_status_histories.count }.by(1)
 
-        expect(container.reload.status).to eq('validar_documentos')
+        expect(container.reload.status).to eq('bl_revalidado')
 
         history = container.container_status_histories.last
-        expect(history.status).to eq('validar_documentos')
+        expect(history.status).to eq('bl_revalidado')
         expect(history.observaciones).to eq('Documentos pendientes')
         expect(history.user).to eq(user)
       end
 
       it 'creates history without user' do
         expect {
-          container.cambiar_status!('validar_documentos', nil, 'Sin usuario')
+          container.cambiar_status!('bl_revalidado', nil, 'Sin usuario')
         }.to change { container.container_status_histories.count }.by(1)
       end
 
       it 'creates history without observaciones' do
         expect {
-          container.cambiar_status!('validar_documentos', user)
+          container.cambiar_status!('bl_revalidado', user)
         }.to change { container.container_status_histories.count }.by(1)
 
         history = container.container_status_histories.last
@@ -414,7 +423,7 @@ RSpec.describe Container, type: :model do
 
         expect {
           begin
-            container.cambiar_status!('validar_documentos', user)
+            container.cambiar_status!('bl_revalidado', user)
           rescue ActiveRecord::RecordInvalid
             # Ignore error for test
           end
@@ -556,7 +565,9 @@ RSpec.describe Container, type: :model do
 
   describe 'tarja attachment processing' do
     let(:customs_agent) { create(:entity, :customs_agent) }
-    let(:container) { create(:container, status: 'validar_documentos') }
+    let(:container) do
+      create(:container, status: 'bl_revalidado')
+    end
     let(:packaging) { create(:packaging, nombre: "Empaque Especial #{SecureRandom.hex(3)}") }
     let!(:line_ok) { create(:bl_house_line, container: container, customs_agent: customs_agent, packaging: packaging, status: 'documentos_ok') }
     let!(:line_other) { create(:bl_house_line, container: container, customs_agent: customs_agent, packaging: packaging, status: 'activo') }
@@ -569,7 +580,7 @@ RSpec.describe Container, type: :model do
       Current.user = previous_user
     end
 
-    it 'does not change status to desconsolidado when only tarja is attached (BL master missing)' do
+    it 'changes status to activo when only tarja is attached (BL master missing)' do
       expect {
         container.tarja_documento.attach(
           io: StringIO.new('Tarja content'),
@@ -577,7 +588,7 @@ RSpec.describe Container, type: :model do
           content_type: 'application/pdf'
         )
         container.reload
-      }.not_to change { container.reload.status }
+      }.to change { container.reload.status }.from('bl_revalidado').to('activo')
     end
 
     it 'does not revalidate BL lines when BL master is missing' do
