@@ -405,6 +405,7 @@ class BlHouseLinesController < ApplicationController
       :customs_agent_id, :client_id, :container_id, :packaging_id, :status, :fecha_despacho,
       :clase_imo,
       :tipo_imo,
+      :telex,
       :hidden_from_customs_agent,
       :bl_endosado_documento, :liberacion_documento, :bl_revalidado_documento, :encomienda_documento, :pago_documento,
       bl_house_line_services_attributes: [
@@ -453,7 +454,8 @@ class BlHouseLinesController < ApplicationController
         :bl_endosado_documento_validated,
         :liberacion_documento_validated,
         :encomienda_documento_validated,
-        :pago_documento_validated
+        :pago_documento_validated,
+        :telex
       )
     else
       {}

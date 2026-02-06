@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_04_120500) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_05_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -115,6 +115,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_120500) do
     t.integer "partida"
     t.decimal "peso"
     t.string "status"
+    t.boolean "telex", default: false, null: false
     t.string "tipo_imo"
     t.datetime "updated_at", null: false
     t.decimal "volumen"
@@ -124,6 +125,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_120500) do
     t.index ["customs_agent_patent_id"], name: "index_bl_house_lines_on_customs_agent_patent_id"
     t.index ["hidden_from_customs_agent"], name: "index_bl_house_lines_on_hidden_from_customs_agent"
     t.index ["packaging_id"], name: "index_bl_house_lines_on_packaging_id"
+    t.index ["telex"], name: "index_bl_house_lines_on_telex"
   end
 
   create_table "clients", force: :cascade do |t|

@@ -106,6 +106,16 @@
         <% end %>
       </div>
 
+      <div class="flex items-start gap-3 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3">
+        <div class="pt-1">
+          <%= form.check_box :telex, class: "h-4 w-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500" %>
+        </div>
+        <div>
+          <%= form.label :telex, "TELEX", class: "text-sm font-semibold text-indigo-900" %>
+          <p class="text-xs text-indigo-700">Marca si esta partida requiere liberación TELEX.</p>
+        </div>
+      </div>
+
       <% unless is_customs_agent %>
         <div class="flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
           <div class="pt-1">
