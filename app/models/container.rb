@@ -94,6 +94,7 @@ class Container < ApplicationRecord
   validate :almacen_matches_destination_for_import, if: -> { tipo_maniobra_importacion? && almacen.present? }
   validate :require_documents_for_desconsolidado, if: :status_changing_to_desconsolidado?
   validate :destination_port_present
+  validate :tentative_fields_together
 
   # Normalización
   before_validation :normalize_number
@@ -385,6 +386,14 @@ class Container < ApplicationRecord
     return if documentos_completos?
 
     errors.add(:base, "Debe adjuntar tanto el BL Master como la Tarja para cambiar el estatus a desconsolidado.")
+  end
+
+  def tentative_fields_together
+    if fecha_tentativa_desconsolidacion.present? && tentativa_turno.blank?
+      errors.add(:tentativa_turno, "debe seleccionarse cuando se establece la fecha tentativa")
+    elsif tentativa_turno.present? && fecha_tentativa_desconsolidacion.blank?
+      errors.add(:fecha_tentativa_desconsolidacion, "debe establecerse cuando se selecciona el turno tentativo")
+    end
   end
 
   def status_changed_to_desconsolidado?
