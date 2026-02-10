@@ -536,8 +536,12 @@ class BlHouseLinesController < ApplicationController
   end
 
   def load_reassign_collections
-    @customs_agents = Entity.customs_agents.where.not(id: @bl_house_line.customs_agent_id).order(:name)
     selected_agent_id = params[:agent_id] || params.dig(:reassign, :new_customs_agent_id) || @bl_house_line.customs_agent_id
+
+    @customs_agents = Entity.customs_agents.order(:name).to_a
+    if @bl_house_line.customs_agent.present? && !@customs_agents.any? { |agent| agent.id == @bl_house_line.customs_agent_id }
+      @customs_agents.unshift(@bl_house_line.customs_agent)
+    end
 
     @clients = if selected_agent_id.present?
       Entity.clients.where(customs_agent_id: selected_agent_id).order(:name)
