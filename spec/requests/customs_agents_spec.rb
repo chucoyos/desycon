@@ -84,4 +84,41 @@ RSpec.describe "CustomsAgents", type: :request do
       expect(response).to have_http_status(:not_found)
     end
   end
+
+  describe "PATCH /revalidations/:id" do
+    let(:headers) { { "Turbo-Frame" => "revalidation_modal" } }
+    let(:customs_agent) { customs_user.entity }
+    let(:client) { create(:entity, :client, customs_agent: customs_agent) }
+
+    it "assigns the customs agent and client when blank" do
+      bl_house_line = create(:bl_house_line, customs_agent: nil, client: nil)
+
+      sign_in customs_user, scope: :user
+      patch customs_agents_revalidation_update_path(bl_house_line),
+        params: { bl_house_line: { client_id: client.id } },
+        headers: headers
+
+      bl_house_line.reload
+      expect(bl_house_line.customs_agent_id).to eq(customs_agent.id)
+      expect(bl_house_line.client_id).to eq(client.id)
+      expect(bl_house_line.status).to eq("validar_documentos")
+      expect(response).to have_http_status(:success)
+    end
+
+    it "keeps the original client when already assigned" do
+      original_client = create(:entity, :client, customs_agent: customs_agent)
+      other_client = create(:entity, :client, customs_agent: customs_agent)
+      bl_house_line = create(:bl_house_line, customs_agent: nil, client: original_client)
+
+      sign_in customs_user, scope: :user
+      patch customs_agents_revalidation_update_path(bl_house_line),
+        params: { bl_house_line: { client_id: other_client.id } },
+        headers: headers
+
+      bl_house_line.reload
+      expect(bl_house_line.client_id).to eq(original_client.id)
+      expect(bl_house_line.status).to eq("validar_documentos")
+      expect(response).to have_http_status(:success)
+    end
+  end
 end

@@ -156,4 +156,52 @@ RSpec.describe "BlHouseLines", type: :request do
       expect(response).to redirect_to(bl_house_lines_url)
     end
   end
+
+  describe "PATCH /bl_house_lines/:id/perform_reassign" do
+    let(:new_agent) { create(:entity, :customs_agent) }
+    let(:new_broker) { create(:entity, :customs_broker) }
+    let(:new_client) { create(:entity, :client, customs_agent: new_agent) }
+    let(:bl_house_line) { create(:bl_house_line, customs_agent: customs_agent) }
+
+    before do
+      AgencyBroker.create!(agency: new_agent, broker: new_broker)
+      create(:service_catalog,
+        name: "Asignacion electronica de carga",
+        code: "BL-ASIG",
+        applies_to: "bl_house_line")
+    end
+
+    it "updates the bl house line and creates a service" do
+      sign_in user, scope: :user
+
+      expect {
+        patch perform_reassign_bl_house_line_url(bl_house_line), params: {
+          reassign: {
+            new_customs_agent_id: new_agent.id,
+            new_customs_broker_id: new_broker.id,
+            new_client_id: new_client.id
+          }
+        }
+      }.to change(BlHouseLineService, :count).by(1)
+
+      bl_house_line.reload
+      expect(bl_house_line.customs_agent_id).to eq(new_agent.id)
+      expect(bl_house_line.customs_broker_id).to eq(new_broker.id)
+      expect(bl_house_line.client_id).to eq(new_client.id)
+      expect(response).to redirect_to(bl_house_lines_url)
+    end
+
+    it "renders reassign when required params are missing" do
+      sign_in user, scope: :user
+
+      patch perform_reassign_bl_house_line_url(bl_house_line), params: {
+        reassign: {
+          new_customs_agent_id: new_agent.id,
+          new_client_id: new_client.id
+        }
+      }
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+  end
 end
