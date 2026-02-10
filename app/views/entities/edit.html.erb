@@ -23,9 +23,6 @@
   <%= render "form", entity: @entity, show_actions: false %>
 
   <% if @entity.persisted? %>
-    <div class="mt-4">
-      <%= render "entities/patents_editor", entity: @entity %>
-    </div>
     <div class="pb-8">
       <%= render "entities/addresses_editor", entity: @entity %>
     </div>

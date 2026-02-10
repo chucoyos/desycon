@@ -4,105 +4,54 @@ module BlHouseLines
   class ReassignService
     class Error < StandardError; end
 
-    def initialize(bl_house_line:, new_customs_agent_id:, new_customs_agent_patent_id:, new_client_id:, hide_original: true, current_user: nil)
+    def initialize(bl_house_line:, new_customs_agent_id:, new_customs_broker_id:, new_client_id:, current_user: nil)
       @bl_house_line = bl_house_line
       @new_customs_agent_id = new_customs_agent_id
-      @new_customs_agent_patent_id = new_customs_agent_patent_id
+      @new_customs_broker_id = new_customs_broker_id
       @new_client_id = new_client_id
-      @hide_original = hide_original
       @current_user = current_user
-      @original_blhouse = bl_house_line.blhouse
     end
 
     def call
       ActiveRecord::Base.transaction do
-        rename_original_blhouse!
-        hide_original_line!
-        clone_line!
+        apply_reassign!
+        add_reassign_service!
+        notify_new_agent
       end
     end
 
     private
 
-    attr_reader :bl_house_line, :new_customs_agent_id, :new_customs_agent_patent_id, :new_client_id, :hide_original, :current_user
+    attr_reader :bl_house_line, :new_customs_agent_id, :new_customs_broker_id, :new_client_id, :current_user
 
-    def rename_original_blhouse!
-      base = original_blhouse.to_s
-      suffix_index = 0
+    def apply_reassign!
+      new_broker_id = new_customs_broker_id.presence
+      new_client_id_value = new_client_id.presence
 
-      loop do
-        candidate = suffix_index.zero? ? "#{base}R" : "#{base}R#{suffix_index + 1}"
-        unless BlHouseLine.where(container_id: bl_house_line.container_id, blhouse: candidate).exists?
-          bl_house_line.update!(blhouse: candidate)
-          break
-        end
-        suffix_index += 1
-      end
-    end
+      raise Error, "Debes seleccionar un broker." if new_broker_id.blank?
+      raise Error, "Debes seleccionar un cliente." if new_client_id_value.blank?
 
-    def hide_original_line!
-      return unless hide_original
-
-      bl_house_line.update!(hidden_from_customs_agent: true)
-    end
-
-    def clone_line!
-      cloned = bl_house_line.dup
-      cloned.assign_attributes(
-        blhouse: original_blhouse,
-        customs_agent_id: new_customs_agent_id,
-        customs_agent_patent_id: new_customs_agent_patent_id,
-        client_id: new_client_id,
-        partida: nil,
-        status: BlHouseLine.statuses[:revalidado],
-        hidden_from_customs_agent: false,
-        skip_revalidation_notification: true
+      bl_house_line.update!(
+        customs_agent_id: new_customs_agent_id.presence || bl_house_line.customs_agent_id,
+        customs_broker_id: new_broker_id,
+        client_id: new_client_id_value
       )
-
-      mark_docs_validated(cloned)
-      attach_existing_documents(cloned)
-
-      cloned.save!
-
-      duplicate_services_for(cloned)
-      notify_new_agent(cloned)
-
-      cloned
     end
 
-    def original_blhouse
-      @original_blhouse
+    def add_reassign_service!
+      catalog = ServiceCatalog.find_by(code: "BL-ASIG", applies_to: "bl_house_line")
+      catalog ||= ServiceCatalog.find_by(name: "Asignación electrónica de carga", applies_to: "bl_house_line")
+      return unless catalog
+
+      bl_house_line.bl_house_line_services.create!(
+        service_catalog_id: catalog.id,
+        billed_to_entity_id: new_client_id.presence || new_customs_agent_id.presence || bl_house_line.customs_agent_id,
+        factura: nil
+      )
     end
 
-    def mark_docs_validated(record)
-      BlHouseLine::DOCUMENT_FIELDS.each do |field|
-        setter = "#{field}_validated="
-        record.public_send(setter, true) if record.respond_to?(setter)
-      end
-    end
-
-    def attach_existing_documents(record)
-      BlHouseLine::DOCUMENT_FIELDS.each do |field|
-        next unless bl_house_line.public_send(field).attached?
-
-        record.public_send(field).attach(bl_house_line.public_send(field).blob)
-      end
-    end
-
-    def duplicate_services_for(cloned)
-      bl_house_line.bl_house_line_services.find_each do |service|
-        cloned.bl_house_line_services.create!(
-          service_catalog_id: service.service_catalog_id,
-          billed_to_entity_id: new_client_id.presence || new_customs_agent_id,
-          fecha_programada: service.fecha_programada,
-          observaciones: service.observaciones,
-          factura: nil
-        )
-      end
-    end
-
-    def notify_new_agent(cloned)
-      return unless new_customs_agent_id
+    def notify_new_agent
+      return unless new_customs_agent_id.present?
 
       recipients = User.where(entity_id: new_customs_agent_id)
       return if recipients.empty?
@@ -111,7 +60,7 @@ module BlHouseLines
         Notification.create!(
           recipient: recipient,
           actor: current_user,
-          notifiable: cloned,
+          notifiable: bl_house_line,
           action: "Partida reasignada"
         )
       end

@@ -1,21 +1,20 @@
 <div>
-  <h3 class="text-base font-semibold leading-6 text-gray-900">Asignar Patente y Fecha</h3>
+   <h3 class="text-base font-semibold leading-6 text-gray-900">Asignar Agente Aduanal y Fecha</h3>
   <div class="mt-2">
-     <p class="text-sm text-gray-500">Seleccione la patente del agente aduanal y establezca la fecha tentativa de revalidación.</p>
+   <p class="text-sm text-gray-500">Seleccione el agente aduanal y establezca la fecha tentativa de revalidación.</p>
   </div>
 
   <%= form_with model: bl_house_line, url: approve_revalidation_bl_house_line_path(bl_house_line), method: :patch do |f| %>
      <div class="mt-4 space-y-4">
-        <div>
-           <%= f.label :customs_agent_patent_id, "Patente de Agente Aduanal", class: "block text-sm font-medium text-gray-700" %>
-           <!-- Finding patents for the assigned customs agent -->
-           <% patents = bl_house_line.customs_agent&.customs_agent_patents&.map { |p| [p.patent_number, p.id] } || [] %>
-           <% if patents.empty? %>
-             <p class="text-sm text-red-600 mt-1">El Agente Aduanal asignado no tiene patentes registradas.</p>
-           <% else %>
-             <%= f.select :customs_agent_patent_id, patents, { prompt: "Seleccione una patente" }, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
-           <% end %>
-        </div>
+            <div>
+                <%= f.label :customs_broker_id, "Agente Aduanal", class: "block text-sm font-medium text-gray-700" %>
+                <% brokers = bl_house_line.customs_agent&.customs_brokers&.map { |b| ["#{b.name} - Patente #{b.patent_number}", b.id] } || [] %>
+                <% if brokers.empty? %>
+                   <p class="text-sm text-red-600 mt-1">La agencia no tiene agentes aduanales registrados.</p>
+                <% else %>
+                   <%= f.select :customs_broker_id, brokers, { prompt: "Seleccione un agente aduanal" }, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" %>
+                <% end %>
+            </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
            <div>

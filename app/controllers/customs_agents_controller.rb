@@ -95,6 +95,10 @@ class CustomsAgentsController < ApplicationController
 
     sanitized_params = revalidation_params(@bl_house_line)
 
+    if @bl_house_line.customs_agent_id.blank?
+      sanitized_params[:customs_agent_id] = current_user.entity_id
+    end
+
     if @bl_house_line.update(sanitized_params.merge(status: :validar_documentos))
       @bl_house_line.notify_revalidation_request
       render partial: "customs_agents/revalidation_success", locals: { bl_house_line: @bl_house_line }
@@ -117,7 +121,11 @@ class CustomsAgentsController < ApplicationController
       :encomienda_documento,
       :pago_documento
     )
-    permitted[:client_id] = sanitize_client_id(permitted[:client_id])
+    if bl_house_line&.client_id.present?
+      permitted.delete(:client_id)
+    else
+      permitted[:client_id] = sanitize_client_id(permitted[:client_id])
+    end
 
     if bl_house_line
       BlHouseLine::DOCUMENT_FIELDS.each do |doc|

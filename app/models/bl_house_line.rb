@@ -5,7 +5,7 @@ class BlHouseLine < ApplicationRecord
 
   # Relationships
   belongs_to :customs_agent, class_name: "Entity", optional: true
-  belongs_to :customs_agent_patent, optional: true
+  belongs_to :customs_broker, class_name: "Entity", optional: true
   belongs_to :client, class_name: "Entity", optional: true
   belongs_to :container, optional: true
   belongs_to :packaging, optional: true
@@ -54,6 +54,7 @@ class BlHouseLine < ApplicationRecord
   validates :volumen, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :clase_imo, length: { maximum: 4 }, allow_blank: true
   validates :tipo_imo, length: { maximum: 4 }, allow_blank: true
+  validate :broker_matches_agency
 
   scope :visible_to_customs_agent, -> { where(hidden_from_customs_agent: false) }
 
@@ -139,6 +140,14 @@ class BlHouseLine < ApplicationRecord
     end
   rescue StandardError => e
     Rails.logger.error("Failed to create asignación electrónica de carga service for BL #{id}: #{e.message}")
+  end
+
+  def broker_matches_agency
+    return if customs_broker_id.blank? || customs_agent_id.blank?
+
+    unless AgencyBroker.exists?(agency_id: customs_agent_id, broker_id: customs_broker_id)
+      errors.add(:customs_broker_id, "no pertenece a la agencia seleccionada")
+    end
   end
 
   private

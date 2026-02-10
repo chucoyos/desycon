@@ -45,11 +45,6 @@ export default class extends Controller {
         if (addressId) {
           this.loadAddressForm(addressId)
         }
-      } else if (modalId === 'patent-modal') {
-        const patentId = event.currentTarget.dataset.patentId
-        if (patentId) {
-          this.loadPatentForm(patentId)
-        }
       }
     } else {
       console.error('Modal not found:', modalId)
@@ -112,30 +107,4 @@ export default class extends Controller {
     })
   }
 
-  loadPatentForm(patentId) {
-    const container = document.getElementById('edit-patent-form-container')
-    if (!container) return
-
-    container.innerHTML = '<p class="text-gray-500 text-center py-4">Cargando formulario...</p>'
-
-    // Get the entity ID from the current URL
-    const urlParts = window.location.pathname.split('/')
-    const entityId = urlParts[urlParts.indexOf('entities') + 1]
-
-    // Fetch the edit form
-    fetch(`/entities/${entityId}/customs_agent_patents/${patentId}/edit`, {
-      headers: {
-        'Accept': 'text/html',
-        'X-Requested-With': 'XMLHttpRequest'
-      }
-    })
-    .then(response => response.text())
-    .then(html => {
-      container.innerHTML = html
-    })
-    .catch(error => {
-      console.error('Error loading patent form:', error)
-      container.innerHTML = '<p class="text-red-600">Error al cargar el formulario</p>'
-    })
-  }
 }

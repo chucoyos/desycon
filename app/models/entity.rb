@@ -3,7 +3,7 @@ class Entity < ApplicationRecord
   has_many :addresses, as: :addressable, dependent: :destroy
   has_one :fiscal_profile, as: :profileable, dependent: :destroy
 
-  # Relación Agente Aduanal - Clientes
+  # Relación Agencia Aduanal - Clientes
   belongs_to :customs_agent, class_name: "Entity", optional: true
   has_many :clients, class_name: "Entity", foreign_key: "customs_agent_id", dependent: :nullify
 
@@ -18,8 +18,13 @@ class Entity < ApplicationRecord
   has_one :forwarder_profile, class_name: "Forwarder", dependent: :destroy
   has_one :client_profile, class_name: "Client", dependent: :destroy
 
-  # Patentes aduanales (múltiples)
-  has_many :customs_agent_patents, dependent: :destroy
+  # Brokers (agentes aduanales) vinculados a la agencia
+  has_many :agency_broker_links_as_agency, class_name: "AgencyBroker", foreign_key: :agency_id, dependent: :destroy
+  has_many :customs_brokers, through: :agency_broker_links_as_agency, source: :broker
+
+  # Agencias vinculadas a un broker
+  has_many :agency_broker_links_as_broker, class_name: "AgencyBroker", foreign_key: :broker_id, dependent: :destroy
+  has_many :customs_agencies, through: :agency_broker_links_as_broker, source: :agency
 
   # Relaciones de negocio
   has_many :billed_services, class_name: "ContainerService",
@@ -29,30 +34,33 @@ class Entity < ApplicationRecord
   # Nested attributes
   accepts_nested_attributes_for :addresses, allow_destroy: true, reject_if: :all_blank
   accepts_nested_attributes_for :fiscal_profile, reject_if: :all_blank
-  accepts_nested_attributes_for :customs_agent_patents,
-                                allow_destroy: true,
-                                reject_if: :all_blank
+  # No nested brokers here; brokers are managed separately
 
   # Validaciones
   validates :name, presence: true
   validate :validate_addresses_if_present
   validate :validate_fiscal_profile
-  validates_associated :customs_agent_patents
   validate :must_have_at_least_one_role
+  validate :broker_patent_required
+  validate :patent_only_for_broker
+  validates :patent_number, uniqueness: true, allow_blank: true
 
   # Scopes
   scope :consolidators, -> { where(is_consolidator: true) }
   scope :customs_agents, -> { where(is_customs_agent: true) }
+  scope :customs_brokers, -> { where(is_customs_broker: true) }
   scope :forwarders, -> { where(is_forwarder: true) }
   scope :clients, -> { where(is_client: true) }
 
   # Callbacks
+  before_validation :normalize_patent_number
   after_update :sync_profiles
 
   def roles
     roles_array = []
     roles_array << "Consolidador" if is_consolidator
-    roles_array << "Agente Aduanal" if is_customs_agent
+    roles_array << "Agencia Aduanal" if is_customs_agent
+    roles_array << "Agente Aduanal (Broker)" if is_customs_broker
     roles_array << "Forwarder" if is_forwarder
     roles_array << "Cliente" if is_client
     roles_array.join(", ")
@@ -60,10 +68,6 @@ class Entity < ApplicationRecord
 
   def display_name
     "#{name} (#{roles})"
-  end
-
-  def active_patents
-    customs_agent_patents.order(:patent_number)
   end
 
   # Address helper methods
@@ -90,9 +94,27 @@ class Entity < ApplicationRecord
   private
 
   def must_have_at_least_one_role
-    unless is_consolidator || is_customs_agent || is_forwarder || is_client
+    unless is_consolidator || is_customs_agent || is_customs_broker || is_forwarder || is_client
       errors.add(:base, "Debe seleccionar al menos un rol")
     end
+  end
+
+  def broker_patent_required
+    return unless is_customs_broker
+
+    if patent_number.blank?
+      errors.add(:patent_number, "es obligatoria para agentes aduanales")
+    end
+  end
+
+  def patent_only_for_broker
+    return if patent_number.blank? || is_customs_broker
+
+    errors.add(:patent_number, "solo aplica a agentes aduanales")
+  end
+
+  def normalize_patent_number
+    self.patent_number = nil if patent_number.blank?
   end
 
   def addresses_loaded_and_present?

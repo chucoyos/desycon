@@ -2,7 +2,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">Dashboard Agente Aduanal</h1>
+      <h1 class="text-3xl font-bold text-gray-900">Dashboard Agencia Aduanal</h1>
       <p class="mt-2 text-sm text-gray-600">
         Bienvenido <%= current_user.entity.name %> - Gestión de asignaciones de carga
       </p>
@@ -108,7 +108,7 @@
           <%= form.text_field :revalidation_blhouse, value: params[:revalidation_blhouse].presence || params[:blhouse], placeholder: "Ingresa el número de BL House", class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" %>
         </div>
         <div class="flex items-end">
-          <%= form.submit "Buscar y Revalidar", class: "bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" %>
+          <%= form.submit "Buscar y Revalidar", class: "cursor-pointer bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" %>
         </div>
       <% end %>
     </div>

@@ -255,7 +255,7 @@
       <div>
         <%= form.label :bl_master_documento, "BL Master (PDF)", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <div class="relative">
-          <%= form.file_field :bl_master_documento, accept: "application/pdf", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" %>
+          <%= form.file_field :bl_master_documento, accept: "application/pdf", class: "cursor-pointer w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" %>
         </div>
         <% if container.persisted? && container.bl_master_documento.attached? %>
           <p class="mt-2 text-sm text-gray-600 flex items-center gap-2">
@@ -272,7 +272,7 @@
       <div>
         <%= form.label :tarja_documento, "Tarja (PDF)", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <div class="relative">
-          <%= form.file_field :tarja_documento, accept: "application/pdf", class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100" %>
+          <%= form.file_field :tarja_documento, accept: "application/pdf", class: "cursor-pointer w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100" %>
         </div>
         <% if container.persisted? && container.tarja_documento.attached? %>
           <p class="mt-2 text-sm text-gray-600 flex items-center gap-2">
@@ -299,7 +299,7 @@
         </div>
         <h2 class="text-xl font-bold text-gray-900">Servicios</h2>
       </div>
-      <button type="button" id="add-service" class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 shadow-sm hover:shadow-md transition-all duration-200 w-full sm:w-auto">
+      <button type="button" id="add-service" class="cursor-pointer inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 shadow-sm hover:shadow-md transition-all duration-200 w-full sm:w-auto">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>

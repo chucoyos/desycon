@@ -22,6 +22,7 @@
           <% container = bl_house_line.container %>
           <% tarja_present = container&.tarja_documento&.attached? %>
           <% requesting_agent = (@requesting_agent || bl_house_line.customs_agent) %>
+          <% assigned_agency = requesting_agent || bl_house_line.customs_agent %>
           <% available_agents = (@customs_agents || Entity.customs_agents.order(:name)).to_a %>
           <% if requesting_agent.present? %>
             <% available_agents.delete_if { |agent| agent.id == requesting_agent.id } %>
@@ -31,6 +32,12 @@
                label = agent.name
                label += " (solicitante)" if requesting_agent.present? && agent.id == requesting_agent.id
                [label, agent.id]
+             end %>
+          <% broker_links = AgencyBroker.includes(:broker).where(agency_id: available_agents.map(&:id)) %>
+          <% broker_options = broker_links.map do |link|
+               broker = link.broker
+               label = "#{broker.name} - Patente #{broker.patent_number}"
+               [label, broker.id, { data: { group: link.agency_id.to_s } }]
              end %>
 
            <%= form_with model: bl_house_line, url: approve_revalidation_bl_house_line_path(bl_house_line), method: :patch, id: "approval_form", html: { class: "flex flex-col" } do |f| %>
@@ -148,14 +155,14 @@
                   </div>
 
                   <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                    <%= button_tag name: "decision", value: "reject", type: "submit", class: "inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 sm:w-auto", data: { action: "click->approval-wizard#confirmReject" } do %>
+                    <%= button_tag name: "decision", value: "reject", type: "submit", class: "cursor-pointer inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 sm:w-auto", data: { action: "click->approval-wizard#confirmReject" } do %>
                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                       Instrucciones pendientes
                     <% end %>
 
-                    <button type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:w-auto disabled:opacity-60 disabled:cursor-not-allowed" data-approval-wizard-target="continueButton" data-action="click->approval-wizard#handleNext">
+                    <button type="button" class="cursor-pointer inline-flex w-full items-center justify-center gap-2 rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:w-auto disabled:opacity-60 disabled:cursor-not-allowed" data-approval-wizard-target="continueButton" data-action="click->approval-wizard#handleNext">
                       Continuar con asignación
                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -171,8 +178,8 @@
                 <div class="flex items-center justify-between border-b border-slate-100 pb-6">
                   <div>
                     <p class="text-xs font-semibold uppercase tracking-wide text-indigo-500">Paso 2</p>
-                    <h3 class="text-2xl font-semibold text-slate-900">Asignar agente y confirmar patente</h3>
-                    <p class="mt-1 text-sm text-slate-500">Selecciona al agente responsable y su patente. Si no existe tarja, define fecha tentativa y turno.</p>
+                    <h3 class="text-2xl font-semibold text-slate-900">Asignar Agente y confirmar patente</h3>
+                    <p class="mt-1 text-sm text-slate-500">Selecciona al agente aduanal. Si no existe tarja, define fecha tentativa y turno.</p>
                   </div>
                   <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">2 de 2</span>
                 </div>
@@ -180,35 +187,31 @@
                  <div class="mt-6 space-y-6">
                     <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                         <div class="space-y-2">
-                           <%= f.label :customs_agent_id, "Agente Aduanal", class: "text-sm font-medium text-slate-700" %>
-                             <%= select_tag "bl_house_line[customs_agent_id]",
-                               options_for_select(agent_options, bl_house_line.customs_agent_id || requesting_agent&.id),
-                               class: "w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 transition focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-100",
-                             data: { dependent_select_target: "source", action: "change->dependent-select#filter" },
-                             required: true,
-                             id: "bl_house_line_customs_agent_id"
-                           %>
+                          <%= f.label :customs_agent_id, "Agencia Aduanal", class: "text-sm font-medium text-slate-700" %>
+                          <% if assigned_agency.present? %>
+                            <div class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800">
+                              <%= assigned_agency.name %>
+                            </div>
+                            <%= hidden_field_tag "bl_house_line[customs_agent_id]", assigned_agency.id, id: "bl_house_line_customs_agent_id", data: { dependent_select_target: "source" } %>
+                          <% else %>
+                            <%= select_tag "bl_house_line[customs_agent_id]",
+                              options_for_select(agent_options, bl_house_line.customs_agent_id),
+                              class: "w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 transition focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-100",
+                              data: { dependent_select_target: "source", action: "change->dependent-select#filter" },
+                              required: true,
+                              id: "bl_house_line_customs_agent_id"
+                            %>
+                          <% end %>
                         </div>
                         <div class="space-y-2">
-                           <%= f.label :customs_agent_patent_id, "Patente de Agente Aduanal", class: "text-sm font-medium text-slate-700" %>
-                          <% 
-                            # Pre-fetch all patents for all agents to enable client-side filtering
-                            # Group them by agent_id for easy display
-                              all_patents = CustomsAgentPatent.where(entity_id: available_agents.map(&:id)).order(:patent_number)
-                           %>
-                           <select name="bl_house_line[customs_agent_patent_id]" id="bl_house_line_customs_agent_patent_id" 
-                                   class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 transition focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-100"
-                                   required
-                                   data-dependent-select-target="target">
-                               <option value="">Seleccione una patente</option>
-                               <% all_patents.each do |patent| %>
-                                   <option value="<%= patent.id %>" 
-                                           data-group="<%= patent.entity_id %>"
-                                           <%= 'selected' if bl_house_line.customs_agent_patent_id == patent.id %>>
-                                       <%= patent.patent_number %>
-                                   </option>
-                               <% end %>
-                           </select>
+                          <%= f.label :customs_broker_id, "Agente Aduanal", class: "text-sm font-medium text-slate-700" %>
+                          <%= f.select :customs_broker_id,
+                            options_for_select(broker_options, bl_house_line.customs_broker_id),
+                            { include_blank: "Seleccione un Agente" },
+                            class: "w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 transition focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-100",
+                            required: true,
+                            data: { dependent_select_target: "target" }
+                          %>
                         </div>
                     </div>
 
@@ -252,7 +255,7 @@
                       Volver a documentos
                     </button>
 
-                    <%= button_tag name: "decision", value: "assign", type: "submit", class: "inline-flex w-full items-center justify-center gap-2 rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:w-auto" do %>
+                    <%= button_tag name: "decision", value: "assign", type: "submit", class: "cursor-pointer inline-flex w-full items-center justify-center gap-2 rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:w-auto" do %>
                       Finalizar Aprobación
                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />

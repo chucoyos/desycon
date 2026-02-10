@@ -16,6 +16,7 @@ class EntitiesController < ApplicationController
     @entities = @entities.where("name ILIKE ?", "%#{params[:name]}%") if params[:name].present?
     @entities = @entities.where(is_consolidator: true) if params[:role] == "consolidator"
     @entities = @entities.where(is_customs_agent: true) if params[:role] == "customs_agent"
+    @entities = @entities.where(is_customs_broker: true) if params[:role] == "customs_broker"
     @entities = @entities.where(is_forwarder: true) if params[:role] == "forwarder"
     @entities = @entities.where(is_client: true) if params[:role] == "client"
 
@@ -30,10 +31,10 @@ class EntitiesController < ApplicationController
 
   def new
     @entity = Entity.new
+    @entity.is_customs_broker = true if params[:role] == "customs_broker"
     # Build associated objects for the form
     @entity.build_fiscal_profile
     @entity.addresses.build
-    @entity.customs_agent_patents.build
     authorize @entity
   end
 
@@ -49,7 +50,6 @@ class EntitiesController < ApplicationController
     # Ensure at least one address field is available for editing
     @entity.addresses.build if @entity.addresses.empty?
     @entity.build_fiscal_profile unless @entity.fiscal_profile.present?
-    @entity.customs_agent_patents.build if @entity.is_customs_agent? && @entity.customs_agent_patents.empty?
     authorize @entity
   end
 
@@ -78,7 +78,6 @@ class EntitiesController < ApplicationController
       # Rebuild associated objects for form display when validation fails
       @entity.build_fiscal_profile unless @entity.fiscal_profile
       @entity.addresses.build if @entity.addresses.empty?
-      @entity.customs_agent_patents.build if @entity.customs_agent_patents.empty? && @entity.is_customs_agent?
       render :new, status: :unprocessable_content
     end
   end
@@ -142,7 +141,6 @@ class EntitiesController < ApplicationController
       else
         @entity.build_fiscal_profile unless @entity.fiscal_profile
         @entity.addresses.build if @entity.addresses.empty?
-        @entity.customs_agent_patents.build if @entity.is_customs_agent? && @entity.customs_agent_patents.empty?
 
         if modal_context
           format.turbo_stream do
@@ -171,7 +169,7 @@ class EntitiesController < ApplicationController
   end
 
   def load_patents
-    # Patents are loaded conditionally in set_entity for customs agents only
+    # Patents are managed via broker entities now
   end
 
   def entity_params
@@ -181,20 +179,18 @@ class EntitiesController < ApplicationController
       :requires_liberacion_documento,
       :requires_encomienda_documento,
       :requires_pago_documento,
+      :patent_number,
       fiscal_profile_attributes: [
         :id, :rfc, :razon_social, :regimen, :uso_cfdi, :forma_pago, :metodo_pago, :_destroy
       ],
       addresses_attributes: [
         :id, :calle, :numero_exterior, :numero_interior, :colonia, :municipio, :localidad,
         :estado, :codigo_postal, :pais, :email, :tipo, :_destroy
-      ],
-      customs_agent_patents_attributes: [
-        :id, :patent_number, :_destroy
       ]
     ]
 
     unless current_user.customs_broker?
-      permitted_attributes += [ :is_consolidator, :is_customs_agent, :is_forwarder, :is_client, :customs_agent_id ]
+      permitted_attributes += [ :is_consolidator, :is_customs_agent, :is_customs_broker, :is_forwarder, :is_client, :customs_agent_id ]
     end
 
     params.require(:entity).permit(permitted_attributes)

@@ -1,6 +1,11 @@
-<% 
-  page_title = current_user.customs_broker? ? "Nuevo Cliente" : "Nueva Entidad"
-  page_description = current_user.customs_broker? ? "Registrar un nuevo cliente" : "Crear una nueva entidad en el sistema"
+<%
+  if params[:role] == "customs_broker"
+    page_title = "Nuevo Agente Aduanal"
+    page_description = "Crear un agente aduanal con patente"
+  else
+    page_title = current_user.customs_broker? ? "Nuevo Cliente" : "Nueva Entidad"
+    page_description = current_user.customs_broker? ? "Registrar un nuevo cliente" : "Crear una nueva entidad en el sistema"
+  end
 %>
 <% content_for :title, page_title %>
 

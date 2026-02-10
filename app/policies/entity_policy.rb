@@ -31,7 +31,7 @@ class EntityPolicy < ApplicationPolicy
     user.present?
   end
 
-  def manage_patents?
+  def manage_brokers?
     user.present? && user.admin_or_executive?
   end
 

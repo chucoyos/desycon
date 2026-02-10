@@ -122,8 +122,8 @@
             <%= form.check_box :hidden_from_customs_agent, class: "h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500" %>
           </div>
           <div>
-            <%= form.label :hidden_from_customs_agent, "Ocultar al agente aduanal", class: "text-sm font-semibold text-amber-900" %>
-            <p class="text-xs text-amber-700">Si se marca, la partida no aparecerá en el dashboard ni en la búsqueda del agente aduanal.</p>
+            <%= form.label :hidden_from_customs_agent, "Ocultar a la agencia aduanal", class: "text-sm font-semibold text-amber-900" %>
+            <p class="text-xs text-amber-700">Si se marca, la partida no aparecerá en el dashboard ni en la búsqueda de la agencia aduanal.</p>
           </div>
         </div>
       <% end %>
@@ -138,7 +138,7 @@
     </div>
   </div>
 
-  <!-- Información de Agente Aduanal y Cliente -->
+  <!-- Información de Agencia Aduanal y Cliente -->
   <% if bl_house_line.persisted? %>
   <div class="bg-white shadow-md rounded-xl p-5 sm:p-6 border border-gray-100">
     <div class="flex items-center gap-3 mb-5">
@@ -150,16 +150,30 @@
       <h2 class="text-xl font-bold text-gray-900">Partes Involucradas</h2>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5" data-controller="dependent-select">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
       <div>
-        <%= form.label :customs_agent_id, "Agente Aduanal", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+          <%= form.label :customs_agent_id, "Agencia Aduanal", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <%= form.collection_select :customs_agent_id, @customs_agents, :id, :name,
-              { include_blank: "Seleccionar agente aduanal (opcional)" },
+            { include_blank: "Seleccionar agencia aduanal (opcional)" },
               class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200",
-              data: { dependent_select_target: "source", action: "change->dependent-select#filter" } %>
+              data: { action: "change->dependent-select#filter" } %>
       </div>
 
-      <div>
+      <div data-controller="dependent-select" data-dependent-select-source-selector-value="#bl_house_line_customs_agent_id">
+        <%= form.label :customs_broker_id, "Agente Aduanal", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <% broker_links = AgencyBroker.includes(:broker).where(agency_id: @customs_agents.map(&:id)) %>
+        <% broker_options = broker_links.map do |link|
+             broker = link.broker
+             ["#{broker.name} - Patente #{broker.patent_number}", broker.id, { data: { group: link.agency_id.to_s } }]
+           end %>
+        <%= form.select :customs_broker_id,
+              options_for_select(broker_options, bl_house_line.customs_broker_id),
+              { include_blank: "Seleccionar agente aduanal" },
+              class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200",
+              data: { dependent_select_target: "target" } %>
+      </div>
+
+      <div data-controller="dependent-select" data-dependent-select-source-selector-value="#bl_house_line_customs_agent_id">
         <%= form.label :client_id, "Cliente", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <% client_options = @clients.map do |client|
              [client.name, client.id, { data: { group: client.customs_agent_id.present? ? client.customs_agent_id.to_s : "" } }]
@@ -245,7 +259,7 @@
           <h2 class="text-xl font-bold text-gray-900">Servicios</h2>
         </div>
         <% unless is_customs_agent %>
-          <button type="button" id="add-bl-service" class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 shadow-sm hover:shadow-md transition-all duration-200 w-full sm:w-auto">
+          <button type="button" id="add-bl-service" class="cursor-pointer inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 shadow-sm hover:shadow-md transition-all duration-200 w-full sm:w-auto">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
@@ -291,10 +305,10 @@
             Documento validado; no se puede modificar.
           </div>
         <% else %>
-          <%= form.file_field :bl_endosado_documento, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100" %>
+          <%= form.file_field :bl_endosado_documento, class: "cursor-pointer w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100" %>
         <% end %>
         <% if bl_house_line.persisted? && bl_house_line.bl_endosado_documento.attached? %>
-          <p class="mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.bl_endosado_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
+          <p class="cursor-pointer mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.bl_endosado_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
         <% end %>
       </div>
 
@@ -307,10 +321,10 @@
             Documento validado; no se puede modificar.
           </div>
         <% else %>
-          <%= form.file_field :liberacion_documento, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100" %>
+          <%= form.file_field :liberacion_documento, class: "cursor-pointer w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100" %>
         <% end %>
         <% if bl_house_line.persisted? && bl_house_line.liberacion_documento.attached? %>
-          <p class="mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.liberacion_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
+          <p class="cursor-pointer mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.liberacion_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
         <% end %>
       </div>
 
@@ -323,10 +337,10 @@
             Documento validado; no se puede modificar.
           </div>
         <% else %>
-          <%= form.file_field :encomienda_documento, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100" %>
+          <%= form.file_field :encomienda_documento, class: "cursor-pointer w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100" %>
         <% end %>
         <% if bl_house_line.persisted? && bl_house_line.encomienda_documento.attached? %>
-          <p class="mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.encomienda_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
+          <p class="cursor-pointer mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.encomienda_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
         <% end %>
       </div>
 
@@ -339,10 +353,10 @@
             Documento validado; no se puede modificar.
           </div>
         <% else %>
-          <%= form.file_field :pago_documento, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100" %>
+          <%= form.file_field :pago_documento, class: "cursor-pointer w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100" %>
         <% end %>
         <% if bl_house_line.persisted? && bl_house_line.pago_documento.attached? %>
-          <p class="mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.pago_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
+          <p class="cursor-pointer mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.pago_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
         <% end %>
       </div>
     </div>

@@ -39,7 +39,7 @@ class RevalidationPdf
         [ "Contiene:", @bl_house_line.contiene ],
         [ "Peso:", "#{@bl_house_line.peso} KG" ],
         [ "Volumen:", "#{@bl_house_line.volumen} M³" ],
-        [ "Agente Aduanal:", customs_agent_name ],
+        [ "Agencia Aduanal:", customs_agent_name ],
         [ "Patente:", patent_number ],
         [ "Consolidador:", consolidator_name ],
         [ "Estatus:", status_name ],
@@ -86,11 +86,7 @@ class RevalidationPdf
   end
 
   def patent_number
-    if @bl_house_line.respond_to?(:customs_agent_patent) && @bl_house_line.customs_agent_patent.present?
-      @bl_house_line.customs_agent_patent.patent_number
-    else
-      @bl_house_line.customs_agent&.customs_agent_patents&.first&.patent_number || "N/A"
-    end
+    @bl_house_line.customs_broker&.patent_number || "N/A"
   end
 
   def status_name

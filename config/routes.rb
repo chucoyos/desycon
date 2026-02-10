@@ -49,7 +49,7 @@ Rails.application.routes.draw do
 
   resources :entities do
     get :new_address, on: :collection
-    resources :customs_agent_patents, only: [ :index, :new, :create, :update, :destroy, :edit ]
+    resources :agency_brokers, only: [ :create, :destroy ]
     resources :addresses, controller: "entity_addresses", only: [ :create, :update, :destroy, :edit ]
   end
   resources :ports
@@ -71,7 +71,7 @@ Rails.application.routes.draw do
       get :documents
       get :reassign
       patch :perform_reassign
-      get :reassign_patents
+      get :reassign_brokers
     end
   end
   resources :service_catalogs

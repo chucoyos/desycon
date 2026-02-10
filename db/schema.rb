@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_05_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_09_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -62,6 +62,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_05_100000) do
     t.index ["codigo_postal"], name: "index_addresses_on_codigo_postal"
   end
 
+  create_table "agency_brokers", force: :cascade do |t|
+    t.bigint "agency_id", null: false
+    t.bigint "broker_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agency_id", "broker_id"], name: "index_agency_brokers_on_agency_id_and_broker_id", unique: true
+    t.index ["agency_id"], name: "index_agency_brokers_on_agency_id"
+    t.index ["broker_id"], name: "index_agency_brokers_on_broker_id"
+  end
+
   create_table "bl_house_line_services", force: :cascade do |t|
     t.bigint "billed_to_entity_id"
     t.bigint "bl_house_line_id", null: false
@@ -104,7 +114,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_05_100000) do
     t.text "contiene"
     t.datetime "created_at", null: false
     t.bigint "customs_agent_id"
-    t.bigint "customs_agent_patent_id"
+    t.bigint "customs_broker_id"
     t.boolean "encomienda_documento_validated", default: false, null: false
     t.date "fecha_despacho"
     t.boolean "hidden_from_customs_agent", default: false, null: false
@@ -122,7 +132,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_05_100000) do
     t.index ["client_id"], name: "index_bl_house_lines_on_client_id"
     t.index ["container_id"], name: "index_bl_house_lines_on_container_id"
     t.index ["customs_agent_id"], name: "index_bl_house_lines_on_customs_agent_id"
-    t.index ["customs_agent_patent_id"], name: "index_bl_house_lines_on_customs_agent_patent_id"
+    t.index ["customs_broker_id"], name: "index_bl_house_lines_on_customs_broker_id"
     t.index ["hidden_from_customs_agent"], name: "index_bl_house_lines_on_hidden_from_customs_agent"
     t.index ["packaging_id"], name: "index_bl_house_lines_on_packaging_id"
     t.index ["telex"], name: "index_bl_house_lines_on_telex"
@@ -218,23 +228,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_05_100000) do
     t.index ["voyage_id"], name: "index_containers_on_voyage_id"
   end
 
-  create_table "customs_agent_patents", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.bigint "entity_id", null: false
-    t.string "patent_number", null: false
-    t.datetime "updated_at", null: false
-    t.index ["entity_id", "patent_number"], name: "index_patents_on_entity_and_number", unique: true
-    t.index ["entity_id"], name: "index_customs_agent_patents_on_entity_id"
-  end
-
   create_table "entities", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "customs_agent_id"
     t.boolean "is_client", default: false
     t.boolean "is_consolidator", default: false
     t.boolean "is_customs_agent", default: false
+    t.boolean "is_customs_broker", default: false, null: false
     t.boolean "is_forwarder", default: false
     t.string "name", null: false
+    t.string "patent_number"
     t.boolean "requires_bl_endosado_documento", default: true, null: false
     t.boolean "requires_encomienda_documento", default: true, null: false
     t.boolean "requires_liberacion_documento", default: true, null: false
@@ -242,6 +245,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_05_100000) do
     t.datetime "updated_at", null: false
     t.index ["customs_agent_id"], name: "index_entities_on_customs_agent_id"
     t.index ["name"], name: "index_entities_on_name"
+    t.index ["patent_number"], name: "index_entities_on_patent_number", unique: true
   end
 
   create_table "fiscal_profiles", force: :cascade do |t|
@@ -386,14 +390,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_05_100000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "agency_brokers", "entities", column: "agency_id"
+  add_foreign_key "agency_brokers", "entities", column: "broker_id"
   add_foreign_key "bl_house_line_services", "bl_house_lines"
   add_foreign_key "bl_house_line_services", "entities", column: "billed_to_entity_id"
   add_foreign_key "bl_house_line_services", "service_catalogs"
   add_foreign_key "bl_house_line_status_histories", "bl_house_lines"
   add_foreign_key "bl_house_lines", "containers"
-  add_foreign_key "bl_house_lines", "customs_agent_patents"
   add_foreign_key "bl_house_lines", "entities", column: "client_id"
   add_foreign_key "bl_house_lines", "entities", column: "customs_agent_id"
+  add_foreign_key "bl_house_lines", "entities", column: "customs_broker_id"
   add_foreign_key "bl_house_lines", "packagings"
   add_foreign_key "clients", "entities"
   add_foreign_key "consolidators", "entities"
@@ -407,7 +413,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_05_100000) do
   add_foreign_key "containers", "shipping_lines"
   add_foreign_key "containers", "vessels"
   add_foreign_key "containers", "voyages"
-  add_foreign_key "customs_agent_patents", "entities"
   add_foreign_key "entities", "entities", column: "customs_agent_id"
   add_foreign_key "forwarders", "entities"
   add_foreign_key "notifications", "users", column: "actor_id"

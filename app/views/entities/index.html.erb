@@ -1,6 +1,6 @@
 <%
   page_title = current_user.customs_broker? ? "Mis Clientes" : "Entidades"
-  page_subtitle = current_user.customs_broker? ? "Gestión de mis clientes" : "Gestión de consolidadores, agentes aduanales, forwarders y clientes"
+  page_subtitle = current_user.customs_broker? ? "Gestión de mis clientes" : "Gestión de consolidadores, agencias aduanales, agentes aduanales, forwarders y clientes"
 %>
 <% content_for :title, page_title %>
 
@@ -85,7 +85,8 @@
                 <%= f.select :role, options_for_select([
                   ["Todos los roles", ""],
                   ["Consolidador", "consolidator"],
-                  ["Agente Aduanal", "customs_agent"],
+                  ["Agencia Aduanal", "customs_agent"],
+                  ["Agente Aduanal", "customs_broker"],
                   ["Forwarder", "forwarder"],
                   ["Cliente", "client"]
                 ], params[:role]), {},
@@ -136,7 +137,8 @@
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       Rol: <%= {
                         "consolidator" => "Consolidador",
-                        "customs_agent" => "Agente Aduanal",
+                        "customs_agent" => "Agencia Aduanal",
+                        "customs_broker" => "Agente Aduanal",
                         "forwarder" => "Forwarder",
                         "client" => "Cliente"
                       }[params[:role]] %>
@@ -188,7 +190,10 @@
                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">Consolidador</span>
                   <% end %>
                   <% if entity.is_customs_agent %>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">Agente Aduanal</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">Agencia Aduanal</span>
+                  <% end %>
+                  <% if entity.is_customs_broker %>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">Agente Aduanal</span>
                   <% end %>
                   <% if entity.is_forwarder %>
                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Forwarder</span>
@@ -282,7 +287,10 @@
               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">Consolidador</span>
             <% end %>
             <% if entity.is_customs_agent %>
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">Agente Aduanal</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">Agencia Aduanal</span>
+            <% end %>
+            <% if entity.is_customs_broker %>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">Agente Aduanal</span>
             <% end %>
             <% if entity.is_forwarder %>
               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Forwarder</span>

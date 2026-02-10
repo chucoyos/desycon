@@ -3,7 +3,7 @@ class BlHouseLinesController < ApplicationController
   IMPORT_SIZE_LIMIT = 2.megabytes
 
   before_action :authenticate_user!
-  before_action :set_bl_house_line, only: %i[show edit update destroy revalidation_approval approve_revalidation documents reassign perform_reassign reassign_patents]
+  before_action :set_bl_house_line, only: %i[show edit update destroy revalidation_approval approve_revalidation documents reassign perform_reassign reassign_brokers]
   after_action :verify_authorized, except: :index
 
   # GET /bl_house_lines
@@ -296,9 +296,8 @@ class BlHouseLinesController < ApplicationController
     service = BlHouseLines::ReassignService.new(
       bl_house_line: @bl_house_line,
       new_customs_agent_id: reassign_params[:new_customs_agent_id],
-      new_customs_agent_patent_id: reassign_params[:new_customs_agent_patent_id],
+      new_customs_broker_id: reassign_params[:new_customs_broker_id],
       new_client_id: reassign_params[:new_client_id],
-      hide_original: reassign_params[:hide_original],
       current_user: current_user
     )
 
@@ -312,20 +311,20 @@ class BlHouseLinesController < ApplicationController
     render :reassign, status: :unprocessable_entity
   end
 
-  # GET /bl_house_lines/1/reassign_patents
-  def reassign_patents
+  # GET /bl_house_lines/1/reassign_brokers
+  def reassign_brokers
     authorize @bl_house_line, :reassign?
     load_reassign_collections
 
     render turbo_stream: [
       turbo_stream.replace(
-        "patent_select",
-        view_context.turbo_frame_tag("patent_select") do
+        "broker_select",
+        view_context.turbo_frame_tag("broker_select") do
           view_context.render(
-            partial: "bl_house_lines/patent_select",
+            partial: "bl_house_lines/broker_select",
             locals: {
-              patents: @customs_agent_patents,
-              selected_patent_id: params[:selected_patent_id]
+              brokers: @customs_brokers,
+              selected_broker_id: params[:selected_broker_id]
             }
           )
         end
@@ -402,7 +401,7 @@ class BlHouseLinesController < ApplicationController
   def bl_house_line_params
     params.require(:bl_house_line).permit(
       :blhouse, :partida, :cantidad, :contiene, :marcas, :peso, :volumen,
-      :customs_agent_id, :client_id, :container_id, :packaging_id, :status, :fecha_despacho,
+      :customs_agent_id, :customs_broker_id, :client_id, :container_id, :packaging_id, :status, :fecha_despacho,
       :clase_imo,
       :tipo_imo,
       :telex,
@@ -435,21 +434,19 @@ class BlHouseLinesController < ApplicationController
   def reassign_params
     raw = params.require(:reassign).permit(
       :new_customs_agent_id,
-      :new_customs_agent_patent_id,
-      :new_client_id,
-      :hide_original
+      :new_customs_broker_id,
+      :new_client_id
     )
 
+    raw[:new_customs_broker_id] = raw[:new_customs_broker_id].presence || (raise ActionController::ParameterMissing, :new_customs_broker_id)
     raw[:new_client_id] = raw[:new_client_id].presence || (raise ActionController::ParameterMissing, :new_client_id)
-
-    raw[:hide_original] = ActiveModel::Type::Boolean.new.cast(raw.fetch(:hide_original, true))
     raw
   end
 
   def revalidation_params
     if params[:bl_house_line].present?
       params.require(:bl_house_line).permit(
-        :customs_agent_patent_id,
+        :customs_broker_id,
         :customs_agent_id,
         :bl_endosado_documento_validated,
         :liberacion_documento_validated,
@@ -540,7 +537,7 @@ class BlHouseLinesController < ApplicationController
 
   def load_reassign_collections
     @customs_agents = Entity.customs_agents.where.not(id: @bl_house_line.customs_agent_id).order(:name)
-    selected_agent_id = params[:agent_id] || params.dig(:reassign, :new_customs_agent_id)
+    selected_agent_id = params[:agent_id] || params.dig(:reassign, :new_customs_agent_id) || @bl_house_line.customs_agent_id
 
     @clients = if selected_agent_id.present?
       Entity.clients.where(customs_agent_id: selected_agent_id).order(:name)
@@ -548,10 +545,10 @@ class BlHouseLinesController < ApplicationController
       Entity.none
     end
 
-    @customs_agent_patents = if selected_agent_id.present?
-      CustomsAgentPatent.where(entity_id: selected_agent_id).order(:patent_number)
+    @customs_brokers = if selected_agent_id.present?
+      AgencyBroker.includes(:broker).where(agency_id: selected_agent_id).map(&:broker).sort_by { |broker| broker.name.to_s }
     else
-      CustomsAgentPatent.none
+      []
     end
   end
 end

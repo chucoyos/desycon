@@ -32,6 +32,14 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3 h-3 mr-1">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25a6 6 0 0 0-1.5-4.5V3.75a.75.75 0 0 1 1.5 0v2.25a6 6 0 0 0 1.5 4.5V21m0 0h-9m9 0h3m-3 0v-8.25a6 6 0 0 0 1.5-4.5V3.75a.75.75 0 0 0-1.5 0v2.25a6 6 0 0 0-1.5 4.5V21m0 0h-9m9 0h3" />
           </svg>
+          Agencia Aduanal
+        </span>
+      <% end %>
+      <% if entity.is_customs_broker %>
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3 h-3 mr-1">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
           Agente Aduanal
         </span>
       <% end %>
@@ -51,7 +59,7 @@
           Cliente
         </span>
       <% end %>
-      <% if !entity.is_consolidator && !entity.is_customs_agent && !entity.is_forwarder && !entity.is_client %>
+      <% if !entity.is_consolidator && !entity.is_customs_agent && !entity.is_customs_broker && !entity.is_forwarder && !entity.is_client %>
         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
           Sin roles asignados
         </span>

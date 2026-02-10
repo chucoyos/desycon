@@ -1,0 +1,58 @@
+<div id="brokers_section" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-slate-50 to-slate-100 border-b border-gray-200">
+    <div class="flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-indigo-600">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+      <h2 class="text-base sm:text-lg font-semibold text-gray-900">Agentes Aduanales</h2>
+    </div>
+  </div>
+
+  <div class="px-4 sm:px-6 py-4 space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <p class="text-sm font-semibold text-gray-700">Agentes vinculados</p>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <% if entity.customs_brokers.any? %>
+            <% entity.customs_brokers.order(:name).each do |broker| %>
+              <span class="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                <span><%= broker.name %></span>
+                <span class="text-indigo-400">•</span>
+                <span>Patente <%= broker.patent_number %></span>
+                <%= button_to entity_agency_broker_path(entity, broker.agency_broker_links_as_broker.find_by(agency_id: entity.id)),
+                  method: :delete,
+                  class: "ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-indigo-400 hover:text-indigo-700",
+                  title: "Desvincular Agente",
+                  data: { turbo_confirm: "¿Deseas desvincular este Agente?" } do %>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                <% end %>
+              </span>
+            <% end %>
+          <% else %>
+            <span class="text-sm text-gray-500">No hay agentes vinculados.</span>
+          <% end %>
+        </div>
+      </div>
+
+      <div>
+        <p class="text-sm font-semibold text-gray-700">Vincular agente</p>
+        <%= form_with url: entity_agency_brokers_path(entity), method: :post, class: "mt-2 flex flex-col gap-3" do |form| %>
+          <%= form.collection_select :broker_id,
+              Entity.customs_brokers.where.not(id: entity.customs_brokers.select(:id)).order(:name),
+              :id,
+              :name,
+              { include_blank: "Selecciona un Agente" },
+              class: "w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" %>
+          <%= form.submit "Vincular agente",
+              class: "inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" %>
+        <% end %>
+        <div class="mt-2 text-xs text-gray-500">
+          <%= link_to "Crear nuevo agente", new_entity_path(role: "customs_broker"), class: "text-indigo-600 hover:text-indigo-800 font-semibold" %>
+          y luego vincularlo a la agencia.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

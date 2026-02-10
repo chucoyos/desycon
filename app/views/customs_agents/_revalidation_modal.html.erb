@@ -93,7 +93,7 @@
 
           <div class="flex items-center justify-between gap-3">
             <p class="text-sm text-gray-600">Confirma o ajusta cliente antes de subir documentos.</p>
-            <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition" data-action="click->revalidation-wizard#goToDocuments">
+            <button type="button" class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition" data-action="click->revalidation-wizard#goToDocuments">
               Continuar a documentos
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5-5 5M6 5h6" />
@@ -163,7 +163,7 @@
               </div>
             </div>
             <div class="flex items-center gap-2">
-              <%= form.submit "Enviar revalidación", class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition cursor-pointer" %>
+              <%= form.submit "Solicitar Revalidación", class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition cursor-pointer" %>
             </div>
           </div>
         </div>

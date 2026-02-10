@@ -1,43 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["patentsContainer", "addressesContainer"]
-
-  addPatent(event) {
-    event.preventDefault()
-    const container = document.getElementById('patents-container')
-    const newId = new Date().getTime()
-    const template = `
-      <div class="patent-field-group flex items-center gap-2 mb-3">
-        <input type="text" 
-               name="entity[customs_agent_patents_attributes][${newId}][patent_number]" 
-               class="flex-1 px-3 py-2 border-2 border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900"
-               placeholder="Número de patente">
-        <input type="hidden" name="entity[customs_agent_patents_attributes][${newId}][_destroy]" value="false">
-        <button type="button" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150 flex-shrink-0" data-action="click->entity-form#removePatent" title="Eliminar patente">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-    `
-    container.insertAdjacentHTML('beforeend', template)
-  }
-
-  removePatent(event) {
-    event.preventDefault()
-    const fieldGroup = event.currentTarget.closest('.patent-field-group')
-    const destroyInput = fieldGroup.querySelector('input[name*="[_destroy]"]')
-    
-    if (destroyInput && fieldGroup.querySelector('input[type="hidden"][name*="[id]"]')) {
-      // Existing record - mark for destruction
-      destroyInput.value = 'true'
-      fieldGroup.style.display = 'none'
-    } else {
-      // New record - just remove from DOM
-      fieldGroup.remove()
-    }
-  }
+  static targets = ["addressesContainer"]
 
   addAddress(event) {
     event.preventDefault()

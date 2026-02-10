@@ -1,0 +1,6 @@
+<% options = brokers.map { |broker| ["#{broker.name} - Patente #{broker.patent_number}", broker.id] } %>
+<%= select_tag "reassign[new_customs_broker_id]",
+  options_for_select(options, selected_broker_id),
+  include_blank: "Selecciona un agente aduanal",
+  class: "w-full appearance-none h-12 rounded-xl border border-slate-200 bg-white shadow-inner shadow-slate-50 px-3 pr-10 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition",
+  required: true %>
