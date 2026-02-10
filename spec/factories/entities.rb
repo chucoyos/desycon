@@ -1,17 +1,24 @@
 FactoryBot.define do
+  sequence(:broker_patent_number) { |n| "#{3000 + n}" }
+
   factory :entity do
     sequence(:name) { |n| "Entidad #{n}" }
     is_consolidator { false }
     is_customs_agent { false }
+    is_customs_broker { false }
     is_forwarder { false }
     is_client { true }
-
     trait :consolidator do
       is_consolidator { true }
     end
 
     trait :customs_agent do
       is_customs_agent { true }
+    end
+
+    trait :customs_broker do
+      is_customs_broker { true }
+      patent_number { generate(:broker_patent_number) }
     end
 
     trait :forwarder do
@@ -41,11 +48,7 @@ FactoryBot.define do
     end
 
     trait :with_patents do
-      customs_agent
-
-      after(:create) do |entity|
-        create_list(:customs_agent_patent, 2, entity: entity)
-      end
+      customs_broker
     end
 
     trait :client_of_customs_agent do

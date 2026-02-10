@@ -69,24 +69,18 @@ RSpec.describe "Entities", type: :system do
     end
   end
 
-  describe "patent creation" do
+  describe "patent update" do
     before do
-      entity.update(is_customs_agent: true)
+      entity.update(is_customs_broker: true)
       visit edit_entity_path(entity)
     end
 
-    it "creates a new patent" do
-      # Click new patent button
-      find("#add-patent-btn").click
+    it "updates the patent number" do
+      check "Agente Aduanal"
+      fill_in "entity_patent_number", with: "123456789"
+      click_button "Actualizar Entidad"
 
-      # Fill and submit patent form
-      within "#new_patent" do
-        fill_in "customs_agent_patent_patent_number", with: "123456789"
-        click_button "Guardar"
-      end
-
-      # Verify success message
-      expect(page).to have_text("Patente agregada exitosamente")
+      expect(page).to have_text("Entidad actualizada exitosamente")
       expect(page).to have_text("123456789")
     end
   end
