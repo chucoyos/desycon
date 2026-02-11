@@ -16,6 +16,10 @@ class ApplicationController < ActionController::Base
     default_signed_in_path(resource)
   end
 
+  def after_sign_out_path_for(_resource_or_scope)
+    root_path
+  end
+
   # Pundit: catch authorization errors
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
