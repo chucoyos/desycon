@@ -65,31 +65,16 @@ RSpec.describe "Notifications UI", type: :system do
     end
   end
 
-  describe "marking notifications as read" do
-    it "updates notification styling when marked as read" do
-      notification = Notification.create!(recipient: user, actor: user, notifiable: bl_house_line, action: "test action", read_at: nil)
+  describe "opening notifications" do
+    it "navigates to the related partida" do
+      Notification.create!(recipient: user, actor: user, notifiable: bl_house_line, action: "test action")
 
       visit notifications_path
 
       expect(page).to have_content("test action")
 
-      click_button "Leído"
-
-      # Just check that the notification is still there (not removed)
-      expect(page).to have_content("test action")
-    end
-
-    it "removes the ping animation after marking as read" do
-      notification = Notification.create!(recipient: user, actor: user, notifiable: bl_house_line, action: "test action", read_at: nil)
-
-      visit notifications_path
-
-      expect(page).to have_content("test action")
-
-      click_button "Leído"
-
-      # Just check that the action completed
-      expect(page).to have_content("test action")
+      click_link "Partida #{bl_house_line.blhouse}"
+      expect(page).to have_current_path(bl_house_line_path(bl_house_line))
     end
   end
 
@@ -103,19 +88,13 @@ RSpec.describe "Notifications UI", type: :system do
     end
   end
 
-  describe "deleting notifications" do
-    it "removes notification from the list" do
-      notification = Notification.create!(recipient: user, actor: user, notifiable: bl_house_line, action: "test action")
+  describe "notification list" do
+    it "shows a link to the related partida" do
+      Notification.create!(recipient: user, actor: user, notifiable: bl_house_line, action: "test action")
 
       visit notifications_path
 
-      expect(page).to have_content("test action")
-
-      accept_confirm do
-        click_button "Borrar"
-      end
-
-      expect(page).not_to have_content("test action")
+      expect(page).to have_link("Partida #{bl_house_line.blhouse}")
     end
   end
 

@@ -10,6 +10,7 @@ export default class extends Controller {
 
     fetch(this.urlValue, {
       method: "DELETE",
+      keepalive: true,
       headers: {
         "X-CSRF-Token": csrfToken,
         "Accept": "text/vnd.turbo-stream.html"
