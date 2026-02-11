@@ -11,5 +11,7 @@ require 'rails_helper'
 #   end
 # end
 RSpec.describe PackagingsHelper, type: :helper do
-  pending "add some examples to (or delete) #{__FILE__}"
+  it "exposes the helper" do
+    expect(helper).to be_present
+  end
 end

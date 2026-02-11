@@ -11,5 +11,29 @@ require 'rails_helper'
 #   end
 # end
 RSpec.describe BlHouseLinesHelper, type: :helper do
-  pending "add some examples to (or delete) #{__FILE__}"
+  describe "#bl_house_line_status_badge_class" do
+    it "returns the badge class for known status" do
+      expect(helper.bl_house_line_status_badge_class("activo")).to eq("bg-indigo-100 text-indigo-800")
+    end
+
+    it "falls back to default for unknown status" do
+      expect(helper.bl_house_line_status_badge_class("unknown")).to eq("bg-gray-100 text-gray-800")
+    end
+  end
+
+  describe "#bl_house_line_status_icon" do
+    it "returns an svg string for known status" do
+      expect(helper.bl_house_line_status_icon("activo")).to include("<svg")
+    end
+  end
+
+  describe "#bl_house_line_status_nombre" do
+    it "returns a human label for known status" do
+      expect(helper.bl_house_line_status_nombre("revalidado")).to eq("Revalidado")
+    end
+
+    it "returns Desconocido for nil" do
+      expect(helper.bl_house_line_status_nombre(nil)).to eq("Desconocido")
+    end
+  end
 end
