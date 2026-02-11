@@ -103,14 +103,14 @@ class BlHouseLine < ApplicationRecord
   end
 
   def required_revalidation_documents
-    agent = customs_agent
-    return DOCUMENT_FIELDS unless agent
+    consolidator = container&.consolidator_entity
+    return DOCUMENT_FIELDS unless consolidator
 
     required = []
-    required << :bl_endosado_documento if agent.respond_to?(:requires_bl_endosado_documento?) ? agent.requires_bl_endosado_documento? : true
-    required << :liberacion_documento if agent.respond_to?(:requires_liberacion_documento?) ? agent.requires_liberacion_documento? : true
-    required << :encomienda_documento if agent.respond_to?(:requires_encomienda_documento?) ? agent.requires_encomienda_documento? : true
-    required << :pago_documento if agent.respond_to?(:requires_pago_documento?) ? agent.requires_pago_documento? : true
+    required << :bl_endosado_documento if consolidator.respond_to?(:requires_bl_endosado_documento?) ? consolidator.requires_bl_endosado_documento? : true
+    required << :liberacion_documento if consolidator.respond_to?(:requires_liberacion_documento?) ? consolidator.requires_liberacion_documento? : true
+    required << :encomienda_documento if consolidator.respond_to?(:requires_encomienda_documento?) ? consolidator.requires_encomienda_documento? : true
+    required << :pago_documento if consolidator.respond_to?(:requires_pago_documento?) ? consolidator.requires_pago_documento? : true
 
     required.presence || DOCUMENT_FIELDS
   end
