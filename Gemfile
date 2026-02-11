@@ -4,7 +4,7 @@ source "https://rubygems.org"
 
 ruby "3.4.1"
 gem "rails", "~> 8.1.1"
-gem "rdoc", "~> 6.16.1"
+gem "rdoc", "~> 7.1.0"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use postgresql as the database for Active Record
