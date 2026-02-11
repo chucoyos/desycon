@@ -2,6 +2,7 @@ class Entity < ApplicationRecord
   # Relaciones polimórficas con tablas existentes
   has_many :addresses, as: :addressable, dependent: :destroy
   has_one :fiscal_profile, as: :profileable, dependent: :destroy
+  has_many :users, dependent: :restrict_with_error
 
   # Relación Agencia Aduanal - Clientes
   belongs_to :customs_agent, class_name: "Entity", optional: true

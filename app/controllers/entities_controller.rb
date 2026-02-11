@@ -158,8 +158,14 @@ class EntitiesController < ApplicationController
   def destroy
     authorize @entity
 
-    @entity.destroy
-    redirect_to entities_path, notice: "Entidad eliminada exitosamente."
+    if @entity.destroy
+      redirect_to entities_path, notice: "Entidad eliminada exitosamente."
+    else
+      message = @entity.errors.full_messages.to_sentence.presence || "No se pudo eliminar la entidad."
+      redirect_to entities_path, alert: message
+    end
+  rescue ActiveRecord::InvalidForeignKey
+    redirect_to entities_path, alert: "No se puede eliminar la entidad porque tiene usuarios asociados."
   end
 
   private
