@@ -1,5 +1,9 @@
 require 'rails_helper'
 
 RSpec.describe "home/index.html.tailwindcss", type: :view do
-  pending "add some examples to (or delete) #{__FILE__}"
+  it "renders the home page" do
+    render template: "home/index"
+
+    expect(rendered).to include("Global DYC")
+  end
 end
