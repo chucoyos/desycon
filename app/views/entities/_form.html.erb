@@ -124,49 +124,51 @@
     </div>
   </div>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-    <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200 flex items-center justify-between">
-      <div>
-        <h3 class="text-base sm:text-lg font-semibold text-gray-900">Documentos requeridos para revalidación</h3>
-        <p class="text-sm text-gray-600">Define qué documentos debe adjuntar la agencia aduanal según el consolidador del contenedor.</p>
+  <% if entity.is_consolidator %>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200 flex items-center justify-between">
+        <div>
+          <h3 class="text-base sm:text-lg font-semibold text-gray-900">Documentos requeridos para revalidación</h3>
+          <p class="text-sm text-gray-600">Define qué documentos debe adjuntar la agencia aduanal según el consolidador del contenedor.</p>
+        </div>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-200 text-amber-900 border border-amber-300">Solo aplica a consolidadores</span>
       </div>
-      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-200 text-amber-900 border border-amber-300">Solo aplica a consolidadores</span>
+
+      <div class="px-4 sm:px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50">
+          <%= form.check_box :requires_bl_endosado_documento, class: "mt-1 h-5 w-5 text-amber-700 border-amber-300 rounded focus:ring-amber-500" %>
+          <div>
+            <span class="block text-sm font-semibold text-gray-900">BL endosado</span>
+            <span class="block text-xs text-gray-600">Requerir archivo de BL endosado.</span>
+          </div>
+        </label>
+
+        <label class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50">
+          <%= form.check_box :requires_liberacion_documento, class: "mt-1 h-5 w-5 text-amber-700 border-amber-300 rounded focus:ring-amber-500" %>
+          <div>
+            <span class="block text-sm font-semibold text-gray-900">Liberación</span>
+            <span class="block text-xs text-gray-600">Requerir documento de liberación.</span>
+          </div>
+        </label>
+
+        <label class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50">
+          <%= form.check_box :requires_encomienda_documento, class: "mt-1 h-5 w-5 text-amber-700 border-amber-300 rounded focus:ring-amber-500" %>
+          <div>
+            <span class="block text-sm font-semibold text-gray-900">Encomienda</span>
+            <span class="block text-xs text-gray-600">Requerir documento de encomienda.</span>
+          </div>
+        </label>
+
+        <label class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50">
+          <%= form.check_box :requires_pago_documento, class: "mt-1 h-5 w-5 text-amber-700 border-amber-300 rounded focus:ring-amber-500" %>
+          <div>
+            <span class="block text-sm font-semibold text-gray-900">Pago</span>
+            <span class="block text-xs text-gray-600">Requerir comprobante de pago.</span>
+          </div>
+        </label>
+      </div>
     </div>
-
-    <div class="px-4 sm:px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-      <label class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50">
-        <%= form.check_box :requires_bl_endosado_documento, class: "mt-1 h-5 w-5 text-amber-700 border-amber-300 rounded focus:ring-amber-500" %>
-        <div>
-          <span class="block text-sm font-semibold text-gray-900">BL endosado</span>
-          <span class="block text-xs text-gray-600">Requerir archivo de BL endosado.</span>
-        </div>
-      </label>
-
-      <label class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50">
-        <%= form.check_box :requires_liberacion_documento, class: "mt-1 h-5 w-5 text-amber-700 border-amber-300 rounded focus:ring-amber-500" %>
-        <div>
-          <span class="block text-sm font-semibold text-gray-900">Liberación</span>
-          <span class="block text-xs text-gray-600">Requerir documento de liberación.</span>
-        </div>
-      </label>
-
-      <label class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50">
-        <%= form.check_box :requires_encomienda_documento, class: "mt-1 h-5 w-5 text-amber-700 border-amber-300 rounded focus:ring-amber-500" %>
-        <div>
-          <span class="block text-sm font-semibold text-gray-900">Encomienda</span>
-          <span class="block text-xs text-gray-600">Requerir documento de encomienda.</span>
-        </div>
-      </label>
-
-      <label class="flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50">
-        <%= form.check_box :requires_pago_documento, class: "mt-1 h-5 w-5 text-amber-700 border-amber-300 rounded focus:ring-amber-500" %>
-        <div>
-          <span class="block text-sm font-semibold text-gray-900">Pago</span>
-          <span class="block text-xs text-gray-600">Requerir comprobante de pago.</span>
-        </div>
-      </label>
-    </div>
-  </div>
+  <% end %>
   <% end %>
 
   <!-- Fiscal Profile -->
