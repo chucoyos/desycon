@@ -10,6 +10,7 @@ class BlHouseLinesController < ApplicationController
   def index
     scope = policy_scope(BlHouseLine)
       .includes(
+        { container: :consolidator_entity },
         :client,
         :bl_house_line_status_histories,
         :bl_endosado_documento_attachment,

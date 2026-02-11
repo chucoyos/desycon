@@ -22,7 +22,7 @@ class CustomsAgentsController < ApplicationController
     base_scope = BlHouseLine.where(customs_agent: current_user.entity)
                  .visible_to_customs_agent
                              .includes(
-                               :container,
+                               { container: :consolidator_entity },
                                :client,
                                :bl_house_line_status_histories,
                                :bl_endosado_documento_attachment,
