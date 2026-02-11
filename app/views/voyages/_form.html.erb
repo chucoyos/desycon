@@ -1,4 +1,4 @@
-<%= form_with(model: voyage, class: "space-y-6") do |form| %>
+<%= form_with(model: voyage, class: "space-y-6", data: { controller: "voyage-port-filter" }) do |form| %>
   <% if voyage.errors.any? %>
     <div class="bg-red-50 border border-red-100 rounded-2xl p-4 shadow-sm">
       <div class="flex gap-3">
@@ -55,11 +55,15 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <%= form.select :voyage_type,
+              <%= form.select :voyage_type,
                 Voyage.voyage_types.keys.map { |t| [t.titleize, t] },
                 { prompt: "Seleccione tipo" },
                 class: "w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white",
-                required: true %>
+                required: true,
+                data: {
+              action: "change->voyage-port-filter#filter",
+              "voyage-port-filter-target": "typeSelect"
+                } %>
         </div>
       </div>
 
@@ -83,7 +87,11 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
             </svg>
           </div>
-          <%= form.collection_select :destination_port_id, @ports, :id, :display_name, { prompt: "Seleccione destino" }, class: "w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white" %>
+              <%= form.select :destination_port_id,
+                options_for_select(@ports.map { |port| [port.display_name, port.id, { "data-port-name": port.name.to_s }] }, voyage.destination_port_id),
+                { prompt: "Seleccione destino" },
+                class: "w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white",
+                data: { "voyage-port-filter-target": "destinationSelect" } %>
         </div>
       </div>
 
