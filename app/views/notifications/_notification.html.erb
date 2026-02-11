@@ -1,7 +1,6 @@
 <div id="<%= dom_id(notification) %>" 
      data-controller="notification"
-     data-notification-url-value="<%= mark_as_read_notification_path(notification) %>"
-     data-notification-read-value="<%= notification.read? %>"
+  data-notification-url-value="<%= notification_path(notification) %>"
      class="group relative flex flex-col h-full rounded-3xl bg-white transition-all duration-300 hover:shadow-lg hover:-translate-y-1 <%= notification.read? ? 'border border-slate-100 shadow-sm' : 'border-2 border-blue-100 shadow-md bg-blue-50/10' %>">
   <!-- Card Header -->
   <div class="px-6 pt-6 pb-2">
@@ -81,7 +80,7 @@
           Referencia
         </p>
         <% if notification.action == "revalidado" %>
-          <%= link_to documents_bl_house_line_path(notification.notifiable), data: { turbo_frame: "revalidation_modal", action: "click->notification#markAsRead" }, class: "group/item flex items-center justify-between" do %>
+          <%= link_to documents_bl_house_line_path(notification.notifiable), data: { turbo_frame: "revalidation_modal", action: "click->notification#deleteNotification" }, class: "group/item flex items-center justify-between" do %>
             <div class="flex items-center gap-3">
               <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -101,7 +100,7 @@
             </svg>
           <% end %>
         <% elsif ["solicitó revalidación", "solicito_revalidacion", "revalidation_approval", "Solicitó Revalidación"].include?(notification.action) %>
-          <%= link_to revalidation_approval_bl_house_line_path(notification.notifiable), data: { turbo_frame: "approval_modal", action: "click->notification#markAsRead" }, class: "group/item flex items-center justify-between" do %>
+          <%= link_to revalidation_approval_bl_house_line_path(notification.notifiable), data: { turbo_frame: "approval_modal", action: "click->notification#deleteNotification" }, class: "group/item flex items-center justify-between" do %>
              <div class="flex items-center gap-3">
               <svg class="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -128,7 +127,7 @@
                latest_history = notification.notifiable.bl_house_line_status_histories.order(created_at: :desc).first
                observation_text = latest_history&.observations
             %>
-            <%= link_to (notification.action == 'Correcciones Solicitadas' ? customs_agents_dashboard_path(revalidation_blhouse: notification.notifiable.blhouse) : notification.notifiable), data: { action: "click->notification#markAsRead" }, class: "group/item block" do %>
+            <%= link_to (notification.action == 'Correcciones Solicitadas' ? customs_agents_dashboard_path(revalidation_blhouse: notification.notifiable.blhouse) : notification.notifiable), data: { action: "click->notification#deleteNotification" }, class: "group/item block" do %>
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-3">
                         <svg class="h-5 w-5 <%= notification.action == 'Correcciones Solicitadas' ? 'text-red-500' : 'text-blue-500' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,7 +152,7 @@
                 <% end %>
             <% end %>
         <% elsif notification.action == "Partida reasignada" %>
-          <%= link_to documents_bl_house_line_path(notification.notifiable), data: { turbo_frame: "revalidation_modal", action: "click->notification#markAsRead" }, class: "group/item flex items-center justify-between" do %>
+          <%= link_to documents_bl_house_line_path(notification.notifiable), data: { turbo_frame: "revalidation_modal", action: "click->notification#deleteNotification" }, class: "group/item flex items-center justify-between" do %>
             <div class="flex items-center gap-3">
               <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -189,20 +188,11 @@
   <!-- Actions -->
   <div class="mt-auto px-6 pb-6 pt-4 border-t border-slate-50">
     <div class="flex items-center justify-end gap-3">
-      <% unless notification.read? %>
-        <%= button_to mark_as_read_notification_path(notification), method: :patch, class: "inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold shadow-md shadow-blue-200 hover:bg-blue-700 hover:shadow-lg transition-all active:scale-95", title: "Marcar como leído" do %>
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-          </svg>
-          <span>Leído</span>
-        <% end %>
-      <% end %>
-
-      <%= button_to notification_path(notification), method: :delete, class: "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors active:scale-95", title: "Eliminar", form: { data: { turbo_confirm: "¿Eliminar esta notificación?" } } do %>
+      <%= button_to notification_path(notification), method: :delete, class: "cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-600 text-white text-sm font-semibold shadow-md shadow-red-200 hover:bg-red-700 hover:shadow-lg transition-all active:scale-95", title: "Eliminar notificación" do %>
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
-        <span>Borrar</span>
+        <span>Eliminar</span>
       <% end %>
     </div>
   </div>

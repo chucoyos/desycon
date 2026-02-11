@@ -2,17 +2,14 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static values = {
-    url: String,
-    read: Boolean
+    url: String
   }
 
-  markAsRead(event) {
-    if (this.readValue) return
-
+  deleteNotification(event) {
     const csrfToken = document.querySelector("[name='csrf-token']").content
 
     fetch(this.urlValue, {
-      method: "PATCH",
+      method: "DELETE",
       headers: {
         "X-CSRF-Token": csrfToken,
         "Accept": "text/vnd.turbo-stream.html"
