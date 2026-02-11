@@ -7,17 +7,12 @@ Rails.application.routes.draw do
 
   devise_scope :user do
     # Sessions
-    get    "users/sign_in",  to: "devise/sessions#new",     as: :new_user_session
+    get    "users/sign_in",  to: redirect("/"),             as: :new_user_session
     post   "users/sign_in",  to: "devise/sessions#create",  as: :user_session
     delete "users/sign_out", to: "devise/sessions#destroy", as: :destroy_user_session
 
-    # Registrations
-    get    "users/sign_up", to: "devise/registrations#new",    as: :new_user_registration
-    post   "users",         to: "devise/registrations#create", as: :user_registration
-    get    "users/edit",    to: "devise/registrations#edit",   as: :edit_user_registration
-    patch  "users",         to: "devise/registrations#update"
-    put    "users",         to: "devise/registrations#update"
-    delete "users",         to: "devise/registrations#destroy"
+    # Registrations (disabled)
+    get "users/sign_up", to: redirect("/"), as: :new_user_registration
 
     # Password recovery
     get   "users/password/new",  to: "devise/passwords#new",    as: :new_user_password
