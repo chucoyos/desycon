@@ -74,4 +74,17 @@ RSpec.describe "Entities", type: :request do
       expect(response).to have_http_status(:success)
     end
   end
+
+  describe "DELETE /destroy" do
+    it "does not delete when entity has users" do
+      create(:user, entity: entity)
+
+      expect {
+        delete entity_path(entity)
+      }.not_to change(Entity, :count)
+
+      expect(response).to redirect_to(entities_path)
+      expect(flash[:alert]).to be_present
+    end
+  end
 end

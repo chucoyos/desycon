@@ -2,6 +2,11 @@ require 'rails_helper'
 
 RSpec.describe Entity, type: :model do
   describe 'associations' do
+    it 'has many users' do
+      association = described_class.reflect_on_association(:users)
+      expect(association.macro).to eq(:has_many)
+      expect(association.options[:dependent]).to eq(:restrict_with_error)
+    end
     it 'has many bl_house_lines_as_customs_agent' do
       association = described_class.reflect_on_association(:bl_house_lines_as_customs_agent)
       expect(association.macro).to eq(:has_many)
@@ -41,6 +46,14 @@ RSpec.describe Entity, type: :model do
       entity = create(:entity)
       expect { entity.destroy }.not_to raise_error
       expect(entity.destroyed?).to be_truthy
+    end
+
+    it 'prevents deletion when entity has associated users' do
+      entity = create(:entity)
+      create(:user, entity: entity)
+
+      expect(entity.destroy).to be_falsey
+      expect(entity.errors[:base]).to be_present
     end
   end
 end
