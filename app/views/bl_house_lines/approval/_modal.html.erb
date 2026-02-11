@@ -236,7 +236,7 @@
                          </div>
                          <div class="space-y-2">
                            <%= label_tag :tentativa_turno, "Turno Tentativo", class: "text-sm font-medium text-slate-700" %>
-                           <% turno_options = Container.tentativa_turnos.keys.map { |t| [t == "manana" ? "Mañana" : "Tarde", t] } %>
+                           <% turno_options = Container.tentativa_turnos.keys.map { |t| [t.tr("_", " ").capitalize, t] } %>
                            <%= select_tag :tentativa_turno,
                              options_for_select(turno_options, bl_house_line.container&.tentativa_turno),
                              class: "w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 transition focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-100" %>

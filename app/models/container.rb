@@ -44,7 +44,7 @@ class Container < ApplicationRecord
     desconsolidado: "desconsolidado"
   }, prefix: true
 
-  enum :tentativa_turno, { manana: 0, tarde: 1 }, prefix: true
+  enum :tentativa_turno, { primer_turno: 0, segundo_turno: 1, tercer_turno: 2 }, prefix: true
 
   enum :tipo_maniobra, {
     importacion: "importacion",
