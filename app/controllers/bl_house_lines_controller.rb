@@ -191,10 +191,14 @@ class BlHouseLinesController < ApplicationController
     if @bl_house_line.save
       respond_to do |format|
         format.turbo_stream do
-          render turbo_stream: turbo_stream.replace(
-            "dispatch_modal",
-            partial: "bl_house_lines/dispatch/modal_closed"
-          )
+          row_dom_id = view_context.dom_id(@bl_house_line, :row)
+          mobile_dom_id = view_context.dom_id(@bl_house_line, :mobile)
+
+          render turbo_stream: [
+            turbo_stream.replace("dispatch_modal", partial: "bl_house_lines/dispatch/modal_closed"),
+            turbo_stream.replace(row_dom_id, partial: "bl_house_lines/row", locals: { bl_house_line: @bl_house_line }),
+            turbo_stream.replace(mobile_dom_id, partial: "bl_house_lines/mobile_card", locals: { bl_house_line: @bl_house_line })
+          ]
         end
         format.html { redirect_to bl_house_lines_path, notice: "Fecha de despacho guardada." }
       end
