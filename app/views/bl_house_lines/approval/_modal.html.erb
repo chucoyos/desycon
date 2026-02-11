@@ -80,7 +80,8 @@
                 </div>
 
                 <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  <% [ :bl_endosado_documento, :liberacion_documento, :encomienda_documento, :pago_documento ].each do |doc| %>
+                  <% required_docs = bl_house_line.required_revalidation_documents %>
+                  <% required_docs.each do |doc| %>
                     <% document_attached = bl_house_line.send(doc).attached? %>
                     <% validated = bl_house_line.document_validated?(doc) %>
                     <div class="group relative overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/60 p-4 shadow-sm transition hover:shadow-lg">
