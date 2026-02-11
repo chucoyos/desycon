@@ -14,7 +14,7 @@ RSpec.describe "Disabled user access", type: :request do
     expect(response.body).to include("Acceso deshabilitado")
 
     get containers_path
-    expect(response).to redirect_to(new_user_session_path)
+    expect(response).to redirect_to(root_path)
   end
 
   it 'allows enabled users to proceed' do
