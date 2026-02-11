@@ -67,6 +67,8 @@ Rails.application.routes.draw do
       get :reassign
       patch :perform_reassign
       get :reassign_brokers
+      get :dispatch_date
+      patch :update_dispatch_date
     end
   end
   resources :service_catalogs

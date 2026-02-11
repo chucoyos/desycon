@@ -3,7 +3,7 @@ class BlHouseLinesController < ApplicationController
   IMPORT_SIZE_LIMIT = 2.megabytes
 
   before_action :authenticate_user!
-  before_action :set_bl_house_line, only: %i[show edit update destroy revalidation_approval approve_revalidation documents reassign perform_reassign reassign_brokers]
+  before_action :set_bl_house_line, only: %i[show edit update destroy revalidation_approval approve_revalidation documents reassign perform_reassign reassign_brokers dispatch_date update_dispatch_date]
   after_action :verify_authorized, except: :index
 
   # GET /bl_house_lines
@@ -163,6 +163,43 @@ class BlHouseLinesController < ApplicationController
     respond_to do |format|
       format.html
       format.turbo_stream
+    end
+  end
+
+  # GET /bl_house_lines/1/dispatch_date
+  def dispatch_date
+    authorize @bl_house_line, :update?
+
+    respond_to do |format|
+      format.html { render partial: "bl_house_lines/dispatch/modal", locals: { bl_house_line: @bl_house_line } }
+      format.turbo_stream { render partial: "bl_house_lines/dispatch/modal", locals: { bl_house_line: @bl_house_line } }
+    end
+  end
+
+  # PATCH /bl_house_lines/1/update_dispatch_date
+  def update_dispatch_date
+    authorize @bl_house_line, :update?
+
+    @bl_house_line.assign_attributes(dispatch_date_params)
+    @bl_house_line.status = "despachado"
+
+    if @bl_house_line.fecha_despacho.blank?
+      @bl_house_line.errors.add(:fecha_despacho, "no puede estar en blanco")
+      return render_dispatch_modal(:unprocessable_entity)
+    end
+
+    if @bl_house_line.save
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace(
+            "dispatch_modal",
+            partial: "bl_house_lines/dispatch/modal_closed"
+          )
+        end
+        format.html { redirect_to bl_house_lines_path, notice: "Fecha de despacho guardada." }
+      end
+    else
+      render_dispatch_modal(:unprocessable_entity)
     end
   end
 
@@ -428,6 +465,17 @@ class BlHouseLinesController < ApplicationController
     @bl_house_line.container = container
     if params[:bl_master].present? && container.bl_master.blank?
       container.update(bl_master: params[:bl_master])
+    end
+  end
+
+  def dispatch_date_params
+    params.require(:bl_house_line).permit(:fecha_despacho)
+  end
+
+  def render_dispatch_modal(status)
+    respond_to do |format|
+      format.turbo_stream { render partial: "bl_house_lines/dispatch/modal", locals: { bl_house_line: @bl_house_line }, status: status }
+      format.html { render partial: "bl_house_lines/dispatch/modal", locals: { bl_house_line: @bl_house_line }, status: status }
     end
   end
 
