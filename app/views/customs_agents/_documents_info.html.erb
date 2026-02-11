@@ -20,12 +20,13 @@
       </span>
     <% end %>
 
+    <% required_docs = bl_house_line.required_revalidation_documents %>
     <% docs = [
-      { label: 'BL Endosado', attached: bl_house_line.bl_endosado_documento.attached?, blob: bl_house_line.bl_endosado_documento },
-      { label: 'Liberación', attached: bl_house_line.liberacion_documento.attached?, blob: bl_house_line.liberacion_documento },
-      { label: 'Encomienda', attached: bl_house_line.encomienda_documento.attached?, blob: bl_house_line.encomienda_documento },
-      { label: 'Pago', attached: bl_house_line.pago_documento.attached?, blob: bl_house_line.pago_documento }
-    ] %>
+      { key: :bl_endosado_documento, label: 'BL Endosado', attached: bl_house_line.bl_endosado_documento.attached?, blob: bl_house_line.bl_endosado_documento },
+      { key: :liberacion_documento, label: 'Liberación', attached: bl_house_line.liberacion_documento.attached?, blob: bl_house_line.liberacion_documento },
+      { key: :encomienda_documento, label: 'Encomienda', attached: bl_house_line.encomienda_documento.attached?, blob: bl_house_line.encomienda_documento },
+      { key: :pago_documento, label: 'Pago', attached: bl_house_line.pago_documento.attached?, blob: bl_house_line.pago_documento }
+    ].select { |doc| required_docs.include?(doc[:key]) } %>
 
     <% docs.each do |doc| %>
       <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-[11px] font-semibold flex-1 min-w-[140px] justify-between <%= doc[:attached] ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-600' %>">

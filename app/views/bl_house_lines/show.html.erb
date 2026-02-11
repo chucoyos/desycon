@@ -346,8 +346,10 @@
       <h2 class="text-lg font-bold text-gray-900">Documentos</h2>
     </div>
     
+    <% required_docs = @bl_house_line.required_revalidation_documents %>
     <div class="space-y-3">
       <!-- BL Endosado -->
+      <% if required_docs.include?(:bl_endosado_documento) %>
       <div class="flex items-center justify-between p-3 rounded-lg <%= @bl_house_line.bl_endosado_documento.attached? ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200' %>">
         <div class="flex items-center gap-3">
           <svg class="w-8 h-8 <%= @bl_house_line.bl_endosado_documento.attached? ? 'text-green-600' : 'text-gray-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -376,8 +378,10 @@
           <% end %>
         <% end %>
       </div>
+      <% end %>
 
       <!-- Liberación -->
+      <% if required_docs.include?(:liberacion_documento) %>
       <div class="flex items-center justify-between p-3 rounded-lg <%= @bl_house_line.liberacion_documento.attached? ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200' %>">
         <div class="flex items-center gap-3">
           <svg class="w-8 h-8 <%= @bl_house_line.liberacion_documento.attached? ? 'text-green-600' : 'text-gray-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -406,8 +410,10 @@
           <% end %>
         <% end %>
       </div>
+      <% end %>
 
       <!-- Encomienda -->
+      <% if required_docs.include?(:encomienda_documento) %>
       <div class="flex items-center justify-between p-3 rounded-lg <%= @bl_house_line.encomienda_documento.attached? ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200' %>">
         <div class="flex items-center gap-3">
           <svg class="w-8 h-8 <%= @bl_house_line.encomienda_documento.attached? ? 'text-green-600' : 'text-gray-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -436,8 +442,10 @@
           <% end %>
         <% end %>
       </div>
+      <% end %>
 
       <!-- Pago -->
+      <% if required_docs.include?(:pago_documento) %>
       <div class="flex items-center justify-between p-3 rounded-lg <%= @bl_house_line.pago_documento.attached? ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200' %>">
         <div class="flex items-center gap-3">
           <svg class="w-8 h-8 <%= @bl_house_line.pago_documento.attached? ? 'text-green-600' : 'text-gray-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -466,6 +474,7 @@
           <% end %>
         <% end %>
       </div>
+      <% end %>
 
       <% if @bl_house_line.documentos_completos? %>
         <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">

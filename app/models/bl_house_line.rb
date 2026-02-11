@@ -70,7 +70,7 @@ class BlHouseLine < ApplicationRecord
   after_update :notify_customs_agent_revalidation, if: -> { saved_change_to_status? && revalidado? }
   after_update :ensure_asignacion_electronica_service, if: -> { saved_change_to_status? && revalidado? }
   def documentos_completos?
-    bl_endosado_documento.attached? && liberacion_documento.attached? && encomienda_documento.attached?
+    required_revalidation_documents.all? { |field| public_send(field).attached? }
   end
 
   def document_validated?(doc_sym)

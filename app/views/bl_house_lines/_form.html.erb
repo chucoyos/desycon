@@ -295,7 +295,9 @@
       <h2 class="text-xl font-bold text-gray-900">Documentos</h2>
     </div>
 
+    <% required_docs = bl_house_line.required_revalidation_documents %>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+      <% if required_docs.include?(:bl_endosado_documento) %>
       <div>
         <%= form.label :bl_endosado_documento, "BL Endosado", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <% validated = bl_house_line.document_validated?(:bl_endosado_documento) %>
@@ -311,7 +313,9 @@
           <p class="cursor-pointer mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.bl_endosado_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
         <% end %>
       </div>
+      <% end %>
 
+      <% if required_docs.include?(:liberacion_documento) %>
       <div>
         <%= form.label :liberacion_documento, "Liberación", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <% validated = bl_house_line.document_validated?(:liberacion_documento) %>
@@ -327,7 +331,9 @@
           <p class="cursor-pointer mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.liberacion_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
         <% end %>
       </div>
+      <% end %>
 
+      <% if required_docs.include?(:encomienda_documento) %>
       <div>
         <%= form.label :encomienda_documento, "Encomienda", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <% validated = bl_house_line.document_validated?(:encomienda_documento) %>
@@ -343,7 +349,9 @@
           <p class="cursor-pointer mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.encomienda_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
         <% end %>
       </div>
+      <% end %>
 
+      <% if required_docs.include?(:pago_documento) %>
       <div>
         <%= form.label :pago_documento, "Pago", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
         <% validated = bl_house_line.document_validated?(:pago_documento) %>
@@ -359,6 +367,7 @@
           <p class="cursor-pointer mt-2 text-sm text-gray-600">Documento actual: <%= link_to "Ver documento", rails_blob_path(bl_house_line.pago_documento, disposition: "inline"), class: "text-green-600 hover:text-green-800 font-medium", target: "_blank" %></p>
         <% end %>
       </div>
+      <% end %>
     </div>
   </div>
 
