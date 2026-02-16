@@ -4,6 +4,11 @@ RSpec.describe NotificationsController, type: :controller do
   let(:role) { Role.find_or_create_by(name: "test_role") }
   let(:user) { User.create!(email: "test_user@example.com", password: "password123", password_confirmation: "password123", role: role) }
 
+  before do
+    allow(controller).to receive(:set_current_user)
+    allow(controller).to receive(:redirect_disabled_user)
+  end
+
   def create_bl_house_line
     entity = Entity.find_or_create_by(name: "Test Entity") do |e|
       e.is_client = true
@@ -25,8 +30,10 @@ RSpec.describe NotificationsController, type: :controller do
 
   describe "GET #index" do
     it "returns http success when authenticated" do
-      # Skip this test as request specs already cover this functionality
-      skip "Covered by request specs"
+      allow(controller).to receive(:authenticate_user!).and_return(true)
+      allow(controller).to receive(:current_user).and_return(user)
+      get :index
+      expect(response).to have_http_status(:ok)
     end
 
     it "redirects when not authenticated" do

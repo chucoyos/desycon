@@ -4,6 +4,6 @@ FactoryBot.define do
     status { "MyString" }
     previous_status { "MyString" }
     changed_at { "2025-12-08 19:54:24" }
-    changed_by { nil }
+    user { nil }
   end
 end
