@@ -276,4 +276,34 @@ RSpec.describe BlHouseLine, type: :model do
       expect(bl_house_line.documentos_completos?).to be_truthy
     end
   end
+
+  describe '#required_revalidation_documents' do
+    let(:container) { create(:container) }
+    let(:bl_house_line) { create(:bl_house_line, container: container) }
+
+    it 'returns only documents required by consolidator entity flags' do
+      container.consolidator_entity.update!(
+        requires_bl_endosado_documento: true,
+        requires_liberacion_documento: false,
+        requires_encomienda_documento: true,
+        requires_pago_documento: false
+      )
+
+      expect(bl_house_line.required_revalidation_documents).to eq([
+        :bl_endosado_documento,
+        :encomienda_documento
+      ])
+    end
+
+    it 'falls back to all document fields when no document is required' do
+      container.consolidator_entity.update!(
+        requires_bl_endosado_documento: false,
+        requires_liberacion_documento: false,
+        requires_encomienda_documento: false,
+        requires_pago_documento: false
+      )
+
+      expect(bl_house_line.required_revalidation_documents).to eq(BlHouseLine::DOCUMENT_FIELDS)
+    end
+  end
 end
