@@ -28,12 +28,14 @@
     </td>
     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
       <div class="relative inline-block text-left" data-controller="dropdown">
-        <button type="button" class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none" data-action="click->dropdown#toggle" title="Opciones">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+        <button type="button" class="cursor-pointer inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" id="dropdownMenuButton-<%= bl_house_line.id %>" aria-expanded="false" aria-haspopup="true" onclick="document.getElementById('dropdown-menu-<%= bl_house_line.id %>').classList.toggle('hidden')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <circle cx="6" cy="12" r="1.5" />
+            <circle cx="12" cy="12" r="1.5" />
+            <circle cx="18" cy="12" r="1.5" />
           </svg>
         </button>
-        <div data-dropdown-target="menu" class="hidden absolute right-0 mt-2 w-56 rounded-xl shadow-xl bg-white border border-gray-100 z-50 origin-top-right ring-1 ring-black ring-opacity-5 focus:outline-none">
+        <div id="dropdown-menu-<%= bl_house_line.id %>" class="hidden absolute right-0 z-10 mt-2 w-44 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
           <div class="py-2" role="menu">
             <%= link_to bl_house_line, class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors", role: "menuitem" do %>
               <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

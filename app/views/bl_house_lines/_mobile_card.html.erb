@@ -23,12 +23,27 @@
   </div>
 
   <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
-    <%= link_to bl_house_line, class: "p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors", title: "Ver" do %>
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-      </svg>
-    <% end %>
+    <div class="relative inline-block text-left">
+      <button type="button" class="cursor-pointer inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" id="dropdownMenuButton-mobile-<%= bl_house_line.id %>" aria-expanded="false" aria-haspopup="true" onclick="document.getElementById('dropdown-menu-mobile-<%= bl_house_line.id %>').classList.toggle('hidden')">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+          <circle cx="6" cy="12" r="1.5" />
+          <circle cx="12" cy="12" r="1.5" />
+          <circle cx="18" cy="12" r="1.5" />
+        </svg>
+      </button>
+      <div id="dropdown-menu-mobile-<%= bl_house_line.id %>" class="hidden absolute right-0 z-10 mt-2 w-44 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+        <div class="py-1">
+          <%= link_to bl_house_line, class: "flex items-center gap-2 px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 transition-colors duration-150", title: "Ver" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            </svg>
+            Ver
+          <% end %>
+          <!-- Add other actions here as needed, following the same dropdown style -->
+        </div>
+      </div>
+    </div>
     <% unless current_user&.customs_broker? %>
       <%= button_to bl_house_line_path(bl_house_line, bl_house_line: { hidden_from_customs_agent: !bl_house_line.hidden_from_customs_agent }), method: :patch, class: "p-2 #{bl_house_line.hidden_from_customs_agent? ? 'text-emerald-700 hover:bg-emerald-50' : 'text-amber-700 hover:bg-amber-50'} rounded-lg transition-colors", form: { data: { turbo_confirm: bl_house_line.hidden_from_customs_agent? ? nil : "Ocultar esta partida a la agencia aduanal?" } }, title: (bl_house_line.hidden_from_customs_agent? ? "Mostrar a la agencia" : "Ocultar a la agencia") do %>
         <% if bl_house_line.hidden_from_customs_agent? %>
