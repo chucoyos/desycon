@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_09_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_16_161000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -116,7 +116,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_09_120000) do
     t.bigint "customs_agent_id"
     t.bigint "customs_broker_id"
     t.boolean "encomienda_documento_validated", default: false, null: false
-    t.date "fecha_despacho"
+    t.datetime "fecha_despacho"
     t.boolean "hidden_from_customs_agent", default: false, null: false
     t.boolean "liberacion_documento_validated", default: false, null: false
     t.text "marcas"
@@ -198,9 +198,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_09_120000) do
     t.bigint "consolidator_id"
     t.datetime "created_at", null: false
     t.string "ejecutivo"
-    t.date "fecha_descarga"
+    t.datetime "fecha_descarga"
     t.date "fecha_desconsolidacion"
-    t.date "fecha_revalidacion_bl_master"
+    t.datetime "fecha_revalidacion_bl_master"
     t.date "fecha_tentativa_desconsolidacion"
     t.datetime "fecha_transferencia"
     t.string "number", null: false
