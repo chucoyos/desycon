@@ -204,4 +204,63 @@ RSpec.describe "BlHouseLines", type: :request do
       expect(response).to have_http_status(:unprocessable_content)
     end
   end
+
+  describe "PATCH /bl_house_lines/:id/approve_revalidation" do
+    let(:user) { create(:user, :executive) }
+    let(:customs_agent) { create(:entity, :customs_agent) }
+    let(:customs_broker) { create(:entity, :customs_broker) }
+    let(:container) { create(:container) }
+    let(:bl_house_line) { create(:bl_house_line, container: container, customs_agent: customs_agent, status: "validar_documentos") }
+
+    before do
+      sign_in user, scope: :user
+
+      create(:consolidator, entity: container.consolidator_entity)
+
+      container.consolidator_entity.update!(
+        requires_bl_endosado_documento: true,
+        requires_liberacion_documento: false,
+        requires_encomienda_documento: false,
+        requires_pago_documento: false
+      )
+
+      AgencyBroker.create!(agency: customs_agent, broker: customs_broker)
+      container.tarja_documento.attach(io: StringIO.new("tarja"), filename: "tarja.pdf", content_type: "application/pdf")
+    end
+
+    it "aprueba cuando todos los documentos requeridos del consolidador están validados" do
+      patch approve_revalidation_bl_house_line_url(bl_house_line), params: {
+        decision: "assign",
+        bl_house_line: {
+          customs_agent_id: customs_agent.id,
+          customs_broker_id: customs_broker.id,
+          bl_endosado_documento_validated: "1",
+          liberacion_documento_validated: "0",
+          encomienda_documento_validated: "0",
+          pago_documento_validated: "0"
+        }
+      }
+
+      expect(response).to have_http_status(:found)
+      expect(bl_house_line.reload.status).to eq("revalidado")
+    end
+
+    it "rechaza cuando falta validar un documento requerido del consolidador" do
+      patch approve_revalidation_bl_house_line_url(bl_house_line), params: {
+        decision: "assign",
+        bl_house_line: {
+          customs_agent_id: customs_agent.id,
+          customs_broker_id: customs_broker.id,
+          bl_endosado_documento_validated: "0",
+          liberacion_documento_validated: "1",
+          encomienda_documento_validated: "1",
+          pago_documento_validated: "1"
+        }
+      }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Debes marcar todos los documentos como validados antes de continuar.")
+      expect(bl_house_line.reload.status).to eq("validar_documentos")
+    end
+  end
 end
