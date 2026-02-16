@@ -529,7 +529,7 @@ class BlHouseLinesController < ApplicationController
   end
 
   def documents_validated?(record)
-    BlHouseLine::DOCUMENT_FIELDS.all? do |doc|
+    record.required_revalidation_documents.all? do |doc|
       record.respond_to?("#{doc}_validated") && record.public_send("#{doc}_validated")
     end
   end
