@@ -270,13 +270,9 @@ class BlHouseLinesController < ApplicationController
 
         unless tarja_present
           if tentative_date.present?
-            turno_label = case tentative_turno.to_s.downcase
-            when "manana", "mañana" then "MAÑANA"
-            when "tarde" then "TARDE"
-            else tentative_turno.to_s.upcase.presence || "MAÑANA"
-            end
-
-            full_observation = "FECHA TENTATIVA PARA EL INICIO DE REVALIDACION EL DIA #{tentative_date} POR LA #{turno_label}."
+            turno_label = tentative_turno.to_s.tr("_", " ").capitalize
+            formatted_date = I18n.l(Date.parse(tentative_date.to_s), format: :long)
+            full_observation = "Fecha tentativa para el inicio de revalidacion: el día #{formatted_date} en el #{turno_label.presence || 'Primer turno'}"
             history = @bl_house_line.bl_house_line_status_histories.order(created_at: :desc).first
             if history
               history.update(observations: full_observation)
