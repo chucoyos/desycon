@@ -629,6 +629,24 @@ RSpec.describe Container, type: :model do
       }.to change { container.bl_master_documento.attached? }.from(false).to(true)
     end
 
+    it 'sets fecha_revalidacion_bl_master when bl_master_documento is attached' do
+      expect(container.fecha_revalidacion_bl_master).to be_nil
+
+      before_attach = Time.current
+
+      container.bl_master_documento.attach(
+        io: StringIO.new('test'),
+        filename: 'bl.pdf',
+        content_type: 'application/pdf'
+      )
+
+      after_attach = Time.current
+
+      expect(container.reload.fecha_revalidacion_bl_master).to be_present
+      expect(container.fecha_revalidacion_bl_master).to be >= before_attach
+      expect(container.fecha_revalidacion_bl_master).to be <= after_attach
+    end
+
     it 'can attach tarja_documento' do
       expect {
         container.tarja_documento.attach(

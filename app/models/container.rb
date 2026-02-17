@@ -374,6 +374,9 @@ class Container < ApplicationRecord
 
   def handle_bl_master_uploaded
     return if status_desconsolidado?
+
+    update_column(:fecha_revalidacion_bl_master, Time.current)
+
     current_actor = @current_user || (defined?(Current) && Current.respond_to?(:user) ? Current.user : nil)
     advance_status!(:bl_revalidado, current_actor, "BL Master adjunto")
   end
