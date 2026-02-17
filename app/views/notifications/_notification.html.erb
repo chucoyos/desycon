@@ -121,11 +121,18 @@
           <% end %>
         <% elsif notification.action == "Correcciones Solicitadas" || notification.action == "Documentación Aprobada" %>
             <% 
-               # Fetch the observation from history that matches the notification time (approx) or is relevant
-               # Since notifications are created immediately after history updates, usually the latest history
-               # will contain the relevant observation.
+               # Prefer a formatted message for approval; fall back to latest history observation.
                latest_history = notification.notifiable.bl_house_line_status_histories.order(created_at: :desc).first
                observation_text = latest_history&.observations
+
+               if notification.action == "Documentación Aprobada"
+                 container = notification.notifiable.container
+                 tentative_date = container&.fecha_tentativa_desconsolidacion
+                 tentative_turno = container&.tentativa_turno
+                 if tentative_date.present? && tentative_turno.present?
+                   observation_text = "Fecha tentativa para el inicio de revalidación: el día #{l(tentative_date, format: :long)} en el #{tentative_turno.to_s.tr('_', ' ').capitalize}"
+                 end
+               end
             %>
             <%= link_to (notification.action == 'Correcciones Solicitadas' ? customs_agents_dashboard_path(revalidation_blhouse: notification.notifiable.blhouse) : notification.notifiable), data: { action: "click->notification#deleteNotification" }, class: "group/item block" do %>
                 <div class="flex items-center justify-between mb-2">
