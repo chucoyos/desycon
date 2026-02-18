@@ -22,6 +22,7 @@ class ApplicationController < ActionController::Base
 
   # Pundit: catch authorization errors
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
+  rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
   # Catch-all 404 handler for unmatched routes
   def not_found

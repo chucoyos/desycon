@@ -436,6 +436,7 @@ class BlHouseLinesController < ApplicationController
     end
   end
 
+
   def bl_house_line_params
     params.require(:bl_house_line).permit(
       :blhouse, :partida, :cantidad, :contiene, :marcas, :peso, :volumen,
