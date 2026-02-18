@@ -117,4 +117,19 @@ module ContainersHelper
       "#{name[0...max_length]}..."
     end
   end
+
+  def container_lifecycle_action(container)
+    case container.status
+    when "activo"
+      { label: "Cargar BL Master", path: lifecycle_bl_master_modal_container_path(container) }
+    when "bl_revalidado"
+      { label: "Fecha Descarga", path: lifecycle_descarga_modal_container_path(container) }
+    when "descargado"
+      { label: "Cita Transferencia", path: lifecycle_transferencia_modal_container_path(container) }
+    when "cita_transferencia"
+      { label: "Fecha tentativa", path: lifecycle_tentativa_modal_container_path(container) }
+    when "fecha_tentativa_desconsolidacion"
+      { label: "Cargar Tarja", path: lifecycle_tarja_modal_container_path(container) }
+    end
+  end
 end

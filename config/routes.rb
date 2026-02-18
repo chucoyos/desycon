@@ -57,6 +57,16 @@ Rails.application.routes.draw do
     member do
       delete :destroy_all_bl_house_lines
       post :import_bl_house_lines, to: "bl_house_lines#import_from_container"
+      get :lifecycle_bl_master_modal
+      patch :lifecycle_bl_master_update
+      get :lifecycle_descarga_modal
+      patch :lifecycle_descarga_update
+      get :lifecycle_transferencia_modal
+      patch :lifecycle_transferencia_update
+      get :lifecycle_tentativa_modal
+      patch :lifecycle_tentativa_update
+      get :lifecycle_tarja_modal
+      patch :lifecycle_tarja_update
     end
   end
   resources :bl_house_lines do

@@ -139,4 +139,44 @@ RSpec.describe "Containers", type: :request do
       expect(flash[:alert]).to be_present
     end
   end
+
+  describe "container lifecycle modals" do
+    before { sign_in user, scope: :user }
+
+    it "renders bl master lifecycle modal" do
+      container = create(:container, status: "activo")
+
+      get lifecycle_bl_master_modal_container_path(container), headers: { "ACCEPT" => "text/vnd.turbo-stream.html" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Cargar BL Master")
+    end
+
+    it "updates descarga date and auto advances to descargado" do
+      container = create(:container, status: "bl_revalidado")
+
+      patch lifecycle_descarga_update_container_path(container),
+            params: { container: { fecha_descarga: Time.current.change(sec: 0) } },
+            headers: { "ACCEPT" => "text/vnd.turbo-stream.html" }
+
+      expect(response).to have_http_status(:ok)
+      expect(container.reload.status).to eq("descargado")
+    end
+
+    it "updates transferencia data and auto advances to cita_transferencia" do
+      container = create(:container, status: "descargado", fecha_descarga: Time.current.change(sec: 0))
+
+      patch lifecycle_transferencia_update_container_path(container),
+            params: {
+              container: {
+                fecha_transferencia: Time.current.change(sec: 0) + 1.day,
+                almacen: "SSA"
+              }
+            },
+            headers: { "ACCEPT" => "text/vnd.turbo-stream.html" }
+
+      expect(response).to have_http_status(:ok)
+      expect(container.reload.status).to eq("cita_transferencia")
+    end
+  end
 end

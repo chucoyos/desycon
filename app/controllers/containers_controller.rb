@@ -1,7 +1,21 @@
 class ContainersController < ApplicationController
   before_action :authenticate_user!
   after_action :verify_authorized, except: :index
-  before_action :set_container, only: %i[edit update destroy]
+  before_action :set_container, only: %i[
+    edit
+    update
+    destroy
+    lifecycle_bl_master_modal
+    lifecycle_bl_master_update
+    lifecycle_descarga_modal
+    lifecycle_descarga_update
+    lifecycle_transferencia_modal
+    lifecycle_transferencia_update
+    lifecycle_tentativa_modal
+    lifecycle_tentativa_update
+    lifecycle_tarja_modal
+    lifecycle_tarja_update
+  ]
   before_action :set_container_for_show, only: %i[show destroy_all_bl_house_lines]
 
   def index
@@ -84,6 +98,126 @@ class ContainersController < ApplicationController
     end
   end
 
+  def lifecycle_bl_master_modal
+    authorize @container, :update?
+    render_lifecycle_modal("containers/lifecycle/bl_master_modal")
+  end
+
+  def lifecycle_bl_master_update
+    authorize @container, :update?
+
+    if lifecycle_bl_master_params[:bl_master_documento].blank?
+      @container.errors.add(:bl_master_documento, "debe adjuntarse")
+      return render_lifecycle_modal("containers/lifecycle/bl_master_modal", :unprocessable_entity)
+    end
+
+    @container.assign_attributes(lifecycle_bl_master_params)
+
+    if @container.save
+      render_lifecycle_success("BL Master actualizado correctamente.")
+    else
+      render_lifecycle_modal("containers/lifecycle/bl_master_modal", :unprocessable_entity)
+    end
+  end
+
+  def lifecycle_descarga_modal
+    authorize @container, :update?
+    render_lifecycle_modal("containers/lifecycle/descarga_modal")
+  end
+
+  def lifecycle_descarga_update
+    authorize @container, :update?
+
+    @container.assign_attributes(lifecycle_descarga_params)
+
+    if @container.fecha_descarga.blank?
+      @container.errors.add(:fecha_descarga, "no puede estar en blanco")
+      return render_lifecycle_modal("containers/lifecycle/descarga_modal", :unprocessable_entity)
+    end
+
+    if @container.save
+      render_lifecycle_success("Fecha de descarga guardada correctamente.")
+    else
+      render_lifecycle_modal("containers/lifecycle/descarga_modal", :unprocessable_entity)
+    end
+  end
+
+  def lifecycle_transferencia_modal
+    authorize @container, :update?
+    render_lifecycle_modal("containers/lifecycle/transferencia_modal")
+  end
+
+  def lifecycle_transferencia_update
+    authorize @container, :update?
+
+    @container.assign_attributes(lifecycle_transferencia_params)
+
+    if @container.fecha_transferencia.blank?
+      @container.errors.add(:fecha_transferencia, "no puede estar en blanco")
+      return render_lifecycle_modal("containers/lifecycle/transferencia_modal", :unprocessable_entity)
+    end
+
+    if @container.almacen.blank?
+      @container.errors.add(:almacen, "no puede estar en blanco")
+      return render_lifecycle_modal("containers/lifecycle/transferencia_modal", :unprocessable_entity)
+    end
+
+    if @container.save
+      render_lifecycle_success("Cita de transferencia guardada correctamente.")
+    else
+      render_lifecycle_modal("containers/lifecycle/transferencia_modal", :unprocessable_entity)
+    end
+  end
+
+  def lifecycle_tentativa_modal
+    authorize @container, :update?
+    render_lifecycle_modal("containers/lifecycle/tentativa_modal")
+  end
+
+  def lifecycle_tentativa_update
+    authorize @container, :update?
+
+    @container.assign_attributes(lifecycle_tentativa_params)
+
+    if @container.fecha_tentativa_desconsolidacion.blank?
+      @container.errors.add(:fecha_tentativa_desconsolidacion, "no puede estar en blanco")
+      return render_lifecycle_modal("containers/lifecycle/tentativa_modal", :unprocessable_entity)
+    end
+
+    if @container.tentativa_turno.blank?
+      @container.errors.add(:tentativa_turno, "no puede estar en blanco")
+      return render_lifecycle_modal("containers/lifecycle/tentativa_modal", :unprocessable_entity)
+    end
+
+    if @container.save
+      render_lifecycle_success("Fecha tentativa guardada correctamente.")
+    else
+      render_lifecycle_modal("containers/lifecycle/tentativa_modal", :unprocessable_entity)
+    end
+  end
+
+  def lifecycle_tarja_modal
+    authorize @container, :update?
+    render_lifecycle_modal("containers/lifecycle/tarja_modal")
+  end
+
+  def lifecycle_tarja_update
+    authorize @container, :update?
+
+    if lifecycle_tarja_params[:tarja_documento].blank?
+      @container.errors.add(:tarja_documento, "debe adjuntarse")
+      return render_lifecycle_modal("containers/lifecycle/tarja_modal", :unprocessable_entity)
+    end
+
+    @container.assign_attributes(lifecycle_tarja_params)
+
+    if @container.save
+      render_lifecycle_success("Tarja actualizada correctamente.")
+    else
+      render_lifecycle_modal("containers/lifecycle/tarja_modal", :unprocessable_entity)
+    end
+  end
+
   private
 
   def set_container
@@ -162,5 +296,45 @@ class ContainersController < ApplicationController
 
   def per
     params[:per]&.to_i&.clamp(10, 100) || 25
+  end
+
+  def lifecycle_bl_master_params
+    params.require(:container).permit(:bl_master_documento)
+  end
+
+  def lifecycle_descarga_params
+    params.require(:container).permit(:fecha_descarga)
+  end
+
+  def lifecycle_transferencia_params
+    params.require(:container).permit(:fecha_transferencia, :almacen)
+  end
+
+  def lifecycle_tentativa_params
+    params.require(:container).permit(:fecha_tentativa_desconsolidacion, :tentativa_turno)
+  end
+
+  def lifecycle_tarja_params
+    params.require(:container).permit(:tarja_documento)
+  end
+
+  def render_lifecycle_modal(partial, status = :ok)
+    respond_to do |format|
+      format.html { render partial:, locals: { container: @container }, status: }
+      format.turbo_stream { render partial:, formats: [ :html ], locals: { container: @container }, status: }
+    end
+  end
+
+  def render_lifecycle_success(message)
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace(
+          "container_lifecycle_modal",
+          partial: "containers/lifecycle/modal_success",
+          locals: { message: }
+        )
+      end
+      format.html { redirect_to containers_path, notice: message }
+    end
   end
 end
