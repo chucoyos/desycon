@@ -5,7 +5,13 @@
     <div class="flex min-h-full items-center justify-center p-4">
       <div class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
         <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-          <h3 id="container-tentativa-title" class="text-lg font-semibold text-slate-900">Capturar fecha tentativa</h3>
+          <div>
+            <h3 id="container-tentativa-title" class="text-lg font-semibold text-slate-900">Capturar fecha tentativa</h3>
+            <p class="mt-1 text-xs text-slate-500">
+              Contenedor: <span class="font-semibold text-slate-700"><%= container.number %></span>
+              · BL Master: <span class="font-semibold text-slate-700"><%= container.bl_master.presence || "Sin BL Master" %></span>
+            </p>
+          </div>
           <button type="button" class="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600" onclick="document.getElementById('container_lifecycle_modal').innerHTML=''">
             <span class="sr-only">Cerrar</span>
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
