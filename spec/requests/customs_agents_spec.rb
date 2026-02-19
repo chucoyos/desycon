@@ -67,6 +67,35 @@ RSpec.describe "CustomsAgents", type: :request do
         expect(response).to redirect_to(edit_bl_house_line_path(assigned_bl_house_line))
       end
     end
+
+    context "revalidation link visibility" do
+      it "hides revalidation link for revalidado status" do
+        bl = create(:bl_house_line, customs_agent: customs_user.entity, status: "revalidado")
+
+        sign_in customs_user, scope: :user
+        get customs_agents_dashboard_path
+
+        expect(response.body).not_to include(customs_agents_revalidation_path(revalidation_blhouse: bl.blhouse))
+      end
+
+      it "hides revalidation link for despachado status" do
+        bl = create(:bl_house_line, customs_agent: customs_user.entity, status: "despachado")
+
+        sign_in customs_user, scope: :user
+        get customs_agents_dashboard_path
+
+        expect(response.body).not_to include(customs_agents_revalidation_path(revalidation_blhouse: bl.blhouse))
+      end
+
+      it "shows revalidation link for non-revalidated statuses" do
+        bl = create(:bl_house_line, customs_agent: customs_user.entity, status: "activo")
+
+        sign_in customs_user, scope: :user
+        get customs_agents_dashboard_path
+
+        expect(response.body).to include(customs_agents_revalidation_path(revalidation_blhouse: bl.blhouse))
+      end
+    end
   end
 
   describe "GET /revalidations" do
