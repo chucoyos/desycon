@@ -7,7 +7,7 @@ class NotificationsController < ApplicationController
     per = 10 unless allowed.include?(per)
     @per_page = per
 
-    @notifications = current_user.notifications.includes(:notifiable, actor: :entity)
+    @notifications = current_user.notifications.includes(actor: :entity, notifiable: :container)
 
     # Aplicar filtros de búsqueda
     apply_filters
