@@ -16,7 +16,14 @@ class VoyagesController < ApplicationController
 
     per_page = params[:per].to_i.positive? ? params[:per].to_i : 10
 
-    voyages_with_associations = voyages.includes(:vessel, :destination_port).order(:viaje)
+    voyages_with_associations = voyages.includes(:vessel, :destination_port)
+
+    if ActiveModel::Type::Boolean.new.cast(params[:latest_only])
+      voyages_with_associations = voyages_with_associations.order(created_at: :desc, id: :desc).limit(1)
+    else
+      voyages_with_associations = voyages_with_associations.order(:viaje)
+    end
+
     @voyages = voyages_with_associations.page(params[:page]).per(per_page)
     @vessels = Vessel.alphabetical
     @ports = Port.alphabetical

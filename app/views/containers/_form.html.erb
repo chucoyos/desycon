@@ -131,7 +131,7 @@
            end %>
         <%= form.select :voyage_id,
               options_for_select(voyage_options, container.voyage_id),
-              { prompt: "Seleccione un viaje" },
+            {},
               class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200",
               required: true,
               data: {
@@ -408,11 +408,6 @@
       const currentValue = voyageSelect.value;
       voyageSelect.innerHTML = '';
 
-      const prompt = document.createElement('option');
-      prompt.value = '';
-      prompt.textContent = 'Seleccione un viaje';
-      voyageSelect.appendChild(prompt);
-
       voyages.forEach((voyage) => {
         const opt = document.createElement('option');
         opt.value = voyage.id;
@@ -422,10 +417,12 @@
         voyageSelect.appendChild(opt);
       });
 
-      if (!voyages.some((voyage) => String(voyage.id) === currentValue)) {
-        voyageSelect.value = '';
-      } else {
+      if (voyages.some((voyage) => String(voyage.id) === currentValue)) {
         voyageSelect.value = currentValue;
+      } else if (voyages.length > 0) {
+        voyageSelect.value = String(voyages[0].id);
+      } else {
+        voyageSelect.value = '';
       }
 
       voyageSelect.dispatchEvent(new Event('change'));
@@ -438,7 +435,7 @@
       }
 
       try {
-        const response = await fetch(`${voyagesUrl}?vessel_id=${vesselId}`);
+        const response = await fetch(`${voyagesUrl}?vessel_id=${vesselId}&latest_only=1`);
         if (!response.ok) throw new Error('Error al cargar viajes');
         const data = await response.json();
         setVoyageOptions(data || []);

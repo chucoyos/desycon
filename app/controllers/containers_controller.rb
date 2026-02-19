@@ -285,7 +285,7 @@ class ContainersController < ApplicationController
     @shipping_lines = ShippingLine.alphabetical
     @vessels = Vessel.alphabetical
     @voyages = if @container&.vessel_id
-      Voyage.where(vessel_id: @container.vessel_id).order(:viaje)
+      Voyage.where(vessel_id: @container.vessel_id).order(created_at: :desc, id: :desc).limit(1)
     else
       Voyage.none
     end
