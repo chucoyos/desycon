@@ -33,10 +33,11 @@
           </div>
         </div>
 
-        <div class="mt-6 flex justify-end">
+        <div class="mt-6 flex justify-end gap-2">
           <button type="button" class="inline-flex justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" onclick="document.getElementById('approval_modal').innerHTML=''">
             Cerrar
           </button>
+          <%= link_to "Actualizar listado", bl_house_lines_path, data: { turbo_frame: "_top" }, class: "inline-flex justify-center rounded-md border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500" %>
         </div>
       </div>
     </div>
