@@ -78,7 +78,7 @@
               <% end %>
             <% end %>
 
-            <% if policy(bl_house_line).approve_revalidation? %>
+            <% if policy(bl_house_line).approve_revalidation? && !bl_house_line.revalidado? && !bl_house_line.despachado? %>
               <%= link_to revalidation_approval_bl_house_line_path(bl_house_line), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-700 hover:bg-indigo-50 transition-colors", role: "menuitem", data: { turbo_frame: "approval_modal" } do %>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a2 2 0 012-2h2a2 2 0 012 2v2m-3-4v-2a2 2 0 00-2-2H9a2 2 0 00-2 2v2m6-6V7a2 2 0 00-2-2H9a2 2 0 00-2 2v2" />

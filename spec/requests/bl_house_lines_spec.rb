@@ -263,4 +263,41 @@ RSpec.describe "BlHouseLines", type: :request do
       expect(bl_house_line.reload.status).to eq("validar_documentos")
     end
   end
+
+  describe "dispatch modal success confirmation" do
+    before { sign_in user, scope: :user }
+
+    it "renders success modal with update list button" do
+      bl_house_line = create(:bl_house_line, status: "revalidado")
+
+      patch update_dispatch_date_bl_house_line_url(bl_house_line),
+            params: { bl_house_line: { fecha_despacho: Time.current.change(sec: 0) } },
+            headers: { "ACCEPT" => "text/vnd.turbo-stream.html" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Despacho registrado")
+      expect(response.body).to include("Actualizar listado")
+      expect(bl_house_line.reload.status).to eq("despachado")
+    end
+  end
+
+  describe "approval link visibility" do
+    before { sign_in user, scope: :user }
+
+    it "does not render approval link for revalidado" do
+      bl_house_line = create(:bl_house_line, status: "revalidado")
+
+      get bl_house_lines_url
+
+      expect(response.body).not_to include(revalidation_approval_bl_house_line_path(bl_house_line))
+    end
+
+    it "does not render approval link for despachado" do
+      bl_house_line = create(:bl_house_line, status: "despachado")
+
+      get bl_house_lines_url
+
+      expect(response.body).not_to include(revalidation_approval_bl_house_line_path(bl_house_line))
+    end
+  end
 end
