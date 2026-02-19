@@ -66,10 +66,12 @@
       <% end %>
     <% end %>
     <% unless current_user&.customs_broker? %>
-      <%= link_to dispatch_date_bl_house_line_path(bl_house_line), class: "p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors", title: "Fecha de Despacho", data: { turbo_frame: "dispatch_modal" } do %>
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-7 4h4m-9 6h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
+      <% if bl_house_line.revalidado? %>
+        <%= link_to dispatch_date_bl_house_line_path(bl_house_line), class: "p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors", title: "Fecha de Despacho", data: { turbo_frame: "dispatch_modal" } do %>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-7 4h4m-9 6h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        <% end %>
       <% end %>
     <% end %>
     <% if policy(bl_house_line).approve_revalidation? %>

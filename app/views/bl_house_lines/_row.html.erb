@@ -53,11 +53,13 @@
                 Editar
               <% end %>
 
-              <%= link_to dispatch_date_bl_house_line_path(bl_house_line), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-blue-700 hover:bg-blue-50 hover:text-blue-900 transition-colors", role: "menuitem", data: { turbo_frame: "dispatch_modal" } do %>
-                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-7 4h4m-9 6h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Fecha Despacho
+              <% if bl_house_line.revalidado? %>
+                <%= link_to dispatch_date_bl_house_line_path(bl_house_line), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-blue-700 hover:bg-blue-50 hover:text-blue-900 transition-colors", role: "menuitem", data: { turbo_frame: "dispatch_modal" } do %>
+                  <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-7 4h4m-9 6h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Fecha Despacho
+                <% end %>
               <% end %>
 
               <%= button_to bl_house_line_path(bl_house_line, bl_house_line: { hidden_from_customs_agent: !bl_house_line.hidden_from_customs_agent }), method: :patch, class: "flex items-center gap-3 w-full px-4 py-2.5 text-sm #{bl_house_line.hidden_from_customs_agent? ? 'text-emerald-700 hover:bg-emerald-50' : 'text-amber-700 hover:bg-amber-50'} transition-colors", form: { data: { turbo_confirm: bl_house_line.hidden_from_customs_agent? ? nil : "Ocultar esta partida a la agencia aduanal?" } }, role: "menuitem" do %>

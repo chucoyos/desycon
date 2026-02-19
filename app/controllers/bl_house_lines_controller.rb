@@ -170,6 +170,7 @@ class BlHouseLinesController < ApplicationController
   # GET /bl_house_lines/1/dispatch_date
   def dispatch_date
     authorize @bl_house_line, :update?
+    return unless ensure_dispatch_allowed
 
     respond_to do |format|
       format.html { render partial: "bl_house_lines/dispatch/modal", locals: { bl_house_line: @bl_house_line } }
@@ -180,6 +181,7 @@ class BlHouseLinesController < ApplicationController
   # PATCH /bl_house_lines/1/update_dispatch_date
   def update_dispatch_date
     authorize @bl_house_line, :update?
+    return unless ensure_dispatch_allowed
 
     @bl_house_line.assign_attributes(dispatch_date_params)
     @bl_house_line.status = "despachado"
@@ -196,7 +198,7 @@ class BlHouseLinesController < ApplicationController
           mobile_dom_id = view_context.dom_id(@bl_house_line, :mobile)
 
           render turbo_stream: [
-            turbo_stream.replace("dispatch_modal", partial: "bl_house_lines/dispatch/modal_closed"),
+            turbo_stream.replace("dispatch_modal", partial: "bl_house_lines/dispatch/modal_success", locals: { bl_house_line: @bl_house_line }),
             turbo_stream.replace(row_dom_id, partial: "bl_house_lines/row", locals: { bl_house_line: @bl_house_line }),
             turbo_stream.replace(mobile_dom_id, partial: "bl_house_lines/mobile_card", locals: { bl_house_line: @bl_house_line })
           ]
@@ -479,6 +481,19 @@ class BlHouseLinesController < ApplicationController
       format.turbo_stream { render partial: "bl_house_lines/dispatch/modal", locals: { bl_house_line: @bl_house_line }, status: status }
       format.html { render partial: "bl_house_lines/dispatch/modal", locals: { bl_house_line: @bl_house_line }, status: status }
     end
+  end
+
+  def ensure_dispatch_allowed
+    return true if @bl_house_line.revalidado?
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace("dispatch_modal", partial: "bl_house_lines/dispatch/modal_closed")
+      end
+      format.html { redirect_to bl_house_lines_path, alert: "Solo puedes registrar fecha de despacho para partidas revalidadas." }
+    end
+
+    false
   end
 
   def reassign_params

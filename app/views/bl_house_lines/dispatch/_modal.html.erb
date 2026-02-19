@@ -7,7 +7,10 @@
         <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <div>
             <h3 id="dispatch-modal-title" class="text-lg font-semibold text-slate-900">Fecha y hora de despacho</h3>
-            <p class="text-sm text-slate-500">Al guardar se actualiza el estatus a Despachado.</p>
+            <p class="mt-1 text-xs text-slate-500">
+              BL House: <span class="font-semibold text-slate-700"><%= bl_house_line.blhouse %></span>
+              · Contenedor: <span class="font-semibold text-slate-700"><%= bl_house_line.container&.number || "Sin contenedor" %></span>
+            </p>
           </div>
           <button type="button" class="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600" onclick="document.getElementById('dispatch_modal').innerHTML=''">
             <span class="sr-only">Cerrar</span>
@@ -21,7 +24,6 @@
           <%= form_with model: bl_house_line, url: update_dispatch_date_bl_house_line_path(bl_house_line), method: :patch, data: { turbo_frame: "dispatch_modal" }, class: "space-y-4" do |f| %>
             <% if bl_house_line.errors.any? %>
               <div class="rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-red-700">
-                <p class="font-semibold">Revisa los campos:</p>
                 <ul class="list-disc pl-5">
                   <% bl_house_line.errors.full_messages.each do |message| %>
                     <li><%= message %></li>
