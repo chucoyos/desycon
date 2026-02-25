@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_16_161000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_25_121500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -211,6 +211,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_16_161000) do
     t.string "status", default: "activo", null: false
     t.integer "tentativa_turno"
     t.string "tipo_maniobra", null: false
+    t.boolean "transferencia_no_aplica", default: false, null: false
     t.string "type_size"
     t.datetime "updated_at", null: false
     t.bigint "vessel_id"
@@ -223,6 +224,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_16_161000) do
     t.index ["status"], name: "index_containers_on_status"
     t.index ["tentativa_turno"], name: "index_containers_on_tentativa_turno"
     t.index ["tipo_maniobra"], name: "index_containers_on_tipo_maniobra"
+    t.index ["transferencia_no_aplica"], name: "index_containers_on_transferencia_no_aplica"
     t.index ["type_size"], name: "index_containers_on_type_size"
     t.index ["vessel_id"], name: "index_containers_on_vessel_id"
     t.index ["voyage_id"], name: "index_containers_on_voyage_id"

@@ -237,6 +237,21 @@ RSpec.describe Container, type: :model do
 
       expect(container.reload.status).to eq('fecha_tentativa_desconsolidacion')
     end
+
+    it 'moves to fecha_tentativa_desconsolidacion when transferencia is marked as not applicable' do
+      container = create(
+        :container,
+        status: 'cita_transferencia',
+        transferencia_no_aplica: true
+      )
+
+      container.update!(
+        fecha_tentativa_desconsolidacion: Date.current + 1.day,
+        tentativa_turno: :primer_turno
+      )
+
+      expect(container.reload.status).to eq('fecha_tentativa_desconsolidacion')
+    end
   end
 
   describe 'scopes' do

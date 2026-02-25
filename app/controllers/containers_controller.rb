@@ -150,7 +150,23 @@ class ContainersController < ApplicationController
   def lifecycle_transferencia_update
     authorize @container, :update?
 
-    @container.assign_attributes(lifecycle_transferencia_params)
+    no_aplica = ActiveModel::Type::Boolean.new.cast(lifecycle_transferencia_params[:transferencia_no_aplica])
+
+    if no_aplica
+      @container.assign_attributes(
+        transferencia_no_aplica: true,
+        fecha_transferencia: nil,
+        almacen: nil
+      )
+
+      if @container.save
+        return render_lifecycle_success("Transferencia marcada como no aplica.")
+      end
+
+      return render_lifecycle_modal("containers/lifecycle/transferencia_modal", :unprocessable_entity)
+    end
+
+    @container.assign_attributes(lifecycle_transferencia_params.merge(transferencia_no_aplica: false))
 
     if @container.fecha_transferencia.blank?
       @container.errors.add(:fecha_transferencia, "no puede estar en blanco")
@@ -260,6 +276,7 @@ class ContainersController < ApplicationController
       :fecha_desconsolidacion,
       :fecha_revalidacion_bl_master,
       :fecha_transferencia,
+      :transferencia_no_aplica,
       :tentativa_turno,
       :recinto,
       :almacen,
@@ -312,7 +329,7 @@ class ContainersController < ApplicationController
   end
 
   def lifecycle_transferencia_params
-    params.require(:container).permit(:fecha_transferencia, :almacen)
+    params.require(:container).permit(:fecha_transferencia, :almacen, :transferencia_no_aplica)
   end
 
   def lifecycle_tentativa_params

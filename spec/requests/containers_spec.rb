@@ -179,6 +179,25 @@ RSpec.describe "Containers", type: :request do
       expect(container.reload.status).to eq("cita_transferencia")
     end
 
+    it "allows marking transferencia as no aplica and advances to cita_transferencia" do
+      container = create(:container, status: "descargado", fecha_descarga: Time.current.change(sec: 0))
+
+      patch lifecycle_transferencia_update_container_path(container),
+            params: {
+              container: {
+                transferencia_no_aplica: "1"
+              }
+            },
+            headers: { "ACCEPT" => "text/vnd.turbo-stream.html" }
+
+      expect(response).to have_http_status(:ok)
+      container.reload
+      expect(container.transferencia_no_aplica).to be true
+      expect(container.fecha_transferencia).to be_nil
+      expect(container.almacen).to be_nil
+      expect(container.status).to eq("cita_transferencia")
+    end
+
     it "renders tarja modal with manual fecha de desconsolidación field" do
       container = create(:container, status: "fecha_tentativa_desconsolidacion")
 
@@ -187,6 +206,15 @@ RSpec.describe "Containers", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Cargar tarja")
       expect(response.body).to include("Fecha de desconsolidación")
+    end
+
+    it "renders transferencia modal with no aplica option" do
+      container = create(:container, status: "descargado")
+
+      get lifecycle_transferencia_modal_container_path(container), headers: { "ACCEPT" => "text/vnd.turbo-stream.html" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("No aplica transferencia")
     end
   end
 end
