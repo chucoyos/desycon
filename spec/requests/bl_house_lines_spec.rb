@@ -322,5 +322,23 @@ RSpec.describe "BlHouseLines", type: :request do
 
       expect(response.body).not_to include(revalidation_approval_bl_house_line_path(bl_house_line))
     end
+
+    it "renders documents link for despachado when user is executive" do
+      bl_house_line = create(:bl_house_line, status: "despachado")
+
+      get bl_house_lines_url
+
+      expect(response.body).to include(documents_bl_house_line_path(bl_house_line))
+    end
+
+    it "does not render documents link for despachado when user is customs broker" do
+      customs_broker_user = create(:user, :customs_broker)
+      sign_in customs_broker_user, scope: :user
+      bl_house_line = create(:bl_house_line, status: "despachado", customs_agent: customs_broker_user.entity)
+
+      get bl_house_lines_url
+
+      expect(response.body).not_to include(documents_bl_house_line_path(bl_house_line))
+    end
   end
 end
