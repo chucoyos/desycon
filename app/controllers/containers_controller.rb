@@ -209,6 +209,11 @@ class ContainersController < ApplicationController
       return render_lifecycle_modal("containers/lifecycle/tarja_modal", :unprocessable_entity)
     end
 
+    if lifecycle_tarja_params[:fecha_desconsolidacion].blank?
+      @container.errors.add(:fecha_desconsolidacion, "no puede estar en blanco")
+      return render_lifecycle_modal("containers/lifecycle/tarja_modal", :unprocessable_entity)
+    end
+
     @container.assign_attributes(lifecycle_tarja_params)
 
     if @container.save
@@ -315,7 +320,7 @@ class ContainersController < ApplicationController
   end
 
   def lifecycle_tarja_params
-    params.require(:container).permit(:tarja_documento)
+    params.require(:container).permit(:tarja_documento, :fecha_desconsolidacion)
   end
 
   def render_lifecycle_modal(partial, status = :ok)

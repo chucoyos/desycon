@@ -37,6 +37,11 @@
               <%= f.file_field :tarja_documento, accept: "application/pdf", required: true, class: "cursor-pointer w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" %>
             </div>
 
+            <div>
+              <%= f.label :fecha_desconsolidacion, "Fecha de desconsolidación", class: "block text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wider" %>
+              <%= f.date_field :fecha_desconsolidacion, required: true, class: "w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500" %>
+            </div>
+
             <div class="flex items-center justify-end gap-2 pt-2">
               <button type="button" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" onclick="document.getElementById('container_lifecycle_modal').innerHTML=''">Cancelar</button>
               <%= f.submit "Guardar", class: "rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700" %>

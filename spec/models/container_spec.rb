@@ -382,7 +382,7 @@ RSpec.describe Container, type: :model do
         expect(container.puede_desconsolidar?).to be false
       end
 
-      it 'returns false when documents are complete (status becomes desconsolidado)' do
+      it 'returns true when documents are complete but fecha_desconsolidacion is missing' do
         container.update!(status: 'activo')
         container.bl_master_documento.attach(
           io: StringIO.new('test'),
@@ -395,10 +395,30 @@ RSpec.describe Container, type: :model do
           content_type: 'application/pdf'
         )
         container.reload
-        expect(container.status).to eq('desconsolidado')
-        expect(container.puede_desconsolidar?).to be false
+        expect(container.status).to eq('bl_revalidado')
+        expect(container.puede_desconsolidar?).to be true
       end
     end
+      it 'moves to desconsolidado only when documentos are complete and fecha_desconsolidacion is present' do
+        container = create(:container, status: 'activo')
+
+        container.bl_master_documento.attach(
+          io: StringIO.new('test'),
+          filename: 'bl.pdf',
+          content_type: 'application/pdf'
+        )
+        container.tarja_documento.attach(
+          io: StringIO.new('test'),
+          filename: 'tarja.pdf',
+          content_type: 'application/pdf'
+        )
+
+        expect(container.reload.status).to eq('bl_revalidado')
+
+        container.update!(fecha_desconsolidacion: Date.current)
+
+        expect(container.reload.status).to eq('desconsolidado')
+      end
 
     describe '#last_status_change' do
       it 'returns the most recent status history' do

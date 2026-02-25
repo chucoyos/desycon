@@ -178,5 +178,15 @@ RSpec.describe "Containers", type: :request do
       expect(response).to have_http_status(:ok)
       expect(container.reload.status).to eq("cita_transferencia")
     end
+
+    it "renders tarja modal with manual fecha de desconsolidación field" do
+      container = create(:container, status: "fecha_tentativa_desconsolidacion")
+
+      get lifecycle_tarja_modal_container_path(container), headers: { "ACCEPT" => "text/vnd.turbo-stream.html" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Cargar tarja")
+      expect(response.body).to include("Fecha de desconsolidación")
+    end
   end
 end

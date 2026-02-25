@@ -316,7 +316,7 @@ class Container < ApplicationRecord
   end
 
   def target_status_from_fields
-    return :desconsolidado if documentos_completos?
+    return :desconsolidado if documentos_completos? && fecha_desconsolidacion.present?
     return :fecha_tentativa_desconsolidacion if fecha_transferencia.present? && fecha_tentativa_desconsolidacion.present?
     return :cita_transferencia if fecha_transferencia.present?
     return :descargado if fecha_descarga.present?
@@ -364,6 +364,7 @@ class Container < ApplicationRecord
   def handle_tarja_uploaded
     return if status_desconsolidado?
     return unless documentos_completos?
+    return if fecha_desconsolidacion.blank?
 
     current_actor = @current_user || (defined?(Current) && Current.respond_to?(:user) ? Current.user : nil)
 
@@ -386,6 +387,10 @@ class Container < ApplicationRecord
   end
 
   def require_documents_for_desconsolidado
+    if fecha_desconsolidacion.blank?
+      errors.add(:fecha_desconsolidacion, "no puede estar en blanco")
+    end
+
     return if documentos_completos?
 
     errors.add(:base, "Debe adjuntar tanto el BL Master como la Tarja para cambiar el estatus a desconsolidado.")
