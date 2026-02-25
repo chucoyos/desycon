@@ -59,7 +59,7 @@
 
         <div class="relative w-full sm:w-auto">
           <%= f.label :status, "Estatus", class: "sr-only" %>
-          <%= f.select :status, options_for_select(@status_filter_options.map { |status| [status.titleize, status] }, params[:status]), { include_blank: "Todos los estatus" }, class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+          <%= f.select :status, options_for_select(@status_filter_options.map { |status| [status.titleize, status] }, @selected_status_filter), { include_blank: "Todos los estatus" }, class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
         </div>
 
         <% unless current_user&.customs_broker? %>

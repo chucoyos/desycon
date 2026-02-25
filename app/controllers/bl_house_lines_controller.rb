@@ -38,8 +38,10 @@ class BlHouseLinesController < ApplicationController
       scope = scope.where(customs_agent_id: params[:customs_agent_id])
     end
 
-    if params[:status].present? && @status_filter_options.include?(params[:status])
-      scope = scope.where(status: params[:status])
+    @selected_status_filter = selected_status_filter
+
+    if @selected_status_filter.present? && @status_filter_options.include?(@selected_status_filter)
+      scope = scope.where(status: @selected_status_filter)
     end
 
     if params[:hidden].present? && !customs_agent_user?
@@ -422,6 +424,22 @@ class BlHouseLinesController < ApplicationController
 
   def customs_agent_statuses
     %w[activo documentos_rechazados documentos_ok revalidado despachado]
+  end
+
+  def selected_status_filter
+    return params[:status] if params[:status].present?
+    return unless current_user&.admin_or_executive?
+    return unless initial_index_load?
+
+    "validar_documentos"
+  end
+
+  def initial_index_load?
+    params[:blhouse].blank? &&
+      params[:container_number].blank? &&
+      params[:client_id].blank? &&
+      params[:customs_agent_id].blank? &&
+      params[:hidden].blank?
   end
 
   def set_bl_house_line

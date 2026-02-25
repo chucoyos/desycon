@@ -43,6 +43,28 @@ RSpec.describe "BlHouseLines", type: :request do
       get bl_house_lines_url
       expect(response).to be_successful
     end
+
+    it "shows only validar_documentos on initial load for executive" do
+      sign_in user, scope: :user
+      pending_line = create(:bl_house_line, status: "validar_documentos", blhouse: "VALDOC001")
+      create(:bl_house_line, status: "revalidado", blhouse: "REVA001")
+
+      get bl_house_lines_url
+
+      expect(response.body).to include(pending_line.blhouse)
+      expect(response.body).not_to include("REVA001")
+    end
+
+    it "respects explicit status filter for executive" do
+      sign_in user, scope: :user
+      create(:bl_house_line, status: "validar_documentos", blhouse: "VALDOC002")
+      target_line = create(:bl_house_line, status: "revalidado", blhouse: "REVA002")
+
+      get bl_house_lines_url, params: { status: "revalidado" }
+
+      expect(response.body).to include(target_line.blhouse)
+      expect(response.body).not_to include("VALDOC002")
+    end
   end
 
   describe "GET /bl_house_lines/:id" do
@@ -326,7 +348,7 @@ RSpec.describe "BlHouseLines", type: :request do
     it "renders documents link for despachado when user is executive" do
       bl_house_line = create(:bl_house_line, status: "despachado")
 
-      get bl_house_lines_url
+      get bl_house_lines_url, params: { status: "despachado" }
 
       expect(response.body).to include(documents_bl_house_line_path(bl_house_line))
     end
@@ -336,7 +358,7 @@ RSpec.describe "BlHouseLines", type: :request do
       sign_in customs_broker_user, scope: :user
       bl_house_line = create(:bl_house_line, status: "despachado", customs_agent: customs_broker_user.entity)
 
-      get bl_house_lines_url
+      get bl_house_lines_url, params: { status: "despachado" }
 
       expect(response.body).not_to include(documents_bl_house_line_path(bl_house_line))
     end
