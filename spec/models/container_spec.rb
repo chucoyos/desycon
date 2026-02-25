@@ -207,6 +207,36 @@ RSpec.describe Container, type: :model do
         container.cambiar_status!('bl_revalidado', user, 'Test')
       }.to change { container.container_status_histories.count }.by(1)
     end
+
+    it 'does not move to fecha_tentativa_desconsolidacion without transferencia' do
+      container = create(
+        :container,
+        status: 'bl_revalidado',
+        fecha_revalidacion_bl_master: Time.current
+      )
+
+      container.update!(
+        fecha_tentativa_desconsolidacion: Date.current + 1.day,
+        tentativa_turno: :primer_turno
+      )
+
+      expect(container.reload.status).to eq('bl_revalidado')
+    end
+
+    it 'moves to fecha_tentativa_desconsolidacion when transferencia exists' do
+      container = create(
+        :container,
+        status: 'cita_transferencia',
+        fecha_transferencia: Time.current.change(sec: 0)
+      )
+
+      container.update!(
+        fecha_tentativa_desconsolidacion: Date.current + 1.day,
+        tentativa_turno: :primer_turno
+      )
+
+      expect(container.reload.status).to eq('fecha_tentativa_desconsolidacion')
+    end
   end
 
   describe 'scopes' do

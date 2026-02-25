@@ -262,6 +262,29 @@ RSpec.describe "BlHouseLines", type: :request do
       expect(response.body).to include("Debes marcar todos los documentos como validados antes de continuar.")
       expect(bl_house_line.reload.status).to eq("validar_documentos")
     end
+
+    it "guarda fecha tentativa desde aprobación sin mover contenedor a fecha_tentativa_desconsolidacion si no hay transferencia" do
+      container.tarja_documento.purge
+
+      patch approve_revalidation_bl_house_line_url(bl_house_line), params: {
+        decision: "assign",
+        fecha_tentativa_desconsolidacion: (Date.current + 1.day).to_s,
+        tentativa_turno: "primer_turno",
+        bl_house_line: {
+          customs_agent_id: customs_agent.id,
+          customs_broker_id: customs_broker.id,
+          bl_endosado_documento_validated: "1",
+          liberacion_documento_validated: "0",
+          encomienda_documento_validated: "0",
+          pago_documento_validated: "0"
+        }
+      }
+
+      expect(response).to have_http_status(:found)
+      expect(bl_house_line.reload.status).to eq("documentos_ok")
+      expect(container.reload.fecha_tentativa_desconsolidacion).to be_present
+      expect(container.status).to eq("activo")
+    end
   end
 
   describe "dispatch modal success confirmation" do

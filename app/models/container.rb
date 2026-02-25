@@ -317,7 +317,7 @@ class Container < ApplicationRecord
 
   def target_status_from_fields
     return :desconsolidado if documentos_completos?
-    return :fecha_tentativa_desconsolidacion if fecha_tentativa_desconsolidacion.present?
+    return :fecha_tentativa_desconsolidacion if fecha_transferencia.present? && fecha_tentativa_desconsolidacion.present?
     return :cita_transferencia if fecha_transferencia.present?
     return :descargado if fecha_descarga.present?
     return :bl_revalidado if bl_master_documento.attached? || fecha_revalidacion_bl_master.present?
