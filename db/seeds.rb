@@ -303,16 +303,38 @@ customs_agent_entity = Entity.find_by(name: "Agencia Aduanal García & Asociados
 client_entity = Entity.find_by(name: "Importadora ABC S.A. de C.V.")
 consolidator_entity = Entity.find_by(is_consolidator: true)
 shipping_line = ShippingLine.first
-vessel = Vessel.first
+vessel = Vessel.first || Vessel.find_or_create_by!(name: "SEED VESSEL")
+origin_port = Port.first || Port.find_or_create_by!(code: "MXMZO", name: "Manzanillo", country: "México")
+destination_port = Port.where.not(id: origin_port&.id).first ||
+                   Port.find_or_create_by!(code: "MXVER", name: "Veracruz", country: "México")
+
+voyage = nil
+if vessel && destination_port
+  voyage = Voyage.find_or_create_by!(vessel: vessel, viaje: "SEED-001") do |v|
+    v.voyage_type = "arribo"
+    v.destination_port = destination_port
+    v.eta = 7.days.from_now
+  end
+end
 
 # Crear contenedor de ejemplo si no existe
-container = Container.find_or_create_by!(number: "CONT001") do |c|
-  c.consolidator_entity = consolidator_entity
-  c.shipping_line = shipping_line
-  c.vessel = vessel
-  c.status = "activo"
-  c.tipo_maniobra = "importacion"
-end
+container = Container.find_or_initialize_by(number: "ABCD1234567", bl_master: "BL-SEED-001")
+container.assign_attributes(
+  consolidator_entity: consolidator_entity,
+  shipping_line: shipping_line,
+  vessel: vessel,
+  voyage: voyage,
+  origin_port: origin_port,
+  status: "activo",
+  tipo_maniobra: "importacion",
+  type_size: "40HC",
+  recinto: "CONTECON",
+  almacen: "SSA",
+  archivo_nr: "NR-SEED-001",
+  sello: "SELLO001",
+  ejecutivo: "Seed Ejecutivo"
+)
+container.save! if container.changed? || container.new_record?
 
 service_catalog_container = ServiceCatalog.find_by(name: "Coordinación de contenedor a almacén", applies_to: "container") || ServiceCatalog.for_containers.first
 if container && service_catalog_container
@@ -322,7 +344,7 @@ if container && service_catalog_container
   end
 end
 
-packaging = Packaging.first || Packaging.create!(name: "Cajas", description: "Cajas de cartón")
+packaging = Packaging.first || Packaging.create!(nombre: "Cajas")
 
 if customs_agent_entity && client_entity && container && packaging
   bl_house_lines_data = [
@@ -344,7 +366,8 @@ if customs_agent_entity && client_entity && container && packaging
       partida: bl_data[:partida],
       peso: 1000.0,
       volumen: 10.0,
-      contiene: "Mercancía de ejemplo"
+      contiene: "Mercancía de ejemplo",
+      marcas: "SEED-MARCA"
     )
     bl.save! if bl.changed? || bl.new_record?
   end
