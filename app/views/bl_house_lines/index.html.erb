@@ -36,7 +36,7 @@
       <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Búsqueda</h2>
     </div>
     <%= form_with url: bl_house_lines_path, method: :get, class: "w-full" do |f| %>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         <div class="min-w-0">
           <%= f.label :blhouse, "BL House", class: "sr-only" %>
           <%= f.text_field :blhouse, value: params[:blhouse], placeholder: "BL House...", class: "block w-full h-12 px-4 border border-gray-200 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-shadow truncate" %>
@@ -60,6 +60,14 @@
         <div class="relative w-full sm:w-auto">
           <%= f.label :status, "Estatus", class: "sr-only" %>
           <%= f.select :status, options_for_select(@status_filter_options.map { |status| [status.titleize, status] }, @selected_status_filter), { include_blank: "Todos los estatus" }, class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+        </div>
+
+        <div class="relative w-full sm:w-auto xl:col-span-2">
+          <%= f.label :start_date, "Rango de fechas", class: "sr-only" %>
+          <div class="grid grid-cols-2 gap-2">
+            <%= f.date_field :start_date, value: @selected_start_date, class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+            <%= f.date_field :end_date, value: @selected_end_date, class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+          </div>
         </div>
 
         <% unless current_user&.customs_broker? %>
@@ -87,6 +95,8 @@
         params[:container_number].present? ||
         params[:client_id].present? ||
         params[:customs_agent_id].present? ||
+        @selected_start_date.present? ||
+        @selected_end_date.present? ||
         @selected_status_filter.present? ||
         params[:hidden].present? %>
 
@@ -128,6 +138,12 @@
               <% if @selected_status_filter.present? %>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                   Estatus: <%= bl_house_line_status_nombre(@selected_status_filter) %>
+                </span>
+              <% end %>
+
+              <% if @selected_start_date.present? || @selected_end_date.present? %>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  Fecha: <%= [@selected_start_date, @selected_end_date].compact.join(" - ") %>
                 </span>
               <% end %>
 

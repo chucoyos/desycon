@@ -80,6 +80,31 @@ RSpec.describe "BlHouseLines", type: :request do
       expect(response.body).to include(pending_line.blhouse)
       expect(response.body).to include(approved_line.blhouse)
     end
+
+    it "excludes old records by default date range (last 30 days)" do
+      sign_in user, scope: :user
+      recent_line = create(:bl_house_line, status: "validar_documentos", blhouse: "RECENT001")
+      old_line = create(:bl_house_line, status: "validar_documentos", blhouse: "OLD001")
+      old_line.update_column(:created_at, 45.days.ago)
+
+      get bl_house_lines_url
+
+      expect(response.body).to include(recent_line.blhouse)
+      expect(response.body).not_to include(old_line.blhouse)
+    end
+
+    it "includes historical records when explicit date range is provided" do
+      sign_in user, scope: :user
+      old_line = create(:bl_house_line, status: "validar_documentos", blhouse: "OLD002")
+      old_line.update_column(:created_at, 45.days.ago)
+
+      get bl_house_lines_url, params: {
+        start_date: 60.days.ago.to_date.to_s,
+        end_date: Date.current.to_s
+      }
+
+      expect(response.body).to include(old_line.blhouse)
+    end
   end
 
   describe "GET /bl_house_lines/:id" do

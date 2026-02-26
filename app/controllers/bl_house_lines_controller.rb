@@ -38,6 +38,14 @@ class BlHouseLinesController < ApplicationController
       scope = scope.where(customs_agent_id: params[:customs_agent_id])
     end
 
+    @selected_start_date = resolved_start_date
+    @selected_end_date = resolved_end_date
+
+    start_date = [ @selected_start_date, @selected_end_date ].min
+    end_date = [ @selected_start_date, @selected_end_date ].max
+
+    scope = scope.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+
     @selected_status_filter = selected_status_filter
 
     if @selected_status_filter.present? && @status_filter_options.include?(@selected_status_filter)
@@ -439,7 +447,33 @@ class BlHouseLinesController < ApplicationController
       params[:container_number].blank? &&
       params[:client_id].blank? &&
       params[:customs_agent_id].blank? &&
+      params[:start_date].blank? &&
+      params[:end_date].blank? &&
       params[:hidden].blank?
+  end
+
+  def resolved_start_date
+    parse_filter_date(params[:start_date]) || default_start_date
+  end
+
+  def resolved_end_date
+    parse_filter_date(params[:end_date]) || default_end_date
+  end
+
+  def parse_filter_date(value)
+    return nil if value.blank?
+
+    Date.iso8601(value)
+  rescue ArgumentError
+    nil
+  end
+
+  def default_start_date
+    Date.current - 30.days
+  end
+
+  def default_end_date
+    Date.current
   end
 
   def set_bl_house_line
