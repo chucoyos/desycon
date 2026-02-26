@@ -96,6 +96,55 @@ RSpec.describe "CustomsAgents", type: :request do
         expect(response.body).to include(customs_agents_revalidation_path(revalidation_blhouse: bl.blhouse))
       end
     end
+
+    context "date range filters" do
+      it "applies default last 30 days filter" do
+        recent_bl = create(:bl_house_line, customs_agent: customs_user.entity, blhouse: "RECENT-DASH", created_at: 5.days.ago)
+        old_bl = create(:bl_house_line, customs_agent: customs_user.entity, blhouse: "OLD-DASH", created_at: 90.days.ago)
+
+        sign_in customs_user, scope: :user
+        get customs_agents_dashboard_path
+
+        expect(response.body).to include(recent_bl.blhouse)
+        expect(response.body).not_to include(old_bl.blhouse)
+      end
+
+      it "includes historical records when explicit date range is provided" do
+        historical_bl = create(:bl_house_line, customs_agent: customs_user.entity, blhouse: "HIST-DASH", created_at: 90.days.ago)
+
+        sign_in customs_user, scope: :user
+        get customs_agents_dashboard_path, params: {
+          start_date: 120.days.ago.to_date.iso8601,
+          end_date: 60.days.ago.to_date.iso8601
+        }
+
+        expect(response.body).to include(historical_bl.blhouse)
+      end
+
+      it "filters records by selected client" do
+        selected_client = create(:entity, :client, customs_agent: customs_user.entity)
+        other_client = create(:entity, :client, customs_agent: customs_user.entity)
+        selected_bl = create(:bl_house_line, customs_agent: customs_user.entity, client: selected_client, blhouse: "CLIENT-MATCH")
+        other_bl = create(:bl_house_line, customs_agent: customs_user.entity, client: other_client, blhouse: "CLIENT-OTHER")
+
+        sign_in customs_user, scope: :user
+        get customs_agents_dashboard_path, params: { client_id: selected_client.id }
+
+        expect(response.body).to include(selected_bl.blhouse)
+        expect(response.body).not_to include(other_bl.blhouse)
+      end
+
+      it "filters by despachado status" do
+        despachado_bl = create(:bl_house_line, customs_agent: customs_user.entity, status: "despachado", blhouse: "DISPATCHED-DASH")
+        activo_bl = create(:bl_house_line, customs_agent: customs_user.entity, status: "activo", blhouse: "ACTIVE-DASH")
+
+        sign_in customs_user, scope: :user
+        get customs_agents_dashboard_path, params: { status: "despachado" }
+
+        expect(response.body).to include(despachado_bl.blhouse)
+        expect(response.body).not_to include(activo_bl.blhouse)
+      end
+    end
   end
 
   describe "GET /revalidations" do

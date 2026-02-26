@@ -122,7 +122,7 @@
         <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Búsqueda y filtros</h2>
       </div>
       <%= form_with url: customs_agents_dashboard_path, method: :get, class: "w-full" do |form| %>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <div class="min-w-0">
             <%= form.label :filter_blhouse, "BL House", class: "sr-only" %>
             <%= form.text_field :filter_blhouse, value: params[:filter_blhouse], placeholder: "BL House...", class: "block w-full h-12 px-4 border border-gray-200 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-shadow truncate" %>
@@ -133,16 +133,36 @@
             <%= form.text_field :filter_container_number, value: params[:filter_container_number], placeholder: "Número de contenedor...", class: "block w-full h-12 px-4 border border-gray-200 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-shadow truncate" %>
           </div>
 
-          <div class="relative w-full sm:w-auto">
+          <div class="relative w-full">
+            <%= form.label :client_id, "Cliente", class: "sr-only" %>
+            <%= form.select :client_id,
+              options_from_collection_for_select(@clients || [], :id, :name, params[:client_id]),
+              { include_blank: "Todos los clientes" },
+              class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+          </div>
+
+          <div class="relative w-full">
             <%= form.label :status, "Estatus", class: "sr-only" %>
             <% status_options = [
               ["Todos los estatus", ""],
               ["Activo", "activo"],
-              ["Documentos rechazados", "documentos_rechazados"],
+              ["Validar documentos", "validar_documentos"],
+              ["Instrucciones pendientes", "instrucciones_pendientes"],
               ["Documentos OK", "documentos_ok"],
-              ["Revalidado", "revalidado"]
+              ["Revalidado", "revalidado"],
+              ["Despachado", "despachado"]
             ] %>
-            <%= form.select :status, options_for_select(status_options, params[:status]), {}, class: "block w-full sm:w-64 px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+            <%= form.select :status, options_for_select(status_options, params[:status]), {}, class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+          </div>
+
+          <div class="relative w-full">
+            <%= form.label :start_date, "Fecha inicio", class: "sr-only" %>
+            <%= form.date_field :start_date, value: @selected_start_date, class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+          </div>
+
+          <div class="relative w-full">
+            <%= form.label :end_date, "Fecha fin", class: "sr-only" %>
+            <%= form.date_field :end_date, value: @selected_end_date, class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
           </div>
         </div>
 
@@ -150,6 +170,65 @@
           <%= form.submit "Buscar", class: "px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md cursor-pointer" %>
           <%= link_to "Limpiar", customs_agents_dashboard_path, class: "px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors" %>
         </div>
+
+        <% active_filters_present = params[:filter_blhouse].present? ||
+          params[:filter_container_number].present? ||
+          params[:client_id].present? ||
+          params[:status].present? ||
+          @selected_start_date.present? ||
+          @selected_end_date.present? %>
+
+        <% if active_filters_present %>
+          <div class="pt-4 mt-4 border-t border-gray-200">
+            <div class="flex items-center justify-between gap-3 flex-wrap">
+              <div class="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="font-medium">Filtros activos:</span>
+
+                <% if params[:filter_blhouse].present? %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    BL House: <%= params[:filter_blhouse] %>
+                  </span>
+                <% end %>
+
+                <% if params[:filter_container_number].present? %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-100 text-sky-800">
+                    Contenedor: <%= params[:filter_container_number] %>
+                  </span>
+                <% end %>
+
+                <% if params[:client_id].present? %>
+                  <% client_name = @clients.find { |client| client.id == params[:client_id].to_i }&.name || "ID #{params[:client_id]}" %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                    Cliente: <%= client_name %>
+                  </span>
+                <% end %>
+
+                <% if params[:status].present? %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                    Estatus: <%= bl_house_line_status_nombre(params[:status]) %>
+                  </span>
+                <% end %>
+
+                <% if @selected_start_date.present? || @selected_end_date.present? %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    Fecha: <%= [@selected_start_date, @selected_end_date].compact.join(" - ") %>
+                  </span>
+                <% end %>
+              </div>
+
+              <%= link_to customs_agents_dashboard_path,
+                class: "text-sm text-indigo-600 hover:text-indigo-800 font-medium inline-flex items-center gap-1" do %>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Quitar filtros
+              <% end %>
+            </div>
+          </div>
+        <% end %>
       <% end %>
     </div>
 

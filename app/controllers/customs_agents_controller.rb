@@ -33,6 +33,7 @@ class CustomsAgentsController < ApplicationController
                              .order(created_at: :desc)
 
     filtered_scope = base_scope
+    @clients = revalidation_clients
 
     if params[:filter_blhouse].present?
       filtered_scope = filtered_scope.where("bl_house_lines.blhouse ILIKE ?", "%#{params[:filter_blhouse]}%")
@@ -42,12 +43,24 @@ class CustomsAgentsController < ApplicationController
       filtered_scope = filtered_scope.joins(:container).where("containers.number ILIKE ?", "%#{params[:filter_container_number]}%")
     end
 
+    if params[:client_id].present?
+      filtered_scope = filtered_scope.where(client_id: params[:client_id])
+    end
+
     if params[:status].present?
-      allowed_statuses = %w[activo documentos_rechazados documentos_ok revalidado]
+      allowed_statuses = BlHouseLine.statuses.keys
       if allowed_statuses.include?(params[:status])
         filtered_scope = filtered_scope.where(status: params[:status])
       end
     end
+
+    @selected_start_date = resolved_start_date
+    @selected_end_date = resolved_end_date
+
+    start_date = [ @selected_start_date, @selected_end_date ].min
+    end_date = [ @selected_start_date, @selected_end_date ].max
+
+    filtered_scope = filtered_scope.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
 
     @bl_house_lines = filtered_scope.page(params[:page]).per(params[:per] || 20)
 
@@ -154,6 +167,30 @@ class CustomsAgentsController < ApplicationController
 
   def revalidation_clients
     Entity.clients.where(customs_agent_id: current_user.entity_id).order(:name)
+  end
+
+  def resolved_start_date
+    parse_filter_date(params[:start_date]) || default_start_date
+  end
+
+  def resolved_end_date
+    parse_filter_date(params[:end_date]) || default_end_date
+  end
+
+  def parse_filter_date(value)
+    return nil if value.blank?
+
+    Date.iso8601(value)
+  rescue ArgumentError
+    nil
+  end
+
+  def default_start_date
+    Date.current - 30.days
+  end
+
+  def default_end_date
+    Date.current
   end
 
   def ensure_customs_agent
