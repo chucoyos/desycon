@@ -87,8 +87,26 @@ RSpec.describe "CustomsAgents", type: :request do
         expect(response.body).not_to include(customs_agents_revalidation_path(revalidation_blhouse: bl.blhouse))
       end
 
-      it "shows revalidation link for non-revalidated statuses" do
+      it "hides revalidation link for documentos_ok status" do
+        bl = create(:bl_house_line, customs_agent: customs_user.entity, status: "documentos_ok")
+
+        sign_in customs_user, scope: :user
+        get customs_agents_dashboard_path
+
+        expect(response.body).not_to include(customs_agents_revalidation_path(revalidation_blhouse: bl.blhouse))
+      end
+
+      it "hides revalidation link for activo status" do
         bl = create(:bl_house_line, customs_agent: customs_user.entity, status: "activo")
+
+        sign_in customs_user, scope: :user
+        get customs_agents_dashboard_path
+
+        expect(response.body).not_to include(customs_agents_revalidation_path(revalidation_blhouse: bl.blhouse))
+      end
+
+      it "shows revalidation link only for instrucciones_pendientes status" do
+        bl = create(:bl_house_line, customs_agent: customs_user.entity, status: "instrucciones_pendientes")
 
         sign_in customs_user, scope: :user
         get customs_agents_dashboard_path
