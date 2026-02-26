@@ -15,6 +15,36 @@ RSpec.describe "Containers", type: :request do
     }
   }
 
+  describe "GET /containers" do
+    before { sign_in user, scope: :user }
+
+    it "shows only recent containers by default (last 30 days)" do
+      recent_container = create(:container, number: "ABCD1234501")
+      old_container = create(:container, number: "ABCD1234502")
+      old_container.update_column(:created_at, 45.days.ago)
+
+      get containers_url
+
+      expect(response).to be_successful
+      expect(response.body).to include(recent_container.number)
+      expect(response.body).not_to include(old_container.number)
+    end
+
+    it "includes older containers when explicit date range is provided" do
+      old_container = create(:container, number: "ABCD1234503")
+      old_container.update_column(:created_at, 45.days.ago)
+
+      get containers_url, params: {
+        start_date: 60.days.ago.to_date.to_s,
+        end_date: Date.current.to_s
+      }
+
+      expect(response).to be_successful
+      expect(response.body).to include(old_container.number)
+      expect(response.body).to include("Filtros activos:")
+    end
+  end
+
   describe "GET /containers/:id" do
     it "renders a successful response" do
       sign_in user, scope: :user

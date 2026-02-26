@@ -22,8 +22,14 @@ class ContainersController < ApplicationController
     @containers = policy_scope(Container)
                     .with_associations
                     .recent
-                    .page(params[:page])
-                    .per(per)
+
+    @selected_start_date = resolved_start_date
+    @selected_end_date = resolved_end_date
+
+    start_date = [ @selected_start_date, @selected_end_date ].min
+    end_date = [ @selected_start_date, @selected_end_date ].max
+
+    @containers = @containers.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
 
     # Filtros opcionales
     @containers = @containers.by_status(params[:status]) if params[:status].present?
@@ -35,6 +41,8 @@ class ContainersController < ApplicationController
     if params[:search].present?
       @containers = @containers.where("number ILIKE ?", "%#{params[:search]}%")
     end
+
+    @containers = @containers.page(params[:page]).per(per)
 
     authorize Container
   end
@@ -318,6 +326,30 @@ class ContainersController < ApplicationController
 
   def per
     params[:per]&.to_i&.clamp(10, 100) || 25
+  end
+
+  def resolved_start_date
+    parse_filter_date(params[:start_date]) || default_start_date
+  end
+
+  def resolved_end_date
+    parse_filter_date(params[:end_date]) || default_end_date
+  end
+
+  def parse_filter_date(value)
+    return nil if value.blank?
+
+    Date.iso8601(value)
+  rescue ArgumentError
+    nil
+  end
+
+  def default_start_date
+    Date.current - 30.days
+  end
+
+  def default_end_date
+    Date.current
   end
 
   def lifecycle_bl_master_params
