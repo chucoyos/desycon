@@ -423,11 +423,11 @@ class BlHouseLinesController < ApplicationController
   end
 
   def customs_agent_statuses
-    %w[activo documentos_rechazados documentos_ok revalidado despachado]
+    %w[activo validar_documentos instrucciones_pendientes documentos_ok revalidado despachado]
   end
 
   def selected_status_filter
-    return params[:status] if params[:status].present?
+    return params[:status].presence if params.key?(:status)
     return unless current_user&.admin_or_executive?
     return unless initial_index_load?
 

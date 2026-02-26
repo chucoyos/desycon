@@ -69,6 +69,17 @@ RSpec.describe "BlHouseLines", type: :request do
       expect(response.body).to include("Filtros activos:")
       expect(response.body).to include("Estatus: Revalidado")
     end
+
+    it "shows all statuses when status is explicitly blank (Todos los estatus)" do
+      sign_in user, scope: :user
+      pending_line = create(:bl_house_line, status: "validar_documentos", blhouse: "VALDOC003")
+      approved_line = create(:bl_house_line, status: "revalidado", blhouse: "REVA003")
+
+      get bl_house_lines_url, params: { status: "" }
+
+      expect(response.body).to include(pending_line.blhouse)
+      expect(response.body).to include(approved_line.blhouse)
+    end
   end
 
   describe "GET /bl_house_lines/:id" do
