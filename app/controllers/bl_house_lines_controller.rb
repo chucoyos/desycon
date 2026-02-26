@@ -8,6 +8,10 @@ class BlHouseLinesController < ApplicationController
 
   # GET /bl_house_lines
   def index
+    if customs_agent_user?
+      redirect_to customs_agents_dashboard_path and return
+    end
+
     scope = policy_scope(BlHouseLine)
       .includes(
         { container: :consolidator_entity },

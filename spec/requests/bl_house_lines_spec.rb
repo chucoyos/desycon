@@ -393,14 +393,14 @@ RSpec.describe "BlHouseLines", type: :request do
       expect(response.body).to include(documents_bl_house_line_path(bl_house_line))
     end
 
-    it "does not render documents link for despachado when user is customs broker" do
+    it "redirects customs broker users to dashboard when accessing index" do
       customs_broker_user = create(:user, :customs_broker)
       sign_in customs_broker_user, scope: :user
-      bl_house_line = create(:bl_house_line, status: "despachado", customs_agent: customs_broker_user.entity)
+      create(:bl_house_line, status: "despachado", customs_agent: customs_broker_user.entity)
 
       get bl_house_lines_url, params: { status: "despachado" }
 
-      expect(response.body).not_to include(documents_bl_house_line_path(bl_house_line))
+      expect(response).to redirect_to(customs_agents_dashboard_path)
     end
   end
 end
