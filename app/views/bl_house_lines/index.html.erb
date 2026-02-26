@@ -82,6 +82,73 @@
         <%= f.submit "Buscar", class: "px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md cursor-pointer" %>
         <%= link_to "Limpiar", bl_house_lines_path, class: "px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors" %>
       </div>
+
+      <% active_filters_present = params[:blhouse].present? ||
+        params[:container_number].present? ||
+        params[:client_id].present? ||
+        params[:customs_agent_id].present? ||
+        @selected_status_filter.present? ||
+        params[:hidden].present? %>
+
+      <% if active_filters_present %>
+        <div class="pt-4 mt-4 border-t border-gray-200">
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div class="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="font-medium">Filtros activos:</span>
+
+              <% if params[:blhouse].present? %>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                  BL House: <%= params[:blhouse] %>
+                </span>
+              <% end %>
+
+              <% if params[:container_number].present? %>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-100 text-sky-800">
+                  Contenedor: <%= params[:container_number] %>
+                </span>
+              <% end %>
+
+              <% if params[:client_id].present? %>
+                <% client_name = @clients.find { |c| c.id == params[:client_id].to_i }&.name || "ID #{params[:client_id]}" %>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                  Cliente: <%= client_name %>
+                </span>
+              <% end %>
+
+              <% if params[:customs_agent_id].present? %>
+                <% agent_name = @customs_agents.find { |a| a.id == params[:customs_agent_id].to_i }&.display_name || "ID #{params[:customs_agent_id]}" %>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Agencia: <%= agent_name %>
+                </span>
+              <% end %>
+
+              <% if @selected_status_filter.present? %>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                  Estatus: <%= bl_house_line_status_nombre(@selected_status_filter) %>
+                </span>
+              <% end %>
+
+              <% if params[:hidden].present? %>
+                <% hidden_label = { "visible" => "Solo visibles", "hidden" => "Solo ocultas" }[params[:hidden]] || params[:hidden] %>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                  Visibilidad: <%= hidden_label %>
+                </span>
+              <% end %>
+            </div>
+
+            <%= link_to bl_house_lines_path,
+              class: "text-sm text-indigo-600 hover:text-indigo-800 font-medium inline-flex items-center gap-1" do %>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Quitar filtros
+            <% end %>
+          </div>
+        </div>
+      <% end %>
     <% end %>
   </div>
 

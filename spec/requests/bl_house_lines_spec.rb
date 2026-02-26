@@ -53,6 +53,8 @@ RSpec.describe "BlHouseLines", type: :request do
 
       expect(response.body).to include(pending_line.blhouse)
       expect(response.body).not_to include("REVA001")
+      expect(response.body).to include("Filtros activos:")
+      expect(response.body).to include("Estatus: Validar Documentos")
     end
 
     it "respects explicit status filter for executive" do
@@ -64,6 +66,8 @@ RSpec.describe "BlHouseLines", type: :request do
 
       expect(response.body).to include(target_line.blhouse)
       expect(response.body).not_to include("VALDOC002")
+      expect(response.body).to include("Filtros activos:")
+      expect(response.body).to include("Estatus: Revalidado")
     end
   end
 
