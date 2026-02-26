@@ -27,18 +27,11 @@ class BlHouseLine < ApplicationRecord
   # Enums
   enum :status, {
     activo: "activo",
-    bl_original: "bl_original",
-    documentos_ok: "documentos_ok",
-    documentos_rechazados: "documentos_rechazados",
-    despachado: "despachado",
-    pendiente_endoso_agente_aduanal: "pendiente_endoso_agente_aduanal",
-    pendiente_endoso_consignatario: "pendiente_endoso_consignatario",
-    finalizado: "finalizado",
+    validar_documentos: "validar_documentos",
     instrucciones_pendientes: "instrucciones_pendientes",
-    pendiente_pagos_locales: "pendiente_pagos_locales",
-    listo: "listo",
+    documentos_ok: "documentos_ok",
     revalidado: "revalidado",
-    validar_documentos: "validar_documentos"
+    despachado: "despachado"
   }
 
   # Validations
