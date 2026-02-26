@@ -57,7 +57,7 @@ class ApplicationController < ActionController::Base
   def default_signed_in_path(user = current_user)
     return root_path unless user
 
-    if user.customs_broker? && user.entity&.is_customs_agent?
+    if user.customs_broker? && user.entity&.role_customs_agent?
       customs_agents_dashboard_path
     else
       containers_path

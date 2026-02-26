@@ -71,12 +71,12 @@ RSpec.describe "Entities", type: :system do
 
   describe "patent update" do
     before do
-      entity.update(is_customs_broker: true)
+      entity.update(role_kind: "customs_broker")
       visit edit_entity_path(entity)
     end
 
     it "updates the patent number" do
-      check "Agente Aduanal"
+      select "Agente Aduanal", from: "entity_role_kind"
       fill_in "entity_patent_number", with: "123456789"
       click_button "Actualizar Entidad"
 

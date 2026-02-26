@@ -40,7 +40,7 @@ class EntityPolicy < ApplicationPolicy
       if user.nil?
         scope.none
       elsif user.customs_broker?
-        if user.entity&.is_customs_agent?
+        if user.entity&.role_customs_agent?
           scope.where(customs_agent_id: user.entity.id)
         else
           scope.none

@@ -1,6 +1,24 @@
 require 'rails_helper'
 
 RSpec.describe Entity, type: :model do
+  describe 'role_kind synchronization' do
+    it 'keeps explicit role_kind as canonical source' do
+      entity = build(:entity, role_kind: 'customs_agent')
+
+      entity.valid?
+
+      expect(entity.role_kind).to eq('customs_agent')
+    end
+
+    it 'assigns client role correctly when set explicitly' do
+      entity = build(:entity, role_kind: 'client')
+
+      entity.valid?
+
+      expect(entity.role_kind).to eq('client')
+    end
+  end
+
   describe 'associations' do
     it 'has many users' do
       association = described_class.reflect_on_association(:users)

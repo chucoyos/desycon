@@ -423,7 +423,7 @@ class BlHouseLinesController < ApplicationController
   def available_customs_agents
     return Entity.customs_agents unless current_user
 
-    if current_user.customs_broker? && current_user.entity&.is_customs_agent?
+    if current_user.customs_broker? && current_user.entity&.role_customs_agent?
       Entity.where(id: current_user.entity_id)
     else
       Entity.customs_agents
@@ -431,7 +431,7 @@ class BlHouseLinesController < ApplicationController
   end
 
   def customs_agent_user?
-    current_user&.customs_broker? && current_user.entity&.is_customs_agent?
+    current_user&.customs_broker? && current_user.entity&.role_customs_agent?
   end
 
   def customs_agent_statuses
@@ -653,7 +653,7 @@ class BlHouseLinesController < ApplicationController
       .first
 
     candidate = revalidation_history&.user&.entity
-    candidate if candidate&.is_customs_agent?
+    candidate if candidate&.role_customs_agent?
   end
 
   def load_reassign_collections

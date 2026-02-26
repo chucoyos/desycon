@@ -11,7 +11,7 @@ RSpec.describe NotificationsController, type: :controller do
 
   def create_bl_house_line
     entity = Entity.find_or_create_by(name: "Test Entity") do |e|
-      e.is_client = true
+      e.role_kind = "client"
     end
     BlHouseLine.create!(
       blhouse: "TEST#{rand(1000)}",

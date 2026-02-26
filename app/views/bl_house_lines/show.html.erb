@@ -1,6 +1,6 @@
 <% content_for :title, "Partida #{@bl_house_line.partida}" %>
 
-<% is_customs_agent = current_user.customs_broker? && current_user.entity&.is_customs_agent? %>
+<% is_customs_agent = current_user.customs_broker? && current_user.entity&.role_customs_agent? %>
 
 <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
 

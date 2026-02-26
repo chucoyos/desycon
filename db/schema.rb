@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_25_121500) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_26_131500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -233,21 +233,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_25_121500) do
   create_table "entities", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "customs_agent_id"
-    t.boolean "is_client", default: false
-    t.boolean "is_consolidator", default: false
-    t.boolean "is_customs_agent", default: false
-    t.boolean "is_customs_broker", default: false, null: false
-    t.boolean "is_forwarder", default: false
     t.string "name", null: false
     t.string "patent_number"
     t.boolean "requires_bl_endosado_documento", default: true, null: false
     t.boolean "requires_encomienda_documento", default: true, null: false
     t.boolean "requires_liberacion_documento", default: true, null: false
     t.boolean "requires_pago_documento", default: true, null: false
+    t.string "role_kind"
     t.datetime "updated_at", null: false
     t.index ["customs_agent_id"], name: "index_entities_on_customs_agent_id"
     t.index ["name"], name: "index_entities_on_name"
     t.index ["patent_number"], name: "index_entities_on_patent_number", unique: true
+    t.index ["role_kind"], name: "index_entities_on_role_kind"
+    t.check_constraint "role_kind IS NULL OR (role_kind::text = ANY (ARRAY['customs_agent'::character varying, 'consolidator'::character varying, 'customs_broker'::character varying, 'client'::character varying, 'forwarder'::character varying]::text[]))", name: "check_entities_role_kind"
   end
 
   create_table "fiscal_profiles", force: :cascade do |t|

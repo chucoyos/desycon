@@ -9,7 +9,7 @@ RSpec.describe "Entity patent numbers", type: :request do
   let(:customs_broker_user) { create(:user, role: customs_broker_role, entity: customs_broker_entity) }
 
   describe "PATCH /entities/:id" do
-    let(:new_attributes) { { patent_number: "8888", is_customs_broker: true } }
+    let(:new_attributes) { { patent_number: "8888", role_kind: "customs_broker" } }
 
     context "as admin" do
       before { sign_in admin_user, scope: :user }

@@ -194,7 +194,7 @@ class CustomsAgentsController < ApplicationController
   end
 
   def ensure_customs_agent
-    unless current_user.customs_broker? && current_user.entity&.is_customs_agent?
+    unless current_user.customs_broker? && current_user.entity&.role_customs_agent?
       redirect_to containers_path, alert: "No tienes permisos para acceder a esta sección"
     end
   end

@@ -4,7 +4,7 @@ RSpec.describe Notification, type: :model do
   let(:role) { Role.find_or_create_by(name: "test_role") }
   let(:user) { User.create!(email: "test_user@example.com", password: "password123", password_confirmation: "password123", role: role) }
   let(:actor) { User.create!(email: "test_actor@example.com", password: "password123", password_confirmation: "password123", role: role) }
-  let(:entity) { Entity.create!(name: "Test Entity", is_client: true) }
+  let(:entity) { Entity.create!(name: "Test Entity", role_kind: "client") }
   let(:bl_house_line) do
     BlHouseLine.create!(
       blhouse: "TEST001",

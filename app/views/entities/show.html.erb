@@ -10,7 +10,7 @@
       <%= render "entities/fiscal_profile_section", entity: @entity %>
     </div>
 
-    <% if @entity.is_customs_broker %>
+    <% if @entity.role_customs_broker? %>
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-indigo-50 to-indigo-100 border-b border-indigo-200">
           <div class="flex items-center gap-2">
@@ -27,13 +27,13 @@
       </div>
     <% end %>
 
-    <% if policy(@entity).manage_brokers? && @entity.is_customs_agent %>
+    <% if policy(@entity).manage_brokers? && @entity.role_customs_agent? %>
       <div id="brokers_container">
         <%= render "entities/brokers_section", entity: @entity %>
       </div>
     <% end %>
 
-    <% if policy(@entity).manage_brokers? && @entity.is_customs_broker %>
+    <% if policy(@entity).manage_brokers? && @entity.role_customs_broker? %>
       <div id="agencies_container">
         <%= render "entities/agencies_section", entity: @entity %>
       </div>

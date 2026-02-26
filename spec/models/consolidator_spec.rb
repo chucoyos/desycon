@@ -60,7 +60,7 @@ RSpec.describe Consolidator, type: :model do
     end
 
     it 'validates uniqueness of entity_id' do
-      entity = create(:entity, is_consolidator: true)
+      entity = create(:entity, :consolidator)
       create(:consolidator, entity: entity)
       duplicate = build(:consolidator, entity: entity)
       expect(duplicate).not_to be_valid

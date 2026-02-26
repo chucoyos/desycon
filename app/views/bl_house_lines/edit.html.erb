@@ -1,4 +1,4 @@
-<% is_customs_agent = current_user.customs_broker? && current_user.entity&.is_customs_agent? %>
+<% is_customs_agent = current_user.customs_broker? && current_user.entity&.role_customs_agent? %>
 
 <div class="max-w-4xl mx-auto">
   <% if is_customs_agent %>

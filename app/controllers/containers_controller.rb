@@ -306,7 +306,7 @@ class ContainersController < ApplicationController
   end
 
   def load_form_data
-    @consolidators = Entity.where(is_consolidator: true).order(:name)
+    @consolidators = Entity.consolidators.order(:name)
     @clients = Entity.clients.order(:name).to_a
     if @container&.consolidator_entity.present? && @clients.none? { |c| c.id == @container.consolidator_entity_id }
       @clients << @container.consolidator_entity

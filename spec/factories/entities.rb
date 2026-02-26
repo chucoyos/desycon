@@ -3,30 +3,27 @@ FactoryBot.define do
 
   factory :entity do
     sequence(:name) { |n| "Entidad #{n}" }
-    is_consolidator { false }
-    is_customs_agent { false }
-    is_customs_broker { false }
-    is_forwarder { false }
-    is_client { true }
+    role_kind { "client" }
+
     trait :consolidator do
-      is_consolidator { true }
+      role_kind { "consolidator" }
     end
 
     trait :customs_agent do
-      is_customs_agent { true }
+      role_kind { "customs_agent" }
     end
 
     trait :customs_broker do
-      is_customs_broker { true }
+      role_kind { "customs_broker" }
       patent_number { generate(:broker_patent_number) }
     end
 
     trait :forwarder do
-      is_forwarder { true }
+      role_kind { "forwarder" }
     end
 
     trait :client do
-      is_client { true }
+      role_kind { "client" }
     end
 
     trait :with_fiscal_profile do
@@ -52,8 +49,7 @@ FactoryBot.define do
     end
 
     trait :client_of_customs_agent do
-      is_client { true }
-      is_customs_agent { false }
+      role_kind { "client" }
       customs_agent { create(:entity, :customs_agent) }
     end
 

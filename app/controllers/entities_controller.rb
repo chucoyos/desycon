@@ -14,11 +14,7 @@ class EntitiesController < ApplicationController
 
     # Aplicar filtros de búsqueda
     @entities = @entities.where("name ILIKE ?", "%#{params[:name]}%") if params[:name].present?
-    @entities = @entities.where(is_consolidator: true) if params[:role] == "consolidator"
-    @entities = @entities.where(is_customs_agent: true) if params[:role] == "customs_agent"
-    @entities = @entities.where(is_customs_broker: true) if params[:role] == "customs_broker"
-    @entities = @entities.where(is_forwarder: true) if params[:role] == "forwarder"
-    @entities = @entities.where(is_client: true) if params[:role] == "client"
+    @entities = @entities.where(role_kind: params[:role]) if params[:role].present?
 
     @entities = @entities.order(:name).page(params[:page]).per(per)
     authorize Entity
@@ -31,7 +27,7 @@ class EntitiesController < ApplicationController
 
   def new
     @entity = Entity.new
-    @entity.is_customs_broker = true if params[:role] == "customs_broker"
+    @entity.role_kind = "customs_broker" if params[:role] == "customs_broker"
     # Build associated objects for the form
     @entity.build_fiscal_profile
     @entity.addresses.build
@@ -57,12 +53,9 @@ class EntitiesController < ApplicationController
     @entity = Entity.new(entity_params)
 
     # Assign customs agent if current user is a customs agent and no customs_agent is already assigned
-    if current_user.customs_broker? && current_user.entity&.is_customs_agent? && @entity.customs_agent_id.blank?
+    if current_user.customs_broker? && current_user.entity&.role_customs_agent? && @entity.customs_agent_id.blank?
       @entity.customs_agent = current_user.entity
-      @entity.is_client = true
-      @entity.is_customs_agent = false
-      @entity.is_consolidator = false
-      @entity.is_forwarder = false
+      @entity.role_kind = "client"
     end
 
     authorize @entity
@@ -196,7 +189,7 @@ class EntitiesController < ApplicationController
     ]
 
     unless current_user.customs_broker?
-      permitted_attributes += [ :is_consolidator, :is_customs_agent, :is_customs_broker, :is_forwarder, :is_client, :customs_agent_id ]
+      permitted_attributes += [ :role_kind, :customs_agent_id ]
     end
 
     params.require(:entity).permit(permitted_attributes)

@@ -34,53 +34,26 @@
 
       <!-- Roles -->
       <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-3">Roles</label>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <% unless current_user.customs_broker? %>
-            <label class="relative flex items-start p-4 rounded-lg border-2 cursor-pointer hover:bg-purple-50 transition-colors duration-150 <%= entity.is_consolidator ? 'border-purple-500 bg-purple-50' : 'border-gray-200' %>">
-              <%= form.check_box :is_consolidator, class: "h-5 w-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500" %>
-              <div class="ml-3">
-                <span class="block text-sm font-medium text-gray-900">Consolidador</span>
-                <span class="block text-xs text-gray-500">Consolida carga de múltiples clientes</span>
-              </div>
-            </label>
-
-            <label class="relative flex items-start p-4 rounded-lg border-2 cursor-pointer hover:bg-blue-50 transition-colors duration-150 <%= entity.is_customs_agent ? 'border-blue-500 bg-blue-50' : 'border-gray-200' %>">
-              <%= form.check_box :is_customs_agent, class: "h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" %>
-              <div class="ml-3">
-                <span class="block text-sm font-medium text-gray-900">Agencia Aduanal</span>
-                <span class="block text-xs text-gray-500">Gestiona trámites aduanales</span>
-              </div>
-            </label>
-
-            <label class="relative flex items-start p-4 rounded-lg border-2 cursor-pointer hover:bg-indigo-50 transition-colors duration-150 <%= entity.is_customs_broker ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200' %>">
-              <%= form.check_box :is_customs_broker, class: "h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" %>
-              <div class="ml-3">
-                <span class="block text-sm font-medium text-gray-900">Agente Aduanal</span>
-                <span class="block text-xs text-gray-500">Representa a la agencia con una patente</span>
-              </div>
-            </label>
-
-            <label class="relative flex items-start p-4 rounded-lg border-2 cursor-pointer hover:bg-green-50 transition-colors duration-150 <%= entity.is_forwarder ? 'border-green-500 bg-green-50' : 'border-gray-200' %>">
-              <%= form.check_box :is_forwarder, class: "h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-500" %>
-              <div class="ml-3">
-                <span class="block text-sm font-medium text-gray-900">Forwarder</span>
-                <span class="block text-xs text-gray-500">Coordina transporte internacional</span>
-              </div>
-            </label>
-          <% end %>
-
-          <label class="relative flex items-start p-4 rounded-lg border-2 cursor-pointer hover:bg-amber-50 transition-colors duration-150 <%= (entity.is_client || current_user.customs_broker?) ? 'border-amber-500 bg-amber-50' : 'border-gray-200' %>">
-            <%= form.check_box :is_client, 
-                class: "h-5 w-5 text-amber-600 border-gray-300 rounded focus:ring-amber-500",
-                disabled: current_user.customs_broker?,
-                checked: (entity.is_client || current_user.customs_broker?) %>
-            <div class="ml-3">
-              <span class="block text-sm font-medium text-gray-900">Cliente</span>
-              <span class="block text-xs text-gray-500">Cliente a facturar</span>
-            </div>
-          </label>
-        </div>
+        <%= form.label :role_kind, "Rol", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+        <% role_options = if current_user.customs_broker?
+            [["Cliente", "client"]]
+          else
+            [
+              ["Consolidador", "consolidator"],
+              ["Agencia Aduanal", "customs_agent"],
+              ["Agente Aduanal", "customs_broker"],
+              ["Forwarder", "forwarder"],
+              ["Cliente", "client"]
+            ]
+          end %>
+        <%= form.select :role_kind,
+            options_for_select(role_options, current_user.customs_broker? ? "client" : entity.role_kind),
+            { include_blank: current_user.customs_broker? ? false : "Seleccionar rol" },
+            class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
+            disabled: current_user.customs_broker? %>
+        <% if current_user.customs_broker? %>
+          <p class="mt-1 text-xs text-gray-500">Las agencias aduanales solo pueden crear entidades de tipo cliente.</p>
+        <% end %>
       </div>
     </div>
   </div>
@@ -96,7 +69,7 @@
         <%= form.text_field :patent_number,
           class: "block w-full px-3 py-3 border-2 #{entity.errors[:patent_number].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500'} rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
           placeholder: "Número de patente aduanal",
-          required: entity.is_customs_broker %>
+          required: entity.role_kind == "customs_broker" %>
         <% if entity.errors[:patent_number].any? %>
           <p class="mt-2 text-sm text-red-600"><%= entity.errors[:patent_number].first %></p>
         <% end %>
@@ -106,7 +79,7 @@
 
   <!-- Customs Agent Assignment (Only for admins/executives) -->
   <% unless current_user.customs_broker? %>
-  <div id="customs-agent-assignment-section" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" style="<%= entity.is_client ? '' : 'display: none;' %>">
+  <div id="customs-agent-assignment-section" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" style="<%= entity.role_kind == 'client' ? '' : 'display: none;' %>">
     <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
       <h3 class="text-base sm:text-lg font-semibold text-gray-900">Asignación de Agencia Aduanal</h3>
     </div>
@@ -114,7 +87,7 @@
       <div>
         <%= form.label :customs_agent_id, "Agencia Aduanal", class: "block text-sm font-semibold text-gray-700 mb-2" %>
         <%= form.collection_select :customs_agent_id, 
-            Entity.where(is_customs_agent: true).order(:name), 
+          Entity.customs_agents.order(:name), 
             :id, 
             :name, 
             { include_blank: "Sin asignar" }, 
@@ -124,7 +97,7 @@
     </div>
   </div>
 
-  <% if entity.is_consolidator %>
+  <% if entity.role_kind == "consolidator" %>
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200 flex items-center justify-between">
         <div>
@@ -383,43 +356,20 @@
         });
       }
 
-      // Toggle patents section based on customs agent checkbox (new and edit)
-      const customsAgentCheckbox = document.getElementById('entity_is_customs_agent');
-      const patentsSection = document.getElementById('patents-section');
-
-      if (customsAgentCheckbox && patentsSection) {
-        const newCustomsAgentCheckbox = customsAgentCheckbox.cloneNode(true);
-        customsAgentCheckbox.parentNode.replaceChild(newCustomsAgentCheckbox, customsAgentCheckbox);
-
-        const togglePatentsSection = () => {
-          if (newCustomsAgentCheckbox.checked) {
-            patentsSection.style.display = 'block';
-          } else {
-            patentsSection.style.display = 'none';
-          }
-        };
-
-        newCustomsAgentCheckbox.addEventListener('change', togglePatentsSection);
-        togglePatentsSection();
-      }
-
-      // Toggle customs agent assignment section based on client checkbox (new and edit)
-      const clientCheckbox = document.getElementById('entity_is_client');
+      // Toggle customs agent assignment section based on selected role (new and edit)
+      const roleKindSelect = document.getElementById('entity_role_kind');
       const customsAgentAssignmentSection = document.getElementById('customs-agent-assignment-section');
 
-      if (clientCheckbox && customsAgentAssignmentSection) {
-        const newClientCheckbox = clientCheckbox.cloneNode(true);
-        clientCheckbox.parentNode.replaceChild(newClientCheckbox, clientCheckbox);
-
+      if (roleKindSelect && customsAgentAssignmentSection) {
         const toggleCustomsAgentAssignmentSection = () => {
-          if (newClientCheckbox.checked) {
+          if (roleKindSelect.value === 'client') {
             customsAgentAssignmentSection.style.display = 'block';
           } else {
             customsAgentAssignmentSection.style.display = 'none';
           }
         };
 
-        newClientCheckbox.addEventListener('change', toggleCustomsAgentAssignmentSection);
+        roleKindSelect.addEventListener('change', toggleCustomsAgentAssignmentSection);
         toggleCustomsAgentAssignmentSection();
       }
 

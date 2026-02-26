@@ -224,10 +224,10 @@ puts "Creando entidades de ejemplo..."
 
 # Agentes aduanales de ejemplo
 customs_agents_data = [
-  { name: "Agencia Aduanal García & Asociados", is_customs_agent: true },
-  { name: "Despachos Aduanales Ramírez S.A.", is_customs_agent: true },
-  { name: "Servicios Aduanales López", is_customs_agent: true },
-  { name: "Agencia Aduanal Martínez", is_customs_agent: true }
+  { name: "Agencia Aduanal García & Asociados", role_kind: "customs_agent" },
+  { name: "Despachos Aduanales Ramírez S.A.", role_kind: "customs_agent" },
+  { name: "Servicios Aduanales López", role_kind: "customs_agent" },
+  { name: "Agencia Aduanal Martínez", role_kind: "customs_agent" }
 ]
 
 customs_agents_data.each do |agent_data|
@@ -238,9 +238,9 @@ end
 
 # Clientes de ejemplo
 clients_data = [
-  { name: "Importadora ABC S.A. de C.V.", is_client: true },
-  { name: "Comercial XYZ Ltda.", is_client: true },
-  { name: "Distribuidora Nacional", is_client: true }
+  { name: "Importadora ABC S.A. de C.V.", role_kind: "client" },
+  { name: "Comercial XYZ Ltda.", role_kind: "client" },
+  { name: "Distribuidora Nacional", role_kind: "client" }
 ]
 
 clients_data.each do |client_data|
@@ -268,7 +268,7 @@ puts "✓ #{ServiceCatalog.count} servicios en catálogo"
 
 # Consolidador de ejemplo (requerido por Container)
 consolidators_data = [
-  { name: "Consolidadora Demo", is_consolidator: true }
+  { name: "Consolidadora Demo", role_kind: "consolidator" }
 ]
 
 consolidators_data.each do |consolidator_data|
@@ -301,7 +301,7 @@ puts "Creando BL House Lines de ejemplo..."
 
 customs_agent_entity = Entity.find_by(name: "Agencia Aduanal García & Asociados")
 client_entity = Entity.find_by(name: "Importadora ABC S.A. de C.V.")
-consolidator_entity = Entity.find_by(is_consolidator: true)
+consolidator_entity = Entity.find_by(role_kind: "consolidator")
 shipping_line = ShippingLine.first
 vessel = Vessel.first || Vessel.find_or_create_by!(name: "SEED VESSEL")
 origin_port = Port.first || Port.find_or_create_by!(code: "MXMZO", name: "Manzanillo", country: "México")

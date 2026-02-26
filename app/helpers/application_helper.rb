@@ -89,7 +89,7 @@ module ApplicationHelper
       lines << "Puede administrar roles y usuarios"
     end
 
-    if user.customs_broker? && user.entity&.is_customs_agent?
+    if user.customs_broker? && user.entity&.role_customs_agent?
       lines << "Acceso al Dashboard Agente y partidas asignadas"
     end
 

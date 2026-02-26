@@ -57,7 +57,7 @@
   </div>
 
   <!-- Patents Section (Full Width) -->
-  <% if entity.is_customs_agent? %>
+  <% if entity.role_customs_agent? %>
     <%= render partial: "entities/patents_section", locals: { entity: entity } %>
   <% end %>
 </div>

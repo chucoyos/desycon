@@ -4,7 +4,7 @@ RSpec.describe "Notifications UI", type: :system do
   let(:role) { Role.find_or_create_by(name: "test_role") }
   let(:user) { User.create!(email: "test_user@example.com", password: "password123", password_confirmation: "password123", role: role) }
   let(:customs_agent) { User.create!(email: "customs@example.com", password: "password123", password_confirmation: "password123", role: role) }
-  let(:entity) { Entity.find_or_create_by(name: "Test Entity") { |e| e.is_client = true } }
+  let(:entity) { Entity.find_or_create_by(name: "Test Entity") { |e| e.role_kind = "client" } }
   let(:bl_house_line) do
     BlHouseLine.create!(
       blhouse: "TEST#{rand(1000)}",

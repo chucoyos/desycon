@@ -5,7 +5,7 @@ class AgencyBrokersController < ApplicationController
   def create
     authorize @entity, :manage_brokers?
 
-    if @entity.is_customs_agent?
+    if @entity.role_customs_agent?
       broker_id = params[:broker_id]
       if broker_id.present?
         AgencyBroker.find_or_create_by!(agency_id: @entity.id, broker_id: broker_id)
@@ -13,7 +13,7 @@ class AgencyBrokersController < ApplicationController
       else
         redirect_to @entity, alert: "Selecciona un broker para vincular."
       end
-    elsif @entity.is_customs_broker?
+    elsif @entity.role_customs_broker?
       agency_id = params[:agency_id]
       if agency_id.present?
         AgencyBroker.find_or_create_by!(agency_id: agency_id, broker_id: @entity.id)
@@ -29,13 +29,13 @@ class AgencyBrokersController < ApplicationController
   def destroy
     authorize @entity, :manage_brokers?
 
-    link = if @entity.is_customs_agent?
+    link = if @entity.role_customs_agent?
       @entity.agency_broker_links_as_agency.find(params[:id])
     else
       @entity.agency_broker_links_as_broker.find(params[:id])
     end
     link.destroy
-    notice = @entity.is_customs_agent? ? "Broker desvinculado exitosamente." : "Agencia desvinculada exitosamente."
+    notice = @entity.role_customs_agent? ? "Broker desvinculado exitosamente." : "Agencia desvinculada exitosamente."
     redirect_to @entity, notice: notice
   end
 

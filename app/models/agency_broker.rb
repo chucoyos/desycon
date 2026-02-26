@@ -6,7 +6,7 @@ class AgencyBroker < ApplicationRecord
   validate :roles_match
 
   def roles_match
-    errors.add(:agency, "debe ser una agencia aduanal") unless agency&.is_customs_agent?
-    errors.add(:broker, "debe ser un agente aduanal (broker)") unless broker&.is_customs_broker?
+    errors.add(:agency, "debe ser una agencia aduanal") unless agency&.role_customs_agent?
+    errors.add(:broker, "debe ser un agente aduanal (broker)") unless broker&.role_customs_broker?
   end
 end
