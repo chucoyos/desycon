@@ -6,6 +6,7 @@ class VoyagesController < ApplicationController
 
   def index
     voyages = policy_scope(Voyage)
+    latest_only = ActiveModel::Type::Boolean.new.cast(params[:latest_only])
 
     voyages = voyages.where(vessel_id: params[:vessel_id]) if params[:vessel_id].present?
     voyages = voyages.where(voyage_type: params[:voyage_type]) if params[:voyage_type].present?
@@ -14,11 +15,21 @@ class VoyagesController < ApplicationController
       voyages = voyages.where("voyages.viaje ILIKE ?", "%#{params[:search].strip}%")
     end
 
+    unless latest_only
+      @selected_start_date = resolved_start_date
+      @selected_end_date = resolved_end_date
+
+      start_date = [ @selected_start_date, @selected_end_date ].min
+      end_date = [ @selected_start_date, @selected_end_date ].max
+
+      voyages = voyages.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+    end
+
     per_page = params[:per].to_i.positive? ? params[:per].to_i : 10
 
     voyages_with_associations = voyages.includes(:vessel, :destination_port)
 
-    if ActiveModel::Type::Boolean.new.cast(params[:latest_only])
+    if latest_only
       voyages_with_associations = voyages_with_associations.order(created_at: :desc, id: :desc).limit(1)
     else
       voyages_with_associations = voyages_with_associations.order(:viaje)
@@ -122,5 +133,29 @@ class VoyagesController < ApplicationController
       :destination_port_id,
       :vessel_id
     )
+  end
+
+  def resolved_start_date
+    parse_filter_date(params[:start_date]) || default_start_date
+  end
+
+  def resolved_end_date
+    parse_filter_date(params[:end_date]) || default_end_date
+  end
+
+  def parse_filter_date(value)
+    return nil if value.blank?
+
+    Date.iso8601(value)
+  rescue ArgumentError
+    nil
+  end
+
+  def default_start_date
+    Date.current - 30.days
+  end
+
+  def default_end_date
+    Date.current
   end
 end
