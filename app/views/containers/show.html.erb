@@ -417,23 +417,6 @@
         </div>
       </section>
 
-      <% if policy(Photo).create? %>
-        <section class="space-y-4">
-          <div class="flex items-center gap-3">
-            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-600 shadow-sm">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h3.172a2 2 0 011.414.586l.828.828A2 2 0 0011.828 7H19a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
-              </svg>
-            </div>
-            <h2 class="text-lg font-bold text-gray-900">Fotografías del contenedor</h2>
-          </div>
-
-          <%= render "shared/photo_module", attachable: @container, section: "apertura", title: "Apertura", subtitle: "Regularmente 5, hasta 15" %>
-          <%= render "shared/photo_module", attachable: @container, section: "desconsolidacion", title: "Desconsolidación", subtitle: "Regularmente 30-40" %>
-          <%= render "shared/photo_module", attachable: @container, section: "vacio", title: "Vacío", subtitle: "Regularmente 20-30" %>
-        </section>
-      <% end %>
-
       <!-- Historial de Status -->
       <section class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
         <div class="flex items-center gap-3 mb-5">
@@ -475,4 +458,21 @@
 
     </div>
   </div>
+
+  <% if policy(Photo).create? %>
+    <section class="space-y-4 mt-6">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-600 shadow-sm">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h3.172a2 2 0 011.414.586l.828.828A2 2 0 0011.828 7H19a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+          </svg>
+        </div>
+        <h2 class="text-lg font-bold text-gray-900">Fotografías del contenedor</h2>
+      </div>
+
+      <%= render "shared/photo_module", attachable: @container, section: "apertura", title: "Apertura", subtitle: "Regularmente 5, hasta 15" %>
+      <%= render "shared/photo_module", attachable: @container, section: "desconsolidacion", title: "Desconsolidación", subtitle: "Regularmente 30-40" %>
+      <%= render "shared/photo_module", attachable: @container, section: "vacio", title: "Vacío", subtitle: "Regularmente 20-30" %>
+    </section>
+  <% end %>
 </div>

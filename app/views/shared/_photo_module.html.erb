@@ -1,66 +1,78 @@
 <%
-  photos = attachable.photos.for_section(section).recent.with_attached_image.limit(24)
+  photos = attachable.photos.for_section(section).recent.includes(:image_attachment).limit(24)
   total_photos = attachable.photos.for_section(section).count
   upload_path = attachable.is_a?(Container) ? photos_container_path(attachable) : photos_bl_house_line_path(attachable)
 %>
 
-<section class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
-  <div class="flex items-center justify-between gap-3 mb-4">
-    <div>
-      <h3 class="text-base font-bold text-gray-900"><%= title %></h3>
-      <p class="text-xs text-gray-500"><%= subtitle %> · <%= total_photos %> foto(s)</p>
+<section class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+  <div class="px-4 py-4 sm:px-5 sm:py-5 border-b border-gray-100 bg-gray-50/70">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <h3 class="text-base font-semibold text-gray-900 tracking-tight"><%= title %></h3>
+        <p class="mt-1 text-xs text-gray-600"><%= subtitle %></p>
+      </div>
+      <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-100 whitespace-nowrap">
+        <%= total_photos %> foto(s)
+      </span>
     </div>
   </div>
 
-  <%= form_with url: upload_path, method: :post, multipart: true, class: "space-y-3" do |f| %>
-    <%= f.hidden_field :section, value: section, name: "photo[section]" %>
+  <div class="px-4 py-4 sm:px-5 sm:py-5 space-y-4">
+    <%= form_with url: upload_path, method: :post, multipart: true, class: "space-y-3" do |f| %>
+      <%= f.hidden_field :section, value: section, name: "photo[section]" %>
 
-    <label class="block text-sm font-medium text-gray-700">Cargar fotografías</label>
-    <%= f.file_field :images,
-          name: "photo[images][]",
-          multiple: true,
-          direct_upload: true,
-          accept: "image/*",
-          class: "block w-full text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-blue-700" %>
-
-    <p class="text-xs text-gray-500">Sugerido para móvil: subir en lotes de 5 a 10 imágenes por envío.</p>
-
-    <div>
-      <%= f.submit "Subir", class: "w-full sm:w-auto inline-flex justify-center items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700" %>
-    </div>
-  <% end %>
-
-  <div class="mt-4">
-    <% if photos.any? %>
-      <div class="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5">
-        <% photos.each do |photo| %>
-          <div class="relative rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
-            <%= link_to rails_blob_path(photo.image, disposition: "inline"), target: "_blank", class: "block" do %>
-              <% if photo.image.variable? %>
-                <%= image_tag photo.image.variant(resize_to_limit: [ 320, 320 ]), class: "h-24 w-full object-cover", loading: "lazy" %>
-              <% else %>
-                <%= image_tag photo.image, class: "h-24 w-full object-cover", loading: "lazy" %>
-              <% end %>
-            <% end %>
-
-            <% if policy(photo).destroy? %>
-              <div class="absolute top-1 right-1">
-                <%= button_to photo_path(photo), method: :delete,
-                      form: { data: { turbo_confirm: "¿Eliminar esta fotografía?" } },
-                      class: "rounded-md bg-white/90 px-2 py-1 text-[11px] font-medium text-red-700 shadow-sm" do %>
-                  Eliminar
-                <% end %>
-              </div>
-            <% end %>
-          </div>
-        <% end %>
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">Cargar fotografías</label>
+        <%= f.file_field :images,
+              name: "photo[images][]",
+              multiple: true,
+              direct_upload: true,
+              accept: "image/*",
+              class: "block w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-blue-700" %>
       </div>
 
-      <% if total_photos > photos.size %>
-        <p class="mt-2 text-xs text-gray-500">Mostrando <%= photos.size %> de <%= total_photos %> fotos.</p>
-      <% end %>
-    <% else %>
-      <p class="text-sm text-gray-500">Sin fotografías en esta sección.</p>
+      <p class="text-xs text-gray-500">Recomendado en móvil: lotes de 5-10 imágenes para una carga más fluida.</p>
+
+      <div>
+        <%= f.submit "Subir fotografías", class: "w-full sm:w-auto inline-flex justify-center items-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300" %>
+      </div>
     <% end %>
+
+    <div>
+      <% if photos.any? %>
+        <div class="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5">
+          <% photos.each do |photo| %>
+            <article class="relative rounded-xl border border-gray-200 overflow-hidden bg-gray-50 shadow-sm">
+              <%= link_to rails_blob_path(photo.image, disposition: "inline"), target: "_blank", class: "block" do %>
+                <% if photo.image.variable? %>
+                  <%= image_tag photo.image.variant(resize_to_limit: [ 420, 420 ]), class: "aspect-square w-full object-cover", loading: "lazy" %>
+                <% else %>
+                  <%= image_tag photo.image, class: "aspect-square w-full object-cover", loading: "lazy" %>
+                <% end %>
+              <% end %>
+
+              <% if policy(photo).destroy? %>
+                <div class="absolute top-1.5 right-1.5">
+                  <%= button_to photo_path(photo), method: :delete,
+                        form: { data: { turbo_confirm: "¿Eliminar esta fotografía?" } },
+                        class: "rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-medium text-red-700 shadow-sm ring-1 ring-gray-200" do %>
+                    Eliminar
+                  <% end %>
+                </div>
+              <% end %>
+            </article>
+          <% end %>
+        </div>
+
+        <% if total_photos > photos.size %>
+          <p class="mt-3 text-xs text-gray-500">Mostrando <%= photos.size %> de <%= total_photos %> fotos.</p>
+        <% end %>
+      <% else %>
+        <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center">
+          <p class="text-sm font-medium text-gray-700">Sin fotografías en esta sección</p>
+          <p class="mt-1 text-xs text-gray-500">Usa el selector superior para cargar imágenes.</p>
+        </div>
+      <% end %>
+    </div>
   </div>
 </section>
