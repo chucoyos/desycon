@@ -28,6 +28,8 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :photos, only: [ :destroy ]
+
   resources :revalidations, only: [ :show ]
 
   resources :packagings
@@ -55,6 +57,10 @@ Rails.application.routes.draw do
   resources :consolidators
   resources :containers do
     member do
+      post :photos, to: "photos#create_for_container"
+    end
+
+    member do
       delete :destroy_all_bl_house_lines
       post :import_bl_house_lines, to: "bl_house_lines#import_from_container"
       get :lifecycle_bl_master_modal
@@ -70,6 +76,10 @@ Rails.application.routes.draw do
     end
   end
   resources :bl_house_lines do
+    member do
+      post :photos, to: "photos#create_for_bl_house_line"
+    end
+
     member do
       get :revalidation_approval
       patch :approve_revalidation

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_26_131500) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_26_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -299,6 +299,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_26_131500) do
     t.index ["key"], name: "index_permissions_on_key", unique: true
   end
 
+  create_table "photos", force: :cascade do |t|
+    t.bigint "attachable_id", null: false
+    t.string "attachable_type", null: false
+    t.datetime "created_at", null: false
+    t.integer "position", default: 0, null: false
+    t.string "section", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "uploaded_by_id"
+    t.index ["attachable_type", "attachable_id", "section", "created_at"], name: "index_photos_on_attachable_and_section"
+    t.index ["attachable_type", "attachable_id"], name: "index_photos_on_attachable"
+    t.index ["uploaded_by_id"], name: "index_photos_on_uploaded_by_id"
+  end
+
   create_table "ports", force: :cascade do |t|
     t.string "code", null: false
     t.string "country_code", null: false
@@ -417,6 +430,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_26_131500) do
   add_foreign_key "forwarders", "entities"
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "notifications", "users", column: "recipient_id"
+  add_foreign_key "photos", "users", column: "uploaded_by_id"
   add_foreign_key "role_permissions", "permissions"
   add_foreign_key "role_permissions", "roles"
   add_foreign_key "users", "entities"

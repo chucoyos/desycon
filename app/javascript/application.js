@@ -1,6 +1,9 @@
 // Configure your import map in config/importmap.rb. Read more: https://github.com/rails/importmap-rails
 import "@hotwired/turbo-rails"
+import * as ActiveStorage from "@rails/activestorage"
 import "controllers"
+
+ActiveStorage.start()
 
 console.log('Turbo loaded:', typeof window.Turbo)
 console.log('Stimulus loaded:', typeof window.Stimulus)

@@ -12,6 +12,7 @@ class BlHouseLine < ApplicationRecord
 
   # Status history
   has_many :bl_house_line_status_histories, dependent: :destroy
+  has_many :photos, as: :attachable, dependent: :destroy
 
   # Document attachments
   has_one_attached :bl_endosado_documento
