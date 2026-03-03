@@ -161,6 +161,7 @@ RSpec.describe Container, type: :model do
         'activo' => 'activo',
         'bl_revalidado' => 'bl_revalidado',
         'fecha_tentativa_desconsolidacion' => 'fecha_tentativa_desconsolidacion',
+        'en_proceso_desconsolidacion' => 'en_proceso_desconsolidacion',
         'cita_transferencia' => 'cita_transferencia',
         'descargado' => 'descargado',
         'desconsolidado' => 'desconsolidado'

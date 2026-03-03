@@ -13,6 +13,8 @@ class ContainersController < ApplicationController
     lifecycle_transferencia_update
     lifecycle_tentativa_modal
     lifecycle_tentativa_update
+    lifecycle_en_proceso_desconsolidacion_modal
+    lifecycle_en_proceso_desconsolidacion_update
     lifecycle_tarja_modal
     lifecycle_tarja_update
   ]
@@ -217,6 +219,23 @@ class ContainersController < ApplicationController
       render_lifecycle_success("Fecha tentativa guardada correctamente.")
     else
       render_lifecycle_modal("containers/lifecycle/tentativa_modal", :unprocessable_entity)
+    end
+  end
+
+  def lifecycle_en_proceso_desconsolidacion_modal
+    authorize @container, :update?
+    render_lifecycle_modal("containers/lifecycle/en_proceso_desconsolidacion_modal")
+  end
+
+  def lifecycle_en_proceso_desconsolidacion_update
+    authorize @container, :update?
+
+    @container.status = "en_proceso_desconsolidacion"
+
+    if @container.save
+      render_lifecycle_success("Estatus actualizado a En proceso desconsolidación.")
+    else
+      render_lifecycle_modal("containers/lifecycle/en_proceso_desconsolidacion_modal", :unprocessable_entity)
     end
   end
 

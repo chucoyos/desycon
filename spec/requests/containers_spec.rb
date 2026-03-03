@@ -228,8 +228,28 @@ RSpec.describe "Containers", type: :request do
       expect(container.status).to eq("cita_transferencia")
     end
 
-    it "renders tarja modal with manual fecha de desconsolidación field" do
+    it "renders en proceso desconsolidación modal after fecha tentativa" do
       container = create(:container, status: "fecha_tentativa_desconsolidacion")
+
+      get lifecycle_en_proceso_desconsolidacion_modal_container_path(container), headers: { "ACCEPT" => "text/vnd.turbo-stream.html" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Iniciar proceso de desconsolidación")
+    end
+
+    it "updates status to en_proceso_desconsolidacion" do
+      container = create(:container, status: "fecha_tentativa_desconsolidacion")
+
+      patch lifecycle_en_proceso_desconsolidacion_update_container_path(container),
+            params: { container: { status: "en_proceso_desconsolidacion" } },
+            headers: { "ACCEPT" => "text/vnd.turbo-stream.html" }
+
+      expect(response).to have_http_status(:ok)
+      expect(container.reload.status).to eq("en_proceso_desconsolidacion")
+    end
+
+    it "renders tarja modal from en_proceso_desconsolidacion" do
+      container = create(:container, status: "en_proceso_desconsolidacion")
 
       get lifecycle_tarja_modal_container_path(container), headers: { "ACCEPT" => "text/vnd.turbo-stream.html" }
 

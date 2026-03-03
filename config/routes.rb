@@ -71,6 +71,8 @@ Rails.application.routes.draw do
       patch :lifecycle_transferencia_update
       get :lifecycle_tentativa_modal
       patch :lifecycle_tentativa_update
+      get :lifecycle_en_proceso_desconsolidacion_modal
+      patch :lifecycle_en_proceso_desconsolidacion_update
       get :lifecycle_tarja_modal
       patch :lifecycle_tarja_update
     end

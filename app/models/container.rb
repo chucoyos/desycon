@@ -40,6 +40,7 @@ class Container < ApplicationRecord
     activo: "activo",
     bl_revalidado: "bl_revalidado",
     fecha_tentativa_desconsolidacion: "fecha_tentativa_desconsolidacion",
+    en_proceso_desconsolidacion: "en_proceso_desconsolidacion",
     cita_transferencia: "cita_transferencia",
     descargado: "descargado",
     desconsolidado: "desconsolidado"
@@ -320,6 +321,7 @@ class Container < ApplicationRecord
     transferencia_completada = fecha_transferencia.present? || transferencia_no_aplica?
 
     return :desconsolidado if documentos_completos? && fecha_desconsolidacion.present?
+    return :en_proceso_desconsolidacion if status_en_proceso_desconsolidacion? && fecha_desconsolidacion.blank?
     return :fecha_tentativa_desconsolidacion if transferencia_completada && fecha_tentativa_desconsolidacion.present?
     return :cita_transferencia if transferencia_completada
     return :descargado if fecha_descarga.present?
@@ -333,7 +335,7 @@ class Container < ApplicationRecord
   end
 
   def status_order
-    %w[activo bl_revalidado descargado cita_transferencia fecha_tentativa_desconsolidacion desconsolidado]
+    %w[activo bl_revalidado descargado cita_transferencia fecha_tentativa_desconsolidacion en_proceso_desconsolidacion desconsolidado]
   end
 
   def advance_status!(new_status, actor, observaciones)

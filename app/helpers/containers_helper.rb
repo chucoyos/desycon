@@ -7,6 +7,8 @@ module ContainersHelper
       "bg-indigo-100 text-indigo-800 border-indigo-200"
     when "fecha_tentativa_desconsolidacion"
       "bg-amber-100 text-amber-800 border-amber-200"
+    when "en_proceso_desconsolidacion"
+      "bg-orange-100 text-orange-800 border-orange-200"
     when "cita_transferencia"
       "bg-purple-100 text-purple-800 border-purple-200"
     when "descargado"
@@ -26,6 +28,8 @@ module ContainersHelper
       '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8m0 0l-3-3m3 3l3-3M5 13l4 4L19 7"/></svg>'.html_safe
     when "fecha_tentativa_desconsolidacion"
       '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>'.html_safe
+    when "en_proceso_desconsolidacion"
+      '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'.html_safe
     when "cita_transferencia"
       '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>'.html_safe
     when "descargado"
@@ -60,6 +64,7 @@ module ContainersHelper
       "activo" => "Activo",
       "bl_revalidado" => "BL Revalidado",
       "fecha_tentativa_desconsolidacion" => "Fecha Tentativa Desconsolidación",
+      "en_proceso_desconsolidacion" => "En proceso desconsolidación",
       "cita_transferencia" => "Cita de Transferencia",
       "descargado" => "Descargado",
       "desconsolidado" => "Desconsolidado"
@@ -129,6 +134,8 @@ module ContainersHelper
     when "cita_transferencia"
       { label: "Fecha tentativa", path: lifecycle_tentativa_modal_container_path(container) }
     when "fecha_tentativa_desconsolidacion"
+      { label: "Inicio desconsolidación", path: lifecycle_en_proceso_desconsolidacion_modal_container_path(container) }
+    when "en_proceso_desconsolidacion"
       { label: "Cargar Tarja", path: lifecycle_tarja_modal_container_path(container) }
     end
   end
