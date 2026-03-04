@@ -18,10 +18,10 @@ RSpec.describe "Containers", type: :request do
   describe "GET /containers" do
     before { sign_in user, scope: :user }
 
-    it "shows only recent containers by default (last 30 days)" do
+    it "shows only recent containers by default (last 60 days)" do
       recent_container = create(:container, number: "ABCD1234501")
       old_container = create(:container, number: "ABCD1234502")
-      old_container.update_column(:created_at, 45.days.ago)
+      old_container.update_column(:created_at, 75.days.ago)
 
       get containers_url
 
@@ -32,10 +32,10 @@ RSpec.describe "Containers", type: :request do
 
     it "includes older containers when explicit date range is provided" do
       old_container = create(:container, number: "ABCD1234503")
-      old_container.update_column(:created_at, 45.days.ago)
+      old_container.update_column(:created_at, 75.days.ago)
 
       get containers_url, params: {
-        start_date: 60.days.ago.to_date.to_s,
+        start_date: 90.days.ago.to_date.to_s,
         end_date: Date.current.to_s
       }
 

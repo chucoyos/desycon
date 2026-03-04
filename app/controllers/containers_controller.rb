@@ -364,7 +364,7 @@ class ContainersController < ApplicationController
   end
 
   def default_start_date
-    Date.current - 30.days
+    Date.current - 60.days
   end
 
   def default_end_date

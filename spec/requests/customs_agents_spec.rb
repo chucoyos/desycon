@@ -116,7 +116,7 @@ RSpec.describe "CustomsAgents", type: :request do
     end
 
     context "date range filters" do
-      it "applies default last 30 days filter" do
+      it "applies default last 60 days filter" do
         recent_bl = create(:bl_house_line, customs_agent: customs_user.entity, blhouse: "RECENT-DASH", created_at: 5.days.ago)
         old_bl = create(:bl_house_line, customs_agent: customs_user.entity, blhouse: "OLD-DASH", created_at: 90.days.ago)
 
