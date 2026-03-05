@@ -168,7 +168,7 @@
         <% end %>
 
         <% if @invoice_payments.any? %>
-          <div class="overflow-x-auto">
+          <div class="overflow-x-auto lg:overflow-visible">
             <table class="min-w-full divide-y divide-gray-200 text-sm">
               <thead class="bg-gray-50">
                 <tr>
@@ -217,7 +217,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
                           </svg>
                         </button>
-                        <div data-dropdown-target="menu" class="hidden absolute right-0 mt-2 w-48 rounded-xl shadow-xl bg-white border border-gray-100 z-50 origin-top-right ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <div data-dropdown-target="menu" class="hidden absolute right-0 bottom-full mb-2 w-48 rounded-xl shadow-xl bg-white border border-gray-100 z-[70] origin-bottom-right ring-1 ring-black ring-opacity-5 focus:outline-none">
                           <div class="py-2" role="menu">
                             <%= link_to invoice_invoice_payment_path(@invoice, payment), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors", role: "menuitem" do %>
                               <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
