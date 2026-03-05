@@ -2,8 +2,10 @@ class BlHouseLineService < ApplicationRecord
   belongs_to :bl_house_line
   belongs_to :service_catalog
   belongs_to :billed_to_entity, class_name: "Entity", optional: true
+  has_many :invoices, as: :invoiceable, dependent: :nullify
 
   before_validation :assign_default_billed_to_entity
+  after_commit :enqueue_facturador_auto_issue, on: :create
 
   validates :service_catalog, presence: true
   validates :amount, presence: true, numericality: { greater_than: 0 }
@@ -23,6 +25,10 @@ class BlHouseLineService < ApplicationRecord
     !facturado?
   end
 
+  def latest_invoice
+    invoices.recent_first.first
+  end
+
   def amount
     service_catalog&.amount
   end
@@ -32,6 +38,13 @@ class BlHouseLineService < ApplicationRecord
   end
 
   private
+
+  def enqueue_facturador_auto_issue
+    return unless Facturador::Config.enabled?
+    return unless Facturador::Config.auto_issue_enabled?
+
+    Facturador::AutoIssueService.call(invoiceable: self, actor: Current.user)
+  end
 
   def assign_default_billed_to_entity
     return if billed_to_entity_id.present?

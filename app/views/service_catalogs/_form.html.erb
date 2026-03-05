@@ -50,6 +50,43 @@
     </div>
   </div>
 
+  <div class="rounded-2xl border border-gray-200 bg-gray-50/60 p-4 space-y-4">
+    <p class="text-sm font-semibold text-gray-800">Datos SAT para CFDI</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="space-y-1">
+        <%= form.label :sat_clave_prod_serv, "Clave Prod/Serv SAT *", class: "block text-sm font-semibold text-gray-800 tracking-wide" %>
+        <%= form.select :sat_clave_prod_serv,
+                        options_for_select([
+                          ["80151600 - Servicios de comercio internacional", "80151600"]
+                        ], service_catalog.sat_clave_prod_serv.presence || "80151600"),
+                        {},
+                        class: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 bg-white" %>
+      </div>
+
+      <div class="space-y-1">
+        <%= form.label :sat_clave_unidad, "Clave Unidad SAT *", class: "block text-sm font-semibold text-gray-800 tracking-wide" %>
+        <%= form.select :sat_clave_unidad,
+                        options_for_select([
+                          ["E48 - Unidad de servicio", "E48"]
+                        ], service_catalog.sat_clave_unidad.presence || "E48"),
+                        {},
+                        class: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 bg-white" %>
+      </div>
+
+      <div class="space-y-1">
+        <%= form.label :sat_objeto_imp, "Objeto Impuesto *", class: "block text-sm font-semibold text-gray-800 tracking-wide" %>
+        <%= form.select :sat_objeto_imp,
+                        options_for_select([
+                          ["02 - Sí objeto de impuesto", "02"],
+                          ["01 - No objeto de impuesto", "01"]
+                        ], service_catalog.sat_objeto_imp.presence || "02"),
+                        {},
+                        class: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 bg-white" %>
+      </div>
+    </div>
+    <p class="text-xs text-gray-500">Estos campos son obligatorios para timbrar CFDI desde Facturador.</p>
+  </div>
+
   <div class="flex items-center justify-end gap-2 pt-2">
     <%= link_to "Cancelar", service_catalogs_path, class: "px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm" %>
     <%= form.submit class: "px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:bg-indigo-700" %>

@@ -1,0 +1,105 @@
+<% content_for :title, "Facturas" %>
+
+<div class="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+  <div class="mb-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div class="flex items-start gap-4">
+        <div class="flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-bold text-3xl text-gray-900">Facturas</h1>
+          <p class="text-sm text-gray-500 mt-1">Consulta y seguimiento de facturas emitidas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-md border border-gray-200 p-5 mb-6">
+    <div class="flex items-center gap-2 mb-4">
+      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+      </svg>
+      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Filtros</h2>
+    </div>
+
+    <%= form_with url: invoices_path, method: :get, class: "w-full" do |f| %>
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Estatus</label>
+          <%= f.select :status,
+              options_for_select([["Todos", ""]] + @invoice_statuses.map { |status| [status.humanize, status] }, @selected_status),
+              {},
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Desde</label>
+          <%= f.date_field :start_date, value: @selected_start_date, class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Hasta</label>
+          <%= f.date_field :end_date, value: @selected_end_date, class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Cliente</label>
+          <%= f.select :client_id,
+              options_for_select([["Todos", ""]] + @clients.map { |client| [client.name, client.id] }, @selected_client_id),
+              {},
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">UUID</label>
+          <%= f.text_field :uuid, value: @selected_uuid, placeholder: "Buscar UUID", class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
+        </div>
+
+        <div class="md:col-span-5 flex gap-2 items-end">
+          <%= f.submit "Filtrar", class: "px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md cursor-pointer" %>
+          <%= link_to "Limpiar", invoices_path, class: "px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="mb-6">
+    <%= render 'shared/tailwind_pagination', paginated: @invoices %>
+  </div>
+
+  <div class="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-100">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gradient-to-r from-gray-50 to-white">
+        <tr>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Fecha</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Cliente</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">UUID</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Estatus</th>
+          <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Total</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-100">
+        <% if @invoices.any? %>
+          <% @invoices.each do |invoice| %>
+            <tr class="hover:bg-gray-50 transition-colors duration-150">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= l(invoice.created_at, format: :short) %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= invoice.receiver_entity&.name || '-' %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-gray-700"><%= invoice.sat_uuid.presence || '-' %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= invoice.status.humanize %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900"><%= number_to_currency(invoice.total || 0) %></td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="5" class="px-6 py-12 text-center">
+              <p class="text-gray-500 text-lg font-medium">No hay facturas para los filtros seleccionados</p>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

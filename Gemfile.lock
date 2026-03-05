@@ -124,6 +124,9 @@ GEM
       warden (~> 1.2.3)
     diff-lcs (1.6.2)
     dotenv (3.1.8)
+    dotenv-rails (3.1.8)
+      dotenv (= 3.1.8)
+      railties (>= 6.1)
     drb (2.2.3)
     ed25519 (1.4.0)
     erb (6.0.1)
@@ -476,6 +479,7 @@ DEPENDENCIES
   csv
   debug
   devise (~> 4.9)
+  dotenv-rails
   factory_bot_rails (~> 6.4)
   image_processing (~> 1.2)
   importmap-rails

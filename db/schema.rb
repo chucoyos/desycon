@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_26_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_04_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -270,6 +270,76 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_26_150000) do
     t.index ["entity_id"], name: "index_forwarders_on_entity_id"
   end
 
+  create_table "invoice_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id"
+    t.string "created_by_type"
+    t.string "event_type", null: false
+    t.bigint "invoice_id", null: false
+    t.string "provider_error_code"
+    t.text "provider_error_message"
+    t.string "provider_status"
+    t.jsonb "request_payload", default: {}, null: false
+    t.jsonb "response_payload", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_type", "created_by_id"], name: "index_invoice_events_on_created_by"
+    t.index ["event_type"], name: "index_invoice_events_on_event_type"
+    t.index ["invoice_id", "created_at"], name: "index_invoice_events_on_invoice_id_and_created_at"
+    t.index ["invoice_id"], name: "index_invoice_events_on_invoice_id"
+  end
+
+  create_table "invoice_payments", force: :cascade do |t|
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.bigint "complement_invoice_id"
+    t.datetime "created_at", null: false
+    t.string "currency", default: "MXN", null: false
+    t.bigint "invoice_id", null: false
+    t.text "notes"
+    t.datetime "paid_at", null: false
+    t.string "payment_method", default: "03", null: false
+    t.string "reference"
+    t.string "status", default: "registered", null: false
+    t.datetime "updated_at", null: false
+    t.index ["complement_invoice_id"], name: "index_invoice_payments_on_complement_invoice_id"
+    t.index ["invoice_id"], name: "index_invoice_payments_on_invoice_id"
+    t.index ["status"], name: "index_invoice_payments_on_status"
+    t.check_constraint "status::text = ANY (ARRAY['registered'::character varying, 'complement_queued'::character varying, 'complement_issued'::character varying, 'failed'::character varying]::text[])", name: "check_invoice_payments_status"
+  end
+
+  create_table "invoices", force: :cascade do |t|
+    t.string "cancellation_motive"
+    t.datetime "cancelled_at"
+    t.datetime "created_at", null: false
+    t.string "currency", default: "MXN", null: false
+    t.bigint "facturador_comprobante_id"
+    t.string "idempotency_key", null: false
+    t.bigint "invoiceable_id", null: false
+    t.string "invoiceable_type", null: false
+    t.datetime "issued_at"
+    t.bigint "issuer_entity_id", null: false
+    t.string "kind", default: "ingreso", null: false
+    t.string "last_error_code"
+    t.text "last_error_message"
+    t.jsonb "payload_snapshot", default: {}, null: false
+    t.jsonb "provider_response", default: {}, null: false
+    t.bigint "receiver_entity_id", null: false
+    t.string "replacement_uuid"
+    t.string "sat_uuid"
+    t.string "status", default: "draft", null: false
+    t.decimal "subtotal", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "tax_total", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "total", precision: 12, scale: 2, default: "0.0", null: false
+    t.datetime "updated_at", null: false
+    t.index ["facturador_comprobante_id"], name: "index_invoices_on_facturador_comprobante_id", unique: true
+    t.index ["idempotency_key"], name: "index_invoices_on_idempotency_key", unique: true
+    t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"
+    t.index ["issuer_entity_id"], name: "index_invoices_on_issuer_entity_id"
+    t.index ["receiver_entity_id"], name: "index_invoices_on_receiver_entity_id"
+    t.index ["sat_uuid"], name: "index_invoices_on_sat_uuid", unique: true
+    t.check_constraint "kind::text = ANY (ARRAY['ingreso'::character varying, 'egreso'::character varying, 'pago'::character varying]::text[])", name: "check_invoices_kind"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'queued'::character varying, 'issued'::character varying, 'cancel_pending'::character varying, 'cancelled'::character varying, 'failed'::character varying]::text[])", name: "check_invoices_status"
+  end
+
   create_table "notifications", force: :cascade do |t|
     t.string "action"
     t.bigint "actor_id", null: false
@@ -348,9 +418,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_26_150000) do
     t.datetime "created_at", null: false
     t.string "currency", default: "MXN", null: false
     t.string "name", null: false
+    t.string "sat_clave_prod_serv"
+    t.string "sat_clave_unidad"
+    t.string "sat_objeto_imp", default: "02", null: false
+    t.decimal "sat_tasa_iva", precision: 6, scale: 4, default: "0.16", null: false
     t.datetime "updated_at", null: false
     t.index ["applies_to", "name"], name: "index_service_catalogs_on_applies_to_and_name", unique: true
     t.index ["code"], name: "index_service_catalogs_on_code", unique: true
+    t.index ["sat_clave_prod_serv"], name: "index_service_catalogs_on_sat_clave_prod_serv"
+    t.index ["sat_clave_unidad"], name: "index_service_catalogs_on_sat_clave_unidad"
   end
 
   create_table "shipping_lines", force: :cascade do |t|
@@ -428,6 +504,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_26_150000) do
   add_foreign_key "containers", "voyages"
   add_foreign_key "entities", "entities", column: "customs_agent_id"
   add_foreign_key "forwarders", "entities"
+  add_foreign_key "invoice_events", "invoices"
+  add_foreign_key "invoice_payments", "invoices"
+  add_foreign_key "invoice_payments", "invoices", column: "complement_invoice_id"
+  add_foreign_key "invoices", "entities", column: "issuer_entity_id"
+  add_foreign_key "invoices", "entities", column: "receiver_entity_id"
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "notifications", "users", column: "recipient_id"
   add_foreign_key "photos", "users", column: "uploaded_by_id"

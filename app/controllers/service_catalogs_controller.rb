@@ -79,6 +79,16 @@ class ServiceCatalogsController < ApplicationController
   end
 
   def service_catalog_params
-    params.require(:service_catalog).permit(:name, :code, :applies_to, :amount, :currency, :active)
+    params.require(:service_catalog).permit(
+      :name,
+      :code,
+      :applies_to,
+      :amount,
+      :currency,
+      :active,
+      :sat_clave_prod_serv,
+      :sat_clave_unidad,
+      :sat_objeto_imp
+    )
   end
 end
