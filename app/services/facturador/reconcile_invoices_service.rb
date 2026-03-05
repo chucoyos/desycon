@@ -70,7 +70,8 @@ module Facturador
         provider_status: provider_invoice["subestatusId"]&.to_s
       )
     rescue Error => e
-      invoice.mark_failed!(error_code: "FACTURADOR_RECONCILE_ERROR", error_message: e.message)
+      error_code = ErrorCodeResolver.call(context: :reconcile, message: e.message, exception: e)
+      invoice.mark_failed!(error_code: error_code, error_message: e.message)
       invoice.invoice_events.create!(
         event_type: "reconcile_failed",
         created_by: actor,

@@ -190,15 +190,7 @@ module Facturador
 
       return parsed if response.is_a?(Net::HTTPSuccess)
 
-      message = parsed["error_description"] || parsed["message"] || parsed["descripcion"]
-      if message.blank? && parsed["errores"].is_a?(Array)
-        details = parsed["errores"].filter_map do |item|
-          item["mensaje"] || item["message"] || item["descripcion"]
-        end
-        message = details.join(" | ") if details.any?
-      end
-
-      message = body if message.blank? && body.present?
+      message = ErrorMessageExtractor.call(parsed, fallback: body)
       raise_with_message(response: response, message: message.presence || response.message)
     rescue JSON::ParserError
       if response.is_a?(Net::HTTPSuccess)
@@ -210,15 +202,17 @@ module Facturador
     end
 
     def raise_for_unsuccessful_response(response)
-      message = response.body.to_s.strip
-      if message.present? && message.start_with?("{")
-        parsed = JSON.parse(message)
-        message = parsed["error_description"] || parsed["message"] || parsed["descripcion"] || message
+      raw = response.body.to_s.strip
+      message = raw
+
+      if raw.present? && raw.start_with?("{", "[")
+        parsed = JSON.parse(raw)
+        message = ErrorMessageExtractor.call(parsed, fallback: raw)
       end
 
       raise_with_message(response: response, message: message.presence || response.message)
     rescue JSON::ParserError
-      raise_with_message(response: response, message: response.message)
+      raise_with_message(response: response, message: response.body.to_s.strip.presence || response.message)
     end
 
     def raise_with_message(response:, message:)

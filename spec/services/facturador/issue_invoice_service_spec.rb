@@ -66,7 +66,7 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
 
       invoice.reload
       expect(invoice.status).to eq('failed')
-      expect(invoice.last_error_code).to eq('FACTURADOR_INVALID')
+      expect(invoice.last_error_code).to eq('FACTURADOR_ISSUE_PROVIDER_ERROR')
       expect(invoice.last_error_message).to include('RFC inválido')
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('issue_failed')
     end
@@ -80,7 +80,7 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
 
       invoice.reload
       expect(invoice.status).to eq('failed')
-      expect(invoice.last_error_code).to eq('FACTURADOR_ERROR')
+      expect(invoice.last_error_code).to eq('FACTURADOR_ISSUE_TIMEOUT_ERROR')
       expect(invoice.last_error_message).to eq('timeout')
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('issue_failed')
     end

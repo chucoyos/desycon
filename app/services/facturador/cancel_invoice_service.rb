@@ -32,6 +32,7 @@ module Facturador
         motivo: motive,
         folio_sustitucion: nil
       )
+      message = nil
 
       if response["esValido"]
         if response["descripcion"].to_s.downcase.include?("cancelado") || response["subEstatusId"].to_i == 3
@@ -43,7 +44,8 @@ module Facturador
         end
       else
         message = extract_error_message(response)
-        invoice.mark_failed!(error_code: "FACTURADOR_CANCEL_INVALID", error_message: message, provider_response: response)
+        error_code = ErrorCodeResolver.call(context: :cancel, provider_payload: response, message: message)
+        invoice.mark_failed!(error_code: error_code, error_message: message, provider_response: response)
         event_type = "cancel_failed"
       end
 
@@ -53,12 +55,13 @@ module Facturador
         request_payload: { motive: motive, replacement_uuid: replacement_uuid },
         response_payload: response,
         provider_status: response["subEstatusId"]&.to_s,
-        provider_error_message: response["descripcion"]
+        provider_error_message: (event_type == "cancel_failed" ? message : response["descripcion"])
       )
 
       invoice
     rescue Error => e
-      invoice.mark_failed!(error_code: "FACTURADOR_CANCEL_ERROR", error_message: e.message)
+      error_code = ErrorCodeResolver.call(context: :cancel, message: e.message, exception: e)
+      invoice.mark_failed!(error_code: error_code, error_message: e.message)
       invoice.invoice_events.create!(
         event_type: "cancel_failed",
         created_by: actor,
@@ -74,14 +77,7 @@ module Facturador
     attr_reader :invoice, :motive, :replacement_uuid, :actor
 
     def extract_error_message(response)
-      errors = response["errores"]
-      return response["descripcion"] if errors.blank?
-
-      if errors.is_a?(Array)
-        errors.map { |item| item["mensaje"] || item["message"] }.compact.join(" | ")
-      else
-        errors.to_s
-      end
+      Facturador::ErrorMessageExtractor.call(response, fallback: "Cancelación PAC no detallada")
     end
   end
 end

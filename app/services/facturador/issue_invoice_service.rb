@@ -35,7 +35,8 @@ module Facturador
 
       invoice
     rescue Error => e
-      invoice.mark_failed!(error_code: "FACTURADOR_ERROR", error_message: e.message)
+      error_code = ErrorCodeResolver.call(context: :issue, message: e.message, exception: e)
+      invoice.mark_failed!(error_code: error_code, error_message: e.message)
       invoice.invoice_events.create!(
         event_type: "issue_failed",
         created_by: actor,
@@ -72,8 +73,9 @@ module Facturador
         )
       else
         message = extract_error_message(response)
+        error_code = ErrorCodeResolver.call(context: :issue, provider_payload: response, message: message)
         invoice.mark_failed!(
-          error_code: "FACTURADOR_INVALID",
+          error_code: error_code,
           error_message: message,
           provider_response: response
         )
@@ -89,16 +91,7 @@ module Facturador
     end
 
     def extract_error_message(response)
-      errors = response["errores"]
-      return response["descripcion"].presence || "Validación PAC no detallada" if errors.blank?
-
-      return errors.to_s unless errors.is_a?(Array)
-
-      messages = errors.filter_map do |item|
-        item["mensaje"] || item["message"]
-      end
-
-      messages.presence&.join(" | ") || "Validación PAC no detallada"
+      Facturador::ErrorMessageExtractor.call(response, fallback: "Validación PAC no detallada")
     end
   end
 end
