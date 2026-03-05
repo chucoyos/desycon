@@ -178,6 +178,7 @@
                   <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Forma pago</th>
                   <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Referencia</th>
                   <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Estatus</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Complemento</th>
                   <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
@@ -190,18 +191,65 @@
                     <td class="px-3 py-2 text-gray-700"><%= payment.reference.presence || '-' %></td>
                     <td class="px-3 py-2 text-gray-700"><%= payment.status.humanize %></td>
                     <td class="px-3 py-2 text-gray-700">
-                      <div class="flex items-center gap-2">
-                        <%= link_to "Ver", invoice_invoice_payment_path(@invoice, payment), class: "inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
+                      <% if payment.complement_invoice.present? %>
+                        <div class="flex flex-col gap-1">
+                          <%= link_to(payment.complement_invoice.sat_uuid.presence || "Factura ##{payment.complement_invoice.id}", invoice_path(payment.complement_invoice), class: "text-indigo-700 hover:text-indigo-900 text-xs font-mono") %>
+                          <div class="flex items-center gap-1">
+                            <% if payment.complement_invoice.xml_file.attached? %>
+                              <%= link_to "XML", rails_blob_path(payment.complement_invoice.xml_file, disposition: "attachment"), class: "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
+                            <% end %>
+                            <% if payment.complement_invoice.pdf_file.attached? %>
+                              <%= link_to "PDF", rails_blob_path(payment.complement_invoice.pdf_file, disposition: "attachment"), class: "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
+                            <% end %>
+                          </div>
+                        </div>
+                      <% elsif payment.status == "complement_queued" %>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-800">En cola</span>
+                      <% elsif payment.status == "failed" %>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-100 text-red-800">Falló</span>
+                      <% else %>
+                        -
+                      <% end %>
+                    </td>
+                    <td class="px-3 py-2 text-gray-700">
+                      <div class="relative inline-block text-left" data-controller="dropdown">
+                        <button type="button" class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors focus:outline-none" data-action="click->dropdown#toggle" title="Opciones">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                          </svg>
+                        </button>
+                        <div data-dropdown-target="menu" class="hidden absolute right-0 mt-2 w-48 rounded-xl shadow-xl bg-white border border-gray-100 z-50 origin-top-right ring-1 ring-black ring-opacity-5 focus:outline-none">
+                          <div class="py-2" role="menu">
+                            <%= link_to invoice_invoice_payment_path(@invoice, payment), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors", role: "menuitem" do %>
+                              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                              </svg>
+                              Ver
+                            <% end %>
 
-                        <% if payment.complement_invoice_id.blank? && payment.status.in?(["registered", "failed"]) %>
-                          <%= link_to "Editar", edit_invoice_invoice_payment_path(@invoice, payment), class: "inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" %>
+                            <% if payment.complement_invoice_id.blank? && payment.status.in?(["registered", "failed"]) %>
+                              <%= link_to edit_invoice_invoice_payment_path(@invoice, payment), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors", role: "menuitem" do %>
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                Editar
+                              <% end %>
 
-                          <%= button_to "Eliminar", invoice_invoice_payment_path(@invoice, payment), method: :delete,
-                              form: { data: { turbo_confirm: "¿Eliminar este pago?" } },
-                              class: "inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100" %>
-                        <% else %>
-                          <span class="text-[11px] text-gray-500">Bloqueado</span>
-                        <% end %>
+                              <div class="border-t border-gray-100 my-1"></div>
+                              <%= button_to invoice_invoice_payment_path(@invoice, payment), method: :delete,
+                                  form: { data: { turbo_confirm: "¿Eliminar este pago?" } },
+                                  class: "group flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-900 transition-colors", role: "menuitem" do %>
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                Eliminar
+                              <% end %>
+                            <% else %>
+                              <div class="px-4 py-2 text-xs text-gray-500">Edición bloqueada</div>
+                            <% end %>
+                          </div>
+                        </div>
                       </div>
                     </td>
                   </tr>

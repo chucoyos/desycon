@@ -84,6 +84,22 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include('Registrar nuevo pago')
       expect(response.body).to include('Registrar pago')
     end
+
+    it 'shows complement uuid when payment has linked complement invoice' do
+      invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-SHOW-002')
+      complement = create(:invoice, kind: 'pago', status: 'issued', sat_uuid: 'UUID-COMP-001')
+      complement.xml_file.attach(io: StringIO.new('<cfdi/>'), filename: 'comp.xml', content_type: 'application/xml')
+      complement.pdf_file.attach(io: StringIO.new('%PDF-1.4 test'), filename: 'comp.pdf', content_type: 'application/pdf')
+      create(:invoice_payment, invoice: invoice, status: 'complement_issued', complement_invoice: complement)
+
+      get invoice_path(invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('Complemento')
+      expect(response.body).to include('UUID-COMP-001')
+      expect(response.body).to include('XML')
+      expect(response.body).to include('PDF')
+    end
   end
 
   describe 'authorization' do

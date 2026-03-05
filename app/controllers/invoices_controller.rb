@@ -34,7 +34,7 @@ class InvoicesController < ApplicationController
     authorize @invoice
 
     @invoice_events = @invoice.invoice_events.order(created_at: :desc).limit(30)
-    @invoice_payments = @invoice.invoice_payments.order(paid_at: :desc)
+    @invoice_payments = @invoice.invoice_payments.includes(:complement_invoice).order(paid_at: :desc)
   end
 
   def issue_manual
