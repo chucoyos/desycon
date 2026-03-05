@@ -1,0 +1,51 @@
+<% content_for :title, "Editar pago ##{@payment.id}" %>
+
+<div class="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="mb-4">
+    <%= link_to invoice_path(@invoice, anchor: "payments-section"), class: "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-indigo-700 hover:bg-indigo-50 transition-all duration-200 group" do %>
+      <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+      </svg>
+      <span>Volver a la factura</span>
+    <% end %>
+  </div>
+
+  <section class="bg-white shadow-sm rounded-xl p-6 border border-gray-100">
+    <h1 class="text-2xl font-bold text-gray-900 mb-5">Editar pago #<%= @payment.id %></h1>
+
+    <%= form_with model: [@invoice, @payment], local: true, class: "grid grid-cols-1 md:grid-cols-2 gap-4" do |f| %>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Monto</label>
+        <%= f.number_field :amount, step: "0.01", min: "0.01", required: true, class: "w-full rounded-md border-gray-300 text-sm" %>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Fecha pago</label>
+        <%= f.datetime_local_field :paid_at, value: @payment.paid_at&.strftime('%Y-%m-%dT%H:%M'), required: true, class: "w-full rounded-md border-gray-300 text-sm" %>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Forma pago</label>
+        <%= f.select :payment_method,
+            FiscalProfile::FORMAS_PAGO.map { |code, label| ["#{code} - #{label}", code] },
+            {},
+            class: "w-full rounded-md border-gray-300 text-sm" %>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Referencia</label>
+        <%= f.text_field :reference, class: "w-full rounded-md border-gray-300 text-sm" %>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Notas</label>
+        <%= f.text_area :notes, rows: 3, class: "w-full rounded-md border-gray-300 text-sm" %>
+      </div>
+
+      <div class="md:col-span-2 flex gap-2">
+        <%= f.submit "Guardar cambios", class: "inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700" %>
+        <%= link_to "Cancelar", invoice_path(@invoice, anchor: "payments-section"), class: "inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" %>
+      </div>
+    <% end %>
+  </section>
+</div>

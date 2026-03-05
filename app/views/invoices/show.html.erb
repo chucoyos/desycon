@@ -1,0 +1,256 @@
+<% content_for :title, "Factura ##{@invoice.id}" %>
+
+<div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+  <div class="mb-4 sm:mb-6">
+    <%= link_to invoices_path, class: "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-indigo-700 hover:bg-indigo-50 transition-all duration-200 group" do %>
+      <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+      </svg>
+      <span>Volver a facturas</span>
+    <% end %>
+  </div>
+
+  <div class="bg-white shadow-md rounded-2xl overflow-hidden mb-6">
+    <div class="px-4 sm:px-6 lg:px-8 py-5 sm:py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div class="flex-1">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Factura #<%= @invoice.id %></h1>
+              <p class="text-sm text-gray-500">UUID: <span class="font-mono"><%= @invoice.sat_uuid.presence || "-" %></span></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <% badge_class = case @invoice.status
+            when 'issued' then 'bg-emerald-100 text-emerald-800 border-emerald-200'
+            when 'queued' then 'bg-blue-100 text-blue-800 border-blue-200'
+            when 'failed' then 'bg-red-100 text-red-800 border-red-200'
+            when 'cancel_pending' then 'bg-amber-100 text-amber-800 border-amber-200'
+            when 'cancelled' then 'bg-slate-100 text-slate-800 border-slate-200'
+            else 'bg-gray-100 text-gray-700 border-gray-200'
+          end %>
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border <%= badge_class %>"><%= @invoice.status.humanize %></span>
+
+          <% if @invoice.issued? %>
+            <%= button_to "Sincronizar XML/PDF", sync_documents_invoice_path(@invoice), method: :post, class: "inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100" %>
+            <%= button_to "Cancelar CFDI", cancel_invoice_path(@invoice), method: :patch, class: "inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100" %>
+          <% end %>
+
+          <% if @invoice.xml_file.attached? %>
+            <%= link_to "Descargar XML", rails_blob_path(@invoice.xml_file, disposition: "attachment"), class: "inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
+          <% end %>
+
+          <% if @invoice.pdf_file.attached? %>
+            <%= link_to "Descargar PDF", rails_blob_path(@invoice.pdf_file, disposition: "attachment"), class: "inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-4 sm:p-6 lg:p-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Total</p>
+        <p class="text-lg font-semibold text-gray-900"><%= number_to_currency(@invoice.total || 0) %></p>
+      </div>
+      <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Subtotal</p>
+        <p class="text-lg font-semibold text-gray-900"><%= number_to_currency(@invoice.subtotal || 0) %></p>
+      </div>
+      <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Impuestos</p>
+        <p class="text-lg font-semibold text-gray-900"><%= number_to_currency(@invoice.tax_total || 0) %></p>
+      </div>
+      <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Saldo pendiente</p>
+        <p class="text-lg font-semibold text-gray-900"><%= number_to_currency(@invoice.outstanding_amount || 0) %></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+      <section class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Datos de factura</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <p class="text-gray-500">Tipo</p>
+            <p class="font-semibold text-gray-900"><%= @invoice.kind.humanize %></p>
+          </div>
+          <div>
+            <p class="text-gray-500">Moneda</p>
+            <p class="font-semibold text-gray-900"><%= @invoice.currency %></p>
+          </div>
+          <div>
+            <p class="text-gray-500">Emisor</p>
+            <p class="font-semibold text-gray-900"><%= @invoice.issuer_entity&.name || '-' %></p>
+          </div>
+          <div>
+            <p class="text-gray-500">Receptor</p>
+            <p class="font-semibold text-gray-900"><%= @invoice.receiver_entity&.name || '-' %></p>
+          </div>
+          <div>
+            <p class="text-gray-500">Comprobante proveedor</p>
+            <p class="font-semibold text-gray-900"><%= @invoice.facturador_comprobante_id || '-' %></p>
+          </div>
+          <div>
+            <p class="text-gray-500">Emitida en</p>
+            <p class="font-semibold text-gray-900"><%= @invoice.issued_at ? l(@invoice.issued_at, format: :long) : '-' %></p>
+          </div>
+          <div>
+            <p class="text-gray-500">Creada en</p>
+            <p class="font-semibold text-gray-900"><%= l(@invoice.created_at, format: :long) %></p>
+          </div>
+          <div>
+            <p class="text-gray-500">Actualizada en</p>
+            <p class="font-semibold text-gray-900"><%= l(@invoice.updated_at, format: :long) %></p>
+          </div>
+        </div>
+
+        <% if @invoice.failed? %>
+          <div class="mt-4 p-3 rounded-lg bg-red-50 border border-red-200">
+            <p class="text-xs text-red-600 uppercase tracking-wider">Error</p>
+            <p class="text-sm font-semibold text-red-800"><%= @invoice.last_error_code.presence || '-' %></p>
+            <p class="text-sm text-red-700 mt-1"><%= @invoice.last_error_message.presence || '-' %></p>
+          </div>
+        <% end %>
+      </section>
+
+      <section id="payments-section" class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Pagos registrados</h2>
+
+        <% if @invoice.status.in?(["issued", "cancel_pending"]) %>
+          <div class="mb-5 p-4 rounded-lg bg-amber-50 border border-amber-200">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+              <p class="text-sm font-semibold text-amber-800">Registrar nuevo pago</p>
+              <p class="text-xs text-amber-700">Saldo actual: <span class="font-semibold"><%= number_to_currency(@invoice.outstanding_amount || 0) %></span></p>
+            </div>
+
+            <%= form_with url: register_payment_invoice_path(@invoice), method: :post, local: true, class: "grid grid-cols-1 md:grid-cols-5 gap-2 items-end" do |f| %>
+              <div>
+                <label class="block text-xs font-medium text-amber-900 mb-1">Monto</label>
+                <%= f.number_field :amount, name: "payment[amount]", step: "0.01", min: "0.01", required: true, class: "w-full text-sm rounded-md border-amber-300" %>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-amber-900 mb-1">Fecha pago</label>
+                <%= f.datetime_local_field :paid_at, name: "payment[paid_at]", required: true, class: "w-full text-sm rounded-md border-amber-300" %>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-amber-900 mb-1">Forma pago</label>
+                <%= f.select :payment_method,
+                    FiscalProfile::FORMAS_PAGO.map { |code, label| ["#{code} - #{label}", code] },
+                    { selected: "03" },
+                    { name: "payment[payment_method]", class: "w-full text-sm rounded-md border-amber-300" } %>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-amber-900 mb-1">Referencia</label>
+                <%= f.text_field :reference, name: "payment[reference]", placeholder: "Referencia", class: "w-full text-sm rounded-md border-amber-300" %>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-amber-900 mb-1">Notas</label>
+                <%= f.text_field :notes, name: "payment[notes]", placeholder: "Opcional", class: "w-full text-sm rounded-md border-amber-300" %>
+              </div>
+
+              <div class="md:col-span-5">
+                <%= f.submit "Registrar pago", class: "inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200" %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+
+        <% if @invoice_payments.any? %>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Fecha pago</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Monto</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Forma pago</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Referencia</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Estatus</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <% @invoice_payments.each do |payment| %>
+                  <tr>
+                    <td class="px-3 py-2 text-gray-700"><%= l(payment.paid_at, format: :short) %></td>
+                    <td class="px-3 py-2 font-semibold text-gray-900"><%= number_to_currency(payment.amount) %></td>
+                    <td class="px-3 py-2 text-gray-700"><%= [payment.payment_method, FiscalProfile::FORMAS_PAGO[payment.payment_method]].compact.join(' - ') %></td>
+                    <td class="px-3 py-2 text-gray-700"><%= payment.reference.presence || '-' %></td>
+                    <td class="px-3 py-2 text-gray-700"><%= payment.status.humanize %></td>
+                    <td class="px-3 py-2 text-gray-700">
+                      <div class="flex items-center gap-2">
+                        <%= link_to "Ver", invoice_invoice_payment_path(@invoice, payment), class: "inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
+
+                        <% if payment.complement_invoice_id.blank? && payment.status.in?(["registered", "failed"]) %>
+                          <%= link_to "Editar", edit_invoice_invoice_payment_path(@invoice, payment), class: "inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" %>
+
+                          <%= button_to "Eliminar", invoice_invoice_payment_path(@invoice, payment), method: :delete,
+                              form: { data: { turbo_confirm: "¿Eliminar este pago?" } },
+                              class: "inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100" %>
+                        <% else %>
+                          <span class="text-[11px] text-gray-500">Bloqueado</span>
+                        <% end %>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="text-sm text-gray-500">No hay pagos registrados para esta factura.</p>
+        <% end %>
+      </section>
+    </div>
+
+    <div class="space-y-6">
+      <section class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Eventos recientes</h2>
+        <% if @invoice_events.any? %>
+          <div class="space-y-3">
+            <% @invoice_events.each do |event| %>
+              <div class="pb-3 border-b border-gray-100 last:border-0">
+                <p class="text-sm font-semibold text-gray-900"><%= event.event_type.humanize %></p>
+                <p class="text-xs text-gray-500 mt-0.5"><%= l(event.created_at, format: :short) %></p>
+                <% if event.provider_error_message.present? %>
+                  <p class="text-xs text-red-600 mt-1"><%= event.provider_error_message %></p>
+                <% end %>
+                <% if event.provider_status.present? %>
+                  <p class="text-xs text-gray-500 mt-1">Subestatus: <%= event.provider_status %></p>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-sm text-gray-500">Sin eventos registrados.</p>
+        <% end %>
+      </section>
+
+      <section class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
+        <details>
+          <summary class="cursor-pointer text-sm font-semibold text-gray-800">Payload de emisión</summary>
+          <pre class="mt-3 p-3 text-xs text-gray-700 bg-gray-50 rounded-lg overflow-auto"><%= JSON.pretty_generate(@invoice.payload_snapshot || {}) %></pre>
+        </details>
+      </section>
+
+      <section class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
+        <details>
+          <summary class="cursor-pointer text-sm font-semibold text-gray-800">Respuesta proveedor</summary>
+          <pre class="mt-3 p-3 text-xs text-gray-700 bg-gray-50 rounded-lg overflow-auto"><%= JSON.pretty_generate(@invoice.provider_response || {}) %></pre>
+        </details>
+      </section>
+    </div>
+  </div>
+</div>

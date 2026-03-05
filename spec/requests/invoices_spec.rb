@@ -70,12 +70,39 @@ RSpec.describe 'Invoices', type: :request do
     end
   end
 
+  describe 'GET /invoices/:id' do
+    before { sign_in admin_user, scope: :user }
+
+    it 'renders show successfully' do
+      invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-SHOW-001')
+
+      get invoice_path(invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Factura ##{invoice.id}")
+      expect(response.body).to include('UUID-SHOW-001')
+      expect(response.body).to include('Registrar nuevo pago')
+      expect(response.body).to include('Registrar pago')
+    end
+  end
+
   describe 'authorization' do
     it 'denies customs broker users' do
       broker_user = create(:user, :customs_broker)
       sign_in broker_user, scope: :user
 
       get invoices_path
+
+      expect(response).to redirect_to(customs_agents_dashboard_path)
+      expect(flash[:alert]).to be_present
+    end
+
+    it 'denies customs broker users on show' do
+      broker_user = create(:user, :customs_broker)
+      sign_in broker_user, scope: :user
+      invoice = create(:invoice)
+
+      get invoice_path(invoice)
 
       expect(response).to redirect_to(customs_agents_dashboard_path)
       expect(flash[:alert]).to be_present

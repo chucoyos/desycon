@@ -30,10 +30,12 @@ Rails.application.routes.draw do
 
   resources :photos, only: [ :destroy ]
 
-  resources :invoices, only: [ :index ] do
+  resources :invoices, only: [ :index, :show ] do
     collection do
       post :issue_manual
     end
+
+    resources :invoice_payments, only: [ :show, :edit, :update, :destroy ]
 
     member do
       patch :cancel

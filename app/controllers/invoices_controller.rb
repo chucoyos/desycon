@@ -1,6 +1,6 @@
 class InvoicesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_invoice, only: %i[cancel sync_documents register_payment]
+  before_action :set_invoice, only: %i[show cancel sync_documents register_payment]
   after_action :verify_authorized
 
   def index
@@ -28,6 +28,13 @@ class InvoicesController < ApplicationController
 
     @invoice_statuses = Invoice::STATUSES
     @clients = Entity.clients.order(:name)
+  end
+
+  def show
+    authorize @invoice
+
+    @invoice_events = @invoice.invoice_events.order(created_at: :desc).limit(30)
+    @invoice_payments = @invoice.invoice_payments.order(paid_at: :desc)
   end
 
   def issue_manual

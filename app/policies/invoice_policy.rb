@@ -1,4 +1,8 @@
 class InvoicePolicy < ApplicationPolicy
+  def show?
+    issue_manual?
+  end
+
   def index?
     issue_manual?
   end

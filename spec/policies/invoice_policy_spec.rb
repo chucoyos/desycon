@@ -9,6 +9,7 @@ RSpec.describe InvoicePolicy, type: :policy do
     let(:user) { create(:user, :executive) }
 
     it 'allows manual issue and cancel' do
+      expect(policy.show?).to eq(true)
       expect(policy.issue_manual?).to eq(true)
       expect(policy.cancel?).to eq(true)
       expect(policy.sync_documents?).to eq(true)
@@ -20,6 +21,7 @@ RSpec.describe InvoicePolicy, type: :policy do
     let(:user) { create(:user, :customs_broker) }
 
     it 'denies manual issue and cancel' do
+      expect(policy.show?).to eq(false)
       expect(policy.issue_manual?).to eq(false)
       expect(policy.cancel?).to eq(false)
       expect(policy.sync_documents?).to eq(false)

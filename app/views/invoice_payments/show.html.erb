@@ -1,0 +1,53 @@
+<% content_for :title, "Pago ##{@payment.id}" %>
+
+<div class="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="mb-4">
+    <%= link_to invoice_path(@invoice, anchor: "payments-section"), class: "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-indigo-700 hover:bg-indigo-50 transition-all duration-200 group" do %>
+      <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+      </svg>
+      <span>Volver a la factura</span>
+    <% end %>
+  </div>
+
+  <section class="bg-white shadow-sm rounded-xl p-6 border border-gray-100">
+    <h1 class="text-2xl font-bold text-gray-900 mb-4">Pago #<%= @payment.id %></h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <div>
+        <p class="text-gray-500">Monto</p>
+        <p class="font-semibold text-gray-900"><%= number_to_currency(@payment.amount) %></p>
+      </div>
+      <div>
+        <p class="text-gray-500">Moneda</p>
+        <p class="font-semibold text-gray-900"><%= @payment.currency %></p>
+      </div>
+      <div>
+        <p class="text-gray-500">Fecha pago</p>
+        <p class="font-semibold text-gray-900"><%= l(@payment.paid_at, format: :long) %></p>
+      </div>
+      <div>
+        <p class="text-gray-500">Forma pago</p>
+        <p class="font-semibold text-gray-900"><%= [@payment.payment_method, FiscalProfile::FORMAS_PAGO[@payment.payment_method]].compact.join(' - ') %></p>
+      </div>
+      <div>
+        <p class="text-gray-500">Referencia</p>
+        <p class="font-semibold text-gray-900"><%= @payment.reference.presence || '-' %></p>
+      </div>
+      <div>
+        <p class="text-gray-500">Estatus</p>
+        <p class="font-semibold text-gray-900"><%= @payment.status.humanize %></p>
+      </div>
+      <div class="md:col-span-2">
+        <p class="text-gray-500">Notas</p>
+        <p class="font-semibold text-gray-900"><%= @payment.notes.presence || '-' %></p>
+      </div>
+    </div>
+
+    <div class="mt-6 flex items-center gap-2">
+      <% if @payment.complement_invoice_id.blank? && @payment.status.in?(["registered", "failed"]) %>
+        <%= link_to "Editar pago", edit_invoice_invoice_payment_path(@invoice, @payment), class: "inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" %>
+      <% end %>
+    </div>
+  </section>
+</div>
