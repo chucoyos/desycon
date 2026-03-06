@@ -30,7 +30,7 @@
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">Estatus</label>
           <%= f.select :status,
-              options_for_select([["Todos", ""]] + @invoice_statuses.map { |status| [status.humanize, status] }, @selected_status),
+            options_for_select([["Todos", ""]] + @invoice_statuses.map { |status| [t("activerecord.attributes.invoice.statuses.#{status}", default: status.humanize), status] }, @selected_status),
               {},
               class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
         </div>
@@ -112,7 +112,7 @@
                   -
                 <% end %>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= invoice.status.humanize %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= t("activerecord.attributes.invoice.statuses.#{invoice.status}", default: invoice.status.humanize) %></td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900"><%= number_to_currency(invoice.total || 0) %></td>
             </tr>
           <% end %>

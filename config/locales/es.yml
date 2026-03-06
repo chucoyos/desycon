@@ -68,6 +68,14 @@ es:
         updated_at: Fecha de actualización
       container:
         archivo_nr: Referencia
+      invoice:
+        statuses:
+          draft: Borrador
+          queued: En cola
+          issued: Emitida
+          cancel_pending: Cancelación pendiente
+          cancelled: Cancelada
+          failed: Fallida
   date:
     abbr_day_names:
     - dom
