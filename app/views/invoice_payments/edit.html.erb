@@ -1,4 +1,21 @@
 <% content_for :title, "Editar pago ##{@payment.id}" %>
+<%
+  serie = @invoice.provider_response.to_h["serie"].presence || @invoice.payload_snapshot.to_h["serie"].presence
+  folio = @invoice.provider_response.to_h["folio"].presence ||
+          @invoice.provider_response.to_h["noComprobante"].presence ||
+          @invoice.provider_response.to_h["numeroComprobante"].presence ||
+          @invoice.facturador_comprobante_id&.to_s
+
+  invoice_heading = if serie.present? && folio.present?
+    "Factura #{serie} #{folio}"
+  elsif folio.present?
+    "Factura #{folio}"
+  elsif serie.present?
+    "Factura #{serie}"
+  else
+    "Factura ##{@invoice.id}"
+  end
+%>
 
 <div class="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
   <div class="mb-4">
@@ -10,41 +27,49 @@
     <% end %>
   </div>
 
-  <section class="bg-white shadow-sm rounded-xl p-6 border border-gray-100">
-    <h1 class="text-2xl font-bold text-gray-900 mb-5">Editar pago #<%= @payment.id %></h1>
-
-    <%= form_with model: [@invoice, @payment], local: true, class: "grid grid-cols-1 md:grid-cols-2 gap-4" do |f| %>
+  <section class="bg-white shadow-sm rounded-2xl border border-gray-100 overflow-hidden">
+    <div class="px-6 py-4 border-b border-indigo-100 bg-indigo-50/40 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
       <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">Monto</label>
-        <%= f.number_field :amount, step: "0.01", min: "0.01", required: true, class: "w-full rounded-md border-gray-300 text-sm" %>
+        <h1 class="text-2xl font-bold text-gray-900">Editar pago #<%= @payment.id %></h1>
+        <p class="text-xs text-gray-500 mt-1">Actualiza los datos del pago antes de emitir su complemento.</p>
+      </div>
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white border border-indigo-100 text-indigo-700">
+        <%= invoice_heading %>
+      </span>
+    </div>
+
+    <%= form_with model: [@invoice, @payment], local: true, class: "p-6 grid grid-cols-1 md:grid-cols-2 gap-4" do |f| %>
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Monto</label>
+        <%= f.number_field :amount, step: "0.01", min: "0.01", required: true, placeholder: "0.00", class: "w-full h-11 rounded-xl border border-gray-300 bg-white px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
       </div>
 
       <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">Fecha pago</label>
-        <%= f.datetime_local_field :paid_at, value: @payment.paid_at&.strftime('%Y-%m-%dT%H:%M'), required: true, class: "w-full rounded-md border-gray-300 text-sm" %>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Fecha pago</label>
+        <%= f.datetime_local_field :paid_at, value: @payment.paid_at&.strftime('%Y-%m-%dT%H:%M'), required: true, class: "w-full h-11 rounded-xl border border-gray-300 bg-white px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
       </div>
 
       <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">Forma pago</label>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Forma pago</label>
         <%= f.select :payment_method,
             FiscalProfile::FORMAS_PAGO.map { |code, label| ["#{code} - #{label}", code] },
             {},
-            class: "w-full rounded-md border-gray-300 text-sm" %>
+            class: "w-full h-11 rounded-xl border border-gray-300 bg-white px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
       </div>
 
       <div>
-        <label class="block text-xs font-medium text-gray-600 mb-1">Referencia</label>
-        <%= f.text_field :reference, class: "w-full rounded-md border-gray-300 text-sm" %>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Referencia</label>
+        <%= f.text_field :reference, class: "w-full h-11 rounded-xl border border-gray-300 bg-white px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
       </div>
 
       <div class="md:col-span-2">
-        <label class="block text-xs font-medium text-gray-600 mb-1">Notas</label>
-        <%= f.text_area :notes, rows: 3, class: "w-full rounded-md border-gray-300 text-sm" %>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Notas</label>
+        <%= f.text_area :notes, rows: 3, class: "w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
       </div>
 
-      <div class="md:col-span-2 flex gap-2">
-        <%= f.submit "Guardar cambios", class: "inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700" %>
-        <%= link_to "Cancelar", invoice_path(@invoice, anchor: "payments-section"), class: "inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" %>
+      <div class="md:col-span-2 flex items-center justify-end gap-2 pt-2">
+        <%= link_to "Cancelar", invoice_path(@invoice, anchor: "payments-section"), class: "inline-flex items-center justify-center h-11 px-4 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" %>
+        <%= f.submit "Guardar cambios", class: "inline-flex items-center justify-center h-11 px-5 rounded-xl text-sm font-semibold bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" %>
       </div>
     <% end %>
   </section>
