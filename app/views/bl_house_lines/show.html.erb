@@ -353,14 +353,6 @@
 
                       <%= button_to "Sincronizar XML/PDF", sync_documents_invoice_path(invoice), method: :post, class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100" %>
 
-                      <%= form_with url: register_payment_invoice_path(invoice), method: :post, local: true, class: "flex flex-wrap items-center gap-2" do |f| %>
-                        <%= f.number_field :amount, name: "payment[amount]", step: "0.01", min: "0.01", placeholder: "Monto", required: true, class: "text-xs rounded-md border-gray-300 w-24" %>
-                        <%= f.datetime_local_field :paid_at, name: "payment[paid_at]", required: true, class: "text-xs rounded-md border-gray-300" %>
-                        <%= f.select :payment_method, FiscalProfile::FORMAS_PAGO.keys, { selected: "03" }, { name: "payment[payment_method]", class: "text-xs rounded-md border-gray-300" } %>
-                        <%= f.text_field :reference, name: "payment[reference]", placeholder: "Referencia", class: "text-xs rounded-md border-gray-300" %>
-                        <%= f.submit "Registrar pago", class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100" %>
-                      <% end %>
-
                       <% if invoice.xml_file.attached? %>
                         <%= link_to "XML", rails_blob_path(invoice.xml_file, disposition: "attachment"), class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
                       <% end %>
