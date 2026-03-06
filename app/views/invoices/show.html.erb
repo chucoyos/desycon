@@ -1,4 +1,21 @@
-<% content_for :title, "Factura ##{@invoice.id}" %>
+<%
+  serie = @invoice.provider_response.to_h["serie"].presence || @invoice.payload_snapshot.to_h["serie"].presence
+  folio = @invoice.provider_response.to_h["folio"].presence ||
+          @invoice.provider_response.to_h["noComprobante"].presence ||
+          @invoice.provider_response.to_h["numeroComprobante"].presence ||
+          @invoice.facturador_comprobante_id&.to_s
+
+  invoice_heading = if serie.present? && folio.present?
+    "Factura #{serie} #{folio}"
+  elsif folio.present?
+    "Factura #{folio}"
+  elsif serie.present?
+    "Factura #{serie}"
+  else
+    "Factura ##{@invoice.id}"
+  end
+%>
+<% content_for :title, invoice_heading %>
 
 <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
   <div class="mb-4 sm:mb-6">
@@ -21,7 +38,7 @@
               </svg>
             </div>
             <div>
-              <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Factura #<%= @invoice.id %></h1>
+              <h1 class="text-2xl sm:text-3xl font-bold text-gray-900"><%= invoice_heading %></h1>
               <p class="text-sm text-gray-500">UUID: <span class="font-mono"><%= @invoice.sat_uuid.presence || "-" %></span></p>
             </div>
           </div>
@@ -76,39 +93,146 @@
 
   <div class="space-y-6">
       <section class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">Datos de factura</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <p class="text-gray-500">Tipo</p>
-            <p class="font-semibold text-gray-900"><%= @invoice.kind.humanize %></p>
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Información fiscal</h2>
+
+        <% payload = @invoice.payload_snapshot.to_h %>
+        <% provider = @invoice.provider_response.to_h %>
+        <% receptor = payload.fetch("receptor", {}).to_h %>
+        <% conceptos = Array(payload["conceptos"]) %>
+        <% uso_cfdi_code = receptor["usoCFDI"].presence %>
+        <% regimen_receptor_code = receptor["regimenFiscalReceptor"].presence %>
+        <% forma_pago_code = payload["formaPago"].presence %>
+        <% metodo_pago_code = payload["metodoPago"].presence %>
+        <% uso_cfdi_label = uso_cfdi_code && FiscalProfile::USOS_CFDI[uso_cfdi_code] %>
+        <% regimen_receptor_label = regimen_receptor_code && FiscalProfile::REGIMENES[regimen_receptor_code] %>
+        <% forma_pago_label = forma_pago_code && FiscalProfile::FORMAS_PAGO[forma_pago_code] %>
+        <% metodo_pago_label = metodo_pago_code && FiscalProfile::METODOS_PAGO[metodo_pago_code] %>
+        <% sat_clave_prod_serv_labels = {
+             "80151600" => "Servicios de comercio internacional",
+             "01010101" => "No existe en el catálogo"
+           } %>
+        <% sat_clave_unidad_labels = {
+             "E48" => "Unidad de servicio",
+             "H87" => "Pieza"
+           } %>
+
+        <div class="grid grid-cols-1 gap-4 text-sm">
+          <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+            <h3 class="text-sm font-bold text-gray-900 mb-3">Receptor</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <p class="text-gray-500">Nombre</p>
+                <p class="font-semibold text-gray-900"><%= receptor["nombre"].presence || @invoice.receiver_entity&.name || '-' %></p>
+              </div>
+              <div>
+                <p class="text-gray-500">RFC</p>
+                <p class="font-semibold text-gray-900 font-mono"><%= receptor["rfc"].presence || '-' %></p>
+              </div>
+              <div>
+                <p class="text-gray-500">Uso CFDI</p>
+                <p class="font-semibold text-gray-900"><%= uso_cfdi_code ? [uso_cfdi_code, uso_cfdi_label].compact.join(' - ') : '-' %></p>
+              </div>
+              <div>
+                <p class="text-gray-500">Régimen</p>
+                <p class="font-semibold text-gray-900"><%= regimen_receptor_code ? [regimen_receptor_code, regimen_receptor_label].compact.join(' - ') : '-' %></p>
+              </div>
+              <div>
+                <p class="text-gray-500">Domicilio fiscal</p>
+                <p class="font-semibold text-gray-900"><%= receptor["domicilioFiscalReceptor"].presence || '-' %></p>
+              </div>
+            </div>
           </div>
-          <div>
-            <p class="text-gray-500">Moneda</p>
-            <p class="font-semibold text-gray-900"><%= @invoice.currency %></p>
+
+          <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+            <h3 class="text-sm font-bold text-gray-900 mb-3">Datos del CFDI</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+              <div>
+                <p class="text-gray-500">Serie / Folio</p>
+                <p class="font-semibold text-gray-900 font-mono"><%= [serie, folio].compact_blank.join(' ') .presence || '-' %></p>
+              </div>
+              <div>
+                <p class="text-gray-500">UUID</p>
+                <p class="font-semibold text-gray-900 font-mono"><%= @invoice.sat_uuid.presence || '-' %></p>
+              </div>
+              <div>
+                <p class="text-gray-500">Tipo comprobante</p>
+                <p class="font-semibold text-gray-900"><%= payload["tipoDeComprobante"].presence || @invoice.kind.humanize %></p>
+              </div>
+              <div>
+                <p class="text-gray-500">Versión / Moneda</p>
+                <p class="font-semibold text-gray-900"><%= [payload["version"], payload["moneda"].presence || @invoice.currency].compact_blank.join(' / ') %></p>
+              </div>
+              <div>
+                <p class="text-gray-500">Forma de pago</p>
+                <p class="font-semibold text-gray-900"><%= forma_pago_code ? [forma_pago_code, forma_pago_label].compact.join(' - ') : '-' %></p>
+              </div>
+              <div>
+                <p class="text-gray-500">Método de pago</p>
+                <p class="font-semibold text-gray-900"><%= metodo_pago_code ? [metodo_pago_code, metodo_pago_label].compact.join(' - ') : '-' %></p>
+              </div>
+              <div>
+                <p class="text-gray-500">Fecha emisión</p>
+                <p class="font-semibold text-gray-900"><%= payload["fecha"].presence || (@invoice.issued_at ? l(@invoice.issued_at, format: :long) : '-') %></p>
+              </div>
+              <div>
+                <p class="text-gray-500">Comprobante proveedor</p>
+                <p class="font-semibold text-gray-900"><%= provider["idComprobante"].presence || @invoice.facturador_comprobante_id || '-' %></p>
+              </div>
+            </div>
           </div>
-          <div>
-            <p class="text-gray-500">Emisor</p>
-            <p class="font-semibold text-gray-900"><%= @invoice.issuer_entity&.name || '-' %></p>
-          </div>
-          <div>
-            <p class="text-gray-500">Receptor</p>
-            <p class="font-semibold text-gray-900"><%= @invoice.receiver_entity&.name || '-' %></p>
-          </div>
-          <div>
-            <p class="text-gray-500">Comprobante proveedor</p>
-            <p class="font-semibold text-gray-900"><%= @invoice.facturador_comprobante_id || '-' %></p>
-          </div>
-          <div>
-            <p class="text-gray-500">Emitida en</p>
-            <p class="font-semibold text-gray-900"><%= @invoice.issued_at ? l(@invoice.issued_at, format: :long) : '-' %></p>
-          </div>
-          <div>
-            <p class="text-gray-500">Creada en</p>
-            <p class="font-semibold text-gray-900"><%= l(@invoice.created_at, format: :long) %></p>
-          </div>
-          <div>
-            <p class="text-gray-500">Actualizada en</p>
-            <p class="font-semibold text-gray-900"><%= l(@invoice.updated_at, format: :long) %></p>
+
+          <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+            <h3 class="text-sm font-bold text-gray-900 mb-3">Conceptos</h3>
+            <% if conceptos.any? %>
+              <div class="space-y-3 pr-1">
+                <% conceptos.each_with_index do |concepto, idx| %>
+                  <% item = concepto.to_h %>
+                  <% clave_prod_serv_code = item["claveProdServ"].presence %>
+                  <% clave_unidad_code = item["claveUnidad"].presence %>
+                  <% clave_prod_serv_label = clave_prod_serv_code && sat_clave_prod_serv_labels[clave_prod_serv_code] %>
+                  <% clave_unidad_label = clave_unidad_code && sat_clave_unidad_labels[clave_unidad_code] %>
+                  <% traslados = Array(item.dig("impuestos", "traslados")) %>
+                  <% concepto_importe = item["importe"].to_d %>
+                  <% concepto_iva = traslados.sum { |traslado| traslado.to_h["importe"].to_d } %>
+                  <% concepto_total = concepto_importe + concepto_iva %>
+                  <div class="bg-white rounded-lg border border-gray-200 p-3">
+                    <p class="text-xs text-gray-500 mb-2">Concepto <%= idx + 1 %></p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 items-start">
+                      <div class="xl:col-span-2">
+                        <p class="text-gray-500 text-xs">Descripción</p>
+                        <p class="text-sm font-semibold text-gray-900"><%= item["descripcion"].presence || '-' %></p>
+                      </div>
+                      <div>
+                        <p class="text-gray-500 text-xs">Prod/Serv</p>
+                        <p class="text-sm font-semibold text-gray-900"><%= clave_prod_serv_code ? [clave_prod_serv_code, clave_prod_serv_label].compact.join(' - ') : '-' %></p>
+                      </div>
+                      <div>
+                        <p class="text-gray-500 text-xs">Unidad</p>
+                        <p class="text-sm font-semibold text-gray-900"><%= clave_unidad_code ? [clave_unidad_code, clave_unidad_label].compact.join(' - ') : '-' %></p>
+                      </div>
+                      <div>
+                        <p class="text-gray-500 text-xs">Cantidad</p>
+                        <p class="text-sm font-semibold text-gray-900"><%= item["cantidad"].presence || '-' %></p>
+                      </div>
+                      <div>
+                        <p class="text-gray-500 text-xs">Importe</p>
+                        <p class="text-sm font-semibold text-gray-900"><%= number_to_currency(concepto_importe) %></p>
+                      </div>
+                      <div>
+                        <p class="text-gray-500 text-xs">IVA</p>
+                        <p class="text-sm font-semibold text-gray-900"><%= number_to_currency(concepto_iva) %></p>
+                      </div>
+                      <div>
+                        <p class="text-gray-500 text-xs">Total con IVA</p>
+                        <p class="text-sm font-semibold text-gray-900"><%= number_to_currency(concepto_total) %></p>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            <% else %>
+              <p class="text-sm text-gray-500">No hay conceptos registrados en el payload.</p>
+            <% end %>
           </div>
         </div>
 
