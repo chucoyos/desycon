@@ -53,6 +53,42 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).not_to include(other_invoice.sat_uuid)
     end
 
+    it 'filters by customs agent' do
+      selected_agent = create(:entity, :customs_agent)
+      other_agent = create(:entity, :customs_agent)
+      selected_client = create(:entity, :client, customs_agent: selected_agent)
+      other_client = create(:entity, :client, customs_agent: other_agent)
+
+      selected_invoice = create(:invoice, receiver_entity: selected_client, sat_uuid: 'UUID-AGENCY-MATCH')
+      other_invoice = create(:invoice, receiver_entity: other_client, sat_uuid: 'UUID-AGENCY-OTHER')
+
+      get invoices_path, params: { customs_agent_id: selected_agent.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(selected_invoice.sat_uuid)
+      expect(response.body).not_to include(other_invoice.sat_uuid)
+    end
+
+    it 'filters by consolidator' do
+      selected_consolidator = create(:entity, :consolidator)
+      other_consolidator = create(:entity, :consolidator)
+
+      selected_container = create(:container, consolidator_entity: selected_consolidator)
+      other_container = create(:container, consolidator_entity: other_consolidator)
+
+      selected_service = create(:container_service, container: selected_container)
+      other_service = create(:container_service, container: other_container)
+
+      selected_invoice = create(:invoice, invoiceable: selected_service, sat_uuid: 'UUID-CONS-MATCH')
+      other_invoice = create(:invoice, invoiceable: other_service, sat_uuid: 'UUID-CONS-OTHER')
+
+      get invoices_path, params: { consolidator_id: selected_consolidator.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(selected_invoice.sat_uuid)
+      expect(response.body).not_to include(other_invoice.sat_uuid)
+    end
+
     it 'filters by date range' do
       recent_invoice = create(:invoice, sat_uuid: 'UUID-DATE-RECENT')
       old_invoice = create(:invoice, sat_uuid: 'UUID-DATE-OLD')

@@ -10,6 +10,8 @@ class InvoicesController < ApplicationController
     @selected_end_date = resolved_end_date
     @selected_status = params[:status].to_s.presence
     @selected_client_id = params[:client_id].to_s.presence
+    @selected_customs_agent_id = params[:customs_agent_id].to_s.presence
+    @selected_consolidator_id = params[:consolidator_id].to_s.presence
     @selected_uuid = params[:uuid].to_s.strip.presence
 
     start_date = [ @selected_start_date, @selected_end_date ].min
@@ -22,12 +24,44 @@ class InvoicesController < ApplicationController
 
     @invoices = @invoices.where(status: @selected_status) if @selected_status.present? && Invoice::STATUSES.include?(@selected_status)
     @invoices = @invoices.where(receiver_entity_id: @selected_client_id) if @selected_client_id.present?
+    if @selected_customs_agent_id.present?
+      @invoices = @invoices.joins(:receiver_entity).where(entities: { customs_agent_id: @selected_customs_agent_id })
+    end
+    if @selected_consolidator_id.present?
+      @invoices = @invoices.where(
+        <<~SQL,
+          (
+            invoices.invoiceable_type = 'ContainerService' AND EXISTS (
+              SELECT 1
+              FROM container_services
+              INNER JOIN containers ON containers.id = container_services.container_id
+              WHERE container_services.id = invoices.invoiceable_id
+                AND containers.consolidator_entity_id = :consolidator_id
+            )
+          )
+          OR
+          (
+            invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
+              SELECT 1
+              FROM bl_house_line_services
+              INNER JOIN bl_house_lines ON bl_house_lines.id = bl_house_line_services.bl_house_line_id
+              INNER JOIN containers ON containers.id = bl_house_lines.container_id
+              WHERE bl_house_line_services.id = invoices.invoiceable_id
+                AND containers.consolidator_entity_id = :consolidator_id
+            )
+          )
+        SQL
+        consolidator_id: @selected_consolidator_id
+      )
+    end
     @invoices = @invoices.where("sat_uuid ILIKE ?", "%#{@selected_uuid}%") if @selected_uuid.present?
 
     @invoices = @invoices.page(params[:page]).per(params[:per] || 25)
 
     @invoice_statuses = Invoice::STATUSES
     @clients = Entity.clients.order(:name)
+    @customs_agents = Entity.customs_agents.order(:name)
+    @consolidators = Entity.consolidators.order(:name)
   end
 
   def show
