@@ -3,6 +3,7 @@ class EntityAddressesController < ApplicationController
 
   def create
     @address = @entity.addresses.build(address_params)
+    @address.tipo = "matriz" if @address.tipo.blank? && @entity.addresses.matriz.none?
 
     if @address.save
       flash[:notice] = "Dirección agregada exitosamente."
@@ -45,6 +46,20 @@ class EntityAddressesController < ApplicationController
 
   def destroy
     @address = @entity.addresses.find(params[:id])
+
+    if prevent_fiscal_address_removal?(@address)
+      error_message = "No se puede eliminar el único domicilio fiscal de la entidad."
+
+      respond_to do |format|
+        format.turbo_stream do
+          flash.now[:alert] = error_message
+          render :destroy, status: :unprocessable_entity
+        end
+        format.html { redirect_to @entity, alert: error_message }
+      end
+      return
+    end
+
     @address.destroy
 
     respond_to do |format|
@@ -64,5 +79,12 @@ class EntityAddressesController < ApplicationController
       :calle, :numero_exterior, :numero_interior, :colonia, :municipio,
       :localidad, :estado, :codigo_postal, :pais, :email, :tipo
     )
+  end
+
+  def prevent_fiscal_address_removal?(address)
+    return false unless address.tipo == "matriz"
+    return false unless @entity.fiscal_profile.present?
+
+    @entity.addresses.where(tipo: "matriz").where.not(id: address.id).none?
   end
 end

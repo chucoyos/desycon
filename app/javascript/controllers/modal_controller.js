@@ -46,6 +46,20 @@ export default class extends Controller {
           this.loadAddressForm(addressId)
         }
       }
+
+      if (modalId === 'new-address-modal') {
+        const requestedType = event.currentTarget.dataset.addressTipo
+        const typeSelect = modal.querySelector('select[name="address[tipo]"]')
+        const title = modal.querySelector('#new-address-modal-title')
+
+        if (typeSelect && requestedType) {
+          typeSelect.value = requestedType
+        }
+
+        if (title) {
+          title.textContent = requestedType === 'sucursal' ? 'Agregar Sucursal' : 'Agregar Domicilio Fiscal'
+        }
+      }
     } else {
       console.error('Modal not found:', modalId)
     }

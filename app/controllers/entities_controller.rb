@@ -164,7 +164,7 @@ class EntitiesController < ApplicationController
   private
 
   def set_entity
-    @entity = Entity.includes(:addresses, :fiscal_profile).find(params.expect(:id))
+    @entity = Entity.includes(:fiscal_profile).find(params.expect(:id))
   end
 
   def load_patents

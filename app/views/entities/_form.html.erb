@@ -20,7 +20,7 @@
           </div>
           <%= form.text_field :name, 
               class: "block w-full pl-10 pr-3 py-3 border-2 #{entity.errors[:name].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-teal-500 focus:ring-teal-500'} rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-              placeholder: "Nombre de la entidad" %>
+              placeholder: "Ej. Comercializadora del Norte" %>
         </div>
         <% if entity.errors[:name].any? %>
           <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
@@ -68,7 +68,7 @@
         <%= form.label :patent_number, "Número de Patente", class: "block text-sm font-semibold text-gray-700 mb-2" %>
         <%= form.text_field :patent_number,
           class: "block w-full px-3 py-3 border-2 #{entity.errors[:patent_number].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-indigo-500 focus:ring-indigo-500'} rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-          placeholder: "Número de patente aduanal",
+          placeholder: "Ej. 1234",
           required: entity.role_kind == "customs_broker" %>
         <% if entity.errors[:patent_number].any? %>
           <p class="mt-2 text-sm text-red-600"><%= entity.errors[:patent_number].first %></p>
@@ -169,7 +169,7 @@
               <%= fp.label :rfc, "RFC", class: "block text-sm font-semibold text-gray-700 mb-2" %>
               <%= fp.text_field :rfc, 
                   class: "block w-full px-3 py-3 border-2 #{entity.fiscal_profile&.errors[:rfc].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-teal-500 focus:ring-teal-500'} rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-                  placeholder: "XAXX010101000",
+                  placeholder: "Ej. XAXX010101000",
                   maxlength: 13 %>
               <% if entity.fiscal_profile&.errors[:rfc].any? %>
                 <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
@@ -185,7 +185,7 @@
               <%= fp.label :razon_social, "Razón Social", class: "block text-sm font-semibold text-gray-700 mb-2" %>
               <%= fp.text_field :razon_social, 
                   class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-                  placeholder: "Razón social completa" %>
+                  placeholder: "Ej. Comercializadora del Norte SA de CV" %>
             </div>
 
             <div>
@@ -257,49 +257,49 @@
             <%= address_form.label :calle, "Calle", class: "block text-sm font-semibold text-gray-700 mb-2" %>
             <%= address_form.text_field :calle,
                 class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-                placeholder: "Nombre de la calle" %>
+              placeholder: "Ej. Av. Insurgentes Sur" %>
           </div>
 
           <div>
             <%= address_form.label :numero_exterior, "Número Exterior", class: "block text-sm font-semibold text-gray-700 mb-2" %>
             <%= address_form.text_field :numero_exterior,
                 class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-                placeholder: "123" %>
+              placeholder: "Ej. 123" %>
           </div>
 
           <div>
             <%= address_form.label :numero_interior, "Número Interior", class: "block text-sm font-semibold text-gray-700 mb-2" %>
             <%= address_form.text_field :numero_interior,
                 class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-                placeholder: "A, B, etc. (opcional)" %>
+              placeholder: "Ej. A (opcional)" %>
           </div>
 
           <div>
             <%= address_form.label :colonia, "Colonia", class: "block text-sm font-semibold text-gray-700 mb-2" %>
             <%= address_form.text_field :colonia,
                 class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-                placeholder: "Nombre de la colonia" %>
+              placeholder: "Ej. Del Valle" %>
           </div>
 
           <div>
             <%= address_form.label :codigo_postal, "Código Postal", class: "block text-sm font-semibold text-gray-700 mb-2" %>
             <%= address_form.text_field :codigo_postal,
                 class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-                placeholder: "12345" %>
+              placeholder: "Ej. 12345" %>
           </div>
 
           <div>
             <%= address_form.label :municipio, "Municipio", class: "block text-sm font-semibold text-gray-700 mb-2" %>
             <%= address_form.text_field :municipio,
                 class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-                placeholder: "Nombre del municipio" %>
+              placeholder: "Ej. Monterrey" %>
           </div>
 
           <div>
             <%= address_form.label :estado, "Estado", class: "block text-sm font-semibold text-gray-700 mb-2" %>
             <%= address_form.text_field :estado,
                 class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-                placeholder: "Nombre del estado" %>
+              placeholder: "Ej. Nuevo Leon" %>
           </div>
 
           <div>
@@ -314,7 +314,7 @@
             <%= address_form.label :email, "Email", class: "block text-sm font-semibold text-gray-700 mb-2" %>
             <%= address_form.email_field :email,
                 class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-                placeholder: "correo@ejemplo.com" %>
+              placeholder: "Ej. facturacion@empresa.com" %>
           </div>
         </div>
       <% end %>
