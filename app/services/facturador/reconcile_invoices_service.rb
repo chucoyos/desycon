@@ -72,7 +72,7 @@ module Facturador
         response_payload: provider_invoice,
         provider_status: provider_invoice["subestatusId"]&.to_s
       )
-    rescue Error => e
+    rescue StandardError => e
       error_code = ErrorCodeResolver.call(context: :reconcile, message: e.message, exception: e)
       if invoice.sat_uuid.present? && invoice.status != "cancelled"
         invoice.mark_cancel_failed_attempt!(error_code: error_code, error_message: e.message)
@@ -112,9 +112,11 @@ module Facturador
 
       return unless provider_invoice["uuid"].present?
 
+      comprobante_id = normalized_comprobante_id(provider_invoice, invoice)
+
       invoice.mark_issued!(
         uuid: provider_invoice["uuid"],
-        comprobante_id: provider_invoice["idComprobante"] || invoice.facturador_comprobante_id,
+        comprobante_id: comprobante_id,
         issued_at: parse_provider_datetime(provider_invoice["fecha"]) || invoice.issued_at || Time.current,
         provider_response: provider_invoice
       )
@@ -134,6 +136,18 @@ module Facturador
       else
         Array(response)
       end
+    end
+
+    def normalized_comprobante_id(provider_invoice, invoice)
+      raw = provider_invoice["idComprobante"]
+      normalized = raw.to_s.strip.presence
+      return invoice.facturador_comprobante_id if normalized.blank? || normalized.to_i.zero?
+
+      if Invoice.where.not(id: invoice.id).exists?(facturador_comprobante_id: normalized)
+        return invoice.facturador_comprobante_id
+      end
+
+      normalized
     end
   end
 end
