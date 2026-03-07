@@ -205,18 +205,20 @@
             </div>
 
             <div>
-              <%= fp.label :forma_pago, "Forma de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-              <%= fp.select :forma_pago,
-                  FiscalProfile::FORMAS_PAGO.map { |k, v| ["#{k} - #{v}", k] },
-                  { include_blank: "Seleccionar forma de pago" },
-                  class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
-            </div>
-
-            <div>
               <%= fp.label :metodo_pago, "Método de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
               <%= fp.select :metodo_pago,
                   FiscalProfile::METODOS_PAGO.map { |k, v| ["#{k} - #{v}", k] },
                   { include_blank: "Seleccionar método de pago" },
+                  data: { payment_rule: "metodo-pago" },
+                  class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+            </div>
+
+            <div>
+              <%= fp.label :forma_pago, "Forma de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+              <%= fp.select :forma_pago,
+                  FiscalProfile::FORMAS_PAGO.map { |k, v| ["#{k} - #{v}", k] },
+                  { include_blank: "Seleccionar forma de pago" },
+                  data: { payment_rule: "forma-pago" },
                   class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
             </div>
           </div>
@@ -408,6 +410,31 @@
         });
       }
       <% end %>
+
+      const PPD = 'PPD';
+      const FORMA_POR_DEFINIR = '99';
+      const toggleFormaPagoOptions = (metodoSelect, formaSelect) => {
+        const ppdSelected = metodoSelect.value === PPD;
+
+        Array.from(formaSelect.options).forEach((option) => {
+          const keepVisible = option.value === '' || option.value === FORMA_POR_DEFINIR || !ppdSelected;
+          option.disabled = !keepVisible;
+          option.hidden = !keepVisible;
+        });
+
+        if (ppdSelected) {
+          formaSelect.value = FORMA_POR_DEFINIR;
+        }
+      };
+
+      document.querySelectorAll('select[data-payment-rule="metodo-pago"]').forEach((metodoSelect) => {
+        const formaSelectName = metodoSelect.name.replace('[metodo_pago]', '[forma_pago]');
+        const formaSelect = document.querySelector(`select[name="${formaSelectName}"]`);
+        if (!formaSelect) return;
+
+        metodoSelect.addEventListener('change', () => toggleFormaPagoOptions(metodoSelect, formaSelect));
+        toggleFormaPagoOptions(metodoSelect, formaSelect);
+      });
     }
 
     // Initialize on page load and after Turbo navigation

@@ -112,6 +112,25 @@ RSpec.describe FiscalProfile, type: :model do
         fiscal_profile.metodo_pago = 'INVALID'
         expect(fiscal_profile).not_to be_valid
       end
+
+      it 'forces forma de pago a Por definir when metodo de pago is PPD' do
+        fiscal_profile.metodo_pago = 'PPD'
+        fiscal_profile.forma_pago = '03'
+
+        fiscal_profile.valid?
+
+        expect(fiscal_profile.forma_pago).to eq('99')
+        expect(fiscal_profile).to be_valid
+      end
+
+      it 'keeps user-selected forma de pago when metodo de pago is PUE' do
+        fiscal_profile.metodo_pago = 'PUE'
+        fiscal_profile.forma_pago = '03'
+
+        fiscal_profile.valid?
+
+        expect(fiscal_profile.forma_pago).to eq('03')
+      end
     end
   end
 

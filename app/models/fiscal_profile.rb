@@ -1,4 +1,7 @@
 class FiscalProfile < ApplicationRecord
+  METODO_PAGO_PPD = "PPD".freeze
+  FORMA_PAGO_POR_DEFINIR = "99".freeze
+
   belongs_to :profileable, polymorphic: true
 
   # Catálogos SAT (simplificados - expandir según necesidad)
@@ -88,6 +91,7 @@ class FiscalProfile < ApplicationRecord
   validates :uso_cfdi, inclusion: { in: USOS_CFDI.keys }, allow_blank: true
   validates :forma_pago, inclusion: { in: FORMAS_PAGO.keys }, allow_blank: true
   validates :metodo_pago, inclusion: { in: METODOS_PAGO.keys }, allow_blank: true
+  validate :ppd_requires_forma_pago_por_definir
 
   # Validación de unicidad: global para no-entities, scoped al agente aduanal para entities
   validates :rfc, uniqueness: {
@@ -100,6 +104,7 @@ class FiscalProfile < ApplicationRecord
 
   # Normalización
   before_validation :normalize_rfc
+  before_validation :enforce_ppd_forma_pago
 
   # Scopes
   scope :by_rfc, ->(rfc) { where("UPPER(rfc) = ?", rfc.upcase) }
@@ -128,6 +133,19 @@ class FiscalProfile < ApplicationRecord
 
   def normalize_rfc
     self.rfc = rfc&.upcase&.strip
+  end
+
+  def enforce_ppd_forma_pago
+    return unless metodo_pago == METODO_PAGO_PPD
+
+    self.forma_pago = FORMA_PAGO_POR_DEFINIR
+  end
+
+  def ppd_requires_forma_pago_por_definir
+    return unless metodo_pago == METODO_PAGO_PPD
+    return if forma_pago == FORMA_PAGO_POR_DEFINIR
+
+    errors.add(:forma_pago, "debe ser Por definir cuando el método de pago es PPD")
   end
 
   def rfc_uniqueness_within_customs_agent_scope

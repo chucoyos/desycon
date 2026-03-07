@@ -109,18 +109,20 @@
         </div>
 
         <div>
-          <%= fp.label :forma_pago, "Forma de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-          <%= fp.select :forma_pago,
-                options_for_select(FiscalProfile::FORMAS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, fp.object.forma_pago),
-                { prompt: "Seleccione forma de pago" },
-                class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200" %>
-        </div>
-
-        <div>
           <%= fp.label :metodo_pago, "Método de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
           <%= fp.select :metodo_pago,
                 options_for_select(FiscalProfile::METODOS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, fp.object.metodo_pago),
                 { prompt: "Seleccione método de pago" },
+                data: { payment_rule: "metodo-pago" },
+                class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200" %>
+        </div>
+
+        <div>
+          <%= fp.label :forma_pago, "Forma de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+          <%= fp.select :forma_pago,
+                options_for_select(FiscalProfile::FORMAS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, fp.object.forma_pago),
+                { prompt: "Seleccione forma de pago" },
+                data: { payment_rule: "forma-pago" },
                 class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200" %>
         </div>
       </div>
@@ -206,6 +208,36 @@
   } else {
     scrollToFirstError();
   }
+
+  function applyPaymentRule() {
+    const PPD = 'PPD';
+    const FORMA_POR_DEFINIR = '99';
+
+    document.querySelectorAll('select[data-payment-rule="metodo-pago"]').forEach((metodoSelect) => {
+      const formaSelectName = metodoSelect.name.replace('[metodo_pago]', '[forma_pago]');
+      const formaSelect = document.querySelector(`select[name="${formaSelectName}"]`);
+      if (!formaSelect) return;
+
+      const toggle = () => {
+        const ppdSelected = metodoSelect.value === PPD;
+
+        Array.from(formaSelect.options).forEach((option) => {
+          const keepVisible = option.value === '' || option.value === FORMA_POR_DEFINIR || !ppdSelected;
+          option.disabled = !keepVisible;
+          option.hidden = !keepVisible;
+        });
+
+        if (ppdSelected) {
+          formaSelect.value = FORMA_POR_DEFINIR;
+        }
+      };
+
+      metodoSelect.onchange = toggle;
+      toggle();
+    });
+  }
+
+  applyPaymentRule();
   
   function collapseAllForms() {
     document.querySelectorAll('.address-item').forEach(item => {
