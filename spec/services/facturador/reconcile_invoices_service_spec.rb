@@ -47,5 +47,28 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
       expect(invoice.status).to eq('cancel_pending')
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('reconcile_synced')
     end
+
+    it 'supports hash payload with resumenComprobante array' do
+      invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-HASH')
+      allow(client_double).to receive(:buscar_comprobantes).and_return(
+        {
+          'numeroComprobantes' => 1,
+          'resumenComprobante' => [
+            {
+              'uuid' => 'UUID-HASH',
+              'subestatus' => 'Cancelado',
+              'descripcion' => 'Cancelado (Directo)',
+              'subestatusId' => 3
+            }
+          ]
+        }
+      )
+
+      described_class.call(limit: 10)
+
+      invoice.reload
+      expect(invoice.status).to eq('cancelled')
+      expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('reconcile_synced')
+    end
   end
 end

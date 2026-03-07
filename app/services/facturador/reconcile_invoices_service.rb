@@ -49,14 +49,17 @@ module Facturador
         take: 10
       )
 
-      provider_invoice = Array(response).find { |item| item["uuid"].to_s.casecmp(invoice.sat_uuid.to_s).zero? }
+      provider_items = extract_provider_items(response)
+      provider_invoice = provider_items.find do |item|
+        item.is_a?(Hash) && item["uuid"].to_s.casecmp(invoice.sat_uuid.to_s).zero?
+      end
 
       unless provider_invoice
         invoice.invoice_events.create!(
           event_type: "reconcile_not_found",
           created_by: actor,
           request_payload: { uuid: invoice.sat_uuid },
-          response_payload: Array(response)
+          response_payload: response
         )
         return
       end
@@ -71,7 +74,7 @@ module Facturador
       )
     rescue Error => e
       error_code = ErrorCodeResolver.call(context: :reconcile, message: e.message, exception: e)
-      if invoice.sat_uuid.present? && !invoice.cancelled?
+      if invoice.sat_uuid.present? && invoice.status != "cancelled"
         invoice.mark_cancel_failed_attempt!(error_code: error_code, error_message: e.message)
       else
         invoice.mark_failed!(error_code: error_code, error_message: e.message)
@@ -123,6 +126,14 @@ module Facturador
       Time.zone.parse(value.to_s)
     rescue ArgumentError, TypeError
       nil
+    end
+
+    def extract_provider_items(response)
+      if response.is_a?(Hash)
+        Array(response["resumenComprobante"])
+      else
+        Array(response)
+      end
     end
   end
 end
