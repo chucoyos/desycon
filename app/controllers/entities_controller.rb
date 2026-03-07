@@ -178,7 +178,6 @@ class EntitiesController < ApplicationController
       :requires_liberacion_documento,
       :requires_encomienda_documento,
       :requires_pago_documento,
-      :patent_number,
       fiscal_profile_attributes: [
         :id, :rfc, :razon_social, :regimen, :uso_cfdi, :forma_pago, :metodo_pago, :_destroy
       ],
@@ -189,7 +188,7 @@ class EntitiesController < ApplicationController
     ]
 
     unless current_user.customs_broker?
-      permitted_attributes += [ :role_kind, :customs_agent_id ]
+      permitted_attributes += [ :role_kind, :customs_agent_id, :patent_number ]
     end
 
     params.require(:entity).permit(permitted_attributes)

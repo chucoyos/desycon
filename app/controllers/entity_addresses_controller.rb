@@ -1,5 +1,6 @@
 class EntityAddressesController < ApplicationController
   before_action :set_entity
+  before_action :authorize_entity_management
 
   def create
     @address = @entity.addresses.build(address_params)
@@ -69,6 +70,10 @@ class EntityAddressesController < ApplicationController
   end
 
   private
+
+  def authorize_entity_management
+    authorize @entity, :update?
+  end
 
   def set_entity
     @entity = Entity.find(params[:entity_id])

@@ -4,11 +4,11 @@ class EntityPolicy < ApplicationPolicy
   end
 
   def show?
-    user.present?
+    can_manage_record?
   end
 
   def create?
-    user.present?
+    user.present? && (user.admin_or_executive? || customs_agent_user?)
   end
 
   def new?
@@ -16,7 +16,7 @@ class EntityPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present?
+    can_manage_record?
   end
 
   def edit?
@@ -24,11 +24,11 @@ class EntityPolicy < ApplicationPolicy
   end
 
   def destroy?
-    user.present? && !user.customs_broker?
+    can_manage_record?
   end
 
   def new_address?
-    user.present?
+    update?
   end
 
   def manage_brokers?
@@ -41,7 +41,7 @@ class EntityPolicy < ApplicationPolicy
         scope.none
       elsif user.customs_broker?
         if user.entity&.role_customs_agent?
-          scope.where(customs_agent_id: user.entity.id)
+          scope.where(customs_agent_id: user.entity.id, role_kind: "client")
         else
           scope.none
         end
@@ -49,5 +49,22 @@ class EntityPolicy < ApplicationPolicy
         scope.all
       end
     end
+  end
+
+  private
+
+  def can_manage_record?
+    return false unless user.present?
+    return true if user.admin_or_executive?
+
+    manageable_client_for_customs_broker?
+  end
+
+  def customs_agent_user?
+    user.customs_broker? && user.entity&.role_customs_agent?
+  end
+
+  def manageable_client_for_customs_broker?
+    customs_agent_user? && record.role_client? && record.customs_agent_id == user.entity_id
   end
 end

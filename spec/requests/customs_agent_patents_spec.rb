@@ -25,11 +25,11 @@ RSpec.describe "Entity patent numbers", type: :request do
     context "as customs broker owner" do
       before { sign_in customs_broker_user, scope: :user }
 
-      it "updates the patent number and redirects to entity show" do
+      it "does not update the patent number and redirects to fallback path" do
         patch entity_path(customs_broker_entity), params: { entity: new_attributes }
         customs_broker_entity.reload
-        expect(customs_broker_entity.patent_number).to eq("8888")
-        expect(response).to redirect_to(entity_path(customs_broker_entity))
+        expect(customs_broker_entity.patent_number).to eq("3001")
+        expect(response).to redirect_to(containers_path)
       end
     end
   end

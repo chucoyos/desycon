@@ -75,7 +75,81 @@ RSpec.describe "Entities", type: :request do
     end
   end
 
+  describe "POST /create" do
+    it "creates an entity with valid params" do
+      expect {
+        post entities_path, params: {
+          entity: {
+            name: "Nueva Entidad",
+            role_kind: "client"
+          }
+        }
+      }.to change(Entity, :count).by(1)
+
+      created = Entity.order(:id).last
+      expect(response).to redirect_to(entity_path(created))
+      expect(flash[:notice]).to eq("Entidad creada exitosamente.")
+      expect(created.name).to eq("Nueva Entidad")
+      expect(created.role_kind).to eq("client")
+    end
+
+    it "returns unprocessable_content with invalid params" do
+      expect {
+        post entities_path, params: {
+          entity: {
+            name: "",
+            role_kind: "client"
+          }
+        }
+      }.not_to change(Entity, :count)
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+  end
+
+  describe "PATCH /update" do
+    let!(:fiscal_profile) { create(:fiscal_profile, profileable: entity, razon_social: "Razon Original") }
+
+    it "updates entity name" do
+      patch entity_path(entity), params: {
+        entity: {
+          name: "Entidad Renombrada"
+        }
+      }
+
+      expect(response).to redirect_to(entity_path(entity))
+      expect(flash[:notice]).to eq("Entidad actualizada exitosamente.")
+      expect(entity.reload.name).to eq("Entidad Renombrada")
+    end
+
+    it "updates fiscal profile through nested attributes" do
+      patch entity_path(entity), params: {
+        entity: {
+          fiscal_profile_attributes: {
+            id: fiscal_profile.id,
+            razon_social: "Razon Actualizada"
+          }
+        }
+      }
+
+      expect(response).to redirect_to(entity_path(entity))
+      expect(flash[:notice]).to eq("Entidad actualizada exitosamente.")
+      expect(entity.reload.fiscal_profile.razon_social).to eq("Razon Actualizada")
+    end
+  end
+
   describe "DELETE /destroy" do
+    it "deletes entity without dependent users" do
+      entity_to_delete = create(:entity)
+
+      expect {
+        delete entity_path(entity_to_delete)
+      }.to change(Entity, :count).by(-1)
+
+      expect(response).to redirect_to(entities_path)
+      expect(flash[:notice]).to eq("Entidad eliminada exitosamente.")
+    end
+
     it "does not delete when entity has users" do
       create(:user, entity: entity)
 
@@ -85,6 +159,66 @@ RSpec.describe "Entities", type: :request do
 
       expect(response).to redirect_to(entities_path)
       expect(flash[:alert]).to be_present
+    end
+  end
+
+  describe "authorization for customs broker users" do
+    let(:customs_broker_user) { create(:user, :customs_broker) }
+
+    before do
+      sign_out user
+      sign_in customs_broker_user, scope: :user
+    end
+
+    it "blocks updating a client that does not belong to the customs agent" do
+      foreign_client = create(:entity, :client)
+
+      patch entity_path(foreign_client), params: {
+        entity: { name: "No autorizado" }
+      }
+
+      expect(response).to redirect_to(customs_agents_dashboard_path)
+      expect(foreign_client.reload.name).not_to eq("No autorizado")
+    end
+
+    it "allows updating own client" do
+      own_client = create(:entity, :client, customs_agent: customs_broker_user.entity)
+
+      patch entity_path(own_client), params: {
+        entity: { name: "Cliente Propio" }
+      }
+
+      expect(response).to redirect_to(entity_path(own_client))
+      expect(own_client.reload.name).to eq("Cliente Propio")
+    end
+
+    it "blocks managing customs brokers (agents)" do
+      customs_broker_entity = create(:entity, :customs_broker)
+
+      patch entity_path(customs_broker_entity), params: {
+        entity: { name: "No deberia" }
+      }
+
+      expect(response).to redirect_to(customs_agents_dashboard_path)
+      expect(customs_broker_entity.reload.name).not_to eq("No deberia")
+    end
+
+    it "ignores patent assignment when creating a client" do
+      expect {
+        post entities_path, params: {
+          entity: {
+            name: "Cliente Agencia",
+            role_kind: "customs_broker",
+            patent_number: "9999"
+          }
+        }
+      }.to change(Entity, :count).by(1)
+
+      created = Entity.order(:id).last
+      expect(response).to redirect_to(entity_path(created))
+      expect(created.role_kind).to eq("client")
+      expect(created.customs_agent_id).to eq(customs_broker_user.entity_id)
+      expect(created.patent_number).to be_nil
     end
   end
 end
