@@ -63,9 +63,9 @@ class Address < ApplicationRecord
   end
 
   # Validaciones
-  validates :pais, presence: true, length: { is: 2 }, format: { with: /\A[A-Z]{2}\z/ }
+  validates :pais, length: { is: 2 }, format: { with: /\A[A-Z]{2}\z/ }, allow_blank: true
   validates :codigo_postal, presence: true, length: { maximum: 10 }
-  validates :estado, presence: true, length: { maximum: 100 }
+  validates :estado, length: { maximum: 100 }, allow_blank: true
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :calle, length: { maximum: 200 }, allow_blank: true
   validates :municipio, length: { maximum: 100 }, allow_blank: true
@@ -76,6 +76,7 @@ class Address < ApplicationRecord
   validates :tipo, inclusion: { in: TIPOS.keys }, allow_blank: true
 
   # Normalización
+  before_validation :set_default_tipo
   before_validation :normalize_codigo_postal
 
   # Scopes
@@ -88,5 +89,9 @@ class Address < ApplicationRecord
   def normalize_codigo_postal
     self.codigo_postal = codigo_postal&.strip&.gsub(/\s+/, "")
     self.pais = pais&.upcase&.strip
+  end
+
+  def set_default_tipo
+    self.tipo = "matriz" if tipo.blank?
   end
 end

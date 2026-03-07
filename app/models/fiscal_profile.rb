@@ -92,6 +92,7 @@ class FiscalProfile < ApplicationRecord
   validates :forma_pago, inclusion: { in: FORMAS_PAGO.keys }, allow_blank: true
   validates :metodo_pago, inclusion: { in: METODOS_PAGO.keys }, allow_blank: true
   validate :ppd_requires_forma_pago_por_definir
+  validate :require_complete_profile_for_client_entities
 
   # Validación de unicidad: global para no-entities, scoped al agente aduanal para entities
   validates :rfc, uniqueness: {
@@ -146,6 +147,14 @@ class FiscalProfile < ApplicationRecord
     return if forma_pago == FORMA_PAGO_POR_DEFINIR
 
     errors.add(:forma_pago, "debe ser Por definir cuando el método de pago es PPD")
+  end
+
+  def require_complete_profile_for_client_entities
+    return unless profileable_type == "Entity" && profileable&.role_client?
+
+    %i[rfc razon_social regimen uso_cfdi metodo_pago forma_pago].each do |field|
+      errors.add(field, "no puede estar en blanco") if public_send(field).blank?
+    end
   end
 
   def rfc_uniqueness_within_customs_agent_scope

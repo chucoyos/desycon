@@ -4,7 +4,7 @@
     <%= hidden_field_tag "modal", "name" %>
     <div>
       <%= form.label :name, "Nombre", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-      <%= form.text_field :name, class: "block w-full px-3 py-3 border-2 #{entity.errors[:name].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Ej. Comercializadora del Norte" %>
+      <%= form.text_field :name, class: "block w-full px-3 py-3 border-2 #{entity.errors[:name].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Ej. Comercializadora del Norte", required: true %>
       <% if entity.errors[:name].any? %>
         <p class="mt-2 text-sm text-red-600"><%= entity.errors[:name].first %></p>
       <% end %>
@@ -21,42 +21,42 @@
       <%= form.fields_for :fiscal_profile do |fp| %>
         <div>
           <%= fp.label :rfc, "RFC", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-          <%= fp.text_field :rfc, class: "block w-full px-3 py-3 border-2 #{entity.fiscal_profile.errors[:rfc].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Ej. XAXX010101000", maxlength: 13 %>
+          <%= fp.text_field :rfc, class: "block w-full px-3 py-3 border-2 #{entity.fiscal_profile.errors[:rfc].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Ej. XAXX010101000", maxlength: 13, required: entity.role_client? %>
           <% if entity.fiscal_profile.errors[:rfc].any? %>
             <p class="mt-2 text-sm text-red-600"><%= entity.fiscal_profile.errors[:rfc].first %></p>
           <% end %>
         </div>
         <div>
           <%= fp.label :razon_social, "Razón Social", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-          <%= fp.text_field :razon_social, class: "block w-full px-3 py-3 border-2 #{entity.fiscal_profile.errors[:razon_social].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Ej. Comercializadora del Norte SA de CV" %>
+          <%= fp.text_field :razon_social, class: "block w-full px-3 py-3 border-2 #{entity.fiscal_profile.errors[:razon_social].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Ej. Comercializadora del Norte SA de CV", required: entity.role_client? %>
           <% if entity.fiscal_profile.errors[:razon_social].any? %>
             <p class="mt-2 text-sm text-red-600"><%= entity.fiscal_profile.errors[:razon_social].first %></p>
           <% end %>
         </div>
         <div>
           <%= fp.label :regimen, "Régimen Fiscal", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-          <%= fp.select :regimen, FiscalProfile::REGIMENES.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar régimen" }, class: "block w-full px-3 py-3 border-2 #{entity.fiscal_profile.errors[:regimen].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+          <%= fp.select :regimen, FiscalProfile::REGIMENES.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar régimen" }, { class: "block w-full px-3 py-3 border-2 #{entity.fiscal_profile.errors[:regimen].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", required: entity.role_client? } %>
           <% if entity.fiscal_profile.errors[:regimen].any? %>
             <p class="mt-2 text-sm text-red-600"><%= entity.fiscal_profile.errors[:regimen].first %></p>
           <% end %>
         </div>
         <div>
           <%= fp.label :uso_cfdi, "Uso CFDI", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-          <%= fp.select :uso_cfdi, FiscalProfile::USOS_CFDI.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar uso CFDI" }, class: "block w-full px-3 py-3 border-2 #{entity.fiscal_profile.errors[:uso_cfdi].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+          <%= fp.select :uso_cfdi, FiscalProfile::USOS_CFDI.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar uso CFDI" }, { class: "block w-full px-3 py-3 border-2 #{entity.fiscal_profile.errors[:uso_cfdi].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", required: entity.role_client? } %>
           <% if entity.fiscal_profile.errors[:uso_cfdi].any? %>
             <p class="mt-2 text-sm text-red-600"><%= entity.fiscal_profile.errors[:uso_cfdi].first %></p>
           <% end %>
         </div>
         <div>
           <%= fp.label :metodo_pago, "Método de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-          <%= fp.select :metodo_pago, FiscalProfile::METODOS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar método de pago" }, data: { payment_rule: "metodo-pago" }, class: "block w-full px-3 py-3 border-2 #{entity.fiscal_profile.errors[:metodo_pago].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+          <%= fp.select :metodo_pago, FiscalProfile::METODOS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar método de pago" }, { data: { payment_rule: "metodo-pago" }, class: "block w-full px-3 py-3 border-2 #{entity.fiscal_profile.errors[:metodo_pago].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", required: entity.role_client? } %>
           <% if entity.fiscal_profile.errors[:metodo_pago].any? %>
             <p class="mt-2 text-sm text-red-600"><%= entity.fiscal_profile.errors[:metodo_pago].first %></p>
           <% end %>
         </div>
         <div>
           <%= fp.label :forma_pago, "Forma de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-          <%= fp.select :forma_pago, FiscalProfile::FORMAS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar forma de pago" }, data: { payment_rule: "forma-pago" }, class: "block w-full px-3 py-3 border-2 #{entity.fiscal_profile.errors[:forma_pago].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+          <%= fp.select :forma_pago, FiscalProfile::FORMAS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar forma de pago" }, { data: { payment_rule: "forma-pago" }, class: "block w-full px-3 py-3 border-2 #{entity.fiscal_profile.errors[:forma_pago].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", required: entity.role_client? } %>
           <% if entity.fiscal_profile.errors[:forma_pago].any? %>
             <p class="mt-2 text-sm text-red-600"><%= entity.fiscal_profile.errors[:forma_pago].first %></p>
           <% end %>
@@ -73,10 +73,11 @@
 <% when "address" %>
   <%= form_with(model: entity, url: entity_path(entity), method: :patch, class: "space-y-4") do |form| %>
     <%= hidden_field_tag "modal", "address" %>
+    <p class="text-xs text-gray-500">Campos obligatorios: <span class="font-semibold">CP y Email</span>.</p>
     <%= form.fields_for :addresses do |address_form| %>
       <div>
         <%= address_form.label :tipo, "Tipo", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-        <%= address_form.select :tipo, Address::TIPOS.map { |k, v| [v, k] }, { include_blank: "Seleccionar tipo" }, class: "block w-full px-3 py-3 border-2 #{entity.addresses.any? && entity.addresses.first.errors[:tipo].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+        <%= address_form.select :tipo, Address::TIPOS.map { |k, v| [v, k] }, { include_blank: "Seleccionar tipo", selected: address_form.object.tipo.presence || "matriz" }, class: "block w-full px-3 py-3 border-2 #{entity.addresses.any? && entity.addresses.first.errors[:tipo].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
         <% if entity.addresses.any? && entity.addresses.first.errors[:tipo].any? %>
           <p class="mt-2 text-sm text-red-600"><%= entity.addresses.first.errors[:tipo].first %></p>
         <% end %>
@@ -110,8 +111,8 @@
         <% end %>
       </div>
       <div>
-        <%= address_form.label :codigo_postal, "Código Postal", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-        <%= address_form.text_field :codigo_postal, class: "block w-full px-3 py-3 border-2 #{entity.addresses.any? && entity.addresses.first.errors[:codigo_postal].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Ej. 12345" %>
+        <%= address_form.label :codigo_postal, "Código Postal (obligatorio)", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+        <%= address_form.text_field :codigo_postal, class: "block w-full px-3 py-3 border-2 #{entity.addresses.any? && entity.addresses.first.errors[:codigo_postal].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Ej. 12345", required: true %>
         <% if entity.addresses.any? && entity.addresses.first.errors[:codigo_postal].any? %>
           <p class="mt-2 text-sm text-red-600"><%= entity.addresses.first.errors[:codigo_postal].first %></p>
         <% end %>
@@ -138,8 +139,8 @@
         <% end %>
       </div>
       <div>
-        <%= address_form.label :email, "Email", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-        <%= address_form.email_field :email, class: "block w-full px-3 py-3 border-2 #{entity.addresses.any? && entity.addresses.first.errors[:email].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Ej. facturacion@empresa.com" %>
+        <%= address_form.label :email, "Email (obligatorio)", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+        <%= address_form.email_field :email, class: "block w-full px-3 py-3 border-2 #{entity.addresses.any? && entity.addresses.first.errors[:email].any? ? 'border-red-300' : 'border-gray-200'} focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Ej. facturacion@empresa.com", required: true %>
         <% if entity.addresses.any? && entity.addresses.first.errors[:email].any? %>
           <p class="mt-2 text-sm text-red-600"><%= entity.addresses.first.errors[:email].first %></p>
         <% end %>

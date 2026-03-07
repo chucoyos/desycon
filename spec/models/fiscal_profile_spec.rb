@@ -103,6 +103,22 @@ RSpec.describe FiscalProfile, type: :model do
         expect(fiscal_profile).to be_valid
       end
 
+      it 'requires uso_cfdi, metodo_pago y forma_pago for client entities' do
+        client_entity = create(:entity, :client)
+        client_fiscal = build(:fiscal_profile, profileable: client_entity, uso_cfdi: nil, metodo_pago: nil, forma_pago: nil)
+
+        expect(client_fiscal).not_to be_valid
+        expect(client_fiscal.errors[:uso_cfdi]).to include('no puede estar en blanco')
+        expect(client_fiscal.errors[:metodo_pago]).to include('no puede estar en blanco')
+        expect(client_fiscal.errors[:forma_pago]).to include('no puede estar en blanco')
+      end
+
+      it 'accepts blank uso_cfdi for non-client profileables' do
+        profile = build(:fiscal_profile, profileable: create(:shipping_line), uso_cfdi: nil)
+
+        expect(profile).to be_valid
+      end
+
       it 'validates forma_pago when present' do
         fiscal_profile.forma_pago = 'INVALID'
         expect(fiscal_profile).not_to be_valid

@@ -20,7 +20,8 @@
           </div>
           <%= form.text_field :name, 
               class: "block w-full pl-10 pr-3 py-3 border-2 #{entity.errors[:name].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-teal-500 focus:ring-teal-500'} rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-              placeholder: "Ej. Comercializadora del Norte" %>
+              placeholder: "Ej. Comercializadora del Norte",
+              required: true %>
         </div>
         <% if entity.errors[:name].any? %>
           <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
@@ -158,6 +159,7 @@
           Ocultar
         </button>
       </div>
+      <p class="text-xs text-gray-500 mt-1">Si el rol es <span class="font-semibold">Cliente</span>, todos los campos del perfil fiscal son obligatorios.</p>
     </div>
 
     <!-- Fiscal Profile Form (Initially Visible) -->
@@ -170,6 +172,8 @@
               <%= fp.text_field :rfc, 
                   class: "block w-full px-3 py-3 border-2 #{entity.fiscal_profile&.errors[:rfc].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-teal-500 focus:ring-teal-500'} rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
                   placeholder: "Ej. XAXX010101000",
+                  required: (current_user.customs_broker? || entity.role_kind == "client"),
+                  data: { client_required: "fiscal-field" },
                   maxlength: 13 %>
               <% if entity.fiscal_profile&.errors[:rfc].any? %>
                 <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
@@ -185,7 +189,9 @@
               <%= fp.label :razon_social, "Razón Social", class: "block text-sm font-semibold text-gray-700 mb-2" %>
               <%= fp.text_field :razon_social, 
                   class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-                  placeholder: "Ej. Comercializadora del Norte SA de CV" %>
+                  placeholder: "Ej. Comercializadora del Norte SA de CV",
+                  required: (current_user.customs_broker? || entity.role_kind == "client"),
+                  data: { client_required: "fiscal-field" } %>
             </div>
 
             <div>
@@ -193,6 +199,8 @@
               <%= fp.select :regimen,
                   FiscalProfile::REGIMENES.map { |k, v| ["#{k} - #{v}", k] },
                   { include_blank: "Seleccionar régimen" },
+                  required: (current_user.customs_broker? || entity.role_kind == "client"),
+                  data: { client_required: "fiscal-field" },
                   class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
             </div>
 
@@ -201,6 +209,8 @@
               <%= fp.select :uso_cfdi,
                   FiscalProfile::USOS_CFDI.map { |k, v| ["#{k} - #{v}", k] },
                   { include_blank: "Seleccionar uso CFDI" },
+                  required: (current_user.customs_broker? || entity.role_kind == "client"),
+                  data: { client_required: "fiscal-field" },
                   class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
             </div>
 
@@ -209,7 +219,8 @@
               <%= fp.select :metodo_pago,
                   FiscalProfile::METODOS_PAGO.map { |k, v| ["#{k} - #{v}", k] },
                   { include_blank: "Seleccionar método de pago" },
-                  data: { payment_rule: "metodo-pago" },
+                  required: (current_user.customs_broker? || entity.role_kind == "client"),
+                  data: { payment_rule: "metodo-pago", client_required: "fiscal-field" },
                   class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
             </div>
 
@@ -218,7 +229,8 @@
               <%= fp.select :forma_pago,
                   FiscalProfile::FORMAS_PAGO.map { |k, v| ["#{k} - #{v}", k] },
                   { include_blank: "Seleccionar forma de pago" },
-                  data: { payment_rule: "forma-pago" },
+                  required: (current_user.customs_broker? || entity.role_kind == "client"),
+                  data: { payment_rule: "forma-pago", client_required: "fiscal-field" },
                   class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
             </div>
           </div>
@@ -241,6 +253,7 @@
   <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
     <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
       <h3 class="text-base sm:text-lg font-semibold text-gray-900">Dirección Principal</h3>
+      <p class="text-xs text-gray-500 mt-1">Campos obligatorios: <span class="font-semibold">CP y Email</span>.</p>
     </div>
     <div class="px-4 sm:px-6 py-4">
       <%= form.fields_for :addresses do |address_form| %>
@@ -249,7 +262,7 @@
             <%= address_form.label :tipo, "Tipo", class: "block text-sm font-semibold text-gray-700 mb-2" %>
             <%= address_form.select :tipo,
                 Address::TIPOS.map { |k, v| [v, k] },
-                { include_blank: "Seleccionar tipo" },
+              { include_blank: "Seleccionar tipo", selected: address_form.object.tipo.presence || "matriz" },
                 class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
           </div>
 
@@ -282,10 +295,11 @@
           </div>
 
           <div>
-            <%= address_form.label :codigo_postal, "Código Postal", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+            <%= address_form.label :codigo_postal, "Código Postal (obligatorio)", class: "block text-sm font-semibold text-gray-700 mb-2" %>
             <%= address_form.text_field :codigo_postal,
                 class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-              placeholder: "Ej. 12345" %>
+              placeholder: "Ej. 12345",
+              required: true %>
           </div>
 
           <div>
@@ -311,10 +325,11 @@
           </div>
 
           <div class="sm:col-span-2 lg:col-span-3">
-            <%= address_form.label :email, "Email", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+            <%= address_form.label :email, "Email (obligatorio)", class: "block text-sm font-semibold text-gray-700 mb-2" %>
             <%= address_form.email_field :email,
                 class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
-              placeholder: "Ej. facturacion@empresa.com" %>
+              placeholder: "Ej. facturacion@empresa.com",
+              required: true %>
           </div>
         </div>
       <% end %>
@@ -361,6 +376,11 @@
       // Toggle customs agent assignment section based on selected role (new and edit)
       const roleKindSelect = document.getElementById('entity_role_kind');
       const customsAgentAssignmentSection = document.getElementById('customs-agent-assignment-section');
+      const toggleFiscalRequiredFields = (requiredForClient) => {
+        document.querySelectorAll('[data-client-required="fiscal-field"]').forEach((field) => {
+          field.required = requiredForClient;
+        });
+      };
 
       if (roleKindSelect && customsAgentAssignmentSection) {
         const toggleCustomsAgentAssignmentSection = () => {
@@ -372,7 +392,14 @@
         };
 
         roleKindSelect.addEventListener('change', toggleCustomsAgentAssignmentSection);
+        roleKindSelect.addEventListener('change', () => toggleFiscalRequiredFields(roleKindSelect.value === 'client'));
         toggleCustomsAgentAssignmentSection();
+        toggleFiscalRequiredFields(roleKindSelect.value === 'client');
+      } else if (roleKindSelect) {
+        roleKindSelect.addEventListener('change', () => toggleFiscalRequiredFields(roleKindSelect.value === 'client'));
+        toggleFiscalRequiredFields(roleKindSelect.value === 'client');
+      } else {
+        toggleFiscalRequiredFields(<%= current_user.customs_broker? ? 'true' : 'false' %>);
       }
 
       // Toggle addresses form (only for persisted entities)

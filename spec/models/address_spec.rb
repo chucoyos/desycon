@@ -17,9 +17,9 @@ RSpec.describe Address, type: :model do
     end
 
     describe 'pais' do
-      it 'requires pais' do
+      it 'allows blank pais' do
         address.pais = nil
-        expect(address).not_to be_valid
+        expect(address).to be_valid
       end
 
       it 'requires 2 character ISO code' do
@@ -48,9 +48,9 @@ RSpec.describe Address, type: :model do
     end
 
     describe 'estado' do
-      it 'requires estado' do
+      it 'allows blank estado' do
         address.estado = nil
-        expect(address).not_to be_valid
+        expect(address).to be_valid
       end
     end
 
@@ -94,6 +94,13 @@ RSpec.describe Address, type: :model do
     end
 
     describe 'tipo' do
+      it 'defaults tipo to matriz when blank' do
+        address.tipo = nil
+        address.valid?
+
+        expect(address.tipo).to eq('matriz')
+      end
+
       it 'validates tipo is in catalog when present' do
         address.tipo = 'invalid'
         expect(address).not_to be_valid

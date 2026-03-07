@@ -125,6 +125,7 @@
           <%= f.object.persisted? ? 'Editar Dirección' : 'Nueva Dirección' %>
         </h3>
       </div>
+      <p class="text-xs text-gray-500 mt-2">Campos obligatorios: <span class="font-semibold">CP y Email</span>.</p>
     </div>
     
     <!-- Campos del formulario -->
@@ -134,7 +135,7 @@
           Tipo de Dirección
         <% end %>
         <%= f.select :tipo,
-              options_for_select(Address::TIPOS.map { |k, v| [v, k] }, f.object.tipo),
+            options_for_select(Address::TIPOS.map { |k, v| [v, k] }, f.object.tipo.presence || 'matriz'),
               { prompt: "Seleccione tipo" },
               class: "block w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all duration-200" %>
       </div>
@@ -148,14 +149,14 @@
 
       <div>
         <%= f.label :codigo_postal, class: "block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2" do %>
-          Código Postal <span class="text-red-500">*</span>
+          Código Postal (obligatorio)
         <% end %>
-        <%= f.text_field :codigo_postal, class: "block w-full px-4 py-3 rounded-lg border #{f.object.errors[:codigo_postal].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'} bg-white focus:ring-2 transition-all duration-200 font-mono", placeholder: "12345" %>
+        <%= f.text_field :codigo_postal, class: "block w-full px-4 py-3 rounded-lg border #{f.object.errors[:codigo_postal].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'} bg-white focus:ring-2 transition-all duration-200 font-mono", placeholder: "12345", required: true %>
       </div>
 
       <div>
         <%= f.label :estado, class: "block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2" do %>
-          Estado <span class="text-red-500">*</span>
+          Estado
         <% end %>
         <%= f.text_field :estado, class: "block w-full px-4 py-3 rounded-lg border #{f.object.errors[:estado].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'} bg-white focus:ring-2 transition-all duration-200", placeholder: "Ej: Jalisco" %>
       </div>
@@ -202,10 +203,10 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
             </svg>
             Correo Electrónico
-            <span class="text-red-500">*</span>
+            (obligatorio)
           </span>
         <% end %>
-        <%= f.email_field :email, class: "block w-full px-4 py-3 rounded-lg border #{f.object.errors[:email].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'} bg-white focus:ring-2 transition-all duration-200", placeholder: "contacto@example.com" %>
+        <%= f.email_field :email, class: "block w-full px-4 py-3 rounded-lg border #{f.object.errors[:email].any? ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'} bg-white focus:ring-2 transition-all duration-200", placeholder: "contacto@example.com", required: true %>
       </div>
     </div>
     

@@ -4,7 +4,7 @@ class EntityAddressesController < ApplicationController
 
   def create
     @address = @entity.addresses.build(address_params)
-    @address.tipo = "matriz" if @address.tipo.blank? && @entity.addresses.matriz.none?
+    @address.tipo = "matriz" if @address.tipo.blank?
 
     if @address.save
       flash[:notice] = "Dirección agregada exitosamente."

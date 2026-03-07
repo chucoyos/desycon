@@ -19,6 +19,9 @@ RSpec.describe "Entities", type: :system do
       # Go to edit page
       visit edit_entity_path(entity)
 
+      # Avoid client-only fiscal required fields from blocking this scenario
+      select "Consolidador", from: "entity_role_kind"
+
       # Fill and submit name form
       fill_in "entity_name", with: "Updated Entity Name"
       click_button "Actualizar Entidad"
