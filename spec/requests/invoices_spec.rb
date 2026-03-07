@@ -160,4 +160,68 @@ RSpec.describe 'Invoices', type: :request do
       expect(flash[:alert]).to be_present
     end
   end
+
+  describe 'PATCH /invoices/:id/cancel' do
+    let(:invoice) { create(:invoice, status: 'issued', sat_uuid: 'UUID-CANCEL-REQ-001') }
+
+    it 'cancels invoice for admin users' do
+      sign_in admin_user, scope: :user
+      invoice.update!(status: 'cancel_pending')
+      expect(Facturador::CancelInvoiceService).to receive(:call).with(
+        invoice: invoice,
+        motive: '02',
+        replacement_uuid: nil,
+        actor: admin_user
+      ).and_return(invoice)
+
+      patch cancel_invoice_path(invoice)
+
+      expect(response).to redirect_to(containers_path)
+      expect(flash[:notice]).to include('Cancelación de CFDI solicitada. La factura se mantiene emitida hasta confirmación final de SAT/PAC.')
+    end
+
+    it 'shows specific alert when cancellation attempt fails but invoice remains issued' do
+      sign_in admin_user, scope: :user
+      invoice.update!(status: 'issued', last_error_message: 'PAC devolvió error 500')
+      allow(Facturador::CancelInvoiceService).to receive(:call).and_return(invoice)
+
+      patch cancel_invoice_path(invoice)
+
+      expect(response).to redirect_to(containers_path)
+      expect(flash[:alert]).to include('No se pudo cancelar el CFDI en este intento')
+    end
+
+    it 'shows alert when cancellation fails' do
+      sign_in admin_user, scope: :user
+      allow(Facturador::CancelInvoiceService).to receive(:call).and_raise(Facturador::RequestError, 'PAC timeout')
+
+      patch cancel_invoice_path(invoice)
+
+      expect(response).to redirect_to(containers_path)
+      expect(flash[:alert]).to include('Error al cancelar CFDI: PAC timeout')
+    end
+
+    it 'shows friendly alert when provider is temporarily unavailable' do
+      sign_in admin_user, scope: :user
+      allow(Facturador::CancelInvoiceService).to receive(:call).and_raise(
+        Facturador::RequestError,
+        '500: An error has occurred. | System.Net.Http.HttpRequestException'
+      )
+
+      patch cancel_invoice_path(invoice)
+
+      expect(response).to redirect_to(containers_path)
+      expect(flash[:alert]).to include('PAC no está disponible temporalmente')
+    end
+
+    it 'denies customs broker users' do
+      broker_user = create(:user, :customs_broker)
+      sign_in broker_user, scope: :user
+
+      patch cancel_invoice_path(invoice)
+
+      expect(response).to redirect_to(customs_agents_dashboard_path)
+      expect(flash[:alert]).to be_present
+    end
+  end
 end

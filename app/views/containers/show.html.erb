@@ -307,16 +307,17 @@
                   <% if (invoice = service.latest_invoice).present? %>
                     <div class="col-span-2">
                       <span class="text-gray-500">CFDI:</span>
-                      <% badge_class = case invoice.status
+                      <% status_for_display = invoice.effective_status %>
+                      <% badge_class = case status_for_display
                         when 'issued' then 'bg-emerald-100 text-emerald-800'
                         when 'queued' then 'bg-blue-100 text-blue-800'
                         when 'failed' then 'bg-red-100 text-red-800'
                         else 'bg-gray-100 text-gray-700'
                       end %>
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold <%= badge_class %>"><%= invoice.status %></span>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold <%= badge_class %>"><%= t("activerecord.attributes.invoice.statuses.#{status_for_display}", default: status_for_display.humanize) %></span>
                       <% if invoice.sat_uuid.present? %>
                         <span class="ml-2 text-[11px] text-gray-600 font-mono"><%= invoice.sat_uuid %></span>
-                      <% elsif invoice.failed? && invoice.last_error_message.present? %>
+                      <% elsif invoice.failed? && invoice.last_error_message.present? && !invoice.last_error_code.to_s.start_with?("FACTURADOR_CANCEL_") %>
                         <p class="mt-1 text-[11px] text-red-600"><%= invoice.last_error_message %></p>
                       <% end %>
                     </div>
@@ -341,9 +342,10 @@
                   <% if current_user&.admin_or_executive? && Rails.application.config.x.facturador.enabled && Rails.application.config.x.facturador.manual_actions_enabled %>
                     <div class="col-span-2 pt-2 border-t border-gray-100 flex flex-wrap gap-2">
                       <% if invoice.present? %>
-                        <% if invoice.issued? %>
+                        <% if invoice.cancel_retryable? %>
+                          <% cancel_button_label = invoice.last_error_code.to_s.start_with?("FACTURADOR_CANCEL_") ? "Reintentar cancelación CFDI" : "Cancelar CFDI" %>
                           <%= form_with url: cancel_invoice_path(invoice), method: :patch, local: true, class: "flex flex-wrap items-center gap-2" do |f| %>
-                            <%= f.submit "Cancelar CFDI", class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100" %>
+                            <%= f.submit cancel_button_label, class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100" %>
                           <% end %>
 
                           <%= button_to "Sincronizar XML/PDF", sync_documents_invoice_path(invoice), method: :post, class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100" %>
@@ -364,7 +366,7 @@
                             <%= link_to "PDF", rails_blob_path(invoice.pdf_file, disposition: "attachment"), class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
                           <% end %>
                         <% elsif !invoice.status.in?(["queued", "cancel_pending"]) %>
-                          <%= button_to "Reintentar CFDI", issue_manual_invoices_path(invoiceable_type: "ContainerService", invoiceable_id: service.id), method: :post, class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" %>
+                          <%= button_to "Reintentar emisión CFDI", issue_manual_invoices_path(invoiceable_type: "ContainerService", invoiceable_id: service.id), method: :post, class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" %>
                         <% end %>
                       <% else %>
                         <%= button_to "Emitir CFDI", issue_manual_invoices_path(invoiceable_type: "ContainerService", invoiceable_id: service.id), method: :post, class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" %>

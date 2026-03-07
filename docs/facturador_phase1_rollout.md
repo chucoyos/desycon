@@ -96,11 +96,37 @@ Facturador::EmisorService.clear!
 - Botones UI en tarjetas de servicios para emitir, reintentar y cancelar CFDI.
 - Servicio de cancelación contra PAC (`CancelInvoiceService`) con estatus `cancel_pending`/`cancelled`.
 - Cancelación acotada temporalmente a motivo `02` (sin relación/sustitución).
+- Confirmación de cancelación en UI mediante modal antes de ejecutar `PATCH /invoices/:id/cancel`.
+
+### Flujo operativo (sincrono + reconciliacion)
+1. Usuario admin/ejecutivo confirma cancelación desde modal en detalle de factura.
+2. `InvoicesController#cancel` ejecuta `Facturador::CancelInvoiceService` en el request web.
+3. Si PAC confirma cancelación inmediata, factura pasa a `cancelled`.
+4. Si PAC acepta pero no confirma final, factura pasa a `cancel_pending`.
+5. `ReconcileInvoicesService` (fase 6) termina de confirmar estado final contra PAC en corridas posteriores.
+
+### Mensajes esperados en UI
+- `CFDI cancelado correctamente.` cuando el proveedor responde cancelación inmediata.
+- `Cancelación de CFDI solicitada. SAT/PAC la confirmará en breve.` cuando queda en `cancel_pending`.
+- `Error al cancelar CFDI: ...` cuando hay error funcional o de comunicación.
+
+### Restricciones actuales
+- Solo se permite cancelar facturas en estado `issued`.
+- Solo se permite motivo SAT `02`.
+- `replacement_uuid` no aplica en esta fase.
+- El botón de cancelación solo aparece para facturas `issued`.
 
 ### Seguridad operativa
 - Requiere flags en `true`:
 	- `FACTURADOR_ENABLED`
 	- `FACTURADOR_MANUAL_ACTIONS_ENABLED`
+
+### Runbook rapido de soporte (cancelacion)
+- Si una factura queda en `cancel_pending` por tiempo prolongado:
+1. Verificar que `FACTURADOR_RECONCILIATION_ENABLED=true`.
+2. Ejecutar conciliación manual: `bin/rails facturador:reconcile_invoices`.
+3. Revisar `invoice_events` y `provider_response` para detalles del PAC.
+4. Si persiste, escalar con UUID y payload de respuesta PAC.
 
 ### Rollback Fase 4
 1. **Inmediato (recomendado):** `FACTURADOR_MANUAL_ACTIONS_ENABLED=false`.

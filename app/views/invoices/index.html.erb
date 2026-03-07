@@ -112,7 +112,8 @@
                   -
                 <% end %>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= t("activerecord.attributes.invoice.statuses.#{invoice.status}", default: invoice.status.humanize) %></td>
+              <% status_for_display = invoice.effective_status %>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= t("activerecord.attributes.invoice.statuses.#{status_for_display}", default: status_for_display.humanize) %></td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900"><%= number_to_currency(invoice.total || 0) %></td>
             </tr>
           <% end %>

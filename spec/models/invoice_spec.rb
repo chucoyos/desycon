@@ -35,4 +35,25 @@ RSpec.describe Invoice, type: :model do
       expect(invoice.status).to eq('draft')
     end
   end
+
+  describe '#effective_status' do
+    it 'returns issued for cancel_pending invoices with uuid' do
+      invoice = create(:invoice, status: 'cancel_pending', sat_uuid: 'UUID-001')
+
+      expect(invoice.effective_status).to eq('issued')
+      expect(invoice.effectively_issued?).to be(true)
+    end
+
+    it 'returns issued for failed invoices with uuid when not cancelled' do
+      invoice = create(:invoice, status: 'failed', sat_uuid: 'UUID-002')
+
+      expect(invoice.effective_status).to eq('issued')
+    end
+
+    it 'keeps cancelled invoices as cancelled' do
+      invoice = create(:invoice, status: 'cancelled', sat_uuid: 'UUID-003')
+
+      expect(invoice.effective_status).to eq('cancelled')
+    end
+  end
 end

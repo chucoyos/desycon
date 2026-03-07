@@ -17,7 +17,7 @@ module Facturador
       return invoice unless Config.enabled?
       return invoice unless Config.manual_actions_enabled?
 
-      raise RequestError, "Invoice is not issued" unless invoice.issued?
+      raise RequestError, "Invoice is not in a cancellable state" unless invoice.cancel_retryable?
       raise RequestError, "Invoice UUID is missing" if invoice.sat_uuid.blank?
       raise RequestError, "Only cancellation motive 02 is allowed" unless motive == "02"
       raise RequestError, "Replacement UUID is not allowed for motive 02" if replacement_uuid.present?
@@ -25,6 +25,7 @@ module Facturador
       access_token = AccessTokenService.fetch!
       emisor_id = EmisorService.emisor_id!(access_token: access_token)
       client = Client.new(access_token: access_token)
+      provider_context = fetch_provider_context(client: client, emisor_id: emisor_id)
 
       response = client.cancelar_comprobante(
         emisor_id: emisor_id,
@@ -43,9 +44,9 @@ module Facturador
           event_type = "cancel_requested"
         end
       else
-        message = extract_error_message(response)
+        message = enrich_error_message(extract_error_message(response), provider_context)
         error_code = ErrorCodeResolver.call(context: :cancel, provider_payload: response, message: message)
-        invoice.mark_failed!(error_code: error_code, error_message: message, provider_response: response)
+        invoice.mark_cancel_failed_attempt!(error_code: error_code, error_message: message, provider_response: response)
         event_type = "cancel_failed"
       end
 
@@ -60,14 +61,30 @@ module Facturador
 
       invoice
     rescue Error => e
-      error_code = ErrorCodeResolver.call(context: :cancel, message: e.message, exception: e)
-      invoice.mark_failed!(error_code: error_code, error_message: e.message)
+      fallback_context = begin
+        if defined?(client) && defined?(emisor_id) && client.present? && emisor_id.present?
+          fetch_provider_context(client: client, emisor_id: emisor_id)
+        end
+      rescue StandardError
+        nil
+      end
+      detailed_message = enrich_error_message(e.message, fallback_context)
+
+      error_code = ErrorCodeResolver.call(context: :cancel, message: detailed_message, exception: e)
+      invoice.mark_cancel_failed_attempt!(error_code: error_code, error_message: detailed_message)
       invoice.invoice_events.create!(
         event_type: "cancel_failed",
         created_by: actor,
         request_payload: { motive: motive, replacement_uuid: replacement_uuid },
-        response_payload: { error: e.message },
-        provider_error_message: e.message
+        response_payload: {
+          error: detailed_message,
+          invoice_id: invoice.id,
+          sat_uuid: invoice.sat_uuid,
+          motive: motive,
+          replacement_uuid: replacement_uuid,
+          provider_context: fallback_context
+        },
+        provider_error_message: detailed_message
       )
       raise
     end
@@ -78,6 +95,58 @@ module Facturador
 
     def extract_error_message(response)
       Facturador::ErrorMessageExtractor.call(response, fallback: "Cancelación PAC no detallada")
+    end
+
+    def fetch_provider_context(client:, emisor_id:)
+      return nil if invoice.sat_uuid.blank?
+
+      date_from = (invoice.issued_at || invoice.created_at || Time.current).to_i - 2.days.to_i
+      date_to = Time.current.to_i
+
+      response = client.buscar_comprobantes(
+        emisor_id: emisor_id,
+        finicial: date_from,
+        ffinal: date_to,
+        uuid: invoice.sat_uuid,
+        take: 10
+      )
+
+      summaries = Array(response["resumenComprobante"])
+      found = summaries.find { |item| item["uuid"].to_s.casecmp(invoice.sat_uuid.to_s).zero? }
+      return nil unless found.is_a?(Hash)
+
+      {
+        estatus: found["estatus"],
+        subestatus: found["subestatus"],
+        estatus_id: found["estatusId"],
+        subestatus_id: found["subestatusId"],
+        monto_pagado: found["montoPagado"],
+        total: found["total"],
+        serie: found["serie"],
+        folio: found["folio"],
+        fecha: found["fecha"]
+      }
+    rescue Facturador::Error
+      nil
+    end
+
+    def enrich_error_message(base_message, provider_context)
+      return base_message if provider_context.blank?
+
+      context_parts = []
+      context_parts << "estatus=#{provider_context[:estatus]}" if provider_context[:estatus].present?
+      context_parts << "subestatus=#{provider_context[:subestatus]}" if provider_context[:subestatus].present?
+      if provider_context[:monto_pagado].present? || provider_context[:total].present?
+        context_parts << "monto_pagado=#{provider_context[:monto_pagado]}"
+        context_parts << "total=#{provider_context[:total]}"
+      end
+      if provider_context[:serie].present? || provider_context[:folio].present?
+        context_parts << "comprobante=#{[ provider_context[:serie], provider_context[:folio] ].compact.join(' ').strip}"
+      end
+
+      return base_message if context_parts.empty?
+
+      "#{base_message} [PAC: #{context_parts.join(', ')}]"
     end
   end
 end

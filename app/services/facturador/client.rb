@@ -70,7 +70,11 @@ module Facturador
       path = format(COMPROBANTE_BY_UUID_PATH, emisor_id: emisor_id, uuid: uuid)
       body = { motivo: motivo }
       body[:folioSustitucion] = folio_sustitucion if folio_sustitucion.present?
-      delete_json(Config.business_base_url, path, body)
+      query = { motivo: motivo }
+      query[:folioSustitucion] = folio_sustitucion if folio_sustitucion.present?
+
+      # Some PAC gateways ignore/delete request bodies on DELETE; send params in both body and query.
+      delete_json(Config.business_base_url, path, body, query: query)
     end
 
     def descargar_xml(emisor_id:, uuid:)
@@ -149,8 +153,9 @@ module Facturador
       execute_raw_request(uri, request)
     end
 
-    def delete_json(base_url, path, body)
+    def delete_json(base_url, path, body, query: {})
       uri = URI.join(base_url, path)
+      uri.query = URI.encode_www_form(query) if query.present?
       request = Net::HTTP::Delete.new(uri)
       request["Content-Type"] = "application/json"
       request["Accept"] = "application/json"
@@ -162,7 +167,7 @@ module Facturador
 
     def execute_request(uri, request)
       response = perform_request(uri, request)
-      parse_json_response(response)
+      parse_json_response(response, request: request, uri: uri)
     rescue Timeout::Error, Errno::ECONNREFUSED, SocketError => e
       raise RequestError, e.message
     end
@@ -171,7 +176,7 @@ module Facturador
       response = perform_request(uri, request)
       return response.body if response.is_a?(Net::HTTPSuccess)
 
-      raise_for_unsuccessful_response(response)
+      raise_for_unsuccessful_response(response, request: request, uri: uri)
     rescue Timeout::Error, Errno::ECONNREFUSED, SocketError => e
       raise RequestError, e.message
     end
@@ -184,24 +189,24 @@ module Facturador
       response
     end
 
-    def parse_json_response(response)
+    def parse_json_response(response, request:, uri:)
       body = response.body.presence || "{}"
       parsed = JSON.parse(body)
 
       return parsed if response.is_a?(Net::HTTPSuccess)
 
       message = ErrorMessageExtractor.call(parsed, fallback: body)
-      raise_with_message(response: response, message: message.presence || response.message)
+      raise_with_message(response: response, message: message.presence || response.message, request: request, uri: uri)
     rescue JSON::ParserError
       if response.is_a?(Net::HTTPSuccess)
         raise RequestError, "Invalid JSON response from Facturador"
       end
 
       raw_message = response.body.to_s.strip
-      raise_with_message(response: response, message: raw_message.presence || response.message)
+      raise_with_message(response: response, message: raw_message.presence || response.message, request: request, uri: uri)
     end
 
-    def raise_for_unsuccessful_response(response)
+    def raise_for_unsuccessful_response(response, request:, uri:)
       raw = response.body.to_s.strip
       message = raw
 
@@ -210,17 +215,42 @@ module Facturador
         message = ErrorMessageExtractor.call(parsed, fallback: raw)
       end
 
-      raise_with_message(response: response, message: message.presence || response.message)
+      raise_with_message(response: response, message: message.presence || response.message, request: request, uri: uri)
     rescue JSON::ParserError
-      raise_with_message(response: response, message: response.body.to_s.strip.presence || response.message)
+      raise_with_message(response: response, message: response.body.to_s.strip.presence || response.message, request: request, uri: uri)
     end
 
-    def raise_with_message(response:, message:)
+    def raise_with_message(response:, message:, request:, uri:)
+      detailed_message = compose_error_message(response: response, message: message, request: request, uri: uri)
+
       if response.code.to_i == 401
-        raise AuthenticationError, message
+        raise AuthenticationError, detailed_message
       end
 
-      raise RequestError, "#{response.code}: #{message}"
+      raise RequestError, detailed_message
+    end
+
+    def compose_error_message(response:, message:, request:, uri:)
+      code = response.code.to_i
+      base = "#{code}: #{message}"
+
+      details = []
+      details << "#{request.method} #{uri.path}"
+      details << "query=#{uri.query}" if uri.query.present?
+
+      request_id = response_request_id(response)
+      details << "request_id=#{request_id}" if request_id.present?
+
+      return base if details.empty?
+
+      "#{base} (#{details.join(', ')})"
+    end
+
+    def response_request_id(response)
+      response["x-correlation-id"].presence ||
+        response["x-request-id"].presence ||
+        response["request-id"].presence ||
+        response["trace-id"].presence
     end
 
     def normalize_pdf_url(raw_url)

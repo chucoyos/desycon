@@ -1,6 +1,18 @@
 module Facturador
   class ErrorMessageExtractor
-    MESSAGE_KEYS = %w[error_description message descripcion mensaje error detail title].freeze
+    MESSAGE_KEYS = %w[
+      error_description
+      message
+      descripcion
+      mensaje
+      error
+      detail
+      title
+      exceptionMessage
+      exception_message
+      exceptionType
+      exception_type
+    ].freeze
     CODE_KEYS = %w[codigo code].freeze
 
     class << self

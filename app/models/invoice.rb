@@ -39,6 +39,20 @@ class Invoice < ApplicationRecord
     status == "failed"
   end
 
+  def effective_status
+    return "issued" if sat_uuid.present? && status != "cancelled" && status.in?(%w[failed cancel_pending])
+
+    status
+  end
+
+  def effectively_issued?
+    effective_status == "issued"
+  end
+
+  def cancel_retryable?
+    issued? || (failed? && sat_uuid.present? && last_error_code.to_s.start_with?("FACTURADOR_CANCEL_"))
+  end
+
   def outstanding_amount
     return 0.to_d unless issued?
 
@@ -105,6 +119,15 @@ class Invoice < ApplicationRecord
       provider_response: provider_response,
       last_error_code: nil,
       last_error_message: nil
+    )
+  end
+
+  def mark_cancel_failed_attempt!(error_code:, error_message:, provider_response: {})
+    update!(
+      status: "issued",
+      last_error_code: error_code,
+      last_error_message: error_message,
+      provider_response: provider_response
     )
   end
 

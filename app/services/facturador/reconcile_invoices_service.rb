@@ -71,7 +71,11 @@ module Facturador
       )
     rescue Error => e
       error_code = ErrorCodeResolver.call(context: :reconcile, message: e.message, exception: e)
-      invoice.mark_failed!(error_code: error_code, error_message: e.message)
+      if invoice.sat_uuid.present? && !invoice.cancelled?
+        invoice.mark_cancel_failed_attempt!(error_code: error_code, error_message: e.message)
+      else
+        invoice.mark_failed!(error_code: error_code, error_message: e.message)
+      end
       invoice.invoice_events.create!(
         event_type: "reconcile_failed",
         created_by: actor,

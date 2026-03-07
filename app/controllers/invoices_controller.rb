@@ -93,16 +93,24 @@ class InvoicesController < ApplicationController
   def cancel
     authorize @invoice, :cancel?
 
-    Facturador::CancelInvoiceService.call(
+    result = Facturador::CancelInvoiceService.call(
       invoice: @invoice,
       motive: "02",
       replacement_uuid: nil,
       actor: current_user
     )
 
-    redirect_back fallback_location: containers_path, notice: "Cancelación solicitada/procesada correctamente."
+    case result.status
+    when "cancelled"
+      redirect_back fallback_location: containers_path, notice: "CFDI cancelado correctamente."
+    when "cancel_pending"
+      redirect_back fallback_location: containers_path, notice: "Cancelación de CFDI solicitada. La factura se mantiene emitida hasta confirmación final de SAT/PAC."
+    else
+      message = result.last_error_message.presence || "PAC/SAT rechazó o no confirmó la cancelación en este intento."
+      redirect_back fallback_location: containers_path, alert: cancel_error_alert(message, exception_flow: false)
+    end
   rescue Facturador::Error => e
-    redirect_back fallback_location: containers_path, alert: "Error al cancelar CFDI: #{e.message}"
+    redirect_back fallback_location: containers_path, alert: cancel_error_alert(e.message, exception_flow: true)
   end
 
   def sync_documents
@@ -184,5 +192,23 @@ class InvoicesController < ApplicationController
 
   def default_end_date
     Date.current
+  end
+
+  def cancel_error_alert(message, exception_flow:)
+    normalized = message.to_s.strip
+
+    if pac_temporarily_unavailable_message?(normalized)
+      return "No fue posible cancelar el CFDI porque PAC no está disponible temporalmente. Reintenta en unos minutos."
+    end
+
+    if exception_flow
+      "Error al cancelar CFDI: #{normalized}"
+    else
+      "No se pudo cancelar el CFDI en este intento: #{normalized}"
+    end
+  end
+
+  def pac_temporarily_unavailable_message?(message)
+    message.match?(/HttpRequestException|An error occurred while sending the request|500:\s*An error has occurred/i)
   end
 end

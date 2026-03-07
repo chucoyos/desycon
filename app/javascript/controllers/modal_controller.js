@@ -73,6 +73,25 @@ export default class extends Controller {
     }
   }
 
+  closeAndSubmit(event) {
+    const form = event.currentTarget
+    const modal = form.closest('[data-modal-target="modal"]')
+
+    if (modal) {
+      modal.classList.add('hidden')
+    }
+
+    const submitButton = form.querySelector('input[type="submit"], button[type="submit"]')
+    if (submitButton) {
+      submitButton.disabled = true
+      if (submitButton.tagName.toLowerCase() === 'input') {
+        submitButton.value = 'Procesando...'
+      } else {
+        submitButton.textContent = 'Procesando...'
+      }
+    }
+  }
+
   // Close modal when clicking on backdrop
   closeOnBackdrop(event) {
     if (event.target === event.currentTarget) {
