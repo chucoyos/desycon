@@ -3,6 +3,7 @@
 <% label_class = "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600" %>
 
 <%= form_with model: [@entity, @address], method: :patch, class: "space-y-5", id: "edit_address_form", data: { turbo: false } do |f| %>
+  <%= hidden_field_tag :context, params[:context].presence %>
   <div class="rounded-2xl border border-cyan-100 bg-cyan-50/60 px-4 py-3 text-xs text-cyan-800">
     Campos obligatorios: <span class="font-semibold">CP y Email</span>
   </div>

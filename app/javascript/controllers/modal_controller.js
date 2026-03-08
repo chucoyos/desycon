@@ -42,8 +42,9 @@ export default class extends Controller {
       // Handle dynamic form loading for edit modals
       if (modalId === 'address-modal') {
         const addressId = event.currentTarget.dataset.addressId
+        const context = event.currentTarget.dataset.addressContext
         if (addressId) {
-          this.loadAddressForm(addressId)
+          this.loadAddressForm(addressId, context)
         }
       }
 
@@ -115,7 +116,7 @@ export default class extends Controller {
     document.removeEventListener('keydown', this.escapeHandler)
   }
 
-  loadAddressForm(addressId) {
+  loadAddressForm(addressId, context = null) {
     const container = document.getElementById('edit-address-form-container')
     if (!container) return
 
@@ -124,7 +125,8 @@ export default class extends Controller {
     const entityId = urlParts[urlParts.indexOf('entities') + 1]
 
     // Fetch the edit form
-    fetch(`/entities/${entityId}/addresses/${addressId}/edit`, {
+    const query = context ? `?context=${encodeURIComponent(context)}` : ""
+    fetch(`/entities/${entityId}/addresses/${addressId}/edit${query}`, {
       headers: {
         'Accept': 'text/html',
         'X-Requested-With': 'XMLHttpRequest'

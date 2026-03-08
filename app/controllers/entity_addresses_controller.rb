@@ -26,9 +26,10 @@ class EntityAddressesController < ApplicationController
 
     if @address.update(address_params)
       flash.now[:notice] = "Dirección actualizada exitosamente."
+      success_path = params[:context] == "edit" ? edit_entity_path(@entity) : @entity
       respond_to do |format|
         format.turbo_stream
-        format.html { redirect_to @entity, notice: "Dirección actualizada exitosamente." }
+        format.html { redirect_to success_path, notice: "Dirección actualizada exitosamente." }
       end
     else
       respond_to do |format|
