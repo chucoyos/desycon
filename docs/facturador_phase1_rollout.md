@@ -3,6 +3,7 @@
 ## Runbooks relacionados
 
 - Checklist de variables y flags: `docs/facturador_env_flags_checklist.md`
+- Checklist Solid Queue en produccion: `docs/solid_queue_worker_production_checklist.md`
 
 ## Objetivo de Fase 1
 Introducir la base de facturación sin alterar comportamiento operativo actual.

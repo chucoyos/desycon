@@ -2,6 +2,10 @@
 
 Checklist operativo para no olvidar variables de entorno y feature flags de Facturador.
 
+Runbook relacionado:
+
+- `docs/solid_queue_worker_production_checklist.md`
+
 ## 1. Variables requeridas (base)
 
 - `FACTURADOR_ENABLED`
