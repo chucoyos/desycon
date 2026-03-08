@@ -8,6 +8,22 @@ RSpec.describe BlHouseLineService, type: :model do
       expect(Facturador::AutoIssueService).not_to receive(:call)
       create(:bl_house_line_service)
     end
+
+    it 'does not attempt auto issue for manually created services' do
+      allow(Facturador::Config).to receive(:enabled?).and_return(true)
+      allow(Facturador::Config).to receive(:auto_issue_enabled?).and_return(true)
+
+      expect(Facturador::AutoIssueService).not_to receive(:call)
+      create(:bl_house_line_service)
+    end
+
+    it 'attempts auto issue for services created from status transition flow' do
+      allow(Facturador::Config).to receive(:enabled?).and_return(true)
+      allow(Facturador::Config).to receive(:auto_issue_enabled?).and_return(true)
+
+      expect(Facturador::AutoIssueService).to receive(:call)
+      create(:bl_house_line_service, auto_issue_origin: BlHouseLineService::AUTO_ISSUE_ORIGIN_STATUS_TRANSITION)
+    end
   end
 
   describe 'restricciones de servicios facturados' do

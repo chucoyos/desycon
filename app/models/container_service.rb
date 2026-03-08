@@ -1,5 +1,6 @@
 class ContainerService < ApplicationRecord
   BILLING_LOCK_STATUSES = %w[queued issued cancel_pending cancelled].freeze
+  AUTO_ISSUE_ORIGIN_STATUS_TRANSITION = "status_transition".freeze
 
   belongs_to :container
   belongs_to :service_catalog
@@ -10,6 +11,8 @@ class ContainerService < ApplicationRecord
   before_update :prevent_changes_if_facturado
   before_destroy :prevent_destroy_if_facturado, prepend: true
   after_commit :enqueue_facturador_auto_issue, on: :create
+
+  attr_accessor :auto_issue_origin
 
   validates :service_catalog, presence: true
   validates :amount, presence: true, numericality: { greater_than: 0 }
@@ -55,8 +58,13 @@ class ContainerService < ApplicationRecord
   def enqueue_facturador_auto_issue
     return unless Facturador::Config.enabled?
     return unless Facturador::Config.auto_issue_enabled?
+    return unless auto_issue_origin_for_status_transition?
 
     Facturador::AutoIssueService.call(invoiceable: self, actor: Current.user)
+  end
+
+  def auto_issue_origin_for_status_transition?
+    auto_issue_origin.to_s == AUTO_ISSUE_ORIGIN_STATUS_TRANSITION
   end
 
   def assign_default_billed_to_entity
