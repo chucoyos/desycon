@@ -25,6 +25,10 @@ module Facturador
         ActiveModel::Type::Boolean.new.cast(env_value(:payment_complements_enabled, false))
       end
 
+      def email_enabled?
+        ActiveModel::Type::Boolean.new.cast(env_value(:email_enabled, false))
+      end
+
       def issuer_entity_id
         value = env_value(:issuer_entity_id)
         value.present? ? value.to_i : nil
@@ -56,6 +60,14 @@ module Facturador
 
       def client_secret
         env_value(:client_secret)
+      end
+
+      def email_subject
+        env_value(:email_subject, "Tu comprobante Fiscal Digital con la nueva versión 3.3")
+      end
+
+      def email_message
+        env_value(:email_message, "hola")
       end
 
       def credentials_present?

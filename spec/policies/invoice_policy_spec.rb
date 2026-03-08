@@ -14,6 +14,7 @@ RSpec.describe InvoicePolicy, type: :policy do
       expect(policy.cancel?).to eq(true)
       expect(policy.sync_documents?).to eq(true)
       expect(policy.register_payment?).to eq(true)
+      expect(policy.send_email?).to eq(true)
     end
   end
 
@@ -26,6 +27,7 @@ RSpec.describe InvoicePolicy, type: :policy do
       expect(policy.cancel?).to eq(false)
       expect(policy.sync_documents?).to eq(false)
       expect(policy.register_payment?).to eq(false)
+      expect(policy.send_email?).to eq(false)
     end
   end
 end

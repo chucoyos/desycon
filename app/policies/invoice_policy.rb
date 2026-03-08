@@ -23,6 +23,10 @@ class InvoicePolicy < ApplicationPolicy
     issue_manual?
   end
 
+  def send_email?
+    issue_manual?
+  end
+
   class Scope < Scope
     def resolve
       return scope.none unless user.present?

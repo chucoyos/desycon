@@ -71,6 +71,8 @@ module Facturador
           response_payload: response,
           provider_status: response["subEstatusId"]&.to_s
         )
+
+        send_email_non_blocking(trigger: "auto_issue")
       else
         message = extract_error_message(response)
         error_code = ErrorCodeResolver.call(context: :issue, provider_payload: response, message: message)
@@ -92,6 +94,14 @@ module Facturador
 
     def extract_error_message(response)
       Facturador::ErrorMessageExtractor.call(response, fallback: "Validación PAC no detallada")
+    end
+
+    def send_email_non_blocking(trigger:)
+      return unless Config.email_enabled?
+
+      Facturador::SendInvoiceEmailService.call(invoice: invoice, actor: actor, trigger: trigger)
+    rescue Facturador::Error => e
+      Rails.logger.warn("Facturador email send skipped after issue for invoice=#{invoice.id}: #{e.message}")
     end
   end
 end

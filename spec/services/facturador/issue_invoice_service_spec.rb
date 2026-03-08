@@ -29,6 +29,7 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
 
     before do
       allow(Facturador::Config).to receive(:enabled?).and_return(true)
+      allow(Facturador::Config).to receive(:email_enabled?).and_return(false)
       allow(Facturador::AccessTokenService).to receive(:fetch!).and_return('token-123')
       allow(Facturador::EmisorService).to receive(:emisor_id!).and_return(208)
       allow(Facturador::Client).to receive(:new).with(access_token: 'token-123').and_return(client_double)

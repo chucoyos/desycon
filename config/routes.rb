@@ -41,6 +41,7 @@ Rails.application.routes.draw do
       patch :cancel
       post :sync_documents
       post :register_payment
+      post :send_email
     end
   end
 

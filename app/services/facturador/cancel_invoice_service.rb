@@ -39,6 +39,7 @@ module Facturador
         if response["descripcion"].to_s.downcase.include?("cancelado") || response["subEstatusId"].to_i == 3
           invoice.mark_cancelled!(cancelled_at: Time.current, provider_response: response)
           event_type = "cancel_succeeded"
+          send_email_non_blocking(trigger: "auto_cancel")
         else
           invoice.mark_cancel_pending!(motive: motive, replacement_uuid: replacement_uuid, provider_response: response)
           event_type = "cancel_requested"
@@ -147,6 +148,14 @@ module Facturador
       return base_message if context_parts.empty?
 
       "#{base_message} [PAC: #{context_parts.join(', ')}]"
+    end
+
+    def send_email_non_blocking(trigger:)
+      return unless Config.email_enabled?
+
+      Facturador::SendInvoiceEmailService.call(invoice: invoice, actor: actor, trigger: trigger)
+    rescue Facturador::Error => e
+      Rails.logger.warn("Facturador email send skipped after cancel for invoice=#{invoice.id}: #{e.message}")
     end
   end
 end

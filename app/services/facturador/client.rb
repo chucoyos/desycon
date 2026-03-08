@@ -11,6 +11,7 @@ module Facturador
     DESCARGA_COMPROBANTE_PATH = "/businessEmision/api/v1/emisores/%<emisor_id>s/descargacomprobantes/%<uuid>s".freeze
     PDF_GENERATE_PATH = "/businessEmision/api/v1/emisores/%<emisor_id>s/pdfs/%<uuid>s".freeze
     PDF_URL_PATH = "/businessEmision/api/v1/emisores/%<emisor_id>s/comprobantes/%<uuid>s/pdf".freeze
+    ENVIO_CORREO_PATH = "/BusinessEmision/api/v1/emisores/%<emisor_id>s/enviocorreo".freeze
 
     def initialize(access_token: nil)
       Config.validate!
@@ -90,6 +91,11 @@ module Facturador
     def obtener_pdf_url(emisor_id:, uuid:)
       path = format(PDF_URL_PATH, emisor_id: emisor_id, uuid: uuid)
       normalize_pdf_url(get_raw(Config.business_base_url, path))
+    end
+
+    def enviar_correo_cfdi(emisor_id:, payload:)
+      path = format(ENVIO_CORREO_PATH, emisor_id: emisor_id)
+      post_json(Config.business_base_url, path, payload)
     end
 
     private

@@ -67,6 +67,10 @@
             </button>
           <% end %>
 
+          <% if @invoice.status.in?(["issued", "cancelled"]) && @invoice.sat_uuid.present? %>
+            <%= button_to "Enviar CFDI por correo", send_email_invoice_path(@invoice), method: :post, class: "inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100" %>
+          <% end %>
+
           <% if @invoice.xml_file.attached? %>
             <%= link_to "Descargar XML", rails_blob_path(@invoice.xml_file, disposition: "attachment"), class: "inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
           <% end %>

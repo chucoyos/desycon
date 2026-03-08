@@ -16,6 +16,9 @@ class InvoiceEvent < ApplicationRecord
     reconcile_synced
     reconcile_not_found
     reconcile_failed
+    email_requested
+    email_sent
+    email_failed
   ].freeze
 
   belongs_to :invoice

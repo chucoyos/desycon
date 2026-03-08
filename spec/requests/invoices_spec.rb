@@ -252,4 +252,54 @@ RSpec.describe 'Invoices', type: :request do
       expect(flash[:notice]).to include('XML/PDF sincronizados (factura cancelada).')
     end
   end
+
+  describe 'POST /invoices/:id/send_email' do
+    let(:invoice) { create(:invoice, status: 'issued', sat_uuid: 'UUID-EMAIL-REQ-001') }
+
+    it 'sends invoice email for admin users' do
+      sign_in admin_user, scope: :user
+      expect(Facturador::SendInvoiceEmailService).to receive(:call).with(invoice: invoice, actor: admin_user, trigger: 'manual')
+
+      post send_email_invoice_path(invoice)
+
+      expect(response).to redirect_to(invoice_path(invoice))
+      expect(flash[:notice]).to include('CFDI enviado por correo mediante PAC.')
+    end
+
+    it 'shows friendly alert when PAC is temporarily unavailable' do
+      sign_in admin_user, scope: :user
+      allow(Facturador::SendInvoiceEmailService).to receive(:call).and_raise(
+        Facturador::RequestError,
+        '500: An error has occurred. | System.Net.Http.HttpRequestException'
+      )
+
+      post send_email_invoice_path(invoice)
+
+      expect(response).to redirect_to(invoice_path(invoice))
+      expect(flash[:alert]).to include('PAC no está disponible temporalmente')
+    end
+
+    it 'shows clear alert when email feature is disabled' do
+      sign_in admin_user, scope: :user
+      allow(Facturador::SendInvoiceEmailService).to receive(:call).and_raise(
+        Facturador::ValidationError,
+        'Email sending via PAC is disabled'
+      )
+
+      post send_email_invoice_path(invoice)
+
+      expect(response).to redirect_to(invoice_path(invoice))
+      expect(flash[:alert]).to include('esta deshabilitado')
+    end
+
+    it 'denies customs broker users' do
+      broker_user = create(:user, :customs_broker)
+      sign_in broker_user, scope: :user
+
+      post send_email_invoice_path(invoice)
+
+      expect(response).to redirect_to(customs_agents_dashboard_path)
+      expect(flash[:alert]).to be_present
+    end
+  end
 end

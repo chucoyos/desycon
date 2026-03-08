@@ -1,6 +1,6 @@
 class InvoicesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_invoice, only: %i[show cancel sync_documents register_payment]
+  before_action :set_invoice, only: %i[show cancel sync_documents register_payment send_email]
   after_action :verify_authorized
 
   def index
@@ -155,6 +155,22 @@ class InvoicesController < ApplicationController
     redirect_back fallback_location: containers_path, alert: "Error al registrar pago: #{e.message}"
   end
 
+  def send_email
+    authorize @invoice, :send_email?
+
+    Facturador::SendInvoiceEmailService.call(invoice: @invoice, actor: current_user, trigger: "manual")
+    redirect_back fallback_location: invoice_path(@invoice), notice: "CFDI enviado por correo mediante PAC."
+  rescue Facturador::Error => e
+    message = if pac_temporarily_unavailable_message?(e.message.to_s)
+      "No fue posible enviar el correo porque PAC no está disponible temporalmente. Reintenta en unos minutos."
+    elsif email_feature_disabled_message?(e.message.to_s)
+      "El envio de correo CFDI por PAC esta deshabilitado en la configuracion actual."
+    else
+      "Error al enviar CFDI por correo: #{e.message}"
+    end
+    redirect_back fallback_location: invoice_path(@invoice), alert: message
+  end
+
   private
 
   def set_invoice
@@ -221,5 +237,9 @@ class InvoicesController < ApplicationController
 
   def pac_temporarily_unavailable_message?(message)
     message.match?(/HttpRequestException|An error occurred while sending the request|500:\s*An error has occurred/i)
+  end
+
+  def email_feature_disabled_message?(message)
+    message.match?(/email sending via pac is disabled/i)
   end
 end

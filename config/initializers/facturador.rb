@@ -20,6 +20,9 @@ Rails.application.config.x.facturador.reconciliation_enabled = ActiveModel::Type
 Rails.application.config.x.facturador.payment_complements_enabled = ActiveModel::Type::Boolean.new.cast(
   ENV.fetch("FACTURADOR_PAYMENT_COMPLEMENTS_ENABLED", facturador_credentials[:payment_complements_enabled] || false)
 )
+Rails.application.config.x.facturador.email_enabled = ActiveModel::Type::Boolean.new.cast(
+  ENV.fetch("FACTURADOR_EMAIL_ENABLED", facturador_credentials[:email_enabled] || false)
+)
 issuer_entity_id = facturador_credentials[:issuer_entity_id]
 Rails.application.config.x.facturador.issuer_entity_id = ENV.fetch("FACTURADOR_ISSUER_ENTITY_ID", issuer_entity_id).presence
 Rails.application.config.x.facturador.auth_base_url = ENV.fetch(
@@ -29,4 +32,12 @@ Rails.application.config.x.facturador.auth_base_url = ENV.fetch(
 Rails.application.config.x.facturador.business_base_url = ENV.fetch(
   "FACTURADOR_BUSINESS_BASE_URL",
   facturador_credentials[:business_base_url] || "https://pruebas.stagefacturador.com"
+)
+Rails.application.config.x.facturador.email_subject = ENV.fetch(
+  "FACTURADOR_EMAIL_SUBJECT",
+  facturador_credentials[:email_subject] || "Tu comprobante Fiscal Digital con la nueva versión 3.3"
+)
+Rails.application.config.x.facturador.email_message = ENV.fetch(
+  "FACTURADOR_EMAIL_MESSAGE",
+  facturador_credentials[:email_message] || "hola"
 )

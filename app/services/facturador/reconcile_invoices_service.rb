@@ -111,10 +111,12 @@ module Facturador
       status_text = "#{subestatus} #{descripcion}"
 
       if status_text.include?("cancelado")
+        was_cancelled = invoice.status == "cancelled"
         invoice.mark_cancelled!(
           cancelled_at: Time.current,
           provider_response: provider_invoice
         )
+        send_email_non_blocking(invoice: invoice, trigger: "auto_reconcile_cancel") unless was_cancelled
         return
       end
 
@@ -165,6 +167,14 @@ module Facturador
       end
 
       normalized
+    end
+
+    def send_email_non_blocking(invoice:, trigger:)
+      return unless Config.email_enabled?
+
+      Facturador::SendInvoiceEmailService.call(invoice: invoice, actor: actor, trigger: trigger)
+    rescue Facturador::Error => e
+      Rails.logger.warn("Facturador email send skipped after reconcile for invoice=#{invoice.id}: #{e.message}")
     end
   end
 end
