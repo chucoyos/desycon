@@ -1,47 +1,67 @@
-<!-- Fiscal Profile Edit Modal -->
-<div id="fiscal-modal" data-modal-target="modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" data-action="click->modal#closeOnBackdrop">
-  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-    <div class="mt-3">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-medium text-gray-900"><%= entity.fiscal_profile.present? ? 'Editar Perfil Fiscal' : 'Crear Perfil Fiscal' %></h3>
-        <button type="button" data-action="click->modal#close" class="text-gray-400 hover:text-gray-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<div id="fiscal-modal" data-modal-target="modal" class="hidden fixed inset-0 z-[70] overflow-y-auto bg-slate-950/45 backdrop-blur-[2px]" style="z-index: 9999;" data-action="click->modal#closeOnBackdrop">
+  <div class="min-h-full w-full px-4 pb-8 pt-24 sm:pb-12 sm:pt-28">
+    <div class="mx-auto w-full max-w-3xl overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/20">
+      <div class="flex items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-r from-teal-50 to-white px-6 py-4 sm:px-8">
+        <div>
+          <h3 class="text-xl font-semibold tracking-tight text-slate-900"><%= entity.fiscal_profile.present? ? "Editar perfil fiscal" : "Crear perfil fiscal" %></h3>
+          <p class="mt-1 text-sm text-slate-600">Define datos SAT para emision y timbrado de CFDI.</p>
+        </div>
+        <button type="button" data-action="click->modal#close" class="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700" aria-label="Cerrar modal">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
+
+      <% text_input_class = "block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200" %>
+      <% select_input_class = "block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200" %>
+      <% label_class = "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600" %>
       <% entity.build_fiscal_profile unless entity.fiscal_profile.present? %>
-      <%= form_with(model: entity, url: entity_path(entity), method: :patch, class: "space-y-4", id: "fiscal_form") do |form| %>
+
+      <%= form_with(model: entity, url: entity_path(entity), method: :patch, class: "space-y-5 bg-white px-6 pb-6 pt-3 sm:px-8 sm:pb-7 sm:pt-4", id: "fiscal_form") do |form| %>
         <%= hidden_field_tag "modal", "fiscal" %>
+        <div class="rounded-2xl border border-teal-100 bg-teal-50/70 px-4 py-3 text-xs text-teal-800">
+          Revisa RFC, regimen y reglas de pago antes de guardar.
+        </div>
+
         <%= form.fields_for :fiscal_profile do |fp| %>
-          <div>
-            <%= fp.label :rfc, "RFC", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-            <%= fp.text_field :rfc, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Ej. XAXX010101000", maxlength: 13, required: entity.role_client? %>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <%= fp.label :rfc, "RFC", class: label_class %>
+              <%= fp.text_field :rfc, class: text_input_class, placeholder: "Ej. XAXX010101000", maxlength: 13, required: entity.role_client? %>
+            </div>
+            <div>
+              <%= fp.label :razon_social, "Razon social", class: label_class %>
+              <%= fp.text_field :razon_social, class: text_input_class, placeholder: "Ej. Comercializadora del Norte SA de CV", required: entity.role_client? %>
+            </div>
           </div>
-          <div>
-            <%= fp.label :razon_social, "Razón Social", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-            <%= fp.text_field :razon_social, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", placeholder: "Ej. Comercializadora del Norte SA de CV", required: entity.role_client? %>
+
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <%= fp.label :regimen, "Regimen fiscal", class: label_class %>
+              <%= fp.select :regimen, FiscalProfile::REGIMENES.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar regimen" }, { class: select_input_class, required: entity.role_client? } %>
+            </div>
+            <div>
+              <%= fp.label :uso_cfdi, "Uso CFDI", class: label_class %>
+              <%= fp.select :uso_cfdi, FiscalProfile::USOS_CFDI.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar uso CFDI" }, { class: select_input_class, required: entity.role_client? } %>
+            </div>
           </div>
-          <div>
-            <%= fp.label :regimen, "Régimen Fiscal", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-            <%= fp.select :regimen, FiscalProfile::REGIMENES.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar régimen" }, { class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", required: entity.role_client? } %>
-          </div>
-          <div>
-            <%= fp.label :uso_cfdi, "Uso CFDI", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-            <%= fp.select :uso_cfdi, FiscalProfile::USOS_CFDI.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar uso CFDI" }, { class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", required: entity.role_client? } %>
-          </div>
-          <div>
-            <%= fp.label :metodo_pago, "Método de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-            <%= fp.select :metodo_pago, FiscalProfile::METODOS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar método de pago" }, { data: { payment_rule: "metodo-pago" }, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", required: entity.role_client? } %>
-          </div>
-          <div>
-            <%= fp.label :forma_pago, "Forma de Pago", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-            <%= fp.select :forma_pago, FiscalProfile::FORMAS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar forma de pago" }, { data: { payment_rule: "forma-pago" }, class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900", required: entity.role_client? } %>
+
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <%= fp.label :metodo_pago, "Metodo de pago", class: label_class %>
+              <%= fp.select :metodo_pago, FiscalProfile::METODOS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar metodo de pago" }, { data: { payment_rule: "metodo-pago" }, class: select_input_class, required: entity.role_client? } %>
+            </div>
+            <div>
+              <%= fp.label :forma_pago, "Forma de pago", class: label_class %>
+              <%= fp.select :forma_pago, FiscalProfile::FORMAS_PAGO.map { |k, v| ["#{k} - #{v}", k] }, { include_blank: "Seleccionar forma de pago" }, { data: { payment_rule: "forma-pago" }, class: select_input_class, required: entity.role_client? } %>
+            </div>
           </div>
         <% end %>
-        <div class="flex justify-end gap-3">
-          <button type="button" data-action="click->modal#close" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Cancelar</button>
-          <%= form.submit "Guardar", class: "px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors", data: { disable_with: "Guardando..." } %>
+
+        <div class="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
+          <button type="button" data-action="click->modal#close" class="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100">Cancelar</button>
+          <%= form.submit "Guardar", class: "inline-flex items-center justify-center rounded-full bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700", data: { disable_with: "Guardando..." } %>
         </div>
       <% end %>
     </div>
