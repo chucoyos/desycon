@@ -22,7 +22,7 @@ RSpec.describe BlHouseLineService, type: :model do
       allow(Facturador::Config).to receive(:auto_issue_enabled?).and_return(true)
 
       expect(Facturador::AutoIssueService).to receive(:call)
-      create(:bl_house_line_service, auto_issue_origin: BlHouseLineService::AUTO_ISSUE_ORIGIN_STATUS_TRANSITION)
+      create(:bl_house_line_service, creation_origin: BlHouseLineService::AUTO_ISSUE_ORIGIN_STATUS_TRANSITION)
     end
   end
 

@@ -22,7 +22,7 @@ RSpec.describe ContainerService, type: :model do
       allow(Facturador::Config).to receive(:auto_issue_enabled?).and_return(true)
 
       expect(Facturador::AutoIssueService).to receive(:call)
-      create(:container_service, auto_issue_origin: ContainerService::AUTO_ISSUE_ORIGIN_STATUS_TRANSITION)
+      create(:container_service, creation_origin: ContainerService::AUTO_ISSUE_ORIGIN_STATUS_TRANSITION)
     end
   end
 

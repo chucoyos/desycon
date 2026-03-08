@@ -431,8 +431,10 @@ class Container < ApplicationRecord
     return unless service
     return if container_services.exists?(service_catalog_id: service.id)
 
-    created_service = container_services.build(service_catalog: service)
-    created_service.auto_issue_origin = ContainerService::AUTO_ISSUE_ORIGIN_STATUS_TRANSITION
+    created_service = container_services.build(
+      service_catalog: service,
+      creation_origin: ContainerService::AUTO_ISSUE_ORIGIN_STATUS_TRANSITION
+    )
     created_service.save!
   end
 end

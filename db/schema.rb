@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_04_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_08_094000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -76,6 +76,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_04_120000) do
     t.bigint "billed_to_entity_id"
     t.bigint "bl_house_line_id", null: false
     t.datetime "created_at", null: false
+    t.string "creation_origin"
     t.string "factura"
     t.date "fecha_programada"
     t.text "observaciones"
@@ -83,6 +84,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_04_120000) do
     t.datetime "updated_at", null: false
     t.index ["billed_to_entity_id"], name: "index_bl_house_line_services_on_billed_to_entity_id"
     t.index ["bl_house_line_id"], name: "index_bl_house_line_services_on_bl_house_line_id"
+    t.index ["creation_origin"], name: "index_bl_house_line_services_on_creation_origin"
     t.index ["factura"], name: "index_bl_house_line_services_on_factura"
     t.index ["fecha_programada"], name: "index_bl_house_line_services_on_fecha_programada"
     t.index ["service_catalog_id"], name: "index_bl_house_line_services_on_service_catalog_id"
@@ -163,6 +165,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_04_120000) do
     t.bigint "billed_to_entity_id"
     t.bigint "container_id", null: false
     t.datetime "created_at", null: false
+    t.string "creation_origin"
     t.string "factura"
     t.date "fecha_programada"
     t.text "observaciones"
@@ -170,6 +173,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_04_120000) do
     t.datetime "updated_at", null: false
     t.index ["billed_to_entity_id"], name: "index_container_services_on_billed_to_entity_id"
     t.index ["container_id"], name: "index_container_services_on_container_id"
+    t.index ["creation_origin"], name: "index_container_services_on_creation_origin"
     t.index ["factura"], name: "index_container_services_on_factura"
     t.index ["fecha_programada"], name: "index_container_services_on_fecha_programada"
     t.index ["service_catalog_id"], name: "index_container_services_on_service_catalog_id"

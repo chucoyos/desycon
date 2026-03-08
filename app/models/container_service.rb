@@ -12,8 +12,6 @@ class ContainerService < ApplicationRecord
   before_destroy :prevent_destroy_if_facturado, prepend: true
   after_commit :enqueue_facturador_auto_issue, on: :create
 
-  attr_accessor :auto_issue_origin
-
   validates :service_catalog, presence: true
   validates :amount, presence: true, numericality: { greater_than: 0 }
   validates :currency, presence: true, inclusion: { in: [ "MXN" ] }
@@ -64,7 +62,7 @@ class ContainerService < ApplicationRecord
   end
 
   def auto_issue_origin_for_status_transition?
-    auto_issue_origin.to_s == AUTO_ISSUE_ORIGIN_STATUS_TRANSITION
+    creation_origin.to_s == AUTO_ISSUE_ORIGIN_STATUS_TRANSITION
   end
 
   def assign_default_billed_to_entity

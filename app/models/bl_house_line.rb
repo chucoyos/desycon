@@ -131,7 +131,7 @@ class BlHouseLine < ApplicationRecord
 
     bl_house_line_services.find_or_create_by(service_catalog: catalog) do |service|
       service.billed_to_entity_id ||= client_id
-      service.auto_issue_origin = BlHouseLineService::AUTO_ISSUE_ORIGIN_STATUS_TRANSITION
+      service.creation_origin = BlHouseLineService::AUTO_ISSUE_ORIGIN_STATUS_TRANSITION
     end
   rescue StandardError => e
     Rails.logger.error("Failed to create asignación electrónica de carga service for BL #{id}: #{e.message}")
