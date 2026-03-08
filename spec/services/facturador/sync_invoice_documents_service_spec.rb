@@ -36,5 +36,19 @@ RSpec.describe Facturador::SyncInvoiceDocumentsService, type: :service do
       event_types = invoice.invoice_events.order(:created_at).pluck(:event_type)
       expect(event_types).to include('xml_requested', 'xml_stored', 'pdf_requested', 'pdf_stored')
     end
+
+    it 'allows syncing documents for cancelled invoices' do
+      invoice.update!(status: 'cancelled')
+      allow(client_double).to receive(:descargar_xml).and_return('<cfdi>cancelled</cfdi>')
+      allow(client_double).to receive(:generar_pdf).and_return({ 'ok' => true })
+      allow(client_double).to receive(:obtener_pdf_url).and_return('https://example.com/cancelled.pdf')
+      allow(URI).to receive(:open).and_return(StringIO.new('%PDF-1.4 cancelled'))
+
+      described_class.call(invoice: invoice)
+
+      invoice.reload
+      expect(invoice.xml_file).to be_attached
+      expect(invoice.pdf_file).to be_attached
+    end
   end
 end

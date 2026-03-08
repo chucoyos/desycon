@@ -17,7 +17,7 @@ module Facturador
     def call
       return invoice unless Config.enabled?
       return invoice unless Config.manual_actions_enabled?
-      raise RequestError, "Invoice is not issued" unless invoice.issued?
+      raise RequestError, "Invoice is not syncable" unless invoice.status.in?(%w[issued cancelled])
       raise RequestError, "Invoice UUID is missing" if invoice.sat_uuid.blank?
 
       access_token = AccessTokenService.fetch!

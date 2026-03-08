@@ -224,4 +224,32 @@ RSpec.describe 'Invoices', type: :request do
       expect(flash[:alert]).to be_present
     end
   end
+
+  describe 'POST /invoices/:id/sync_documents' do
+    let(:invoice) { create(:invoice, status: 'issued', sat_uuid: 'UUID-SYNC-001') }
+
+    it 'reconciles issued invoice explicitly before syncing documents' do
+      sign_in admin_user, scope: :user
+      expect(Facturador::ReconcileInvoicesService).to receive(:call_for_invoice).with(invoice: invoice, actor: admin_user)
+      expect(Facturador::SyncInvoiceDocumentsService).to receive(:call).with(invoice: invoice, actor: admin_user)
+
+      post sync_documents_invoice_path(invoice)
+
+      expect(response).to redirect_to(containers_path)
+      expect(flash[:notice]).to include('XML y PDF sincronizados correctamente.')
+    end
+
+    it 'still syncs xml/pdf when explicit reconciliation changes invoice status to cancelled' do
+      sign_in admin_user, scope: :user
+      allow(Facturador::ReconcileInvoicesService).to receive(:call_for_invoice) do
+        invoice.update!(status: 'cancelled')
+      end
+      expect(Facturador::SyncInvoiceDocumentsService).to receive(:call).with(invoice: invoice, actor: admin_user)
+
+      post sync_documents_invoice_path(invoice)
+
+      expect(response).to redirect_to(containers_path)
+      expect(flash[:notice]).to include('XML/PDF sincronizados (factura cancelada).')
+    end
+  end
 end

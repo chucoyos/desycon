@@ -29,7 +29,7 @@ class Invoice < ApplicationRecord
   scope :recent_first, -> { order(created_at: :desc) }
   scope :issued, -> { where(status: "issued") }
   scope :cancelled, -> { where(status: "cancelled") }
-  scope :pending_reconciliation, -> { where(status: %w[issued cancel_pending]).where.not(sat_uuid: [ nil, "" ]) }
+  scope :pending_reconciliation, -> { where(status: "cancel_pending").where.not(sat_uuid: [ nil, "" ]) }
 
   def issued?
     status == "issued"

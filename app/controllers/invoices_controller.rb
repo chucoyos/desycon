@@ -116,8 +116,19 @@ class InvoicesController < ApplicationController
   def sync_documents
     authorize @invoice, :sync_documents?
 
+    if @invoice.issued?
+      Facturador::ReconcileInvoicesService.call_for_invoice(invoice: @invoice, actor: current_user)
+      @invoice.reload
+    end
+
     Facturador::SyncInvoiceDocumentsService.call(invoice: @invoice, actor: current_user)
-    redirect_back fallback_location: containers_path, notice: "XML y PDF sincronizados correctamente."
+    notice_message = if @invoice.status == "cancelled"
+      "XML/PDF sincronizados (factura cancelada)."
+    else
+      "XML y PDF sincronizados correctamente."
+    end
+
+    redirect_back fallback_location: containers_path, notice: notice_message
   rescue Facturador::Error => e
     redirect_back fallback_location: containers_path, alert: "Error al sincronizar documentos: #{e.message}"
   end

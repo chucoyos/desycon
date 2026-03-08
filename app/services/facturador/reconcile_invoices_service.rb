@@ -6,6 +6,10 @@ module Facturador
       def call(limit: DEFAULT_LIMIT, actor: nil)
         new(limit: limit, actor: actor).call
       end
+
+      def call_for_invoice(invoice:, actor: nil)
+        new(limit: 1, actor: actor).call_for_invoice(invoice: invoice)
+      end
     end
 
     def initialize(limit:, actor: nil)
@@ -24,6 +28,19 @@ module Facturador
       invoices = Invoice.pending_reconciliation.recent_first.limit(limit)
       invoices.each { |invoice| reconcile_invoice!(invoice: invoice, client: client, emisor_id: emisor_id) }
       invoices
+    end
+
+    def call_for_invoice(invoice:)
+      return invoice unless Config.enabled?
+      return invoice unless Config.reconciliation_enabled?
+      return invoice if invoice.sat_uuid.blank?
+
+      access_token = AccessTokenService.fetch!
+      emisor_id = EmisorService.emisor_id!(access_token: access_token)
+      client = Client.new(access_token: access_token)
+
+      reconcile_invoice!(invoice: invoice, client: client, emisor_id: emisor_id)
+      invoice
     end
 
     private

@@ -13,7 +13,7 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
     end
 
     it 'marks invoice as cancelled when provider reports cancelado' do
-      invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-CANCEL')
+      invoice = create(:invoice, status: 'cancel_pending', sat_uuid: 'UUID-CANCEL')
       allow(client_double).to receive(:buscar_comprobantes).and_return([
         {
           'uuid' => 'UUID-CANCEL',
@@ -31,7 +31,7 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
     end
 
     it 'marks invoice as cancel_pending when provider is waiting cancellation acceptance' do
-      invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-PENDING')
+      invoice = create(:invoice, status: 'cancel_pending', sat_uuid: 'UUID-PENDING')
       allow(client_double).to receive(:buscar_comprobantes).and_return([
         {
           'uuid' => 'UUID-PENDING',
@@ -49,7 +49,7 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
     end
 
     it 'supports hash payload with resumenComprobante array' do
-      invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-HASH')
+      invoice = create(:invoice, status: 'cancel_pending', sat_uuid: 'UUID-HASH')
       allow(client_double).to receive(:buscar_comprobantes).and_return(
         {
           'numeroComprobantes' => 1,
@@ -72,7 +72,7 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
     end
 
     it 'keeps existing comprobante id when provider sends idComprobante as 0' do
-      invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-EMITIDO-001', facturador_comprobante_id: nil)
+      invoice = create(:invoice, status: 'cancel_pending', sat_uuid: 'UUID-EMITIDO-001', facturador_comprobante_id: nil)
       allow(client_double).to receive(:buscar_comprobantes).and_return(
         {
           'numeroComprobantes' => 1,
@@ -95,6 +95,29 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
       expect(invoice.status).to eq('issued')
       expect(invoice.facturador_comprobante_id).to be_nil
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('reconcile_synced')
+    end
+
+    it 'reconciles issued invoice only via explicit call_for_invoice' do
+      invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-EXPLICIT-001')
+      allow(client_double).to receive(:buscar_comprobantes).and_return(
+        {
+          'numeroComprobantes' => 1,
+          'resumenComprobante' => [
+            {
+              'uuid' => 'UUID-EXPLICIT-001',
+              'subestatus' => 'Cancelado',
+              'descripcion' => 'Cancelado (Directo)',
+              'subestatusId' => 3
+            }
+          ]
+        }
+      )
+
+      described_class.call(limit: 10)
+      expect(invoice.reload.status).to eq('issued')
+
+      described_class.call_for_invoice(invoice: invoice)
+      expect(invoice.reload.status).to eq('cancelled')
     end
   end
 end
