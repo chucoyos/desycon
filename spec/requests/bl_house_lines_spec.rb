@@ -105,6 +105,19 @@ RSpec.describe "BlHouseLines", type: :request do
 
       expect(response.body).to include(old_line.blhouse)
     end
+
+    it "orders records by most recent first" do
+      sign_in user, scope: :user
+      older = create(:bl_house_line, status: "validar_documentos", blhouse: "ORDER-OLD")
+      newer = create(:bl_house_line, status: "validar_documentos", blhouse: "ORDER-NEW")
+      older.update_column(:created_at, 5.minutes.ago)
+      newer.update_column(:created_at, Time.current)
+
+      get bl_house_lines_url
+
+      expect(response).to be_successful
+      expect(response.body.index("ORDER-NEW")).to be < response.body.index("ORDER-OLD")
+    end
   end
 
   describe "GET /bl_house_lines/:id" do

@@ -65,7 +65,7 @@ class BlHouseLinesController < ApplicationController
       end
     end
 
-    @bl_house_lines = scope.page(params[:page]).per(params[:per] || 20)
+    @bl_house_lines = scope.order(created_at: :desc, id: :desc).page(params[:page]).per(params[:per] || 10)
 
     # Data for filters
     load_clients
