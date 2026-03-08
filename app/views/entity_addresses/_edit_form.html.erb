@@ -1,0 +1,106 @@
+<% context ||= nil %>
+<% text_input_class = "block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200" %>
+<% select_input_class = "block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200" %>
+<% label_class = "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600" %>
+
+<%= form_with model: [entity, address], method: :patch, class: "space-y-5", id: "edit_address_form", data: { turbo: false } do |f| %>
+  <%= hidden_field_tag :context, context.presence %>
+  <div class="rounded-2xl border border-cyan-100 bg-cyan-50/60 px-4 py-3 text-xs text-cyan-800">
+    Campos obligatorios: <span class="font-semibold">CP y Email</span>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div>
+      <%= f.label :tipo, "Tipo", class: label_class %>
+      <%= f.select :tipo,
+          Address::TIPOS.map { |k, v| [v, k] },
+          { include_blank: "Seleccionar tipo", selected: f.object.tipo.presence || "matriz" },
+          class: select_input_class %>
+    </div>
+    <div>
+      <%= f.label :email, "Email (obligatorio)", class: label_class %>
+      <%= f.email_field :email,
+          class: text_input_class,
+          placeholder: "Ej. facturacion@empresa.com",
+          required: true %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="sm:col-span-2">
+      <%= f.label :calle, "Calle", class: label_class %>
+      <%= f.text_field :calle,
+          class: text_input_class,
+          placeholder: "Ej. Av. Insurgentes Sur" %>
+    </div>
+    <div>
+      <%= f.label :numero_exterior, "Num. Ext.", class: label_class %>
+      <%= f.text_field :numero_exterior,
+          class: text_input_class,
+          placeholder: "Ej. 123" %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div>
+      <%= f.label :numero_interior, "Num. Int.", class: label_class %>
+      <%= f.text_field :numero_interior,
+          class: text_input_class,
+          placeholder: "Ej. A" %>
+    </div>
+    <div>
+      <%= f.label :colonia, "Colonia", class: label_class %>
+      <%= f.text_field :colonia,
+          class: text_input_class,
+          placeholder: "Ej. Del Valle" %>
+    </div>
+    <div>
+      <%= f.label :codigo_postal, "CP (obligatorio)", class: label_class %>
+      <%= f.text_field :codigo_postal,
+          class: text_input_class,
+          placeholder: "Ej. 12345",
+          required: true %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div>
+      <%= f.label :municipio, "Municipio", class: label_class %>
+      <%= f.text_field :municipio,
+          class: text_input_class,
+          placeholder: "Ej. Monterrey" %>
+    </div>
+    <div>
+      <%= f.label :localidad, "Localidad", class: label_class %>
+      <%= f.text_field :localidad,
+          class: text_input_class,
+          placeholder: "Ej. Centro" %>
+    </div>
+    <div>
+      <%= f.label :estado, "Estado", class: label_class %>
+      <%= f.text_field :estado,
+          class: text_input_class,
+          placeholder: "Ej. Nuevo Leon" %>
+    </div>
+  </div>
+
+  <div>
+    <%= f.label :pais, "Pais", class: label_class %>
+    <%= f.select :pais,
+        Address.paises_con_banderas.map { |display, code| [display, code] },
+        { include_blank: "Seleccionar pais" },
+        class: select_input_class %>
+  </div>
+
+  <% if f.object.errors.any? %>
+    <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+      <p class="font-semibold">No se pudo guardar el domicilio.</p>
+      <p class="mt-1"><%= f.object.errors.full_messages.to_sentence %></p>
+    </div>
+  <% end %>
+
+  <div class="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
+    <button type="button" data-action="click->modal#close" class="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100">Cancelar</button>
+    <%= f.submit "Guardar cambios", class: "inline-flex items-center justify-center rounded-full bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-700" %>
+  </div>
+<% end %>

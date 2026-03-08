@@ -39,3 +39,11 @@
 </div>
 
 <%= render "entities/address_modal", entity: @entity %>
+
+<div id="address-edit-templates-edit" class="hidden" aria-hidden="true">
+  <% @entity.addresses.select(&:persisted?).each do |address| %>
+    <template id="address-edit-template-<%= address.id %>-edit">
+      <%= render "entity_addresses/edit_form", entity: @entity, address: address, context: "edit" %>
+    </template>
+  <% end %>
+</div>

@@ -4,11 +4,17 @@ export default class extends Controller {
   static targets = ["modal"]
 
   connect() {
-    console.log('Modal controller connected')
+    this.escapeHandler = (event) => {
+      if (event.key === 'Escape') {
+        this.modalTargets.forEach(modal => {
+          modal.classList.add('hidden')
+        })
+      }
+    }
+    document.addEventListener('keydown', this.escapeHandler)
   }
 
   open(event) {
-    console.log('Modal open triggered', event.currentTarget.dataset.modalId)
     event.preventDefault()
     const modalId = event.currentTarget.dataset.modalId
     const modal = document.getElementById(modalId)
@@ -37,14 +43,15 @@ export default class extends Controller {
       }
 
       modal.classList.remove('hidden')
-      console.log('Modal opened:', modalId)
 
       // Handle dynamic form loading for edit modals
       if (modalId === 'address-modal') {
         const addressId = event.currentTarget.dataset.addressId
         const context = event.currentTarget.dataset.addressContext
         if (addressId) {
-          this.loadAddressForm(addressId, context)
+          if (!this.injectAddressFormFromTemplate(addressId, context)) {
+            this.loadAddressForm(addressId, context)
+          }
         }
       }
 
@@ -100,20 +107,20 @@ export default class extends Controller {
     }
   }
 
-  // Close modal on escape key
-  connect() {
-    this.escapeHandler = (event) => {
-      if (event.key === 'Escape') {
-        this.modalTargets.forEach(modal => {
-          modal.classList.add('hidden')
-        })
-      }
-    }
-    document.addEventListener('keydown', this.escapeHandler)
-  }
-
   disconnect() {
     document.removeEventListener('keydown', this.escapeHandler)
+  }
+
+  injectAddressFormFromTemplate(addressId, context = null) {
+    const container = document.getElementById('edit-address-form-container')
+    if (!container) return false
+
+    const contextKey = context || 'show'
+    const template = document.getElementById(`address-edit-template-${addressId}-${contextKey}`)
+    if (!template) return false
+
+    container.innerHTML = template.innerHTML
+    return true
   }
 
   loadAddressForm(addressId, context = null) {

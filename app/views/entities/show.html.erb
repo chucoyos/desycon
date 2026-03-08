@@ -54,6 +54,14 @@
 <%= render "entities/roles_modal", entity: @entity %>
 <%= render "entities/address_modal", entity: @entity %>
 
+<div id="address-edit-templates-show" class="hidden" aria-hidden="true">
+  <% @entity.addresses.select(&:persisted?).each do |address| %>
+    <template id="address-edit-template-<%= address.id %>-show">
+      <%= render "entity_addresses/edit_form", entity: @entity, address: address, context: nil %>
+    </template>
+  <% end %>
+</div>
+
 <!-- New Address Modal -->
 <div id="new-address-modal" data-modal-target="modal" class="hidden fixed inset-0 z-[70] overflow-y-auto bg-slate-950/45 backdrop-blur-[2px]" style="z-index: 9999;" data-action="click->modal#closeOnBackdrop">
   <div class="min-h-full w-full px-4 pb-8 pt-24 sm:pb-12 sm:pt-28">
