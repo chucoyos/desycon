@@ -263,7 +263,7 @@ RSpec.describe 'Invoices', type: :request do
       post send_email_invoice_path(invoice)
 
       expect(response).to redirect_to(invoice_path(invoice))
-      expect(flash[:notice]).to include('CFDI enviado por correo mediante PAC.')
+      expect(flash[:notice]).to include('CFDI enviado por correo exitosamente.')
     end
 
     it 'shows friendly alert when PAC is temporarily unavailable' do
