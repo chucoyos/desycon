@@ -72,6 +72,24 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('issue_failed')
     end
 
+    it 'raises transient issue error for FAC119 provider code so job can retry' do
+      allow(client_double).to receive(:emitir_comprobante).and_return(
+        {
+          'esValido' => false,
+          'errores' => [ { 'codigo' => 'FAC119', 'mensaje' => 'La serie del comprobante no esta disponible. Intentar mas tarde.' } ]
+        }
+      )
+
+      expect {
+        described_class.call(invoice_id: invoice.id)
+      }.to raise_error(Facturador::TransientIssueError, /serie del comprobante/i)
+
+      invoice.reload
+      expect(invoice.status).to eq('failed')
+      expect(invoice.last_error_code).to eq('FACTURADOR_ISSUE_PROVIDER_FAC119')
+      expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('issue_failed')
+    end
+
     it 'marks invoice as failed and re-raises when request error happens' do
       allow(client_double).to receive(:emitir_comprobante).and_raise(Facturador::RequestError, 'timeout')
 

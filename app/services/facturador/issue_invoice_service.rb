@@ -13,6 +13,7 @@ module Facturador
 
     def call
       return unless Config.enabled?
+      transient_retry_error = nil
 
       invoice.with_lock do
         return invoice if invoice.issued?
@@ -30,11 +31,15 @@ module Facturador
           emitir: true
         )
 
-        handle_response!(response)
+        transient_retry_error = handle_response!(response)
       end
+
+      raise transient_retry_error if transient_retry_error
 
       invoice
     rescue Error => e
+      raise if e.is_a?(TransientIssueError)
+
       error_code = ErrorCodeResolver.call(context: :issue, message: e.message, exception: e)
       invoice.mark_failed!(error_code: error_code, error_message: e.message)
       invoice.invoice_events.create!(
@@ -89,7 +94,11 @@ module Facturador
           response_payload: response,
           provider_error_message: message
         )
+
+        return TransientIssueError.new(message) if transient_provider_retryable?(error_code)
       end
+
+      nil
     end
 
     def extract_error_message(response)
@@ -106,6 +115,10 @@ module Facturador
       )
     rescue StandardError, NotImplementedError => e
       Rails.logger.warn("Facturador email enqueue skipped after issue for invoice=#{invoice.id}: #{e.message}")
+    end
+
+    def transient_provider_retryable?(error_code)
+      error_code.to_s == "FACTURADOR_ISSUE_PROVIDER_FAC119"
     end
   end
 end

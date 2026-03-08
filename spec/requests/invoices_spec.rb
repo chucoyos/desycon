@@ -136,6 +136,40 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include('XML')
       expect(response.body).to include('PDF')
     end
+
+    it 'shows retry issue button for issue-related failed invoice' do
+      service = create(:container_service)
+      invoice = create(
+        :invoice,
+        invoiceable: service,
+        status: 'failed',
+        sat_uuid: nil,
+        last_error_code: 'FACTURADOR_ISSUE_PROVIDER_FAC119',
+        last_error_message: 'FAC119: La serie del comprobante no esta disponible. Intentar mas tarde.'
+      )
+
+      get invoice_path(invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('Reintentar emisión CFDI')
+    end
+
+    it 'does not show retry issue button for non-issue failed codes' do
+      service = create(:container_service)
+      invoice = create(
+        :invoice,
+        invoiceable: service,
+        status: 'failed',
+        sat_uuid: nil,
+        last_error_code: 'FACTURADOR_CANCEL_PROVIDER_ERROR',
+        last_error_message: 'PAC/SAT no confirmó cancelación'
+      )
+
+      get invoice_path(invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include('Reintentar emisión CFDI')
+    end
   end
 
   describe 'authorization' do
