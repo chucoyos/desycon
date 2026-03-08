@@ -116,8 +116,7 @@ class EntitiesController < ApplicationController
             when "name"
               render turbo_stream: [
                 turbo_stream.replace("entity_header", partial: "entities/header", locals: { entity: @entity }),
-                turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash }),
-                turbo_stream.replace("name-modal", partial: "entities/name_modal", locals: { entity: @entity })
+                turbo_stream.replace("flash_messages", partial: "shared/flash_messages", locals: { flash: flash })
               ]
             else
               render turbo_stream: [

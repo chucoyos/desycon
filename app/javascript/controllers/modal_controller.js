@@ -14,8 +14,8 @@ export default class extends Controller {
     const modal = document.getElementById(modalId)
 
     if (modal) {
-      // For static modals (name and fiscal), reset forms
-      if (modalId === 'name-modal' || modalId === 'fiscal-modal') {
+      // For static modal (fiscal), reset forms
+      if (modalId === 'fiscal-modal') {
         const forms = modal.querySelectorAll('form')
         forms.forEach(form => {
           // Reset the form
