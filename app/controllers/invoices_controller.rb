@@ -159,7 +159,7 @@ class InvoicesController < ApplicationController
     authorize @invoice, :send_email?
 
     Facturador::SendInvoiceEmailService.call(invoice: @invoice, actor: current_user, trigger: "manual")
-    redirect_back fallback_location: invoice_path(@invoice), notice: "CFDI enviado por correo mediante PAC."
+    redirect_back fallback_location: invoice_path(@invoice), notice: "CFDI enviado por correo exitosamente."
   rescue Facturador::Error => e
     message = if pac_temporarily_unavailable_message?(e.message.to_s)
       "No fue posible enviar el correo porque PAC no está disponible temporalmente. Reintenta en unos minutos."
