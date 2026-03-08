@@ -118,5 +118,49 @@ RSpec.describe Facturador::SendInvoiceEmailService, type: :service do
         described_class.call(invoice: invoice, actor: actor, trigger: 'manual')
       }.to raise_error(Facturador::RequestError, /No se pudo enviar/)
     end
+
+    it 'refreshes provider summary before send when idResumenComprobante is missing' do
+      invoice.update!(
+        provider_response: {
+          'serie' => 'A',
+          'folio' => nil,
+          'fecha' => Time.current.iso8601,
+          'total' => 1160.0,
+          'idResumenComprobante' => nil,
+          'satTipoDeComprobante' => 'I',
+          'receptorRfc' => 'EKU9003173C9',
+          'receptorNombre' => receiver_entity.name
+        }
+      )
+
+      allow(client_double).to receive(:buscar_comprobantes).and_return(
+        {
+          'resumenComprobante' => [
+            {
+              'uuid' => invoice.sat_uuid,
+              'idResumenComprobante' => 5245,
+              'folio' => '1830',
+              'serie' => 'A',
+              'fecha' => Time.current.iso8601,
+              'total' => 1160.0,
+              'receptorRfc' => 'EKU9003173C9',
+              'receptorNombre' => receiver_entity.name,
+              'satTipoDeComprobante' => 'I'
+            }
+          ]
+        }
+      )
+      allow(client_double).to receive(:enviar_correo_cfdi).and_return(true)
+
+      described_class.call(invoice: invoice, actor: actor, trigger: 'auto_issue')
+
+      expect(client_double).to have_received(:buscar_comprobantes)
+      expect(client_double).to have_received(:enviar_correo_cfdi).with(
+        emisor_id: 208,
+        payload: hash_including(
+          'cfdi' => hash_including('idResumenComprobante' => 5245, 'folio' => '1830')
+        )
+      )
+    end
   end
 end

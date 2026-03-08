@@ -172,9 +172,13 @@ module Facturador
     def send_email_non_blocking(invoice:, trigger:)
       return unless Config.email_enabled?
 
-      Facturador::SendInvoiceEmailService.call(invoice: invoice, actor: actor, trigger: trigger)
-    rescue Facturador::Error => e
-      Rails.logger.warn("Facturador email send skipped after reconcile for invoice=#{invoice.id}: #{e.message}")
+      Facturador::SendInvoiceEmailJob.perform_later(
+        invoice_id: invoice.id,
+        trigger: trigger,
+        actor_id: actor&.id
+      )
+    rescue StandardError, NotImplementedError => e
+      Rails.logger.warn("Facturador email enqueue skipped after reconcile for invoice=#{invoice.id}: #{e.message}")
     end
   end
 end

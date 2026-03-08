@@ -26,7 +26,7 @@ module Facturador
       emisor_id = EmisorService.emisor_id!(access_token: access_token)
       client = Client.new(access_token: access_token)
 
-      payload = build_payload
+      payload = build_payload(client: client, emisor_id: emisor_id)
       invoice.invoice_events.create!(
         event_type: "email_requested",
         created_by: actor,
@@ -88,21 +88,26 @@ module Facturador
       @issuer_email ||= invoice.issuer_entity&.fiscal_address&.email.to_s.strip
     end
 
-    def build_payload
+    def build_payload(client:, emisor_id:)
       {
         "asunto" => Config.email_subject,
         "cc" => issuer_email,
         "mensaje" => Config.email_message,
         "para" => receiver_email,
         "responderA" => issuer_email,
-        "cfdi" => build_cfdi_payload
+        "cfdi" => build_cfdi_payload(client: client, emisor_id: emisor_id)
       }
     end
 
-    def build_cfdi_payload
-      provider = provider_summary
+    def build_cfdi_payload(client:, emisor_id:)
+      provider = provider_summary(client: client, emisor_id: emisor_id)
       payload = invoice.payload_snapshot.to_h
       receptor = payload.fetch("receptor", {}).to_h
+      resumen_id = provider["idResumenComprobante"].presence || provider["idcomprobante"].presence
+
+      if resumen_id.blank?
+        raise RequestError, "Resumen CFDI aun no disponible en PAC para envio de correo"
+      end
 
       {
         "seleccionado" => false,
@@ -112,13 +117,13 @@ module Facturador
         "receptorNombre" => provider["receptorNombre"].presence || receptor["nombre"].presence || invoice.receiver_entity&.name,
         "serie" => provider["serie"].presence || invoice.provider_response.to_h["serie"].presence || payload["serie"].presence,
         "folio" => provider["folio"].presence || invoice.provider_response.to_h["folio"].presence,
-        "idResumenComprobante" => provider["idResumenComprobante"],
+        "idResumenComprobante" => resumen_id,
         "receptorRfc" => provider["receptorRfc"].presence || receptor["rfc"],
         "satTipoDeComprobante" => provider["satTipoDeComprobante"].presence || payload["tipoDeComprobante"]
       }
     end
 
-    def provider_summary
+    def provider_summary(client:, emisor_id:)
       return @provider_summary if defined?(@provider_summary)
 
       response = invoice.provider_response.to_h
@@ -128,6 +133,29 @@ module Facturador
       else
         response
       end
+
+      return @provider_summary if @provider_summary["idResumenComprobante"].present? || @provider_summary["idcomprobante"].present?
+
+      @provider_summary = fetch_provider_summary(client: client, emisor_id: emisor_id) || @provider_summary
+    end
+
+    def fetch_provider_summary(client:, emisor_id:)
+      date_from = (invoice.issued_at || invoice.created_at || Time.current).to_i - 2.days.to_i
+      date_to = Time.current.to_i
+
+      response = client.buscar_comprobantes(
+        emisor_id: emisor_id,
+        finicial: date_from,
+        ffinal: date_to,
+        uuid: invoice.sat_uuid,
+        take: 10
+      )
+
+      items = response.is_a?(Hash) ? Array(response["resumenComprobante"]) : Array(response)
+      found = items.find { |item| item.is_a?(Hash) && item["uuid"].to_s.casecmp(invoice.sat_uuid.to_s).zero? }
+      found.to_h
+    rescue Facturador::Error
+      nil
     end
 
     def parse_response_message(response)
