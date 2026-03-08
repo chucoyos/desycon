@@ -1,5 +1,9 @@
 # Facturador - Implementación por etapas (reversible)
 
+## Runbooks relacionados
+
+- Checklist de variables y flags: `docs/facturador_env_flags_checklist.md`
+
 ## Objetivo de Fase 1
 Introducir la base de facturación sin alterar comportamiento operativo actual.
 
