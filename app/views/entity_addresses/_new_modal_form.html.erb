@@ -1,0 +1,75 @@
+<% entity = local_assigns.fetch(:entity) %>
+<% address = local_assigns.fetch(:address, Address.new) %>
+<% text_input_class = "block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200" %>
+<% select_input_class = "block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200" %>
+<% label_class = "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600" %>
+
+<%= form_with(model: [entity, address], method: :post, class: "space-y-5 bg-white px-6 pb-6 pt-3 sm:px-8 sm:pb-7 sm:pt-4", id: "new_address_form") do |form| %>
+  <div class="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-xs text-emerald-800">
+    Por defecto se recomienda capturar el domicilio fiscal (matriz). Campos obligatorios: <span class="font-semibold">CP y Email</span>.
+  </div>
+
+  <% if address.errors.any? %>
+    <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+      <p class="font-semibold">No se pudo guardar el domicilio.</p>
+      <p class="mt-1"><%= address.errors.full_messages.to_sentence %></p>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div>
+      <%= form.label :tipo, "Tipo", class: label_class %>
+      <%= form.select :tipo, Address::TIPOS.map { |k, v| [v, k] }, { include_blank: "Seleccionar tipo", selected: address.tipo.presence || "matriz" }, class: select_input_class %>
+    </div>
+    <div>
+      <%= form.label :email, "Email (obligatorio)", class: label_class %>
+      <%= form.email_field :email, class: text_input_class, placeholder: "Ej. facturacion@empresa.com", required: true %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="sm:col-span-2">
+      <%= form.label :calle, "Calle", class: label_class %>
+      <%= form.text_field :calle, class: text_input_class, placeholder: "Ej. Av. Insurgentes Sur" %>
+    </div>
+    <div>
+      <%= form.label :numero_exterior, "Num. Exterior", class: label_class %>
+      <%= form.text_field :numero_exterior, class: text_input_class, placeholder: "Ej. 123" %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div>
+      <%= form.label :numero_interior, "Num. Interior", class: label_class %>
+      <%= form.text_field :numero_interior, class: text_input_class, placeholder: "Ej. A" %>
+    </div>
+    <div>
+      <%= form.label :colonia, "Colonia", class: label_class %>
+      <%= form.text_field :colonia, class: text_input_class, placeholder: "Ej. Del Valle" %>
+    </div>
+    <div>
+      <%= form.label :codigo_postal, "CP (obligatorio)", class: label_class %>
+      <%= form.text_field :codigo_postal, class: text_input_class, placeholder: "Ej. 12345", required: true %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div>
+      <%= form.label :municipio, "Municipio", class: label_class %>
+      <%= form.text_field :municipio, class: text_input_class, placeholder: "Ej. Monterrey" %>
+    </div>
+    <div>
+      <%= form.label :estado, "Estado", class: label_class %>
+      <%= form.text_field :estado, class: text_input_class, placeholder: "Ej. Nuevo Leon" %>
+    </div>
+    <div>
+      <%= form.label :pais, "Pais", class: label_class %>
+      <%= form.select :pais, Address.paises_con_banderas.map { |display, code| [display, code] }, { include_blank: "Seleccionar pais" }, class: select_input_class %>
+    </div>
+  </div>
+
+  <div class="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
+    <button type="button" data-action="click->modal#close" class="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100">Cancelar</button>
+    <%= form.submit "Agregar direccion", class: "inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700" %>
+  </div>
+<% end %>

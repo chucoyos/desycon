@@ -6,6 +6,10 @@
   <%= turbo_stream.replace "flash_messages" do %>
     <%= render partial: "shared/flash_messages", locals: { flash: flash } %>
   <% end %>
+<% elsif @address.errors.any? %>
+  <%= turbo_stream.replace "new_address_form" do %>
+    <%= render "entity_addresses/new_modal_form", entity: @entity, address: @address %>
+  <% end %>
 <% else %>
   <%= turbo_stream.replace "addresses_container" do %>
     <%= render partial: "entities/addresses_section", locals: { entity: @entity } %>
