@@ -321,7 +321,7 @@
                   end %>
                   <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold <%= badge_class %>"><%= t("activerecord.attributes.invoice.statuses.#{status_for_display}", default: status_for_display.humanize) %></span>
                   <% if invoice.sat_uuid.present? %>
-                    <span class="ml-2 text-[11px] text-gray-600 font-mono"><%= invoice.sat_uuid %></span>
+                    <%= link_to invoice.sat_uuid, invoice_path(invoice), class: "ml-2 text-[11px] text-blue-700 hover:text-blue-900 underline underline-offset-2 font-mono" %>
                   <% elsif invoice.failed? && invoice.last_error_message.present? && !invoice.last_error_code.to_s.start_with?("FACTURADOR_CANCEL_") %>
                     <p class="mt-1 text-[11px] text-red-600"><%= invoice.last_error_message %></p>
                   <% end %>
