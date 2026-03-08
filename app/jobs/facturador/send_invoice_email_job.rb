@@ -2,10 +2,9 @@ module Facturador
   class SendInvoiceEmailJob < ApplicationJob
     queue_as :default
 
-    discard_on Facturador::ValidationError
-
     AUTH_ATTEMPTS = 3
     REQUEST_ATTEMPTS = 4
+    UUID_ATTEMPTS = 4
 
     def perform(invoice_id:, trigger:, actor_id: nil)
       invoice = Invoice.find(invoice_id)
@@ -16,6 +15,9 @@ module Facturador
         actor: actor,
         trigger: trigger
       )
+    rescue Facturador::ValidationError => e
+      handle_validation_error!(error: e, trigger: trigger)
+      raise
     rescue Facturador::AuthenticationError => e
       retry_if_supported!(error: e, attempts: AUTH_ATTEMPTS, wait_time: 30.seconds)
       raise
@@ -25,6 +27,18 @@ module Facturador
     end
 
     private
+
+    def handle_validation_error!(error:, trigger:)
+      return unless retryable_missing_uuid?(error: error, trigger: trigger)
+
+      retry_if_supported!(error: error, attempts: UUID_ATTEMPTS, wait_time: 20.seconds)
+    end
+
+    def retryable_missing_uuid?(error:, trigger:)
+      return false if trigger.to_s == "manual"
+
+      error.message.to_s.include?("Invoice UUID is missing")
+    end
 
     def retry_if_supported!(error:, attempts:, wait_time:)
       return unless scheduled_retry_supported?
