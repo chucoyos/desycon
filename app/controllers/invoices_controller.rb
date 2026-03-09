@@ -93,22 +93,24 @@ class InvoicesController < ApplicationController
   def cancel
     authorize @invoice, :cancel?
 
-    result = Facturador::CancelInvoiceService.call(
+    motive = "02"
+    replacement_uuid = nil
+
+    Facturador::CancelInvoiceService.validate_cancel_request!(
       invoice: @invoice,
-      motive: "02",
-      replacement_uuid: nil,
-      actor: current_user
+      motive: motive,
+      replacement_uuid: replacement_uuid
     )
 
-    case result.status
-    when "cancelled"
-      redirect_back fallback_location: containers_path, notice: "CFDI cancelado correctamente."
-    when "cancel_pending"
-      redirect_back fallback_location: containers_path, notice: "Cancelación de CFDI solicitada. La factura se mantiene emitida hasta confirmación final de SAT/PAC."
-    else
-      message = result.last_error_message.presence || "PAC/SAT rechazó o no confirmó la cancelación en este intento."
-      redirect_back fallback_location: containers_path, alert: cancel_error_alert(message, exception_flow: false)
-    end
+    Facturador::CancelInvoiceJob.perform_later(
+      invoice_id: @invoice.id,
+      motive: motive,
+      replacement_uuid: replacement_uuid,
+      actor_id: current_user.id
+    )
+
+    redirect_back fallback_location: containers_path,
+      notice: "Cancelación de CFDI en proceso. Te notificaremos cuando PAC/SAT confirme el resultado."
   rescue Facturador::Error => e
     redirect_back fallback_location: containers_path, alert: cancel_error_alert(e.message, exception_flow: true)
   end

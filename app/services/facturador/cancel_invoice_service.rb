@@ -4,6 +4,13 @@ module Facturador
       def call(invoice:, motive:, replacement_uuid: nil, actor: nil)
         new(invoice: invoice, motive: motive, replacement_uuid: replacement_uuid, actor: actor).call
       end
+
+      def validate_cancel_request!(invoice:, motive:, replacement_uuid: nil)
+        raise RequestError, "Invoice is not in a cancellable state" unless invoice.cancel_retryable?
+        raise RequestError, "Invoice UUID is missing" if invoice.sat_uuid.blank?
+        raise RequestError, "Only cancellation motive 02 is allowed" unless motive == "02"
+        raise RequestError, "Replacement UUID is not allowed for motive 02" if replacement_uuid.present?
+      end
     end
 
     def initialize(invoice:, motive:, replacement_uuid:, actor: nil)
@@ -17,10 +24,7 @@ module Facturador
       return invoice unless Config.enabled?
       return invoice unless Config.manual_actions_enabled?
 
-      raise RequestError, "Invoice is not in a cancellable state" unless invoice.cancel_retryable?
-      raise RequestError, "Invoice UUID is missing" if invoice.sat_uuid.blank?
-      raise RequestError, "Only cancellation motive 02 is allowed" unless motive == "02"
-      raise RequestError, "Replacement UUID is not allowed for motive 02" if replacement_uuid.present?
+      self.class.validate_cancel_request!(invoice: invoice, motive: motive, replacement_uuid: replacement_uuid)
 
       access_token = AccessTokenService.fetch!
       emisor_id = EmisorService.emisor_id!(access_token: access_token)

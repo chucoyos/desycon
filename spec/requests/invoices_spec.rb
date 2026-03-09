@@ -198,54 +198,29 @@ RSpec.describe 'Invoices', type: :request do
   describe 'PATCH /invoices/:id/cancel' do
     let(:invoice) { create(:invoice, status: 'issued', sat_uuid: 'UUID-CANCEL-REQ-001') }
 
-    it 'cancels invoice for admin users' do
+    it 'enqueues cancellation for admin users' do
       sign_in admin_user, scope: :user
-      invoice.update!(status: 'cancel_pending')
-      expect(Facturador::CancelInvoiceService).to receive(:call).with(
-        invoice: invoice,
+      expect(Facturador::CancelInvoiceJob).to receive(:perform_later).with(
+        invoice_id: invoice.id,
         motive: '02',
         replacement_uuid: nil,
-        actor: admin_user
-      ).and_return(invoice)
-
-      patch cancel_invoice_path(invoice)
-
-      expect(response).to redirect_to(containers_path)
-      expect(flash[:notice]).to include('Cancelación de CFDI solicitada. La factura se mantiene emitida hasta confirmación final de SAT/PAC.')
-    end
-
-    it 'shows specific alert when cancellation attempt fails but invoice remains issued' do
-      sign_in admin_user, scope: :user
-      invoice.update!(status: 'issued', last_error_message: 'PAC devolvió error 500')
-      allow(Facturador::CancelInvoiceService).to receive(:call).and_return(invoice)
-
-      patch cancel_invoice_path(invoice)
-
-      expect(response).to redirect_to(containers_path)
-      expect(flash[:alert]).to include('No se pudo cancelar el CFDI en este intento')
-    end
-
-    it 'shows alert when cancellation fails' do
-      sign_in admin_user, scope: :user
-      allow(Facturador::CancelInvoiceService).to receive(:call).and_raise(Facturador::RequestError, 'PAC timeout')
-
-      patch cancel_invoice_path(invoice)
-
-      expect(response).to redirect_to(containers_path)
-      expect(flash[:alert]).to include('Error al cancelar CFDI: PAC timeout')
-    end
-
-    it 'shows friendly alert when provider is temporarily unavailable' do
-      sign_in admin_user, scope: :user
-      allow(Facturador::CancelInvoiceService).to receive(:call).and_raise(
-        Facturador::RequestError,
-        '500: An error has occurred. | System.Net.Http.HttpRequestException'
+        actor_id: admin_user.id
       )
 
       patch cancel_invoice_path(invoice)
 
       expect(response).to redirect_to(containers_path)
-      expect(flash[:alert]).to include('PAC no está disponible temporalmente')
+      expect(flash[:notice]).to include('Cancelación de CFDI en proceso')
+    end
+
+    it 'shows alert when invoice is not cancellable before enqueuing' do
+      sign_in admin_user, scope: :user
+      invoice.update!(status: 'draft', sat_uuid: nil)
+
+      patch cancel_invoice_path(invoice)
+
+      expect(response).to redirect_to(containers_path)
+      expect(flash[:alert]).to include('Error al cancelar CFDI')
     end
 
     it 'denies customs broker users' do
