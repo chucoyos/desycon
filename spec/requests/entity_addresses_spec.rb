@@ -55,6 +55,26 @@ RSpec.describe 'EntityAddresses', type: :request do
       expect(address.email).to eq('actualizado@example.com')
     end
 
+    it 'returns turbo stream in edit context to preserve unsaved entity form fields' do
+      address = create(:address, addressable: entity, tipo: 'sucursal', calle: 'Calle Original')
+
+      patch entity_address_path(entity, address), params: {
+        context: 'edit',
+        address: {
+          calle: 'Calle Turbo',
+          pais: 'MX',
+          codigo_postal: '01010',
+          estado: 'Ciudad de Mexico',
+          email: 'turbo@example.com'
+        }
+      }, headers: { 'ACCEPT' => 'text/vnd.turbo-stream.html' }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq('text/vnd.turbo-stream.html')
+      expect(response.body).to include('turbo-stream action="replace" target="addresses_container"')
+      expect(address.reload.calle).to eq('Calle Turbo')
+    end
+
     it 'returns unprocessable_content with invalid params' do
       address = create(:address, addressable: entity, tipo: 'sucursal')
 
