@@ -5,12 +5,14 @@ class Invoice < ApplicationRecord
   STATUSES = %w[draft queued issued cancel_pending cancelled failed].freeze
   CANCELLATION_MOTIVES = %w[02].freeze
 
-  belongs_to :invoiceable, polymorphic: true
+  belongs_to :invoiceable, polymorphic: true, optional: true
   belongs_to :issuer_entity, class_name: "Entity"
   belongs_to :receiver_entity, class_name: "Entity"
+  belongs_to :customs_agent, class_name: "Entity", optional: true
 
   has_many :invoice_events, dependent: :destroy
   has_many :invoice_payments, dependent: :destroy
+  has_many :invoice_line_items, -> { order(:position, :id) }, dependent: :destroy
   has_many :payment_complements, class_name: "InvoicePayment", foreign_key: :complement_invoice_id, dependent: :nullify
   has_one_attached :xml_file
   has_one_attached :pdf_file
@@ -25,6 +27,7 @@ class Invoice < ApplicationRecord
   validates :sat_uuid, uniqueness: true, allow_blank: true
   validates :facturador_comprobante_id, uniqueness: true, allow_nil: true
   validates :cancellation_motive, inclusion: { in: CANCELLATION_MOTIVES }, allow_blank: true
+  validate :customs_agent_must_be_agency_when_present
 
   scope :recent_first, -> { order(created_at: :desc) }
   scope :issued, -> { where(status: "issued") }
@@ -136,7 +139,14 @@ class Invoice < ApplicationRecord
   def ensure_idempotency_key
     return if idempotency_key.present?
 
-    fingerprint = [ invoiceable_type, invoiceable_id, kind, total.to_s ].join(":")
+    fingerprint = [ invoiceable_type, invoiceable_id, receiver_entity_id, kind, total.to_s, Time.current.to_f ].join(":")
     self.idempotency_key = Digest::SHA256.hexdigest(fingerprint)
+  end
+
+  def customs_agent_must_be_agency_when_present
+    return if customs_agent.blank?
+    return if customs_agent.role_customs_agent?
+
+    errors.add(:customs_agent, "debe ser una agencia aduanal")
   end
 end

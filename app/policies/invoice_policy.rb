@@ -11,6 +11,18 @@ class InvoicePolicy < ApplicationPolicy
     user.present? && user.admin_or_executive?
   end
 
+  def new?
+    issue_manual?
+  end
+
+  def create?
+    issue_manual?
+  end
+
+  def retry_issue?
+    issue_manual?
+  end
+
   def cancel?
     issue_manual?
   end

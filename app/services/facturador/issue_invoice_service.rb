@@ -49,6 +49,11 @@ module Facturador
         response_payload: { error: e.message },
         provider_error_message: e.message
       )
+
+      if transient_transport_retryable?(e)
+        raise TransientIssueError, e.message
+      end
+
       raise
     end
 
@@ -119,6 +124,13 @@ module Facturador
 
     def transient_provider_retryable?(error_code)
       error_code.to_s == "FACTURADOR_ISSUE_PROVIDER_FAC119"
+    end
+
+    def transient_transport_retryable?(error)
+      return false unless error.is_a?(RequestError) || error.is_a?(AuthenticationError)
+
+      message = error.message.to_s
+      message.match?(/Temporary failure in name resolution|getaddrinfo\(3\)|Failed to open TCP connection|execution expired|timed out|timeout/i)
     end
   end
 end

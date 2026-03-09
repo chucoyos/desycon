@@ -5,6 +5,10 @@ FactoryBot.define do
     active { true }
     amount { 100.0 }
     currency { "MXN" }
+    sat_clave_prod_serv { "78101800" }
+    sat_clave_unidad { "E48" }
+    sat_objeto_imp { "02" }
+    sat_tasa_iva { 0.16 }
 
     factory :service_catalog_maniobra do
       name { "Maniobra de descarga" }

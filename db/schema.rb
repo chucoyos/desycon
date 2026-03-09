@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_08_094000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_09_001000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -292,6 +292,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_08_094000) do
     t.index ["invoice_id"], name: "index_invoice_events_on_invoice_id"
   end
 
+  create_table "invoice_line_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "description", null: false
+    t.bigint "invoice_id", null: false
+    t.integer "position", default: 0, null: false
+    t.decimal "quantity", precision: 12, scale: 3, default: "1.0", null: false
+    t.string "sat_clave_prod_serv", null: false
+    t.string "sat_clave_unidad", null: false
+    t.string "sat_objeto_imp", null: false
+    t.decimal "sat_tasa_iva", precision: 6, scale: 4, default: "0.16", null: false
+    t.bigint "service_catalog_id", null: false
+    t.decimal "subtotal", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "tax_amount", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "total", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "unit_price", precision: 12, scale: 2, default: "0.0", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id", "position"], name: "index_invoice_line_items_on_invoice_id_and_position"
+    t.index ["invoice_id"], name: "index_invoice_line_items_on_invoice_id"
+    t.index ["service_catalog_id"], name: "index_invoice_line_items_on_service_catalog_id"
+  end
+
   create_table "invoice_payments", force: :cascade do |t|
     t.decimal "amount", precision: 12, scale: 2, null: false
     t.bigint "complement_invoice_id"
@@ -315,10 +336,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_08_094000) do
     t.datetime "cancelled_at"
     t.datetime "created_at", null: false
     t.string "currency", default: "MXN", null: false
+    t.bigint "customs_agent_id"
     t.bigint "facturador_comprobante_id"
     t.string "idempotency_key", null: false
-    t.bigint "invoiceable_id", null: false
-    t.string "invoiceable_type", null: false
+    t.bigint "invoiceable_id"
+    t.string "invoiceable_type"
     t.datetime "issued_at"
     t.bigint "issuer_entity_id", null: false
     t.string "kind", default: "ingreso", null: false
@@ -334,6 +356,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_08_094000) do
     t.decimal "tax_total", precision: 12, scale: 2, default: "0.0", null: false
     t.decimal "total", precision: 12, scale: 2, default: "0.0", null: false
     t.datetime "updated_at", null: false
+    t.index ["customs_agent_id"], name: "index_invoices_on_customs_agent_id"
     t.index ["facturador_comprobante_id"], name: "index_invoices_on_facturador_comprobante_id", unique: true
     t.index ["idempotency_key"], name: "index_invoices_on_idempotency_key", unique: true
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"
@@ -509,8 +532,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_08_094000) do
   add_foreign_key "entities", "entities", column: "customs_agent_id"
   add_foreign_key "forwarders", "entities"
   add_foreign_key "invoice_events", "invoices"
+  add_foreign_key "invoice_line_items", "invoices"
+  add_foreign_key "invoice_line_items", "service_catalogs"
   add_foreign_key "invoice_payments", "invoices"
   add_foreign_key "invoice_payments", "invoices", column: "complement_invoice_id"
+  add_foreign_key "invoices", "entities", column: "customs_agent_id"
   add_foreign_key "invoices", "entities", column: "issuer_entity_id"
   add_foreign_key "invoices", "entities", column: "receiver_entity_id"
   add_foreign_key "notifications", "users", column: "actor_id"

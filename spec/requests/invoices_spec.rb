@@ -13,6 +13,7 @@ RSpec.describe 'Invoices', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('Facturas')
+      expect(response.body).to include('Nuevo CFDI')
     end
 
     it 'filters by status' do
@@ -106,6 +107,74 @@ RSpec.describe 'Invoices', type: :request do
     end
   end
 
+  describe 'GET /invoices/new' do
+    before { sign_in admin_user, scope: :user }
+
+    it 'renders new manual invoice form' do
+      create(:service_catalog)
+      create(:entity, :customs_agent)
+      create(:entity, :consolidator)
+      create(:entity, :client)
+
+      get new_invoice_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('Nuevo CFDI')
+      expect(response.body).to include('Crear y emitir CFDI')
+    end
+  end
+
+  describe 'POST /invoices' do
+    let(:receiver) { create(:entity, :client, :with_fiscal_profile, :with_address) }
+    let(:issuer) { create(:entity, :customs_agent, :with_fiscal_profile, :with_address) }
+    let(:invoice) { create(:invoice, invoiceable: nil, issuer_entity: issuer, receiver_entity: receiver, status: 'queued') }
+
+    before do
+      sign_in admin_user, scope: :user
+    end
+
+    it 'creates manual invoice and redirects to show' do
+      allow(Facturador::CreateManualInvoiceService).to receive(:call)
+        .and_return(Facturador::CreateManualInvoiceService::Result.new(invoice: invoice))
+
+      post invoices_path, params: {
+        manual_invoice: {
+          receiver_kind: 'client',
+          receiver_entity_id: receiver.id,
+          customs_agent_id: '',
+          line_items: [
+            {
+              service_catalog_id: create(:service_catalog).id,
+              description: 'Concepto manual',
+              quantity: '1',
+              unit_price: '100.00'
+            }
+          ]
+        }
+      }
+
+      expect(response).to redirect_to(invoice_path(invoice))
+      expect(flash[:notice]).to include('CFDI manual creado')
+    end
+
+    it 'renders new when service returns error' do
+      allow(Facturador::CreateManualInvoiceService).to receive(:call)
+        .and_return(Facturador::CreateManualInvoiceService::Result.new(error_message: 'Debes agregar al menos un concepto'))
+
+      post invoices_path, params: {
+        manual_invoice: {
+          receiver_kind: 'client',
+          receiver_entity_id: receiver.id,
+          customs_agent_id: '',
+          line_items: []
+        }
+      }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include('Nuevo CFDI')
+    end
+  end
+
   describe 'GET /invoices/:id' do
     before { sign_in admin_user, scope: :user }
 
@@ -146,6 +215,26 @@ RSpec.describe 'Invoices', type: :request do
         sat_uuid: nil,
         last_error_code: 'FACTURADOR_ISSUE_PROVIDER_FAC119',
         last_error_message: 'FAC119: La serie del comprobante no esta disponible. Intentar mas tarde.'
+      )
+
+      get invoice_path(invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('Reintentar emisión CFDI')
+    end
+
+    it 'shows retry issue button for failed manual invoice without invoiceable' do
+      issuer = create(:entity, :customs_agent)
+      receiver = create(:entity, :client)
+      invoice = create(
+        :invoice,
+        invoiceable: nil,
+        issuer_entity: issuer,
+        receiver_entity: receiver,
+        status: 'failed',
+        sat_uuid: nil,
+        last_error_code: 'FACTURADOR_ISSUE_NETWORK_ERROR',
+        last_error_message: 'Failed to open TCP connection'
       )
 
       get invoice_path(invoice)
@@ -228,6 +317,38 @@ RSpec.describe 'Invoices', type: :request do
       sign_in broker_user, scope: :user
 
       patch cancel_invoice_path(invoice)
+
+      expect(response).to redirect_to(customs_agents_dashboard_path)
+      expect(flash[:alert]).to be_present
+    end
+  end
+
+  describe 'POST /invoices/:id/retry_issue' do
+    let(:invoice) do
+      create(
+        :invoice,
+        status: 'failed',
+        sat_uuid: nil,
+        last_error_code: 'FACTURADOR_ISSUE_NETWORK_ERROR',
+        last_error_message: 'Temporary failure in name resolution'
+      )
+    end
+
+    it 'requeues failed issue invoice for admin users' do
+      sign_in admin_user, scope: :user
+      expect_any_instance_of(Invoice).to receive(:queue_issue!).with(actor: admin_user).and_return(true)
+
+      post retry_issue_invoice_path(invoice)
+
+      expect(response).to redirect_to(invoice_path(invoice))
+      expect(flash[:notice]).to include('Reintento de emisión CFDI encolado')
+    end
+
+    it 'denies customs broker users' do
+      broker_user = create(:user, :customs_broker)
+      sign_in broker_user, scope: :user
+
+      post retry_issue_invoice_path(invoice)
 
       expect(response).to redirect_to(customs_agents_dashboard_path)
       expect(flash[:alert]).to be_present

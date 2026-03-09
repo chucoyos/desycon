@@ -34,6 +34,12 @@ module Facturador
         value.present? ? value.to_i : nil
       end
 
+      def issuer_entity
+        return nil if issuer_entity_id.blank?
+
+        Entity.find_by(id: issuer_entity_id)
+      end
+
       def auth_base_url
         env_value(:auth_base_url, "https://authcli.stagefacturador.com")
       end

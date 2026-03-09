@@ -13,10 +13,12 @@ module Facturador
     def build
       return build_payment_complement_payload if invoice.kind == "pago"
 
+      conceptos = conceptos_payload
+
       payload = {
         emisor: emisor_payload,
         receptor: receptor_payload,
-        conceptos: [ concepto_payload ],
+        conceptos: conceptos,
         version: "4.0",
         fecha: Time.current.strftime("%Y-%m-%dT%H:%M:%S"),
         formaPago: receiver_fiscal_profile.forma_pago.presence || "99",
@@ -100,6 +102,10 @@ module Facturador
       invoice.invoiceable.service_catalog
     end
 
+    def manual?
+      invoice.invoice_line_items.any?
+    end
+
     def emisor_payload
       {
         rfc: emisor_fiscal_profile.rfc,
@@ -145,15 +151,77 @@ module Facturador
       concept
     end
 
+    def conceptos_payload
+      return [ concepto_payload ] unless manual?
+
+      invoice.invoice_line_items.map { |item| concepto_from_line_item(item) }
+    end
+
+    def concepto_from_line_item(item)
+      concept = {
+        claveProdServ: item.sat_clave_prod_serv,
+        cantidad: item.quantity.to_f,
+        claveUnidad: item.sat_clave_unidad,
+        descripcion: item.description,
+        valorUnitario: item.unit_price.to_f,
+        importe: item.subtotal.to_f,
+        objetoImp: item.sat_objeto_imp
+      }
+
+      if line_item_requires_tax_breakdown?(item)
+        concept[:impuestos] = {
+          traslados: [
+            {
+              base: item.subtotal.to_f,
+              impuesto: "002",
+              tipoFactor: "Tasa",
+              tasaOCuota: format("%.6f", item.sat_tasa_iva.to_f),
+              importe: item.tax_amount.to_f
+            }
+          ]
+        }
+      end
+
+      concept
+    end
+
     def requires_tax_breakdown?
-      service_catalog.sat_objeto_imp == "02" && invoice.tax_total.to_d.positive?
+      if manual?
+        invoice.invoice_line_items.any? { |item| line_item_requires_tax_breakdown?(item) }
+      else
+        service_catalog.sat_objeto_imp == "02" && invoice.tax_total.to_d.positive?
+      end
     end
 
     def impuestos_payload
+      return manual_impuestos_payload if manual?
+
       {
         totalImpuestosTrasladados: invoice.tax_total.to_f,
         traslados: [ traslado_payload ]
       }
+    end
+
+    def manual_impuestos_payload
+      taxable_items = invoice.invoice_line_items.select { |item| line_item_requires_tax_breakdown?(item) }
+      grouped = taxable_items.group_by { |item| item.sat_tasa_iva.to_d }
+
+      {
+        totalImpuestosTrasladados: taxable_items.sum { |item| item.tax_amount.to_d }.to_f,
+        traslados: grouped.map do |rate, items|
+          {
+            base: items.sum { |item| item.subtotal.to_d }.to_f,
+            impuesto: "002",
+            tipoFactor: "Tasa",
+            tasaOCuota: format("%.6f", rate.to_f),
+            importe: items.sum { |item| item.tax_amount.to_d }.to_f
+          }
+        end
+      }
+    end
+
+    def line_item_requires_tax_breakdown?(item)
+      item.sat_objeto_imp.to_s == "02" && item.tax_amount.to_d.positive?
     end
 
     def concepto_impuestos_payload

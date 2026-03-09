@@ -1,6 +1,7 @@
 class InvoicesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_invoice, only: %i[show cancel sync_documents register_payment send_email]
+  before_action :set_invoice, only: %i[show retry_issue cancel sync_documents register_payment send_email]
+  before_action :load_manual_invoice_options, only: %i[new create]
   after_action :verify_authorized
 
   def index
@@ -71,6 +72,31 @@ class InvoicesController < ApplicationController
     @invoice_payments = @invoice.invoice_payments.includes(:complement_invoice).order(paid_at: :desc)
   end
 
+  def new
+    authorize Invoice, :new?
+
+    @selected_receiver_kind = params[:receiver_kind].to_s.presence || "client"
+  end
+
+  def create
+    authorize Invoice, :create?
+
+    result = Facturador::CreateManualInvoiceService.call(
+      actor: current_user,
+      receiver_entity_id: manual_invoice_params[:receiver_entity_id],
+      customs_agent_id: manual_invoice_params[:customs_agent_id],
+      line_items_params: manual_line_items_params
+    )
+
+    if result.success?
+      redirect_to invoice_path(result.invoice), notice: "CFDI manual creado y en proceso de emisión."
+    else
+      @selected_receiver_kind = manual_invoice_params[:receiver_kind].to_s.presence || "client"
+      flash.now[:alert] = result.error_message
+      render :new, status: :unprocessable_content
+    end
+  end
+
   def issue_manual
     authorize Invoice, :issue_manual?
 
@@ -88,6 +114,24 @@ class InvoicesController < ApplicationController
     end
   rescue Facturador::Error => e
     redirect_back fallback_location: containers_path, alert: "Error al emitir CFDI: #{e.message}"
+  end
+
+  def retry_issue
+    authorize @invoice, :retry_issue?
+
+    unless @invoice.failed? && @invoice.last_error_code.to_s.start_with?("FACTURADOR_ISSUE_")
+      return redirect_back fallback_location: invoice_path(@invoice), alert: "La factura no está en un estado reintentable de emisión."
+    end
+
+    enqueued = @invoice.queue_issue!(actor: current_user)
+
+    if enqueued
+      redirect_back fallback_location: invoice_path(@invoice), notice: "Reintento de emisión CFDI encolado correctamente."
+    else
+      redirect_back fallback_location: invoice_path(@invoice), alert: "No fue posible encolar el reintento de emisión CFDI."
+    end
+  rescue Facturador::Error => e
+    redirect_back fallback_location: invoice_path(@invoice), alert: "Error al reintentar emisión CFDI: #{e.message}"
   end
 
   def cancel
@@ -197,6 +241,45 @@ class InvoicesController < ApplicationController
 
   def payment_params
     params.require(:payment).permit(:amount, :paid_at, :payment_method, :reference, :notes)
+  end
+
+  def manual_invoice_params
+    params.require(:manual_invoice).permit(:receiver_kind, :receiver_entity_id, :customs_agent_id)
+  end
+
+  def manual_line_items_params
+    raw_line_items = params.dig(:manual_invoice, :line_items)
+
+    normalized_items = case raw_line_items
+    when ActionController::Parameters
+      raw_line_items.values
+    when Array
+      raw_line_items
+    else
+      []
+    end
+
+    normalized_items.filter_map do |line|
+      if line.is_a?(ActionController::Parameters)
+        line_params = line
+      elsif line.respond_to?(:to_h)
+        line_params = ActionController::Parameters.new(line.to_h)
+      else
+        next
+      end
+
+      permitted = line_params.permit(:service_catalog_id, :description, :quantity, :unit_price)
+      next if permitted.values.all?(&:blank?)
+
+      permitted
+    end
+  end
+
+  def load_manual_invoice_options
+    @receiver_clients = Entity.clients.order(:name)
+    @receiver_consolidators = Entity.consolidators.order(:name)
+    @customs_agents_for_manual = Entity.customs_agents.order(:name)
+    @service_catalogs_for_manual = ServiceCatalog.active.order(:name)
   end
 
   def resolved_start_date

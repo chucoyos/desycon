@@ -30,7 +30,7 @@ Rails.application.routes.draw do
 
   resources :photos, only: [ :destroy ]
 
-  resources :invoices, only: [ :index, :show ] do
+  resources :invoices, only: [ :index, :show, :new, :create ] do
     collection do
       post :issue_manual
     end
@@ -38,6 +38,7 @@ Rails.application.routes.draw do
     resources :invoice_payments, only: [ :show, :edit, :update, :destroy ]
 
     member do
+      post :retry_issue
       patch :cancel
       post :sync_documents
       post :register_payment

@@ -90,17 +90,33 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('issue_failed')
     end
 
-    it 'marks invoice as failed and re-raises when request error happens' do
-      allow(client_double).to receive(:emitir_comprobante).and_raise(Facturador::RequestError, 'timeout')
+    it 'marks invoice as failed and re-raises when non-transient request error happens' do
+      allow(client_double).to receive(:emitir_comprobante).and_raise(Facturador::RequestError, 'Error de validacion remota')
 
       expect {
         described_class.call(invoice_id: invoice.id)
-      }.to raise_error(Facturador::RequestError, 'timeout')
+      }.to raise_error(Facturador::RequestError, 'Error de validacion remota')
 
       invoice.reload
       expect(invoice.status).to eq('failed')
-      expect(invoice.last_error_code).to eq('FACTURADOR_ISSUE_TIMEOUT_ERROR')
-      expect(invoice.last_error_message).to eq('timeout')
+      expect(invoice.last_error_code).to eq('FACTURADOR_ISSUE_ERROR')
+      expect(invoice.last_error_message).to eq('Error de validacion remota')
+      expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('issue_failed')
+    end
+
+    it 'raises transient issue error for DNS/network transport errors so job can retry' do
+      allow(client_double).to receive(:emitir_comprobante).and_raise(
+        Facturador::RequestError,
+        'Failed to open TCP connection to authcli.stagefacturador.com:443 (getaddrinfo(3): Temporary failure in name resolution)'
+      )
+
+      expect {
+        described_class.call(invoice_id: invoice.id)
+      }.to raise_error(Facturador::TransientIssueError, /Temporary failure in name resolution/)
+
+      invoice.reload
+      expect(invoice.status).to eq('failed')
+      expect(invoice.last_error_code).to eq('FACTURADOR_ISSUE_NETWORK_ERROR')
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('issue_failed')
     end
   end
