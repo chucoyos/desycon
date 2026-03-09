@@ -1,4 +1,6 @@
 <% content_for :title, "Nuevo CFDI" %>
+<% manual_form_values = @manual_form_values || {} %>
+<% manual_line_items_prefill = @manual_line_items_prefill || [] %>
 
 <div class="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
   <div class="mb-6">
@@ -23,7 +25,7 @@
         <div>
           <%= f.label :customs_agent_id, "Agencia aduanal (opcional)", class: "block text-xs font-medium text-gray-600 mb-1" %>
           <%= f.select :customs_agent_id,
-            options_for_select([["Sin agencia", ""]] + @customs_agents_for_manual.map { |agent| [agent.name, agent.id] }),
+            options_for_select([["Sin agencia", ""]] + @customs_agents_for_manual.map { |agent| [agent.name, agent.id] }, manual_form_values["customs_agent_id"]),
             {},
             class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg",
             id: "manual_customs_agent_id" %>
@@ -31,13 +33,14 @@
 
         <div>
           <%= f.label :receiver_entity_id, "Receptor", class: "block text-xs font-medium text-gray-600 mb-1" %>
+          <% receiver_options =
+            @receiver_clients.map { |entity| [entity.name, entity.id, { "data-kind": "client", "data-customs-agent-id": entity.customs_agent_id }] } +
+            @receiver_consolidators.map { |entity| [entity.name, entity.id, { "data-kind": "consolidator", "data-customs-agent-id": "" }] } %>
           <%= f.select :receiver_entity_id,
-            options_for_select(
-              @receiver_clients.map { |entity| [entity.name, entity.id, { "data-kind": "client", "data-customs-agent-id": entity.customs_agent_id }] } +
-              @receiver_consolidators.map { |entity| [entity.name, entity.id, { "data-kind": "consolidator", "data-customs-agent-id": "" }] }
-            ),
+            options_for_select(receiver_options, manual_form_values["receiver_entity_id"]),
             { include_blank: "Seleccionar receptor" },
             class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg",
+            required: true,
             id: "manual_receiver_entity_id" %>
         </div>
       </div>
@@ -88,14 +91,35 @@
     </div>
 
     <div class="flex items-center gap-3">
-      <%= f.submit "Crear y emitir CFDI", class: "px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold" %>
+      <%= f.submit "Generar CFDI",
+        id: "manual-cfdi-submit",
+        data: { loading_text: "Generando CFDI..." },
+        class: "px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold inline-flex items-center gap-2" %>
       <%= link_to "Cancelar", invoices_path, class: "px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium" %>
     </div>
   <% end %>
 </div>
 
+<div id="manual-cfdi-processing-overlay" class="hidden fixed inset-0 z-[100] bg-slate-950/55 backdrop-blur-[1px]">
+  <div class="h-full w-full flex items-center justify-center px-4">
+    <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+      <div class="flex items-center gap-3">
+        <svg class="w-6 h-6 text-indigo-600 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+        <div>
+          <p class="text-sm font-semibold text-slate-900">Estamos generando tu CFDI</p>
+          <p class="text-xs text-slate-600 mt-1">No cierres esta ventana, estamos procesando tu solicitud.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   (function() {
+    const initManualCfdiForm = () => {
     const form = document.getElementById('manual-cfdi-form');
     if (!form || form.dataset.manualCfdiReady === 'true') return;
     form.dataset.manualCfdiReady = 'true';
@@ -107,6 +131,36 @@
     const lineItems = document.getElementById('manual-line-items');
     const addButton = document.getElementById('add-manual-line-item');
     const template = document.getElementById('manual-line-item-template');
+    const submitButton = document.getElementById('manual-cfdi-submit');
+    const overlay = document.getElementById('manual-cfdi-processing-overlay');
+    const prefilledLineItems = <%= raw(manual_line_items_prefill.to_json) %>;
+
+    const enterSubmittingState = () => {
+      if (overlay) overlay.classList.remove('hidden');
+      form.setAttribute('aria-busy', 'true');
+
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.classList.add('opacity-75', 'cursor-not-allowed');
+        submitButton.innerHTML = `
+          <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+          ${submitButton.dataset.loadingText || 'Procesando...'}
+        `;
+      }
+    };
+
+    const leaveSubmittingState = () => {
+      if (overlay) overlay.classList.add('hidden');
+      form.removeAttribute('aria-busy');
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.classList.remove('opacity-75', 'cursor-not-allowed');
+        submitButton.textContent = 'Generar CFDI';
+      }
+    };
 
     const filterReceivers = () => {
       const selectedKind = receiverKind.value;
@@ -141,10 +195,14 @@
 
       select.addEventListener('change', () => {
         const selected = select.selectedOptions[0];
-        if (!selected || !selected.value) return;
+        if (!selected || !selected.value) {
+          description.value = '';
+          price.value = '0';
+          return;
+        }
 
-        if (!description.value) description.value = selected.dataset.name || '';
-        if (Number(price.value) === 0) price.value = selected.dataset.price || '0';
+        description.value = selected.dataset.name || '';
+        price.value = selected.dataset.price || '0';
       });
 
       removeBtn.addEventListener('click', () => {
@@ -152,10 +210,21 @@
       });
     };
 
-    const addLineItem = () => {
+    const addLineItem = (prefill = {}) => {
       const fragment = template.content.cloneNode(true);
       const lineItem = fragment.querySelector('.manual-line-item');
       attachLineItemEvents(lineItem);
+
+      const select = lineItem.querySelector('.service-catalog-select');
+      const qty = lineItem.querySelector('.line-qty');
+      const price = lineItem.querySelector('.line-price');
+      const description = lineItem.querySelector('.line-description');
+
+      if (prefill.service_catalog_id) select.value = String(prefill.service_catalog_id);
+      if (prefill.quantity) qty.value = String(prefill.quantity);
+      if (prefill.unit_price) price.value = String(prefill.unit_price);
+      if (prefill.description) description.value = String(prefill.description);
+
       lineItems.appendChild(fragment);
     };
 
@@ -163,7 +232,23 @@
     customsAgent.addEventListener('change', filterReceivers);
     addButton.addEventListener('click', addLineItem);
 
-    addLineItem();
+    form.addEventListener('submit', enterSubmittingState);
+    form.addEventListener('turbo:submit-start', enterSubmittingState);
+    form.addEventListener('turbo:submit-end', (event) => {
+      if (event.detail && event.detail.success) return;
+      leaveSubmittingState();
+    });
+
+    if (Array.isArray(prefilledLineItems) && prefilledLineItems.length > 0) {
+      prefilledLineItems.forEach((item) => addLineItem(item));
+    } else {
+      addLineItem();
+    }
     filterReceivers();
+
+    };
+
+    document.addEventListener('turbo:load', initManualCfdiForm);
+    initManualCfdiForm();
   })();
 </script>

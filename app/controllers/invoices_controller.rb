@@ -76,6 +76,12 @@ class InvoicesController < ApplicationController
     authorize Invoice, :new?
 
     @selected_receiver_kind = params[:receiver_kind].to_s.presence || "client"
+    @manual_form_values = {
+      "receiver_kind" => @selected_receiver_kind,
+      "customs_agent_id" => "",
+      "receiver_entity_id" => ""
+    }
+    @manual_line_items_prefill = []
   end
 
   def create
@@ -89,9 +95,11 @@ class InvoicesController < ApplicationController
     )
 
     if result.success?
-      redirect_to invoice_path(result.invoice), notice: "CFDI manual creado y en proceso de emisión."
+      redirect_to invoice_path(result.invoice, from_manual_create: 1), notice: "CFDI manual creado y en proceso de emisión."
     else
       @selected_receiver_kind = manual_invoice_params[:receiver_kind].to_s.presence || "client"
+      @manual_form_values = manual_invoice_params.to_h
+      @manual_line_items_prefill = manual_line_items_params.map(&:to_h)
       flash.now[:alert] = result.error_message
       render :new, status: :unprocessable_content
     end

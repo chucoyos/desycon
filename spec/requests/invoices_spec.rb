@@ -120,7 +120,7 @@ RSpec.describe 'Invoices', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('Nuevo CFDI')
-      expect(response.body).to include('Crear y emitir CFDI')
+      expect(response.body).to include('Generar CFDI')
     end
   end
 
@@ -153,7 +153,7 @@ RSpec.describe 'Invoices', type: :request do
         }
       }
 
-      expect(response).to redirect_to(invoice_path(invoice))
+      expect(response).to redirect_to(invoice_path(invoice, from_manual_create: 1))
       expect(flash[:notice]).to include('CFDI manual creado')
     end
 
@@ -221,6 +221,26 @@ RSpec.describe 'Invoices', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('Reintentar emisión CFDI')
+    end
+
+    it 'shows processing banner for queued invoices' do
+      invoice = create(:invoice, status: 'queued', sat_uuid: nil)
+
+      get invoice_path(invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('Estamos emitiendo tu CFDI')
+      expect(response.body).to include('se actualizará automáticamente')
+    end
+
+    it 'shows post-create processing banner when returning from manual create flow' do
+      invoice = create(:invoice, status: 'failed', sat_uuid: nil, last_error_code: 'FACTURADOR_ISSUE_NETWORK_ERROR')
+
+      get invoice_path(invoice, from_manual_create: 1)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('Tu solicitud de emisión fue procesada')
+      expect(response.body).to include('Estado actual')
     end
 
     it 'shows retry issue button for failed manual invoice without invoiceable' do
