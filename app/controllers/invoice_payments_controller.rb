@@ -7,6 +7,10 @@ class InvoicePaymentsController < ApplicationController
 
   def show
     authorize @payment
+
+    @payment_evidences = @payment.invoice_payment_evidences
+      .includes(:submitted_by, :customs_agent, :receipt_file_attachment)
+      .order(created_at: :desc)
   end
 
   def edit
@@ -42,7 +46,7 @@ class InvoicePaymentsController < ApplicationController
   end
 
   def payment_params
-    params.require(:invoice_payment).permit(:amount, :paid_at, :payment_method, :reference, :notes)
+    params.require(:invoice_payment).permit(:amount, :paid_at, :payment_method, :reference, :tracking_key, :notes, :receipt_file)
   end
 
   def ensure_manageable_payment!

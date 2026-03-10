@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_09_001000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_10_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -313,6 +313,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_001000) do
     t.index ["service_catalog_id"], name: "index_invoice_line_items_on_service_catalog_id"
   end
 
+  create_table "invoice_payment_evidences", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "customs_agent_id", null: false
+    t.bigint "invoice_id", null: false
+    t.bigint "invoice_payment_id"
+    t.string "reference", null: false
+    t.text "review_comment"
+    t.string "status", default: "pending", null: false
+    t.bigint "submitted_by_id", null: false
+    t.string "tracking_key"
+    t.datetime "updated_at", null: false
+    t.index ["customs_agent_id"], name: "index_invoice_payment_evidences_on_customs_agent_id"
+    t.index ["invoice_id"], name: "index_invoice_payment_evidences_on_invoice_id"
+    t.index ["invoice_payment_id"], name: "index_invoice_payment_evidences_on_invoice_payment_id"
+    t.index ["status"], name: "index_invoice_payment_evidences_on_status"
+    t.index ["submitted_by_id"], name: "index_invoice_payment_evidences_on_submitted_by_id"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'linked'::character varying, 'rejected'::character varying]::text[])", name: "check_invoice_payment_evidences_status"
+  end
+
   create_table "invoice_payments", force: :cascade do |t|
     t.decimal "amount", precision: 12, scale: 2, null: false
     t.bigint "complement_invoice_id"
@@ -324,10 +343,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_001000) do
     t.string "payment_method", default: "03", null: false
     t.string "reference"
     t.string "status", default: "registered", null: false
+    t.string "tracking_key"
     t.datetime "updated_at", null: false
     t.index ["complement_invoice_id"], name: "index_invoice_payments_on_complement_invoice_id"
     t.index ["invoice_id"], name: "index_invoice_payments_on_invoice_id"
     t.index ["status"], name: "index_invoice_payments_on_status"
+    t.index ["tracking_key"], name: "index_invoice_payments_on_tracking_key"
     t.check_constraint "status::text = ANY (ARRAY['registered'::character varying, 'complement_queued'::character varying, 'complement_issued'::character varying, 'failed'::character varying]::text[])", name: "check_invoice_payments_status"
   end
 
@@ -534,6 +555,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_001000) do
   add_foreign_key "invoice_events", "invoices"
   add_foreign_key "invoice_line_items", "invoices"
   add_foreign_key "invoice_line_items", "service_catalogs"
+  add_foreign_key "invoice_payment_evidences", "entities", column: "customs_agent_id"
+  add_foreign_key "invoice_payment_evidences", "invoice_payments"
+  add_foreign_key "invoice_payment_evidences", "invoices"
+  add_foreign_key "invoice_payment_evidences", "users", column: "submitted_by_id"
   add_foreign_key "invoice_payments", "invoices"
   add_foreign_key "invoice_payments", "invoices", column: "complement_invoice_id"
   add_foreign_key "invoices", "entities", column: "customs_agent_id"

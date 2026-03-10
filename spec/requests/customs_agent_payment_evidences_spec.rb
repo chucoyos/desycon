@@ -1,0 +1,64 @@
+require "rails_helper"
+
+RSpec.describe "CustomsAgentPaymentEvidences", type: :request do
+  let(:customs_user) { create(:user, :customs_broker) }
+  let(:customs_agent) { customs_user.entity }
+  let(:client_entity) { create(:entity, :client, customs_agent: customs_agent) }
+  let(:invoice) { create(:invoice, status: "issued", receiver_entity: client_entity) }
+  let(:admin_user) { create(:user, :admin) }
+
+  before do
+    admin_user
+  end
+
+  def uploaded_receipt
+    file = Tempfile.new([ "receipt", ".pdf" ])
+    file.write("%PDF-1.4 fake test receipt")
+    file.rewind
+    Rack::Test::UploadedFile.new(file.path, "application/pdf")
+  end
+
+  it "creates payment evidence without creating invoice payment" do
+    sign_in customs_user, scope: :user
+
+    expect do
+      post customs_agents_payment_evidences_path, params: {
+        payment_evidence: {
+          invoice_id: invoice.id,
+          reference: "BLH-10001",
+          tracking_key: "TRACK-10001",
+          receipt_file: uploaded_receipt
+        }
+      }
+    end.to change(InvoicePaymentEvidence, :count).by(1)
+      .and change(InvoicePayment, :count).by(0)
+
+    expect(response).to redirect_to(customs_agents_dashboard_path)
+    expect(flash[:notice]).to include("Comprobante enviado")
+
+    evidence = InvoicePaymentEvidence.order(:id).last
+    expect(evidence.invoice_id).to eq(invoice.id)
+    expect(evidence.reference).to eq("BLH-10001")
+    expect(evidence.status).to eq("pending")
+    expect(evidence.receipt_file).to be_attached
+  end
+
+  it "rejects invoice outside customs agent scope" do
+    sign_in customs_user, scope: :user
+    outsider_client = create(:entity, :client)
+    outsider_invoice = create(:invoice, status: "issued", receiver_entity: outsider_client)
+
+    expect do
+      post customs_agents_payment_evidences_path, params: {
+        payment_evidence: {
+          invoice_id: outsider_invoice.id,
+          reference: "BLH-OUTSIDE",
+          receipt_file: uploaded_receipt
+        }
+      }
+    end.not_to change(InvoicePaymentEvidence, :count)
+
+    expect(response).to redirect_to(customs_agents_dashboard_path)
+    expect(flash[:alert]).to include("Factura no valida")
+  end
+end

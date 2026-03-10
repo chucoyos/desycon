@@ -15,6 +15,28 @@ RSpec.describe 'InvoicePayments', type: :request do
       expect(response.body).to include("Pago ##{payment.id}")
       expect(response.body).to include(payment.reference)
     end
+
+    it 'shows agency evidence details when payment has linked evidence' do
+      customs_user = create(:user, :customs_broker)
+      evidence = create(
+        :invoice_payment_evidence,
+        invoice: invoice,
+        invoice_payment: payment,
+        customs_agent: customs_user.entity,
+        submitted_by: customs_user,
+        reference: 'BLH-EVID-001',
+        tracking_key: 'TRACK-EVID-001'
+      )
+
+      get invoice_invoice_payment_path(invoice, payment)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('Evidencia enviada por agencia')
+      expect(response.body).to include(evidence.reference)
+      expect(response.body).to include(evidence.tracking_key)
+      expect(response.body).to include('Ver comprobante')
+      expect(response.body).to include('Descargar comprobante')
+    end
   end
 
   describe 'GET /invoices/:invoice_id/invoice_payments/:id/edit' do
@@ -48,6 +70,23 @@ RSpec.describe 'InvoicePayments', type: :request do
       expect(response).to redirect_to(invoice_path(invoice, anchor: 'payments-section'))
       expect(payment.reload.amount.to_f).to eq(650.25)
       expect(payment.reference).to eq('REF-UPDATED')
+    end
+
+    it 'updates tracking key and attaches receipt file' do
+      receipt = Tempfile.new([ 'payment-edit-receipt', '.pdf' ])
+      receipt.write('%PDF-1.4 edited receipt')
+      receipt.rewind
+
+      patch invoice_invoice_payment_path(invoice, payment), params: {
+        invoice_payment: {
+          tracking_key: 'TRACK-EDIT-001',
+          receipt_file: Rack::Test::UploadedFile.new(receipt.path, 'application/pdf')
+        }
+      }
+
+      expect(response).to redirect_to(invoice_path(invoice, anchor: 'payments-section'))
+      expect(payment.reload.tracking_key).to eq('TRACK-EDIT-001')
+      expect(payment.receipt_file).to be_attached
     end
   end
 

@@ -3,6 +3,8 @@ class InvoicePayment < ApplicationRecord
 
   belongs_to :invoice
   belongs_to :complement_invoice, class_name: "Invoice", optional: true
+  has_many :invoice_payment_evidences, dependent: :nullify
+  has_one_attached :receipt_file
 
   validates :amount, numericality: { greater_than: 0 }
   validates :currency, inclusion: { in: [ "MXN" ] }
@@ -10,6 +12,7 @@ class InvoicePayment < ApplicationRecord
   validates :payment_method, inclusion: { in: FiscalProfile::FORMAS_PAGO.keys }
   validates :status, inclusion: { in: STATUSES }
   validates :reference, length: { maximum: 120 }, allow_blank: true
+  validates :tracking_key, length: { maximum: 120 }, allow_blank: true
   validates :notes, length: { maximum: 1000 }, allow_blank: true
   validate :cumulative_amount_within_invoice_total
 

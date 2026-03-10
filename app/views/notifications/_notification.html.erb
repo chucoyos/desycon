@@ -173,6 +173,22 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
           <% end %>
+        <% elsif notification.notifiable_type == "InvoicePaymentEvidence" %>
+          <% evidence = notification.notifiable %>
+          <% evidence_target_path = notification.recipient&.admin_or_executive? ? admin_invoice_payment_evidence_path(evidence) : invoice_path(evidence.invoice) %>
+          <%= link_to evidence_target_path, class: "group/item flex items-center justify-between" do %>
+            <div class="flex items-center gap-3">
+              <svg class="h-5 w-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
+              </svg>
+              <span class="text-sm font-semibold text-slate-700 group-hover/item:text-blue-600 transition-colors">
+                Evidencia de pago factura #<%= evidence.invoice_id %>
+              </span>
+            </div>
+            <svg class="h-4 w-4 text-slate-300 group-hover/item:text-blue-500 group-hover/item:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          <% end %>
         <% else %>
           <%= link_to notification.notifiable, class: "group/item flex items-center justify-between" do %>
             <div class="flex items-center gap-3">

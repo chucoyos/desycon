@@ -196,7 +196,9 @@ class InvoicesController < ApplicationController
       paid_at: payment_params[:paid_at],
       payment_method: payment_params[:payment_method],
       reference: payment_params[:reference],
+      tracking_key: payment_params[:tracking_key],
       notes: payment_params[:notes],
+      receipt_file: payment_params[:receipt_file],
       actor: current_user
     )
 
@@ -248,7 +250,7 @@ class InvoicesController < ApplicationController
   end
 
   def payment_params
-    params.require(:payment).permit(:amount, :paid_at, :payment_method, :reference, :notes)
+    params.require(:payment).permit(:amount, :paid_at, :payment_method, :reference, :tracking_key, :notes, :receipt_file)
   end
 
   def manual_invoice_params

@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   get "customs_agents/dashboard"
+  post "customs_agents/payment_evidences", to: "customs_agent_payment_evidences#create", as: :customs_agents_payment_evidences
   get "customs_agents/revalidations", to: "customs_agents#revalidation_modal", as: :customs_agents_revalidation
   patch "customs_agents/revalidations/:id", to: "customs_agents#revalidation_update", as: :customs_agents_revalidation_update
 
@@ -58,6 +59,13 @@ Rails.application.routes.draw do
 
   namespace :admin do
     resources :users
+    resources :invoice_payment_evidences, only: [ :index, :show ] do
+      member do
+        patch :link_payment
+        patch :reject
+        post :register_payment
+      end
+    end
   end
 
   resources :entities do

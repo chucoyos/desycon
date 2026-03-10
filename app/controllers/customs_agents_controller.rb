@@ -69,6 +69,14 @@ class CustomsAgentsController < ApplicationController
     @pending_assignments = base_scope.where.not(status: [ :finalizado, :revalidado ]).count
     @completed_assignments = base_scope.where(status: [ :finalizado, :revalidado ]).count
     @problem_assignments = base_scope.where(status: [ :instrucciones_pendientes, :pendiente_pagos_locales ]).count
+
+    @agency_invoices_for_payment_evidence = Invoice
+      .joins(:receiver_entity)
+      .where(entities: { customs_agent_id: current_user.entity_id })
+      .where(status: %w[issued cancel_pending])
+      .includes(:receiver_entity)
+      .order(created_at: :desc)
+      .limit(100)
   end
 
   def revalidation_modal

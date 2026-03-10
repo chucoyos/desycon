@@ -25,22 +25,22 @@ RSpec.describe Facturador::RegisterInvoicePaymentService, type: :service do
       expect(Facturador::IssuePaymentComplementService).to have_received(:call).with(payment: payment, actor: nil)
     end
 
-    it 'rejects payment registration when invoice metodoPago is PUE' do
+    it 'registers payment when invoice metodoPago is PUE without triggering complement service' do
       invoice.update!(payload_snapshot: { metodoPago: 'PUE' })
 
-      expect do
-        described_class.call(
-          invoice: invoice,
-          amount: 100,
-          paid_at: Time.current,
-          payment_method: '03',
-          reference: nil,
-          notes: nil,
-          actor: nil
-        )
-      end.to raise_error(Facturador::RequestError, /REP solo aplica para PPD/)
+      payment = described_class.call(
+        invoice: invoice,
+        amount: 100,
+        paid_at: Time.current,
+        payment_method: '03',
+        reference: nil,
+        notes: nil,
+        actor: nil
+      )
 
-      expect(invoice.invoice_payments.count).to eq(0)
+      expect(payment).to be_persisted
+      expect(payment.invoice).to eq(invoice)
+      expect(invoice.invoice_payments.count).to eq(1)
       expect(Facturador::IssuePaymentComplementService).not_to have_received(:call)
     end
 

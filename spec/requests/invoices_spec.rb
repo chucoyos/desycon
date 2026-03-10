@@ -206,7 +206,7 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include('PDF')
     end
 
-    it 'hides payment registration form for PUE invoices' do
+    it 'keeps payment registration form available for PUE invoices' do
       invoice = create(
         :invoice,
         status: 'issued',
@@ -217,9 +217,9 @@ RSpec.describe 'Invoices', type: :request do
       get invoice_path(invoice)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include('Registro de pago no disponible')
-      expect(response.body).to include('REP solo aplica para PPD')
-      expect(response.body).not_to include('Registrar pago')
+      expect(response.body).to include('Registrar nuevo pago')
+      expect(response.body).to include('Se registrará el pago sin emitir REP')
+      expect(response.body).to include('Registrar pago')
     end
 
     it 'shows retry issue button for issue-related failed invoice' do
@@ -476,12 +476,18 @@ RSpec.describe 'Invoices', type: :request do
     let(:invoice) { create(:invoice, status: 'issued', sat_uuid: 'UUID-PAY-REQ-001', payload_snapshot: { metodoPago: 'PPD' }) }
 
     let(:valid_payment_params) do
+      receipt = Tempfile.new([ 'receipt', '.pdf' ])
+      receipt.write('%PDF-1.4 payment receipt')
+      receipt.rewind
+
       {
         payment: {
           amount: '250.00',
           paid_at: Time.zone.parse('2026-03-09 12:00:00').iso8601,
           payment_method: '03',
           reference: 'PAY-REQ-001',
+          tracking_key: 'TRACK-REQ-001',
+          receipt_file: Rack::Test::UploadedFile.new(receipt.path, 'application/pdf'),
           notes: 'Pago parcial'
         }
       }
@@ -495,15 +501,19 @@ RSpec.describe 'Invoices', type: :request do
       expect(response).to redirect_to(containers_path)
       expect(flash[:notice]).to include('Pago registrado')
       expect(invoice.invoice_payments.count).to eq(1)
+      payment = invoice.invoice_payments.last
+      expect(payment.tracking_key).to eq('TRACK-REQ-001')
+      expect(payment.receipt_file).to be_attached
     end
 
-    it 'shows friendly alert for PUE invoices' do
+    it 'registers payment for PUE invoices without blocking the operation' do
       invoice.update!(payload_snapshot: { metodoPago: 'PUE' })
 
       post register_payment_invoice_path(invoice), params: valid_payment_params
 
       expect(response).to redirect_to(containers_path)
-      expect(flash[:alert]).to include('REP solo aplica para PPD')
+      expect(flash[:notice]).to include('Pago registrado')
+      expect(invoice.invoice_payments.count).to eq(1)
     end
 
     it 'shows friendly alert when outstanding amount is zero' do

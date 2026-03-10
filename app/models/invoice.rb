@@ -69,17 +69,23 @@ class Invoice < ApplicationRecord
   end
 
   def payment_complement_eligible?
-    return false unless effectively_issued?
-    return false if kind == "pago"
-    return false unless payment_method_code == FiscalProfile::METODO_PAGO_PPD
-
-    outstanding_amount.positive?
+    payment_registration_eligible? && payment_method_code == FiscalProfile::METODO_PAGO_PPD
   end
 
   def payment_complement_ineligibility_reason
+    return payment_registration_ineligibility_reason if payment_registration_ineligibility_reason.present?
+    return "La factura fue emitida con metodoPago #{payment_method_code}; REP solo aplica para PPD." unless payment_method_code == FiscalProfile::METODO_PAGO_PPD
+
+    nil
+  end
+
+  def payment_registration_eligible?
+    payment_registration_ineligibility_reason.blank?
+  end
+
+  def payment_registration_ineligibility_reason
     return "Solo se puede registrar pagos para facturas emitidas." unless effectively_issued?
     return "No se pueden registrar pagos sobre un CFDI de tipo pago." if kind == "pago"
-    return "La factura fue emitida con metodoPago #{payment_method_code}; REP solo aplica para PPD." unless payment_method_code == FiscalProfile::METODO_PAGO_PPD
     return "La factura no tiene saldo pendiente por pagar." unless outstanding_amount.positive?
 
     nil

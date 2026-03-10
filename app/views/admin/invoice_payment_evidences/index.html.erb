@@ -1,0 +1,85 @@
+<% content_for :title, "Evidencias de pago" %>
+
+<div class="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+  <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div class="flex items-start gap-4">
+      <div class="flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="font-bold text-3xl text-gray-900">Evidencias de pago</h1>
+        <p class="text-sm text-gray-500 mt-1">Revisa, vincula o rechaza comprobantes enviados por agencias</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-md border border-gray-200 p-5 mb-6">
+    <%= form_with url: admin_invoice_payment_evidences_path, method: :get, class: "grid grid-cols-1 md:grid-cols-3 gap-4" do |f| %>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Estado</label>
+        <%= f.select :status,
+          options_for_select([["Todos", ""]] + InvoicePaymentEvidence::STATUSES.map { |status| [status.titleize, status] }, @status_filter),
+          {},
+          class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm transition-all" %>
+      </div>
+
+      <div class="flex gap-2 items-end md:col-span-2">
+        <%= f.submit "Filtrar", class: "cursor-pointer px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md" %>
+        <%= link_to "Limpiar", admin_invoice_payment_evidences_path, class: "px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors" %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="mb-6">
+    <%= render "shared/tailwind_pagination", paginated: @invoice_payment_evidences %>
+  </div>
+
+  <div class="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-100">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gradient-to-r from-gray-50 to-white">
+        <tr>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ID</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Factura</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Agencia</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Referencia</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Estado</th>
+          <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Acción</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-100">
+        <% if @invoice_payment_evidences.any? %>
+          <% @invoice_payment_evidences.each do |evidence| %>
+            <tr class="hover:bg-gray-50 transition-colors duration-150">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">#<%= evidence.id %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <%= link_to "Factura ##{evidence.invoice_id}", invoice_path(evidence.invoice), class: "text-blue-600 hover:text-blue-800 font-medium" %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= evidence.customs_agent&.name %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= evidence.reference %></td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <% badge_classes = case evidence.status
+                  when "pending" then "bg-amber-100 text-amber-800"
+                  when "linked" then "bg-green-100 text-green-800"
+                  when "rejected" then "bg-red-100 text-red-800"
+                  else "bg-gray-100 text-gray-700"
+                  end %>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= badge_classes %>">
+                  <%= evidence.status.titleize %>
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <%= link_to "Revisar", admin_invoice_payment_evidence_path(evidence), class: "inline-flex items-center px-3 py-1.5 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold" %>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr>
+            <td colspan="6" class="px-6 py-12 text-center text-gray-500">No hay evidencias de pago para los filtros seleccionados.</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
