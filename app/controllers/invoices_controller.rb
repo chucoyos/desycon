@@ -206,7 +206,7 @@ class InvoicesController < ApplicationController
       redirect_back fallback_location: containers_path, notice: "Pago registrado correctamente."
     end
   rescue Facturador::Error, ActiveRecord::RecordInvalid => e
-    redirect_back fallback_location: containers_path, alert: "Error al registrar pago: #{e.message}"
+    redirect_back fallback_location: containers_path, alert: payment_registration_error_alert(e)
   end
 
   def send_email
@@ -326,6 +326,17 @@ class InvoicesController < ApplicationController
     else
       "No se pudo cancelar el CFDI en este intento: #{normalized}"
     end
+  end
+
+  def payment_registration_error_alert(error)
+    message = error.message.to_s
+
+    return "No se puede registrar pago porque el CFDI no es elegible para REP." if message.match?(/Invoice is not eligible for payment registration/i)
+    return "No se puede registrar pago: la factura fue emitida con metodo PUE; REP solo aplica para PPD." if message.match?(/REP solo aplica para PPD/i)
+    return "No se puede registrar pago: la factura no tiene saldo pendiente." if message.match?(/no tiene saldo pendiente/i)
+    return "No se puede registrar pago: no se permiten pagos sobre CFDI de tipo pago." if message.match?(/tipo pago/i)
+
+    "Error al registrar pago: #{message}"
   end
 
   def pac_temporarily_unavailable_message?(message)

@@ -52,6 +52,10 @@ module Facturador
         env_value(:serie).presence
       end
 
+      def payment_serie
+        env_value(:payment_serie).presence
+      end
+
       def username
         env_value(:username)
       end

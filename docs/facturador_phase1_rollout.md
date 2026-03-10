@@ -191,3 +191,30 @@ Facturador::EmisorService.clear!
 1. **Inmediato (recomendado):** `FACTURADOR_PAYMENT_COMPLEMENTS_ENABLED=false`.
 2. Si deseas ocultar captura manual: `FACTURADOR_MANUAL_ACTIONS_ENABLED=false`.
 3. Si deseas cortar todo PAC: `FACTURADOR_ENABLED=false`.
+
+### Checklist de validacion REP (staging)
+1. Confirmar flags activos:
+	- `FACTURADOR_ENABLED=true`
+	- `FACTURADOR_MANUAL_ACTIONS_ENABLED=true`
+	- `FACTURADOR_PAYMENT_COMPLEMENTS_ENABLED=true`
+2. Crear/usar una factura `issued` con `metodoPago=PPD` y saldo pendiente.
+3. Validar UI en detalle de factura:
+	- se muestra formulario `Registrar nuevo pago`
+	- se muestra `Saldo actual`
+4. Registrar un pago parcial y validar resultado:
+	- mensaje: `Pago registrado y complemento de pago encolado.`
+	- pago en estatus `complement_queued`
+5. Esperar emision del complemento o forzar reconciliacion y validar:
+	- `Invoice` complemento tipo `pago` en `issued`
+	- `InvoicePayment` en `complement_issued`
+6. Probar caso no elegible `metodoPago=PUE`:
+	- no aparece formulario de registro de pago
+	- aparece bloque informativo: `REP solo aplica para PPD`
+	- POST manual a `register_payment` regresa alerta amigable de bloqueo
+7. Probar caso no elegible sin saldo pendiente:
+	- no aparece formulario
+	- aparece motivo `no tiene saldo pendiente`
+	- POST manual a `register_payment` regresa alerta amigable
+8. Probar fallo transitorio PAC (FAC119/network) durante emision del complemento:
+	- pago se mantiene en `complement_queued`
+	- reintento posterior puede completar a `complement_issued`

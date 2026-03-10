@@ -119,5 +119,90 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
       expect(invoice.last_error_code).to eq('FACTURADOR_ISSUE_NETWORK_ERROR')
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('issue_failed')
     end
+
+    context 'when invoice is a payment complement' do
+      let(:source_invoice) { create(:invoice, status: 'issued', sat_uuid: 'UUID-SOURCE-123') }
+      let(:payment) do
+        create(
+          :invoice_payment,
+          invoice: source_invoice,
+          amount: 150,
+          status: 'complement_queued',
+          complement_invoice: invoice
+        )
+      end
+
+      let(:invoice) do
+        create(
+          :invoice,
+          kind: 'pago',
+          status: 'draft',
+          issuer_entity: issuer_entity,
+          receiver_entity: receiver_entity,
+          subtotal: 150,
+          tax_total: 0,
+          total: 150,
+          payload_snapshot: {
+            payment: {
+              amount: '150.0',
+              paid_at: Time.zone.parse('2026-03-09 12:00:00').iso8601,
+              payment_method: '03'
+            },
+            source_invoice_id: source_invoice.id,
+            source_invoice_uuid: source_invoice.sat_uuid
+          }
+        )
+      end
+
+      before do
+        payment
+      end
+
+      it 'marks linked payment as complement_issued on successful issue' do
+        allow(Facturador::PayloadBuilder).to receive(:build).with(invoice).and_return({ sample: 'payload' })
+        allow(client_double).to receive(:emitir_comprobante).and_return(
+          {
+            'esValido' => true,
+            'uuid' => 'UUID-COMP-123',
+            'idComprobante' => 44,
+            'subEstatusId' => 2
+          }
+        )
+
+        described_class.call(invoice_id: invoice.id)
+
+        expect(payment.reload.status).to eq('complement_issued')
+      end
+
+      it 'marks linked payment as failed on non-transient issue failure' do
+        allow(Facturador::PayloadBuilder).to receive(:build).with(invoice).and_return({ sample: 'payload' })
+        allow(client_double).to receive(:emitir_comprobante).and_return(
+          {
+            'esValido' => false,
+            'errores' => [ { 'codigo' => 'FAC999', 'mensaje' => 'Error definitivo REP' } ]
+          }
+        )
+
+        described_class.call(invoice_id: invoice.id)
+
+        expect(payment.reload.status).to eq('failed')
+      end
+
+      it 'keeps linked payment queued on transient provider failures' do
+        allow(Facturador::PayloadBuilder).to receive(:build).with(invoice).and_return({ sample: 'payload' })
+        allow(client_double).to receive(:emitir_comprobante).and_return(
+          {
+            'esValido' => false,
+            'errores' => [ { 'codigo' => 'FAC119', 'mensaje' => 'Intentar mas tarde' } ]
+          }
+        )
+
+        expect {
+          described_class.call(invoice_id: invoice.id)
+        }.to raise_error(Facturador::TransientIssueError)
+
+        expect(payment.reload.status).to eq('complement_queued')
+      end
+    end
   end
 end

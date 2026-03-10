@@ -17,6 +17,7 @@ module Facturador
 
       invoice = payment.invoice
       raise RequestError, "Invoice must be issued to create payment complement" unless invoice.issued?
+      raise RequestError, "Invoice UUID is required to create payment complement" if invoice.sat_uuid.blank?
 
       complement = find_or_build_complement_for(invoice: invoice)
       complement.save! if complement.new_record?
@@ -67,6 +68,7 @@ module Facturador
               payment_method: payment.payment_method,
               reference: payment.reference
             },
+            source_invoice_id: invoice.id,
             source_invoice_uuid: invoice.sat_uuid
           },
           provider_response: {}

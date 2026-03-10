@@ -206,6 +206,22 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include('PDF')
     end
 
+    it 'hides payment registration form for PUE invoices' do
+      invoice = create(
+        :invoice,
+        status: 'issued',
+        sat_uuid: 'UUID-SHOW-003',
+        payload_snapshot: { metodoPago: 'PUE' }
+      )
+
+      get invoice_path(invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('Registro de pago no disponible')
+      expect(response.body).to include('REP solo aplica para PPD')
+      expect(response.body).not_to include('Registrar pago')
+    end
+
     it 'shows retry issue button for issue-related failed invoice' do
       service = create(:container_service)
       invoice = create(
@@ -221,6 +237,7 @@ RSpec.describe 'Invoices', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('Reintentar emisión CFDI')
+      expect(response.body).to include(retry_issue_invoice_path(invoice))
     end
 
     it 'shows processing banner for queued invoices' do
@@ -450,6 +467,52 @@ RSpec.describe 'Invoices', type: :request do
 
       expect(response).to redirect_to(customs_agents_dashboard_path)
       expect(flash[:alert]).to be_present
+    end
+  end
+
+  describe 'POST /invoices/:id/register_payment' do
+    before { sign_in admin_user, scope: :user }
+
+    let(:invoice) { create(:invoice, status: 'issued', sat_uuid: 'UUID-PAY-REQ-001', payload_snapshot: { metodoPago: 'PPD' }) }
+
+    let(:valid_payment_params) do
+      {
+        payment: {
+          amount: '250.00',
+          paid_at: Time.zone.parse('2026-03-09 12:00:00').iso8601,
+          payment_method: '03',
+          reference: 'PAY-REQ-001',
+          notes: 'Pago parcial'
+        }
+      }
+    end
+
+    it 'registers payment and redirects with success notice' do
+      allow(Facturador::IssuePaymentComplementService).to receive(:call)
+
+      post register_payment_invoice_path(invoice), params: valid_payment_params
+
+      expect(response).to redirect_to(containers_path)
+      expect(flash[:notice]).to include('Pago registrado')
+      expect(invoice.invoice_payments.count).to eq(1)
+    end
+
+    it 'shows friendly alert for PUE invoices' do
+      invoice.update!(payload_snapshot: { metodoPago: 'PUE' })
+
+      post register_payment_invoice_path(invoice), params: valid_payment_params
+
+      expect(response).to redirect_to(containers_path)
+      expect(flash[:alert]).to include('REP solo aplica para PPD')
+    end
+
+    it 'shows friendly alert when outstanding amount is zero' do
+      create(:invoice_payment, invoice: invoice, amount: invoice.total, status: 'complement_issued')
+
+      post register_payment_invoice_path(invoice), params: valid_payment_params
+
+      expect(response).to redirect_to(containers_path)
+      expect(flash[:alert]).to include('no tiene saldo pendiente')
     end
   end
 end

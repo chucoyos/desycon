@@ -64,6 +64,27 @@ class Invoice < ApplicationRecord
     remaining.positive? ? remaining : 0.to_d
   end
 
+  def payment_method_code
+    payload_snapshot.to_h["metodoPago"].to_s.presence || receiver_entity&.fiscal_profile&.metodo_pago.to_s.presence || "PPD"
+  end
+
+  def payment_complement_eligible?
+    return false unless effectively_issued?
+    return false if kind == "pago"
+    return false unless payment_method_code == FiscalProfile::METODO_PAGO_PPD
+
+    outstanding_amount.positive?
+  end
+
+  def payment_complement_ineligibility_reason
+    return "Solo se puede registrar pagos para facturas emitidas." unless effectively_issued?
+    return "No se pueden registrar pagos sobre un CFDI de tipo pago." if kind == "pago"
+    return "La factura fue emitida con metodoPago #{payment_method_code}; REP solo aplica para PPD." unless payment_method_code == FiscalProfile::METODO_PAGO_PPD
+    return "La factura no tiene saldo pendiente por pagar." unless outstanding_amount.positive?
+
+    nil
+  end
+
   def queue_issue!(actor: nil)
     return false unless Facturador::Config.enabled?
     return false if issued?

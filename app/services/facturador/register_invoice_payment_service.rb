@@ -25,7 +25,8 @@ module Facturador
     end
 
     def call
-      raise RequestError, "Invoice is not eligible for payment registration" unless invoice.issued? || invoice.status_cancel_pending?
+      raise RequestError, "Invoice is not eligible for payment registration" unless invoice.issued? || invoice.status == "cancel_pending"
+      raise RequestError, invoice.payment_complement_ineligibility_reason if invoice.payment_complement_ineligibility_reason.present?
 
       payment = invoice.invoice_payments.create!(
         amount: amount,

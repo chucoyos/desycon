@@ -40,6 +40,8 @@ module Facturador
     rescue Error => e
       raise if e.is_a?(TransientIssueError)
 
+      is_transient_transport = transient_transport_retryable?(e)
+
       error_code = ErrorCodeResolver.call(context: :issue, message: e.message, exception: e)
       invoice.mark_failed!(error_code: error_code, error_message: e.message)
       invoice.invoice_events.create!(
@@ -50,7 +52,9 @@ module Facturador
         provider_error_message: e.message
       )
 
-      if transient_transport_retryable?(e)
+      sync_payment_complement_status!("failed") unless is_transient_transport
+
+      if is_transient_transport
         raise TransientIssueError, e.message
       end
 
@@ -82,6 +86,8 @@ module Facturador
           provider_status: response["subEstatusId"]&.to_s
         )
 
+        sync_payment_complement_status!("complement_issued")
+
         send_email_non_blocking(trigger: "auto_issue")
       else
         message = extract_error_message(response)
@@ -99,6 +105,8 @@ module Facturador
           response_payload: response,
           provider_error_message: message
         )
+
+        sync_payment_complement_status!("failed") unless transient_provider_retryable?(error_code)
 
         return TransientIssueError.new(message) if transient_provider_retryable?(error_code)
       end
@@ -131,6 +139,12 @@ module Facturador
 
       message = error.message.to_s
       message.match?(/Temporary failure in name resolution|getaddrinfo\(3\)|Failed to open TCP connection|execution expired|timed out|timeout/i)
+    end
+
+    def sync_payment_complement_status!(status)
+      return unless invoice.kind == "pago"
+
+      invoice.payment_complements.update_all(status: status, updated_at: Time.current)
     end
   end
 end
