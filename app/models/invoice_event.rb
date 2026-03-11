@@ -12,6 +12,7 @@ class InvoiceEvent < ApplicationRecord
     xml_stored
     pdf_requested
     pdf_stored
+    payment_registered
     reconcile_requested
     reconcile_synced
     reconcile_not_found

@@ -23,6 +23,7 @@ RSpec.describe Facturador::RegisterInvoicePaymentService, type: :service do
       expect(payment.invoice).to eq(invoice)
       expect(payment.amount.to_d).to eq(300.to_d)
       expect(Facturador::IssuePaymentComplementService).to have_received(:call).with(payment: payment, actor: nil)
+      expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('payment_registered')
     end
 
     it 'registers payment when invoice metodoPago is PUE without triggering complement service' do
@@ -42,6 +43,7 @@ RSpec.describe Facturador::RegisterInvoicePaymentService, type: :service do
       expect(payment.invoice).to eq(invoice)
       expect(invoice.invoice_payments.count).to eq(1)
       expect(Facturador::IssuePaymentComplementService).not_to have_received(:call)
+      expect(invoice.invoice_events.where(event_type: 'payment_registered')).to be_empty
     end
 
     it 'rejects payment registration when invoice has no outstanding balance' do

@@ -45,22 +45,24 @@ module Facturador
 
       payment.receipt_file.attach(receipt_file) if receipt_file.present?
 
-      invoice.invoice_events.create!(
-        event_type: "reconcile_requested",
-        created_by: actor,
-        request_payload: {
-          payment_id: payment.id,
-          amount: amount,
-          paid_at: paid_at,
-          payment_method: payment_method,
-          reference: reference,
-          tracking_key: tracking_key,
-          receipt_attached: payment.receipt_file.attached?
-        },
-        response_payload: { status: "registered" }
-      )
+      if invoice.payment_complement_eligible?
+        invoice.invoice_events.create!(
+          event_type: "payment_registered",
+          created_by: actor,
+          request_payload: {
+            payment_id: payment.id,
+            amount: amount,
+            paid_at: paid_at,
+            payment_method: payment_method,
+            reference: reference,
+            tracking_key: tracking_key,
+            receipt_attached: payment.receipt_file.attached?
+          },
+          response_payload: { status: "registered" }
+        )
 
-      IssuePaymentComplementService.call(payment: payment, actor: actor) if invoice.payment_complement_eligible?
+        IssuePaymentComplementService.call(payment: payment, actor: actor)
+      end
       payment
     end
 
