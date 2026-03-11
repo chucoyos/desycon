@@ -82,7 +82,16 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
       sign_in admin_user, scope: :user
 
       payment = create(:invoice_payment, invoice: invoice)
-      allow(Facturador::RegisterInvoicePaymentService).to receive(:call).and_return(payment)
+      expect(Facturador::RegisterInvoicePaymentService).to receive(:call).with(
+        invoice: evidence.invoice,
+        amount: "500.00",
+        paid_at: Date.current.iso8601,
+        payment_method: "03",
+        reference: "BLH-20001",
+        tracking_key: "TRACK-ADMIN-001",
+        notes: "Pago confirmado",
+        actor: admin_user
+      ).and_return(payment)
 
       post register_payment_admin_invoice_payment_evidence_path(evidence), params: {
         register_payment: {
@@ -90,6 +99,7 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
           paid_at: Date.current.iso8601,
           payment_method: "03",
           reference: "BLH-20001",
+          tracking_key: "TRACK-ADMIN-001",
           notes: "Pago confirmado",
           review_comment: "Registrado por ejecutivo"
         }

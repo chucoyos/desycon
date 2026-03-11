@@ -61,4 +61,23 @@ RSpec.describe "CustomsAgentPaymentEvidences", type: :request do
     expect(response).to redirect_to(customs_agents_dashboard_path)
     expect(flash[:alert]).to include("Factura no valida")
   end
+
+  it "rejects fully paid invoice even if it belongs to customs agent scope" do
+    sign_in customs_user, scope: :user
+    fully_paid_invoice = create(:invoice, status: "issued", receiver_entity: client_entity)
+    create(:invoice_payment, invoice: fully_paid_invoice, amount: fully_paid_invoice.total, status: "complement_issued")
+
+    expect do
+      post customs_agents_payment_evidences_path, params: {
+        payment_evidence: {
+          invoice_id: fully_paid_invoice.id,
+          reference: "BLH-FULL-PAID",
+          receipt_file: uploaded_receipt
+        }
+      }
+    end.not_to change(InvoicePaymentEvidence, :count)
+
+    expect(response).to redirect_to(customs_agents_dashboard_path)
+    expect(flash[:alert]).to include("Factura no valida")
+  end
 end

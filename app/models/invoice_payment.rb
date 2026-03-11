@@ -1,5 +1,11 @@
 class InvoicePayment < ApplicationRecord
   STATUSES = %w[registered complement_queued complement_issued failed].freeze
+  STATUS_LABELS = {
+    "registered" => "Registrado",
+    "complement_queued" => "Complemento en cola",
+    "complement_issued" => "Complemento emitido",
+    "failed" => "Fallido"
+  }.freeze
 
   belongs_to :invoice
   belongs_to :complement_invoice, class_name: "Invoice", optional: true
@@ -17,6 +23,10 @@ class InvoicePayment < ApplicationRecord
   validate :cumulative_amount_within_invoice_total
 
   scope :recent_first, -> { order(paid_at: :desc, id: :desc) }
+
+  def status_label
+    STATUS_LABELS[status] || status.to_s.humanize
+  end
 
   private
 

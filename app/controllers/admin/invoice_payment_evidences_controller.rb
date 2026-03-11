@@ -65,6 +65,7 @@ module Admin
         paid_at: register_payment_params[:paid_at],
         payment_method: register_payment_params[:payment_method],
         reference: register_payment_params[:reference].presence || @evidence.reference,
+        tracking_key: register_payment_params[:tracking_key].presence || @evidence.tracking_key,
         notes: register_payment_params[:notes],
         actor: current_user
       )
@@ -92,7 +93,7 @@ module Admin
     end
 
     def register_payment_params
-      params.require(:register_payment).permit(:amount, :paid_at, :payment_method, :reference, :notes, :review_comment)
+      params.require(:register_payment).permit(:amount, :paid_at, :payment_method, :reference, :tracking_key, :notes, :review_comment)
     end
   end
 end
