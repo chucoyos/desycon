@@ -3,6 +3,12 @@ require "digest"
 class Invoice < ApplicationRecord
   KINDS = %w[ingreso egreso pago].freeze
   STATUSES = %w[draft queued issued cancel_pending cancelled failed].freeze
+  PAYMENT_STATUSES = %w[pending partial paid].freeze
+  PAYMENT_STATUS_LABELS = {
+    "pending" => "Pendiente",
+    "partial" => "Parcial",
+    "paid" => "Pagado"
+  }.freeze
   CANCELLATION_MOTIVES = %w[02].freeze
 
   belongs_to :invoiceable, polymorphic: true, optional: true
@@ -33,6 +39,22 @@ class Invoice < ApplicationRecord
   scope :issued, -> { where(status: "issued") }
   scope :cancelled, -> { where(status: "cancelled") }
   scope :pending_reconciliation, -> { where(status: "cancel_pending").where.not(sat_uuid: [ nil, "" ]) }
+  scope :with_payment_status, ->(payment_status) {
+    next all unless PAYMENT_STATUSES.include?(payment_status)
+
+    paid_total_sql = "COALESCE((SELECT SUM(invoice_payments.amount) FROM invoice_payments WHERE invoice_payments.invoice_id = invoices.id), 0)"
+
+    case payment_status
+    when "pending"
+      where("#{paid_total_sql} <= 0")
+    when "partial"
+      where("#{paid_total_sql} > 0 AND #{paid_total_sql} < invoices.total")
+    when "paid"
+      where("#{paid_total_sql} >= invoices.total")
+    else
+      all
+    end
+  }
 
   def issued?
     status == "issued"
@@ -66,6 +88,18 @@ class Invoice < ApplicationRecord
 
   def payment_method_code
     payload_snapshot.to_h["metodoPago"].to_s.presence || receiver_entity&.fiscal_profile&.metodo_pago.to_s.presence || "PPD"
+  end
+
+  def payment_status
+    paid_total = invoice_payments.sum(:amount).to_d
+    return "pending" unless paid_total.positive?
+    return "paid" if paid_total >= total.to_d
+
+    "partial"
+  end
+
+  def payment_status_label
+    PAYMENT_STATUS_LABELS[payment_status] || payment_status.to_s.humanize
   end
 
   def payment_complement_eligible?

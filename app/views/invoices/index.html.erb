@@ -41,6 +41,14 @@
         </div>
 
         <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Estatus pago</label>
+          <%= f.select :payment_status,
+            options_for_select([["Todos", ""]] + @payment_statuses.map { |status| [Invoice::PAYMENT_STATUS_LABELS[status], status] }, @selected_payment_status),
+              {},
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
+        </div>
+
+        <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">Desde</label>
           <%= f.date_field :start_date, value: @selected_start_date, class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
         </div>
@@ -103,6 +111,7 @@
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Cliente</th>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">UUID</th>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Estatus</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Estatus pago</th>
           <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Total</th>
         </tr>
       </thead>
@@ -123,12 +132,13 @@
               </td>
               <% status_for_display = invoice.effective_status %>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= t("activerecord.attributes.invoice.statuses.#{status_for_display}", default: status_for_display.humanize) %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= invoice.payment_status_label %></td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900"><%= number_to_currency(invoice.total || 0) %></td>
             </tr>
           <% end %>
         <% else %>
           <tr>
-            <td colspan="5" class="px-6 py-12 text-center">
+            <td colspan="6" class="px-6 py-12 text-center">
               <p class="text-gray-500 text-lg font-medium">No hay facturas para los filtros seleccionados</p>
             </td>
           </tr>

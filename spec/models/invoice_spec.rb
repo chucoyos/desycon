@@ -56,4 +56,29 @@ RSpec.describe Invoice, type: :model do
       expect(invoice.effective_status).to eq('cancelled')
     end
   end
+
+  describe '#payment_status' do
+    it 'returns pending when there are no payments' do
+      invoice = create(:invoice, status: 'issued', total: 1000)
+
+      expect(invoice.payment_status).to eq('pending')
+      expect(invoice.payment_status_label).to eq('Pendiente')
+    end
+
+    it 'returns partial when paid amount is below total' do
+      invoice = create(:invoice, status: 'issued', total: 1000)
+      create(:invoice_payment, invoice: invoice, amount: 400, status: 'registered')
+
+      expect(invoice.payment_status).to eq('partial')
+      expect(invoice.payment_status_label).to eq('Parcial')
+    end
+
+    it 'returns paid when paid amount reaches total' do
+      invoice = create(:invoice, status: 'issued', total: 1000)
+      create(:invoice_payment, invoice: invoice, amount: 1000, status: 'registered')
+
+      expect(invoice.payment_status).to eq('paid')
+      expect(invoice.payment_status_label).to eq('Pagado')
+    end
+  end
 end

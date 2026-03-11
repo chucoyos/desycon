@@ -105,6 +105,22 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include(recent_invoice.sat_uuid)
       expect(response.body).not_to include(old_invoice.sat_uuid)
     end
+
+    it 'filters by payment status' do
+      pending_invoice = create(:invoice, status: 'issued', total: 1000, sat_uuid: 'UUID-PAYMENT-PENDING')
+      partial_invoice = create(:invoice, status: 'issued', total: 1000, sat_uuid: 'UUID-PAYMENT-PARTIAL')
+      paid_invoice = create(:invoice, status: 'issued', total: 1000, sat_uuid: 'UUID-PAYMENT-PAID')
+
+      create(:invoice_payment, invoice: partial_invoice, amount: 300, status: 'registered')
+      create(:invoice_payment, invoice: paid_invoice, amount: 1000, status: 'registered')
+
+      get invoices_path, params: { payment_status: 'partial' }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(partial_invoice.sat_uuid)
+      expect(response.body).not_to include(pending_invoice.sat_uuid)
+      expect(response.body).not_to include(paid_invoice.sat_uuid)
+    end
   end
 
   describe 'GET /invoices/new' do
