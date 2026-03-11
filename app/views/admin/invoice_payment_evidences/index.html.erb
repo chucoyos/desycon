@@ -51,10 +51,24 @@
       <tbody class="bg-white divide-y divide-gray-100">
         <% if @invoice_payment_evidences.any? %>
           <% @invoice_payment_evidences.each do |evidence| %>
+            <% serie = evidence.invoice.provider_response.to_h["serie"].presence || evidence.invoice.payload_snapshot.to_h["serie"].presence %>
+            <% folio = evidence.invoice.provider_response.to_h["folio"].presence ||
+                      evidence.invoice.provider_response.to_h["noComprobante"].presence ||
+                      evidence.invoice.provider_response.to_h["numeroComprobante"].presence ||
+                      evidence.invoice.facturador_comprobante_id&.to_s %>
+            <% invoice_label = if serie.present? && folio.present?
+              "Factura #{serie} #{folio}"
+            elsif folio.present?
+              "Factura #{folio}"
+            elsif serie.present?
+              "Factura #{serie}"
+            else
+              "Factura"
+            end %>
             <tr class="hover:bg-gray-50 transition-colors duration-150">
               <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">#<%= evidence.id %></td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                <%= link_to "Factura ##{evidence.invoice_id}", invoice_path(evidence.invoice), class: "text-blue-600 hover:text-blue-800 font-medium" %>
+                <%= link_to invoice_label, invoice_path(evidence.invoice), class: "text-blue-600 hover:text-blue-800 font-medium" %>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= evidence.customs_agent&.name %></td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= evidence.reference %></td>

@@ -1,10 +1,27 @@
 <% content_for :title, "Revisión de evidencia ##{@evidence.id}" %>
+<%
+  serie = @invoice.provider_response.to_h["serie"].presence || @invoice.payload_snapshot.to_h["serie"].presence
+  folio = @invoice.provider_response.to_h["folio"].presence ||
+          @invoice.provider_response.to_h["noComprobante"].presence ||
+          @invoice.provider_response.to_h["numeroComprobante"].presence ||
+          @invoice.facturador_comprobante_id&.to_s
+
+  invoice_label = if serie.present? && folio.present?
+    "Factura #{serie} #{folio}"
+  elsif folio.present?
+    "Factura #{folio}"
+  elsif serie.present?
+    "Factura #{serie}"
+  else
+    "Factura"
+  end
+%>
 
 <div class="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
   <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
     <div>
       <h1 class="font-bold text-3xl text-gray-900">Evidencia #<%= @evidence.id %></h1>
-      <p class="text-sm text-gray-500 mt-1">Factura #<%= @invoice.id %> | Referencia enviada: <span class="font-semibold"><%= @evidence.reference %></span></p>
+      <p class="text-sm text-gray-500 mt-1"><%= invoice_label %> | Referencia enviada: <span class="font-semibold"><%= @evidence.reference %></span></p>
     </div>
     <%= link_to "Volver", admin_invoice_payment_evidences_path, class: "inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium" %>
   </div>
