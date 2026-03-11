@@ -63,7 +63,7 @@ module Admin
         review_comment: review_note.presence
       )
 
-      redirect_to admin_invoice_payment_evidence_path(@evidence), notice: "Pago registrado y evidencia vinculada correctamente."
+      redirect_to invoice_invoice_payment_path(@evidence.invoice, payment), notice: "Pago registrado y evidencia vinculada correctamente."
     rescue Facturador::Error, ActiveRecord::RecordInvalid => e
       redirect_to admin_invoice_payment_evidence_path(@evidence), alert: "No fue posible registrar el pago desde la evidencia: #{e.message}"
     end

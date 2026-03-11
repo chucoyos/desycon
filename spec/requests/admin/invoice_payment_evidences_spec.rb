@@ -97,7 +97,7 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
       }
 
       evidence.reload
-      expect(response).to redirect_to(admin_invoice_payment_evidence_path(evidence))
+      expect(response).to redirect_to(invoice_invoice_payment_path(invoice, payment))
       expect(evidence.status).to eq("linked")
       expect(evidence.invoice_payment_id).to eq(payment.id)
       expect(evidence.review_comment).to include("Registrado por ejecutivo")

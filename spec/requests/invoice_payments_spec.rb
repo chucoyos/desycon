@@ -14,6 +14,7 @@ RSpec.describe 'InvoicePayments', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Pago ##{payment.id}")
       expect(response.body).to include(payment.reference)
+      expect(response.body).to include('Volver a evidencias')
     end
 
     it 'shows agency evidence details when payment has linked evidence' do
