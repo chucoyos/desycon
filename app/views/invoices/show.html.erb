@@ -16,6 +16,11 @@
   end
 %>
 <% content_for :title, invoice_heading %>
+<% can_sync_documents = policy(@invoice).sync_documents? %>
+<% can_cancel_invoice = policy(@invoice).cancel? %>
+<% can_send_email = policy(@invoice).send_email? %>
+<% can_retry_issue = policy(@invoice).retry_issue? %>
+<% can_manage_payments = policy(@invoice).register_payment? %>
 
 <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8" data-controller="modal">
   <div class="mb-4 sm:mb-6">
@@ -56,9 +61,11 @@
           end %>
           <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border <%= badge_class %>"><%= t("activerecord.attributes.invoice.statuses.#{status_for_display}", default: status_for_display.humanize) %></span>
 
-          <% if @invoice.cancel_retryable? %>
+          <% if can_cancel_invoice && @invoice.cancel_retryable? %>
             <% cancel_button_label = @invoice.last_error_code.to_s.start_with?("FACTURADOR_CANCEL_") ? "Reintentar cancelación CFDI" : "Cancelar CFDI" %>
-            <%= button_to "Sincronizar XML/PDF", sync_documents_invoice_path(@invoice), method: :post, class: "inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100" %>
+            <% if can_sync_documents %>
+              <%= button_to "Sincronizar XML/PDF", sync_documents_invoice_path(@invoice), method: :post, class: "inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100" %>
+            <% end %>
             <button type="button"
                     data-action="click->modal#open"
                     data-modal-id="invoice-cancel-modal"
@@ -67,12 +74,12 @@
             </button>
           <% end %>
 
-          <% if @invoice.status.in?(["issued", "cancelled"]) && @invoice.sat_uuid.present? %>
+          <% if can_send_email && @invoice.status.in?(["issued", "cancelled"]) && @invoice.sat_uuid.present? %>
             <%= button_to "Enviar CFDI por correo", send_email_invoice_path(@invoice), method: :post, class: "inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100" %>
           <% end %>
 
-          <% can_retry_issue = @invoice.failed? && @invoice.last_error_code.to_s.start_with?("FACTURADOR_ISSUE_") %>
-          <% if can_retry_issue %>
+          <% show_retry_issue = can_retry_issue && @invoice.failed? && @invoice.last_error_code.to_s.start_with?("FACTURADOR_ISSUE_") %>
+          <% if show_retry_issue %>
             <%= button_to "Reintentar emisión CFDI", retry_issue_invoice_path(@invoice), method: :post, class: "inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" %>
           <% end %>
 
@@ -322,7 +329,7 @@
       <section id="payments-section" class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
         <h2 class="text-lg font-bold text-gray-900 mb-4">Pagos registrados</h2>
 
-        <% if @invoice.effectively_issued? %>
+        <% if can_manage_payments && @invoice.effectively_issued? %>
           <% if @invoice.payment_registration_eligible? %>
             <div class="mb-5 rounded-2xl border border-indigo-100 bg-indigo-50/40 shadow-sm overflow-hidden">
               <div class="px-4 py-3 border-b border-indigo-100 bg-white/70 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
@@ -404,7 +411,9 @@
                   <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Referencia</th>
                   <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Estatus</th>
                   <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Complemento</th>
-                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Acciones</th>
+                  <% if can_manage_payments %>
+                    <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Acciones</th>
+                  <% end %>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
@@ -436,47 +445,49 @@
                         -
                       <% end %>
                     </td>
-                    <td class="px-3 py-2 text-gray-700">
-                      <div class="relative inline-block text-left" data-controller="dropdown">
-                        <button type="button" class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors focus:outline-none" data-action="click->dropdown#toggle" title="Opciones">
-                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
-                          </svg>
-                        </button>
-                        <div data-dropdown-target="menu" class="hidden absolute right-0 bottom-full mb-2 w-48 rounded-xl shadow-xl bg-white border border-gray-100 z-[70] origin-bottom-right ring-1 ring-black ring-opacity-5 focus:outline-none">
-                          <div class="py-2" role="menu">
-                            <%= link_to invoice_invoice_payment_path(@invoice, payment), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors", role: "menuitem" do %>
-                              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                              </svg>
-                              Ver
-                            <% end %>
-
-                            <% if payment.complement_invoice_id.blank? && payment.status.in?(["registered", "failed"]) %>
-                              <%= link_to edit_invoice_invoice_payment_path(@invoice, payment), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors", role: "menuitem" do %>
+                    <% if can_manage_payments %>
+                      <td class="px-3 py-2 text-gray-700">
+                        <div class="relative inline-block text-left" data-controller="dropdown">
+                          <button type="button" class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors focus:outline-none" data-action="click->dropdown#toggle" title="Opciones">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                            </svg>
+                          </button>
+                          <div data-dropdown-target="menu" class="hidden absolute right-0 bottom-full mb-2 w-48 rounded-xl shadow-xl bg-white border border-gray-100 z-[70] origin-bottom-right ring-1 ring-black ring-opacity-5 focus:outline-none">
+                            <div class="py-2" role="menu">
+                              <%= link_to invoice_invoice_payment_path(@invoice, payment), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors", role: "menuitem" do %>
                                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                 </svg>
-                                Editar
+                                Ver
                               <% end %>
 
-                              <div class="border-t border-gray-100 my-1"></div>
-                              <%= button_to invoice_invoice_payment_path(@invoice, payment), method: :delete,
-                                  form: { data: { turbo_confirm: "¿Eliminar este pago?" } },
-                                  class: "group flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-900 transition-colors", role: "menuitem" do %>
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                </svg>
-                                Eliminar
+                              <% if payment.complement_invoice_id.blank? && payment.status.in?(["registered", "failed"]) %>
+                                <%= link_to edit_invoice_invoice_payment_path(@invoice, payment), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors", role: "menuitem" do %>
+                                  <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                  </svg>
+                                  Editar
+                                <% end %>
+
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <%= button_to invoice_invoice_payment_path(@invoice, payment), method: :delete,
+                                    form: { data: { turbo_confirm: "¿Eliminar este pago?" } },
+                                    class: "group flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-900 transition-colors", role: "menuitem" do %>
+                                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                  </svg>
+                                  Eliminar
+                                <% end %>
+                              <% else %>
+                                <div class="px-4 py-2 text-xs text-gray-500">Edición bloqueada</div>
                               <% end %>
-                            <% else %>
-                              <div class="px-4 py-2 text-xs text-gray-500">Edición bloqueada</div>
-                            <% end %>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
+                    <% end %>
                   </tr>
                 <% end %>
               </tbody>
@@ -528,7 +539,7 @@
   </div>
 </div>
 
-<% if @invoice.cancel_retryable? %>
+<% if can_cancel_invoice && @invoice.cancel_retryable? %>
   <div id="invoice-cancel-modal" data-modal-target="modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" data-action="click->modal#closeOnBackdrop">
     <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
       <div class="mt-2">

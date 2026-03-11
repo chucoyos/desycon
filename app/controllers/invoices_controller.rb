@@ -7,18 +7,21 @@ class InvoicesController < ApplicationController
   def index
     authorize Invoice
 
+    admin_or_executive = current_user.admin_or_executive?
+
     @selected_start_date = resolved_start_date
     @selected_end_date = resolved_end_date
     @selected_status = params[:status].to_s.presence
     @selected_client_id = params[:client_id].to_s.presence
-    @selected_customs_agent_id = params[:customs_agent_id].to_s.presence
-    @selected_consolidator_id = params[:consolidator_id].to_s.presence
+    @selected_customs_agent_id = admin_or_executive ? params[:customs_agent_id].to_s.presence : nil
+    @selected_consolidator_id = admin_or_executive ? params[:consolidator_id].to_s.presence : nil
     @selected_uuid = params[:uuid].to_s.strip.presence
 
     start_date = [ @selected_start_date, @selected_end_date ].min
     end_date = [ @selected_start_date, @selected_end_date ].max
 
-    @invoices = policy_scope(Invoice)
+    scoped_invoices = policy_scope(Invoice)
+    @invoices = scoped_invoices
                 .includes(:receiver_entity)
                 .where(created_at: start_date.beginning_of_day..end_date.end_of_day)
                 .order(created_at: :desc)
@@ -60,9 +63,11 @@ class InvoicesController < ApplicationController
     @invoices = @invoices.page(params[:page]).per(params[:per] || 25)
 
     @invoice_statuses = Invoice::STATUSES
-    @clients = Entity.clients.order(:name)
-    @customs_agents = Entity.customs_agents.order(:name)
-    @consolidators = Entity.consolidators.order(:name)
+    related_client_ids = scoped_invoices.select(:receiver_entity_id)
+    @clients = Entity.clients.where(id: related_client_ids).order(:name)
+    @customs_agents = admin_or_executive ? Entity.customs_agents.order(:name) : Entity.customs_agents.where(id: current_user.entity_id)
+    @consolidators = admin_or_executive ? Entity.consolidators.order(:name) : Entity.none
+    @admin_or_executive = admin_or_executive
   end
 
   def show

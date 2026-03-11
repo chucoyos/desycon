@@ -299,20 +299,43 @@ RSpec.describe 'Invoices', type: :request do
   end
 
   describe 'authorization' do
-    it 'denies customs broker users' do
-      broker_user = create(:user, :customs_broker)
+    it 'allows customs broker users on index and only shows related invoices' do
+      agency = create(:entity, :customs_agent)
+      broker_user = create(:user, :customs_broker, entity: agency)
       sign_in broker_user, scope: :user
+
+      related_invoice = create(:invoice, receiver_entity: create(:entity, :client, customs_agent: agency), sat_uuid: 'UUID-RELATED-BROKER')
+      unrelated_invoice = create(:invoice, receiver_entity: create(:entity, :client, customs_agent: create(:entity, :customs_agent)), sat_uuid: 'UUID-UNRELATED-BROKER')
 
       get invoices_path
 
-      expect(response).to redirect_to(customs_agents_dashboard_path)
-      expect(flash[:alert]).to be_present
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(related_invoice.sat_uuid)
+      expect(response.body).not_to include(unrelated_invoice.sat_uuid)
+      expect(response.body).not_to include('Nuevo CFDI')
     end
 
-    it 'denies customs broker users on show' do
-      broker_user = create(:user, :customs_broker)
+    it 'allows customs broker users on show for related invoice with read-only view' do
+      agency = create(:entity, :customs_agent)
+      broker_user = create(:user, :customs_broker, entity: agency)
       sign_in broker_user, scope: :user
-      invoice = create(:invoice)
+      invoice = create(:invoice, receiver_entity: create(:entity, :client, customs_agent: agency), status: 'issued', sat_uuid: 'UUID-BROKER-SHOW-001')
+
+      get invoice_path(invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('UUID-BROKER-SHOW-001')
+      expect(response.body).not_to include('Registrar nuevo pago')
+      expect(response.body).not_to include('Cancelar CFDI')
+      expect(response.body).not_to include('Enviar CFDI por correo')
+    end
+
+    it 'denies customs broker users on unrelated invoice show' do
+      agency = create(:entity, :customs_agent)
+      broker_user = create(:user, :customs_broker, entity: agency)
+      sign_in broker_user, scope: :user
+      other_agency = create(:entity, :customs_agent)
+      invoice = create(:invoice, receiver_entity: create(:entity, :client, customs_agent: other_agency))
 
       get invoice_path(invoice)
 
@@ -471,8 +494,6 @@ RSpec.describe 'Invoices', type: :request do
   end
 
   describe 'POST /invoices/:id/register_payment' do
-    before { sign_in admin_user, scope: :user }
-
     let(:invoice) { create(:invoice, status: 'issued', sat_uuid: 'UUID-PAY-REQ-001', payload_snapshot: { metodoPago: 'PPD' }) }
 
     let(:valid_payment_params) do
@@ -494,6 +515,7 @@ RSpec.describe 'Invoices', type: :request do
     end
 
     it 'registers payment and redirects with success notice' do
+      sign_in admin_user, scope: :user
       allow(Facturador::IssuePaymentComplementService).to receive(:call)
 
       post register_payment_invoice_path(invoice), params: valid_payment_params
@@ -507,6 +529,7 @@ RSpec.describe 'Invoices', type: :request do
     end
 
     it 'registers payment for PUE invoices without blocking the operation' do
+      sign_in admin_user, scope: :user
       invoice.update!(payload_snapshot: { metodoPago: 'PUE' })
 
       post register_payment_invoice_path(invoice), params: valid_payment_params
@@ -517,12 +540,25 @@ RSpec.describe 'Invoices', type: :request do
     end
 
     it 'shows friendly alert when outstanding amount is zero' do
+      sign_in admin_user, scope: :user
       create(:invoice_payment, invoice: invoice, amount: invoice.total, status: 'complement_issued')
 
       post register_payment_invoice_path(invoice), params: valid_payment_params
 
       expect(response).to redirect_to(containers_path)
       expect(flash[:alert]).to include('no tiene saldo pendiente')
+    end
+
+    it 'denies customs broker users' do
+      agency = create(:entity, :customs_agent)
+      broker_user = create(:user, :customs_broker, entity: agency)
+      related_invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-PAY-BROKER-001', receiver_entity: create(:entity, :client, customs_agent: agency))
+      sign_in broker_user, scope: :user
+
+      post register_payment_invoice_path(related_invoice), params: valid_payment_params
+
+      expect(response).to redirect_to(customs_agents_dashboard_path)
+      expect(flash[:alert]).to be_present
     end
   end
 end
