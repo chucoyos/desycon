@@ -16,7 +16,7 @@
   </div>
 
   <div class="bg-white rounded-xl shadow-md border border-gray-200 p-5 mb-6">
-    <%= form_with url: admin_invoice_payment_evidences_path, method: :get, class: "grid grid-cols-1 md:grid-cols-3 gap-4" do |f| %>
+    <%= form_with url: admin_invoice_payment_evidences_path, method: :get, class: "grid grid-cols-1 md:grid-cols-4 gap-4" do |f| %>
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">Estado</label>
         <%= f.select :status,
@@ -25,7 +25,21 @@
           class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm transition-all" %>
       </div>
 
-      <div class="flex gap-2 items-end md:col-span-2">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Fecha inicio</label>
+        <%= f.date_field :start_date,
+          value: @start_date,
+          class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm transition-all" %>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Fecha fin</label>
+        <%= f.date_field :end_date,
+          value: @end_date,
+          class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm transition-all" %>
+      </div>
+
+      <div class="flex gap-2 items-end">
         <%= f.submit "Filtrar", class: "cursor-pointer px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md" %>
         <%= link_to "Limpiar", admin_invoice_payment_evidences_path, class: "px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors" %>
       </div>

@@ -43,6 +43,64 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
       expect(response).to have_http_status(:redirect)
       expect(flash[:alert]).to be_present
     end
+
+    it "limits evidences to the last month by default" do
+      sign_in admin_user, scope: :user
+
+      recent_evidence = create(
+        :invoice_payment_evidence,
+        invoice: invoice,
+        customs_agent: customs_agent,
+        submitted_by: customs_user,
+        reference: "REF-RECENT-ONE-MONTH",
+        created_at: 5.days.ago
+      )
+      create(
+        :invoice_payment_evidence,
+        invoice: invoice,
+        customs_agent: customs_agent,
+        submitted_by: customs_user,
+        reference: "REF-OLD-OUTSIDE-MONTH",
+        created_at: 2.months.ago
+      )
+
+      get admin_invoice_payment_evidences_path
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include(recent_evidence.reference)
+      expect(response.body).not_to include("REF-OLD-OUTSIDE-MONTH")
+    end
+
+    it "filters evidences by the selected date range" do
+      sign_in admin_user, scope: :user
+
+      target_date = 2.months.ago.to_date
+      create(
+        :invoice_payment_evidence,
+        invoice: invoice,
+        customs_agent: customs_agent,
+        submitted_by: customs_user,
+        reference: "REF-IN-RANGE",
+        created_at: target_date.noon
+      )
+      create(
+        :invoice_payment_evidence,
+        invoice: invoice,
+        customs_agent: customs_agent,
+        submitted_by: customs_user,
+        reference: "REF-OUT-RANGE",
+        created_at: 5.days.ago
+      )
+
+      get admin_invoice_payment_evidences_path, params: {
+        start_date: (target_date - 1.day).iso8601,
+        end_date: (target_date + 1.day).iso8601
+      }
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("REF-IN-RANGE")
+      expect(response.body).not_to include("REF-OUT-RANGE")
+    end
   end
 
   describe "PATCH /admin/invoice_payment_evidences/:id/reject" do

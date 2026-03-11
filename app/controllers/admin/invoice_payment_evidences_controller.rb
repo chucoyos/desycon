@@ -8,8 +8,10 @@ module Admin
       authorize InvoicePaymentEvidence
 
       @status_filter = params[:status].to_s.presence
+      @start_date, @end_date = resolve_date_filters
       @invoice_payment_evidences = policy_scope(InvoicePaymentEvidence)
         .includes(:invoice, :customs_agent)
+        .where(created_at: @start_date.beginning_of_day..@end_date.end_of_day)
         .order(created_at: :desc)
       @invoice_payment_evidences = @invoice_payment_evidences.where(status: @status_filter) if @status_filter.in?(InvoicePaymentEvidence::STATUSES)
       @invoice_payment_evidences = @invoice_payment_evidences.page(params[:page]).per(params[:per] || 25)
@@ -76,6 +78,28 @@ module Admin
 
     def register_payment_params
       params.require(:register_payment).permit(:amount, :paid_at, :payment_method, :reference, :tracking_key, :notes, :review_comment)
+    end
+
+    def resolve_date_filters
+      today = Time.zone.today
+      default_start = today - 1.month
+
+      start_date = parse_date_param(params[:start_date]) || default_start
+      end_date = parse_date_param(params[:end_date]) || today
+
+      if start_date > end_date
+        start_date, end_date = end_date, start_date
+      end
+
+      [ start_date, end_date ]
+    end
+
+    def parse_date_param(value)
+      return nil if value.blank?
+
+      Date.iso8601(value)
+    rescue ArgumentError
+      nil
     end
 
     def notify_customs_agency_of_rejection(evidence, comment)
