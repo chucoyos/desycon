@@ -163,6 +163,24 @@ RSpec.describe "CustomsAgents", type: :request do
         expect(response.body).not_to include(activo_bl.blhouse)
       end
     end
+
+    it "shows invoice series and folio in payment evidence form" do
+      client = create(:entity, :client, customs_agent: customs_user.entity)
+      invoice = create(
+        :invoice,
+        status: "issued",
+        receiver_entity: client,
+        payload_snapshot: { "serie" => "A" },
+        provider_response: { "folio" => "12345" }
+      )
+
+      sign_in customs_user, scope: :user
+      get customs_agents_dashboard_path
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("A 12345")
+      expect(response.body).not_to include("##{invoice.id} -")
+    end
   end
 
   describe "GET /revalidations" do
