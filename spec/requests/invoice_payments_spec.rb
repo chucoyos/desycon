@@ -26,7 +26,8 @@ RSpec.describe 'InvoicePayments', type: :request do
         customs_agent: customs_user.entity,
         submitted_by: customs_user,
         reference: 'BLH-EVID-001',
-        tracking_key: 'TRACK-EVID-001'
+        tracking_key: 'TRACK-EVID-001',
+        review_comment: 'Validado por ejecutivo con referencia coincidente'
       )
 
       get invoice_invoice_payment_path(invoice, payment)
@@ -35,6 +36,8 @@ RSpec.describe 'InvoicePayments', type: :request do
       expect(response.body).to include('Evidencia enviada por agencia')
       expect(response.body).to include(evidence.reference)
       expect(response.body).to include(evidence.tracking_key)
+      expect(response.body).to include('Comentario de revision')
+      expect(response.body).to include('Validado por ejecutivo con referencia coincidente')
       expect(response.body).to include('Ver comprobante')
       expect(response.body).to include('Descargar comprobante')
     end
