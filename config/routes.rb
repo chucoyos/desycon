@@ -62,7 +62,6 @@ Rails.application.routes.draw do
     resources :users
     resources :invoice_payment_evidences, only: [ :index, :show ] do
       member do
-        patch :link_payment
         patch :reject
         post :register_payment
       end

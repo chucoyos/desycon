@@ -11,10 +11,6 @@ class InvoicePaymentEvidencePolicy < ApplicationPolicy
     manageable_user?
   end
 
-  def link_payment?
-    update?
-  end
-
   def reject?
     update?
   end

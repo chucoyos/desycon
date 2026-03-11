@@ -1,7 +1,7 @@
 module Admin
   class InvoicePaymentEvidencesController < ApplicationController
     before_action :authenticate_user!
-    before_action :set_evidence, only: [ :show, :link_payment, :reject, :register_payment ]
+    before_action :set_evidence, only: [ :show, :reject, :register_payment ]
     after_action :verify_authorized
 
     def index
@@ -9,7 +9,7 @@ module Admin
 
       @status_filter = params[:status].to_s.presence
       @invoice_payment_evidences = policy_scope(InvoicePaymentEvidence)
-        .includes(:invoice, :customs_agent, :submitted_by, :invoice_payment)
+        .includes(:invoice, :customs_agent)
         .order(created_at: :desc)
       @invoice_payment_evidences = @invoice_payment_evidences.where(status: @status_filter) if @status_filter.in?(InvoicePaymentEvidence::STATUSES)
       @invoice_payment_evidences = @invoice_payment_evidences.page(params[:page]).per(params[:per] || 25)
@@ -21,25 +21,6 @@ module Admin
       @invoice = @evidence.invoice
       @invoice_payments = @invoice.invoice_payments.recent_first
       @payment_method_options = FiscalProfile::FORMAS_PAGO.map { |code, label| [ "#{code} - #{label}", code ] }
-    end
-
-    def link_payment
-      authorize @evidence
-
-      payment = @evidence.invoice.invoice_payments.find_by(id: params[:invoice_payment_id])
-      unless payment
-        redirect_to admin_invoice_payment_evidence_path(@evidence), alert: "No se encontró el pago seleccionado para esta factura." and return
-      end
-
-      @evidence.update!(
-        invoice_payment: payment,
-        status: "linked",
-        review_comment: params[:review_comment].to_s.presence
-      )
-
-      redirect_to admin_invoice_payment_evidence_path(@evidence), notice: "Evidencia vinculada al pago ##{payment.id}."
-    rescue ActiveRecord::RecordInvalid => e
-      redirect_to admin_invoice_payment_evidence_path(@evidence), alert: e.record.errors.full_messages.to_sentence
     end
 
     def reject

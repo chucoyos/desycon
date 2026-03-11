@@ -45,23 +45,6 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
     end
   end
 
-  describe "PATCH /admin/invoice_payment_evidences/:id/link_payment" do
-    it "links evidence to existing payment from same invoice" do
-      sign_in admin_user, scope: :user
-      payment = create(:invoice_payment, invoice: invoice)
-
-      patch link_payment_admin_invoice_payment_evidence_path(evidence), params: {
-        invoice_payment_id: payment.id,
-        review_comment: "Validado contra movimiento bancario"
-      }
-
-      evidence.reload
-      expect(response).to redirect_to(admin_invoice_payment_evidence_path(evidence))
-      expect(evidence.status).to eq("linked")
-      expect(evidence.invoice_payment_id).to eq(payment.id)
-    end
-  end
-
   describe "PATCH /admin/invoice_payment_evidences/:id/reject" do
     it "rejects evidence with mandatory comment" do
       sign_in admin_user, scope: :user

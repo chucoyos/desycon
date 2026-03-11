@@ -20,7 +20,7 @@
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">Estado</label>
         <%= f.select :status,
-          options_for_select([["Todos", ""]] + InvoicePaymentEvidence::STATUSES.map { |status| [status.titleize, status] }, @status_filter),
+          options_for_select([["Todos", ""]] + InvoicePaymentEvidence::STATUSES.map { |status| [InvoicePaymentEvidence.status_label_for(status), status] }, @status_filter),
           {},
           class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm transition-all" %>
       </div>
@@ -66,7 +66,7 @@
                   else "bg-gray-100 text-gray-700"
                   end %>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= badge_classes %>">
-                  <%= evidence.status.titleize %>
+                  <%= evidence.status_label %>
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

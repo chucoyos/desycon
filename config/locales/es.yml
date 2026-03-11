@@ -78,6 +78,11 @@ es:
           cancel_pending: Cancelación pendiente
           cancelled: Cancelada
           failed: Fallida
+      invoice_payment_evidence:
+        statuses:
+          pending: Pendiente
+          linked: Vinculada
+          rejected: Rechazada
   date:
     abbr_day_names:
     - dom

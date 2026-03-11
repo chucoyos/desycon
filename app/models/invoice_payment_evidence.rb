@@ -13,6 +13,17 @@ class InvoicePaymentEvidence < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
   validates :receipt_file, presence: true
 
+  def self.status_label_for(status)
+    I18n.t(
+      "activerecord.attributes.invoice_payment_evidence.statuses.#{status}",
+      default: status.to_s.humanize
+    )
+  end
+
+  def status_label
+    self.class.status_label_for(status)
+  end
+
   after_create_commit :notify_admins_and_executives
 
   private

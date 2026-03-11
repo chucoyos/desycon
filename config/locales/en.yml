@@ -33,3 +33,10 @@ en:
     default: "You are not authorized to perform this action."
     invoice_policy:
       show?: "You are not authorized to view this invoice."
+  activerecord:
+    attributes:
+      invoice_payment_evidence:
+        statuses:
+          pending: Pending
+          linked: Linked
+          rejected: Rejected

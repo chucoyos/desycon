@@ -16,7 +16,7 @@
         <dl class="space-y-3 text-sm text-gray-700">
           <div>
             <dt class="text-gray-500">Estado</dt>
-            <dd class="font-semibold"><%= @evidence.status.titleize %></dd>
+            <dd class="font-semibold"><%= @evidence.status_label %></dd>
           </div>
           <div>
             <dt class="text-gray-500">Agencia</dt>
@@ -54,24 +54,6 @@
     </div>
 
     <div class="lg:col-span-2 space-y-6">
-      <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Vincular a pago existente</h2>
-        <%= form_with url: link_payment_admin_invoice_payment_evidence_path(@evidence), method: :patch, local: true, class: "space-y-4" do |f| %>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Pago</label>
-            <%= f.select :invoice_payment_id,
-              options_for_select(@invoice_payments.map { |payment| ["##{payment.id} - #{number_to_currency(payment.amount)} - #{I18n.l(payment.paid_at.to_date)}", payment.id] }, @evidence.invoice_payment_id),
-              { include_blank: "Selecciona un pago" },
-              { class: "w-full px-3 py-2 border border-gray-300 rounded-md", required: true } %>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Comentario (opcional)</label>
-            <%= f.text_area :review_comment, rows: 2, class: "w-full px-3 py-2 border border-gray-300 rounded-md" %>
-          </div>
-          <%= f.submit "Vincular evidencia", class: "cursor-pointer inline-flex items-center px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm font-semibold" %>
-        <% end %>
-      </div>
-
       <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Registrar pago nuevo desde evidencia</h2>
         <%= form_with url: register_payment_admin_invoice_payment_evidence_path(@evidence), method: :post, scope: :register_payment, local: true, class: "grid grid-cols-1 md:grid-cols-2 gap-4" do |f| %>
