@@ -13,6 +13,7 @@ RSpec.describe InvoicePolicy, type: :policy do
       expect(policy.issue_manual?).to eq(true)
       expect(policy.cancel?).to eq(true)
       expect(policy.sync_documents?).to eq(true)
+      expect(policy.sync_files?).to eq(true)
       expect(policy.register_payment?).to eq(true)
       expect(policy.send_email?).to eq(true)
     end
@@ -28,6 +29,8 @@ RSpec.describe InvoicePolicy, type: :policy do
 
       expect(described_class.new(user, related_invoice).show?).to eq(true)
       expect(described_class.new(user, unrelated_invoice).show?).to eq(false)
+      expect(described_class.new(user, related_invoice).sync_files?).to eq(true)
+      expect(described_class.new(user, unrelated_invoice).sync_files?).to eq(false)
       expect(policy.index?).to eq(true)
       expect(policy.issue_manual?).to eq(false)
       expect(policy.cancel?).to eq(false)

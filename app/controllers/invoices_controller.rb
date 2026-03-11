@@ -1,6 +1,6 @@
 class InvoicesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_invoice, only: %i[show retry_issue cancel sync_documents register_payment send_email]
+  before_action :set_invoice, only: %i[show retry_issue cancel sync_documents sync_files register_payment send_email]
   before_action :load_manual_invoice_options, only: %i[new create]
   after_action :verify_authorized
 
@@ -190,6 +190,15 @@ class InvoicesController < ApplicationController
     redirect_back fallback_location: containers_path, notice: notice_message
   rescue Facturador::Error => e
     redirect_back fallback_location: containers_path, alert: "Error al sincronizar documentos: #{e.message}"
+  end
+
+  def sync_files
+    authorize @invoice, :sync_files?
+
+    Facturador::SyncInvoiceDocumentsService.call(invoice: @invoice, actor: current_user)
+    redirect_back fallback_location: invoice_path(@invoice), notice: "XML y PDF sincronizados correctamente."
+  rescue Facturador::Error => e
+    redirect_back fallback_location: invoice_path(@invoice), alert: "Error al sincronizar documentos: #{e.message}"
   end
 
   def register_payment

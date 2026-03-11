@@ -188,6 +188,20 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include('UUID-SHOW-001')
       expect(response.body).to include('Registrar nuevo pago')
       expect(response.body).to include('Registrar pago')
+      expect(response.body).to include('Sincronizar XML/PDF')
+      expect(response.body).not_to include('Re-sincronizar XML/PDF')
+    end
+
+    it 'shows re-sync label for admin when xml and pdf are already attached' do
+      invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-SHOW-001A')
+      invoice.xml_file.attach(io: StringIO.new('<cfdi/>'), filename: 'invoice.xml', content_type: 'application/xml')
+      invoice.pdf_file.attach(io: StringIO.new('%PDF-1.4 test'), filename: 'invoice.pdf', content_type: 'application/pdf')
+
+      get invoice_path(invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('Re-sincronizar XML/PDF')
+      expect(response.body).not_to include('Sincronizar XML/PDF')
     end
 
     it 'shows complement uuid when payment has linked complement invoice' do
@@ -328,6 +342,24 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).not_to include('Registrar nuevo pago')
       expect(response.body).not_to include('Cancelar CFDI')
       expect(response.body).not_to include('Enviar CFDI por correo')
+      expect(response.body).not_to include('Re-sincronizar XML/PDF')
+      expect(response.body).to include('Sincronizar XML/PDF')
+    end
+
+    it 'hides customs broker sync button when xml and pdf are already attached' do
+      agency = create(:entity, :customs_agent)
+      broker_user = create(:user, :customs_broker, entity: agency)
+      sign_in broker_user, scope: :user
+      invoice = create(:invoice, receiver_entity: create(:entity, :client, customs_agent: agency), status: 'issued', sat_uuid: 'UUID-BROKER-SHOW-002')
+      invoice.xml_file.attach(io: StringIO.new('<cfdi/>'), filename: 'invoice.xml', content_type: 'application/xml')
+      invoice.pdf_file.attach(io: StringIO.new('%PDF-1.4 test'), filename: 'invoice.pdf', content_type: 'application/pdf')
+
+      get invoice_path(invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include('Sincronizar XML/PDF')
+      expect(response.body).to include('Descargar XML')
+      expect(response.body).to include('Descargar PDF')
     end
 
     it 'denies customs broker users on unrelated invoice show' do
@@ -440,6 +472,46 @@ RSpec.describe 'Invoices', type: :request do
 
       expect(response).to redirect_to(containers_path)
       expect(flash[:notice]).to include('XML/PDF sincronizados (factura cancelada).')
+    end
+  end
+
+  describe 'POST /invoices/:id/sync_files' do
+    let(:invoice) { create(:invoice, status: 'issued', sat_uuid: 'UUID-SYNC-FILES-001') }
+
+    it 'syncs documents without reconciliation for admin users' do
+      sign_in admin_user, scope: :user
+      expect(Facturador::ReconcileInvoicesService).not_to receive(:call_for_invoice)
+      expect(Facturador::SyncInvoiceDocumentsService).to receive(:call).with(invoice: invoice, actor: admin_user)
+
+      post sync_files_invoice_path(invoice)
+
+      expect(response).to redirect_to(invoice_path(invoice))
+      expect(flash[:notice]).to include('XML y PDF sincronizados correctamente.')
+    end
+
+    it 'allows customs broker users when invoice is related to their agency' do
+      agency = create(:entity, :customs_agent)
+      broker_user = create(:user, :customs_broker, entity: agency)
+      related_invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-SYNC-FILES-BROKER', receiver_entity: create(:entity, :client, customs_agent: agency))
+      sign_in broker_user, scope: :user
+
+      expect(Facturador::SyncInvoiceDocumentsService).to receive(:call).with(invoice: related_invoice, actor: broker_user)
+      post sync_files_invoice_path(related_invoice)
+
+      expect(response).to redirect_to(invoice_path(related_invoice))
+      expect(flash[:notice]).to include('XML y PDF sincronizados correctamente.')
+    end
+
+    it 'denies customs broker users when invoice is not related to their agency' do
+      agency = create(:entity, :customs_agent)
+      broker_user = create(:user, :customs_broker, entity: agency)
+      unrelated_invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-SYNC-FILES-DENY', receiver_entity: create(:entity, :client, customs_agent: create(:entity, :customs_agent)))
+      sign_in broker_user, scope: :user
+
+      post sync_files_invoice_path(unrelated_invoice)
+
+      expect(response).to redirect_to(customs_agents_dashboard_path)
+      expect(flash[:alert]).to be_present
     end
   end
 

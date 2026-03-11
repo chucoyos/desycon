@@ -31,6 +31,10 @@ class InvoicePolicy < ApplicationPolicy
     issue_manual?
   end
 
+  def sync_files?
+    issue_manual? || customs_related_invoice?
+  end
+
   def register_payment?
     issue_manual?
   end

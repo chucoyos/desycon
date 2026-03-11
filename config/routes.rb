@@ -42,6 +42,7 @@ Rails.application.routes.draw do
       post :retry_issue
       patch :cancel
       post :sync_documents
+      post :sync_files
       post :register_payment
       post :send_email
     end
