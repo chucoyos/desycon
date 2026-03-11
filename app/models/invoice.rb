@@ -81,7 +81,11 @@ class Invoice < ApplicationRecord
   def outstanding_amount
     return 0.to_d unless issued?
 
-    paid_total = invoice_payments.sum(:amount).to_d
+    paid_total = if association(:invoice_payments).loaded?
+      invoice_payments.sum { |payment| payment.amount.to_d }
+    else
+      invoice_payments.sum(:amount).to_d
+    end
     remaining = total.to_d - paid_total
     remaining.positive? ? remaining : 0.to_d
   end

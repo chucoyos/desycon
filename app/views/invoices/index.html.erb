@@ -112,7 +112,7 @@
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">UUID</th>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Estatus</th>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Estatus pago</th>
-          <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Total</th>
+          <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Saldo</th>
         </tr>
       </thead>
       <tbody class="bg-white divide-y divide-gray-100">
@@ -133,7 +133,7 @@
               <% status_for_display = invoice.effective_status %>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= t("activerecord.attributes.invoice.statuses.#{status_for_display}", default: status_for_display.humanize) %></td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= invoice.payment_status_label %></td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900"><%= number_to_currency(invoice.total || 0) %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900"><%= number_to_currency(invoice.outstanding_amount || 0) %></td>
             </tr>
           <% end %>
         <% else %>

@@ -23,7 +23,7 @@ class InvoicesController < ApplicationController
 
     scoped_invoices = policy_scope(Invoice)
     @invoices = scoped_invoices
-                .includes(:receiver_entity)
+                .includes(:receiver_entity, :invoice_payments)
                 .where(created_at: start_date.beginning_of_day..end_date.end_of_day)
                 .order(created_at: :desc)
 
