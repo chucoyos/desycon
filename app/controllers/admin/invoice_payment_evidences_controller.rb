@@ -51,6 +51,7 @@ module Admin
       end
 
       @evidence.update!(status: "rejected", review_comment: comment)
+      notify_customs_agency_of_rejection(@evidence, comment)
       redirect_to admin_invoice_payment_evidence_path(@evidence), notice: "Evidencia rechazada."
     rescue ActiveRecord::RecordInvalid => e
       redirect_to admin_invoice_payment_evidence_path(@evidence), alert: e.record.errors.full_messages.to_sentence
@@ -94,6 +95,28 @@ module Admin
 
     def register_payment_params
       params.require(:register_payment).permit(:amount, :paid_at, :payment_method, :reference, :tracking_key, :notes, :review_comment)
+    end
+
+    def notify_customs_agency_of_rejection(evidence, comment)
+      recipients = User.joins(:role)
+        .where(entity_id: evidence.customs_agent_id)
+        .where(roles: { name: Role::CUSTOMS_BROKER })
+
+      action_text = [
+        "rechazo evidencia de pago de la factura ##{evidence.invoice_id}",
+        "Referencia: #{evidence.reference}",
+        ("Clave rastreo: #{evidence.tracking_key}" if evidence.tracking_key.present?),
+        "Motivo: #{comment}"
+      ].compact.join(" | ")
+
+      recipients.find_each do |recipient|
+        Notification.create!(
+          recipient: recipient,
+          actor: current_user,
+          action: action_text,
+          notifiable: evidence
+        )
+      end
     end
   end
 end

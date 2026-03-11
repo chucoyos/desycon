@@ -29,3 +29,7 @@
 
 en:
   hello: "Hello world"
+  pundit:
+    default: "You are not authorized to perform this action."
+    invoice_policy:
+      show?: "You are not authorized to view this invoice."

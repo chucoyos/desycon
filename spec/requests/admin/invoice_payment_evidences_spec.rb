@@ -66,14 +66,22 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
     it "rejects evidence with mandatory comment" do
       sign_in admin_user, scope: :user
 
-      patch reject_admin_invoice_payment_evidence_path(evidence), params: {
-        review_comment: "Comprobante ilegible"
-      }
+      expect do
+        patch reject_admin_invoice_payment_evidence_path(evidence), params: {
+          review_comment: "Comprobante ilegible"
+        }
+      end.to change {
+        Notification.where(recipient: customs_user, notifiable: evidence).count
+      }.by(1)
 
       evidence.reload
       expect(response).to redirect_to(admin_invoice_payment_evidence_path(evidence))
       expect(evidence.status).to eq("rejected")
       expect(evidence.review_comment).to eq("Comprobante ilegible")
+
+      rejection_notification = Notification.where(recipient: customs_user, notifiable: evidence).order(:id).last
+      expect(rejection_notification.action).to include("rechazo evidencia de pago")
+      expect(rejection_notification.action).to include("Motivo: Comprobante ilegible")
     end
   end
 

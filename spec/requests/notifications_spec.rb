@@ -21,6 +21,16 @@ RSpec.describe "Notifications", type: :request do
 
       expect(response.body).to include("test action")
     end
+
+    it "includes delete-on-click action for invoice payment evidence notifications" do
+      evidence = create(:invoice_payment_evidence)
+      Notification.create!(recipient: user, actor: user, notifiable: evidence, action: "evidencia rechazada")
+
+      get notifications_path
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("click-&gt;notification#deleteNotification")
+    end
   end
 
   describe "revalidation notification styling" do

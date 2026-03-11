@@ -17,6 +17,8 @@ es:
   # Pundit authorization messages
   pundit:
     default: "No tienes permiso para realizar esta acción."
+    invoice_policy:
+      show?: "No tienes permiso para ver esta factura."
     container_policy:
       index?: "No tienes permiso para ver contenedores."
       show?: "No tienes permiso para ver este contenedor."

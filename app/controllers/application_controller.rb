@@ -50,7 +50,7 @@ class ApplicationController < ActionController::Base
 
   def user_not_authorized(exception)
     policy_name = exception.policy.class.to_s.underscore
-    flash[:alert] = t "pundit.#{policy_name}.#{exception.query}", default: :default
+    flash[:alert] = t("pundit.#{policy_name}.#{exception.query}", default: t("pundit.default"))
     redirect_back(fallback_location: default_signed_in_path)
   end
 
