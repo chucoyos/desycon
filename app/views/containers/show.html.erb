@@ -345,7 +345,11 @@
                         <% if invoice.cancel_retryable? %>
                           <% cancel_button_label = invoice.last_error_code.to_s.start_with?("FACTURADOR_CANCEL_") ? "Reintentar cancelación CFDI" : "Cancelar CFDI" %>
                           <%= form_with url: cancel_invoice_path(invoice), method: :patch, local: true, class: "flex flex-wrap items-center gap-2" do |f| %>
-                            <%= f.submit cancel_button_label, class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100" %>
+                            <%= f.submit cancel_button_label,
+                                data: {
+                                  turbo_confirm: "Esta acción solicitará la cancelación del CFDI en PAC/SAT.\n\nSi el PAC no confirma de inmediato, la factura puede seguir visible como emitida hasta la conciliación.\n\nMotivo aplicado: 02 - Sin relación.\n\n¿Deseas continuar?"
+                                },
+                                class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100" %>
                           <% end %>
 
                           <%= button_to "Sincronizar XML/PDF", sync_documents_invoice_path(invoice), method: :post, class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100" %>
