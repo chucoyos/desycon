@@ -12,6 +12,7 @@ class InvoicesController < ApplicationController
     @selected_start_date = resolved_start_date
     @selected_end_date = resolved_end_date
     @selected_status = params[:status].to_s.presence
+    @selected_kind = params[:kind].to_s.presence
     @selected_payment_status = params[:payment_status].to_s.presence
     @selected_client_id = params[:client_id].to_s.presence
     @selected_customs_agent_id = admin_or_executive ? params[:customs_agent_id].to_s.presence : nil
@@ -20,14 +21,17 @@ class InvoicesController < ApplicationController
 
     start_date = [ @selected_start_date, @selected_end_date ].min
     end_date = [ @selected_start_date, @selected_end_date ].max
+    paid_total_sql = "COALESCE((SELECT SUM(invoice_payments.amount) FROM invoice_payments WHERE invoice_payments.invoice_id = invoices.id), 0)"
 
     scoped_invoices = policy_scope(Invoice)
     @invoices = scoped_invoices
-                .includes(:receiver_entity, :invoice_payments)
+          .includes(:receiver_entity)
+          .select("invoices.*", "#{paid_total_sql} AS paid_total_for_index")
                 .where(created_at: start_date.beginning_of_day..end_date.end_of_day)
                 .order(created_at: :desc)
 
     @invoices = @invoices.where(status: @selected_status) if @selected_status.present? && Invoice::STATUSES.include?(@selected_status)
+    @invoices = @invoices.where(kind: @selected_kind) if @selected_kind.present? && Invoice::KINDS.include?(@selected_kind)
     @invoices = @invoices.with_payment_status(@selected_payment_status) if @selected_payment_status.present? && Invoice::PAYMENT_STATUSES.include?(@selected_payment_status)
     @invoices = @invoices.where(receiver_entity_id: @selected_client_id) if @selected_client_id.present?
     if @selected_customs_agent_id.present?

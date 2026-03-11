@@ -40,6 +40,17 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include(with_uuid.receiver_entity.name)
     end
 
+    it 'filters by comprobante type' do
+      factura_invoice = create(:invoice, kind: 'ingreso', sat_uuid: 'UUID-KIND-FACTURA')
+      pago_invoice = create(:invoice, kind: 'pago', sat_uuid: 'UUID-KIND-PAGO')
+
+      get invoices_path, params: { kind: 'pago' }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(pago_invoice.sat_uuid)
+      expect(response.body).not_to include(factura_invoice.sat_uuid)
+    end
+
     it 'filters by client' do
       client = create(:entity, :client)
       other_client = create(:entity, :client)

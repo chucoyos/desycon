@@ -81,7 +81,9 @@ class Invoice < ApplicationRecord
   def outstanding_amount
     return 0.to_d unless issued?
 
-    paid_total = if association(:invoice_payments).loaded?
+    paid_total = if has_attribute?(:paid_total_for_index)
+      self[:paid_total_for_index].to_d
+    elsif association(:invoice_payments).loaded?
       invoice_payments.sum { |payment| payment.amount.to_d }
     else
       invoice_payments.sum(:amount).to_d
