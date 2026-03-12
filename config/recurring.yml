@@ -14,10 +14,6 @@ production:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
 
-  facturador_reconcile_invoices:
-    command: "Facturador::ReconcileInvoicesJob.perform_later"
-    schedule: every 30 minutes
-
   customs_agents_recalculate_access_restrictions:
     command: "CustomsAgents::RecalculateAccessRestrictionsJob.perform_later"
     schedule: every hour
@@ -26,10 +22,6 @@ staging:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
-
-  facturador_reconcile_invoices:
-    command: "Facturador::ReconcileInvoicesJob.perform_later"
-    schedule: every 30 minutes
 
   customs_agents_recalculate_access_restrictions:
     command: "CustomsAgents::RecalculateAccessRestrictionsJob.perform_later"
