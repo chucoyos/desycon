@@ -195,7 +195,7 @@ class EntitiesController < ApplicationController
       ]
     ]
 
-    unless current_user.customs_broker?
+    if current_user.admin_or_executive?
       permitted_attributes += [ :role_kind, :customs_agent_id, :patent_number, :enforce_overdue_payment_rule ]
     end
 
