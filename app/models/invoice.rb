@@ -39,6 +39,16 @@ class Invoice < ApplicationRecord
   scope :issued, -> { where(status: "issued") }
   scope :cancelled, -> { where(status: "cancelled") }
   scope :pending_reconciliation, -> { where(status: "cancel_pending").where.not(sat_uuid: [ nil, "" ]) }
+  scope :reconciliation_candidates, -> {
+    where(status: %w[cancel_pending issued failed])
+      .where.not(sat_uuid: [ nil, "" ])
+  }
+  scope :prioritized_for_reconciliation, -> {
+    order(
+      Arel.sql("CASE WHEN invoices.status = 'cancel_pending' THEN 0 ELSE 1 END ASC"),
+      Arel.sql("COALESCE(invoices.issued_at, invoices.created_at) DESC")
+    )
+  }
   scope :with_payment_status, ->(payment_status) {
     next all unless PAYMENT_STATUSES.include?(payment_status)
 

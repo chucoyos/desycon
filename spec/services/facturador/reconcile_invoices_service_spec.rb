@@ -98,7 +98,7 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('reconcile_synced')
     end
 
-    it 'reconciles issued invoice only via explicit call_for_invoice' do
+    it 'reconciles issued invoice automatically when it is inside reconciliation window' do
       invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-EXPLICIT-001')
       allow(client_double).to receive(:buscar_comprobantes).and_return(
         {
@@ -115,10 +115,29 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
       )
 
       described_class.call(limit: 10)
-      expect(invoice.reload.status).to eq('issued')
-
-      described_class.call_for_invoice(invoice: invoice)
       expect(invoice.reload.status).to eq('cancelled')
+    end
+
+    it 'prioritizes cancel_pending before other reconciliable statuses' do
+      issued_invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-ISSUED-SECOND')
+      pending_invoice = create(:invoice, status: 'cancel_pending', sat_uuid: 'UUID-PENDING-FIRST')
+
+      expect(client_double).to receive(:buscar_comprobantes)
+        .with(hash_including(uuid: 'UUID-PENDING-FIRST'))
+        .once
+        .and_return([
+          {
+            'uuid' => 'UUID-PENDING-FIRST',
+            'subestatus' => 'Cancelado',
+            'descripcion' => 'Cancelado (Directo)',
+            'subestatusId' => 3
+          }
+        ])
+
+      described_class.call(limit: 1)
+
+      expect(pending_invoice.reload.status).to eq('cancelled')
+      expect(issued_invoice.reload.status).to eq('issued')
     end
 
     it 'excludes invoices older than max age from automatic reconciliation' do

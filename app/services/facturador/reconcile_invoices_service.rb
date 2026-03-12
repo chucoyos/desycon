@@ -48,7 +48,7 @@ module Facturador
     attr_reader :limit, :actor
 
     def invoices_scope_for_reconciliation
-      scope = Invoice.pending_reconciliation.recent_first
+      scope = Invoice.reconciliation_candidates.prioritized_for_reconciliation
       max_age_days = Config.reconciliation_max_age_days
       return scope if max_age_days.blank?
 
