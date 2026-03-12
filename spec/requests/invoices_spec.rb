@@ -401,6 +401,23 @@ RSpec.describe 'Invoices', type: :request do
       expect(response).to redirect_to(customs_agents_dashboard_path)
       expect(flash[:alert]).to be_present
     end
+
+    it 'keeps index and show access when customs agency is restricted' do
+      agency = create(:entity, :customs_agent, restricted_access_enabled: true)
+      broker_user = create(:user, :customs_broker, entity: agency)
+      sign_in broker_user, scope: :user
+      related_invoice = create(:invoice, receiver_entity: create(:entity, :client, customs_agent: agency), status: 'issued', sat_uuid: 'UUID-BROKER-RESTRICTED-001')
+
+      get invoices_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('UUID-BROKER-RESTRICTED-001')
+
+      get invoice_path(related_invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('UUID-BROKER-RESTRICTED-001')
+    end
   end
 
   describe 'PATCH /invoices/:id/cancel' do

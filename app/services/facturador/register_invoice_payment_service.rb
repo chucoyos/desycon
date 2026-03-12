@@ -63,11 +63,20 @@ module Facturador
 
         IssuePaymentComplementService.call(payment: payment, actor: actor)
       end
+
+      enqueue_customs_agency_access_recalculation
       payment
     end
 
     private
 
     attr_reader :invoice, :amount, :paid_at, :payment_method, :reference, :tracking_key, :notes, :receipt_file, :actor
+
+    def enqueue_customs_agency_access_recalculation
+      customs_agent_id = invoice.customs_agent_id || invoice.receiver_entity&.customs_agent_id
+      return if customs_agent_id.blank?
+
+      CustomsAgents::RecalculateAccessRestrictionsJob.perform_later(customs_agent_id: customs_agent_id)
+    end
   end
 end

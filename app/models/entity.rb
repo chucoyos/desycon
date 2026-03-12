@@ -1,4 +1,6 @@
 class Entity < ApplicationRecord
+  RESTRICTED_ACCESS_REASON_OVERDUE_INVOICES = "Regla 72h: facturas vencidas con saldo pendiente".freeze
+
   ROLE_KIND_PRIORITY = {
     customs_agent: :is_customs_agent,
     consolidator: :is_consolidator,
@@ -71,6 +73,8 @@ class Entity < ApplicationRecord
   scope :customs_brokers, -> { where(role_kind: "customs_broker") }
   scope :forwarders, -> { where(role_kind: "forwarder") }
   scope :clients, -> { where(role_kind: "client") }
+  scope :with_restricted_access, -> { where(restricted_access_enabled: true) }
+  scope :with_overdue_rule_enabled, -> { where(enforce_overdue_payment_rule: true) }
 
   # Callbacks
   before_validation :normalize_patent_number
@@ -104,6 +108,27 @@ class Entity < ApplicationRecord
 
   def build_fiscal_address_if_needed
     addresses.build(tipo: "matriz") if addresses.matriz.empty?
+  end
+
+  def set_restricted_access!(enabled:, reason: nil, changed_at: Time.current)
+    attrs = {
+      restricted_access_enabled: enabled,
+      restricted_access_reason: reason
+    }
+
+    if enabled
+      attrs[:restricted_access_enabled_at] ||= changed_at
+      attrs[:restricted_access_unlocked_at] = nil
+    else
+      attrs[:restricted_access_enabled_at] = nil
+      attrs[:restricted_access_unlocked_at] = changed_at
+    end
+
+    update!(attrs)
+  end
+
+  def restricted_access_for_overdue_rule?
+    restricted_access_enabled? && restricted_access_reason == RESTRICTED_ACCESS_REASON_OVERDUE_INVOICES
   end
 
   private

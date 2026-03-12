@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_10_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_11_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -237,17 +237,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_10_110000) do
   create_table "entities", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "customs_agent_id"
+    t.boolean "enforce_overdue_payment_rule", default: true, null: false
     t.string "name", null: false
     t.string "patent_number"
     t.boolean "requires_bl_endosado_documento", default: true, null: false
     t.boolean "requires_encomienda_documento", default: true, null: false
     t.boolean "requires_liberacion_documento", default: true, null: false
     t.boolean "requires_pago_documento", default: true, null: false
+    t.boolean "restricted_access_enabled", default: false, null: false
+    t.datetime "restricted_access_enabled_at"
+    t.string "restricted_access_reason"
+    t.datetime "restricted_access_unlocked_at"
     t.string "role_kind"
     t.datetime "updated_at", null: false
     t.index ["customs_agent_id"], name: "index_entities_on_customs_agent_id"
+    t.index ["enforce_overdue_payment_rule"], name: "index_entities_on_enforce_overdue_payment_rule"
     t.index ["name"], name: "index_entities_on_name"
     t.index ["patent_number"], name: "index_entities_on_patent_number", unique: true
+    t.index ["restricted_access_enabled"], name: "index_entities_on_restricted_access_enabled"
+    t.index ["restricted_access_enabled_at"], name: "index_entities_on_restricted_access_enabled_at"
     t.index ["role_kind"], name: "index_entities_on_role_kind"
     t.check_constraint "role_kind IS NULL OR (role_kind::text = ANY (ARRAY['customs_agent'::character varying, 'consolidator'::character varying, 'customs_broker'::character varying, 'client'::character varying, 'forwarder'::character varying]::text[]))", name: "check_entities_role_kind"
   end

@@ -84,6 +84,7 @@ class EntitiesController < ApplicationController
     respond_to do |format|
       if @entity.update(entity_params)
         @entity.reload # Reload to ensure associations are fresh
+        enqueue_customs_agency_access_recalculation(@entity)
 
         if modal_context
           format.turbo_stream do
@@ -165,6 +166,19 @@ class EntitiesController < ApplicationController
     # Patents are managed via broker entities now
   end
 
+  def enqueue_customs_agency_access_recalculation(entity)
+    return unless entity.role_customs_agent?
+
+    if !entity.enforce_overdue_payment_rule? && entity.restricted_access_enabled?
+      entity.set_restricted_access!(enabled: false, reason: nil)
+      return
+    end
+
+    return unless entity.enforce_overdue_payment_rule?
+
+    CustomsAgents::RecalculateAccessRestrictionsJob.perform_later(customs_agent_id: entity.id)
+  end
+
   def entity_params
     permitted_attributes = [
       :name,
@@ -182,7 +196,7 @@ class EntitiesController < ApplicationController
     ]
 
     unless current_user.customs_broker?
-      permitted_attributes += [ :role_kind, :customs_agent_id, :patent_number ]
+      permitted_attributes += [ :role_kind, :customs_agent_id, :patent_number, :enforce_overdue_payment_rule ]
     end
 
     params.require(:entity).permit(permitted_attributes)

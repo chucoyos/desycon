@@ -1,3 +1,10 @@
+<%
+  customs_agency_restricted = current_user.customs_broker? &&
+    current_user.entity&.role_customs_agent? &&
+    current_user.entity&.restricted_access_enabled?
+  customs_agency_home_path = customs_agency_restricted ? new_customs_agents_payment_evidence_path : customs_agents_dashboard_path
+%>
+
 <nav class="bg-gradient-to-r from-white via-blue-50 to-white shadow-lg border-b border-blue-100 fixed top-0 left-0 right-0 z-50 backdrop-blur-sm">
   <div class="container mx-auto px-5">
     <div class="flex items-center justify-between h-16">
@@ -103,9 +110,12 @@
         <% end %>
         
         <% if current_user.customs_broker? && current_user.entity&.role_customs_agent? %>
-          <%= link_to "Dashboard Revalidaciones", customs_agents_dashboard_path, class: "inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" %>
+          <%= link_to(customs_agency_restricted ? "Adjuntar comprobante" : "Dashboard Revalidaciones", customs_agency_home_path, class: "inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200") %>
+          <%= link_to "Adjuntar comprobante", new_customs_agents_payment_evidence_path, class: "inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" %>
           <%= link_to "Facturas", invoices_path, class: "inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" %>
-          <%= link_to "Clientes", entities_path, class: "inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" %>
+          <% unless customs_agency_restricted %>
+            <%= link_to "Clientes", entities_path, class: "inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" %>
+          <% end %>
         <% end %>
         
         <div class="flex items-center gap-3 ml-4 pl-4 border-l border-gray-300">
@@ -224,11 +234,17 @@
       <% end %>
 
       <% if current_user.customs_broker? && current_user.entity&.role_customs_agent? %>
-        <%= link_to customs_agents_dashboard_path, class: "flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200" do %>
+        <%= link_to customs_agency_home_path, class: "flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200" do %>
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
           </svg>
-          Dashboard Agente
+          <%= customs_agency_restricted ? "Adjuntar comprobante" : "Dashboard Agente" %>
+        <% end %>
+        <%= link_to new_customs_agents_payment_evidence_path, class: "flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200" do %>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16V4m0 12l-3-3m3 3l3-3M4 20h16" />
+          </svg>
+          Adjuntar comprobante
         <% end %>
         <%= link_to invoices_path, class: "flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200" do %>
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

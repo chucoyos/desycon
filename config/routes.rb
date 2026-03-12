@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   get "customs_agents/dashboard"
+  get "customs_agents/payment_evidences/new", to: "customs_agent_payment_evidences#new", as: :new_customs_agents_payment_evidence
   post "customs_agents/payment_evidences", to: "customs_agent_payment_evidences#create", as: :customs_agents_payment_evidences
   get "customs_agents/revalidations", to: "customs_agents#revalidation_modal", as: :customs_agents_revalidation
   patch "customs_agents/revalidations/:id", to: "customs_agents#revalidation_update", as: :customs_agents_revalidation_update

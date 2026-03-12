@@ -126,14 +126,23 @@
       <tbody class="bg-white divide-y divide-gray-100">
         <% if @invoices.any? %>
           <% @invoices.each do |invoice| %>
+            <% can_view_details = policy(invoice).show? %>
             <tr class="hover:bg-gray-50 transition-colors duration-150">
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                <%= link_to l(invoice.created_at, format: :short), invoice_path(invoice), class: "text-indigo-700 hover:text-indigo-900 font-medium" %>
+                <% if can_view_details %>
+                  <%= link_to l(invoice.created_at, format: :short), invoice_path(invoice), class: "text-indigo-700 hover:text-indigo-900 font-medium" %>
+                <% else %>
+                  <span><%= l(invoice.created_at, format: :short) %></span>
+                <% end %>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= invoice.receiver_entity&.name || '-' %></td>
               <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-gray-700">
                 <% if invoice.sat_uuid.present? %>
-                  <%= link_to invoice.sat_uuid, invoice_path(invoice), class: "text-indigo-700 hover:text-indigo-900" %>
+                  <% if can_view_details %>
+                    <%= link_to invoice.sat_uuid, invoice_path(invoice), class: "text-indigo-700 hover:text-indigo-900" %>
+                  <% else %>
+                    <span><%= invoice.sat_uuid %></span>
+                  <% end %>
                 <% else %>
                   -
                 <% end %>

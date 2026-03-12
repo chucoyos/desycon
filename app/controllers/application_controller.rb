@@ -10,6 +10,7 @@ class ApplicationController < ActionController::Base
   # Set current user for Current attributes
   before_action :set_current_user
   before_action :redirect_disabled_user
+  before_action :redirect_restricted_access_user
 
   # Redirect based on user role after sign in
   def after_sign_in_path_for(resource)
@@ -48,6 +49,16 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def redirect_restricted_access_user
+    return unless current_user
+    return if devise_controller?
+    return unless restricted_customs_agency_user?
+    return if restricted_access_whitelisted_route?
+
+    flash[:alert] = "Tu acceso está restringido temporalmente por facturas vencidas. Solo puedes adjuntar comprobantes y consultar facturas relacionadas con tu agencia."
+    redirect_to new_customs_agents_payment_evidence_path and return
+  end
+
   def user_not_authorized(exception)
     policy_name = exception.policy.class.to_s.underscore
     flash[:alert] = t("pundit.#{policy_name}.#{exception.query}", default: t("pundit.default"))
@@ -57,10 +68,30 @@ class ApplicationController < ActionController::Base
   def default_signed_in_path(user = current_user)
     return root_path unless user
 
+    if user.customs_broker? && user.entity&.role_customs_agent? && user.entity&.restricted_access_enabled?
+      return new_customs_agents_payment_evidence_path
+    end
+
     if user.customs_broker? && user.entity&.role_customs_agent?
       customs_agents_dashboard_path
     else
       containers_path
     end
+  end
+
+  def restricted_customs_agency_user?
+    !current_user.admin_or_executive? &&
+      current_user.entity&.role_customs_agent? &&
+      current_user.entity&.restricted_access_enabled?
+  end
+
+  def restricted_access_whitelisted_route?
+    allowed_routes = {
+      "customs_agent_payment_evidences" => %w[new create],
+      "invoices" => %w[index show]
+    }
+
+    actions = allowed_routes[controller_path]
+    actions.present? && actions.include?(action_name)
   end
 end

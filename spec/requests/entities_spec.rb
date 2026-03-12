@@ -122,6 +122,19 @@ RSpec.describe "Entities", type: :request do
       expect(entity.reload.name).to eq("Entidad Renombrada")
     end
 
+    it "allows admin to update overdue-rule toggle" do
+      agency = create(:entity, :customs_agent, enforce_overdue_payment_rule: true)
+
+      patch entity_path(agency), params: {
+        entity: {
+          enforce_overdue_payment_rule: false
+        }
+      }
+
+      expect(response).to redirect_to(entity_path(agency))
+      expect(agency.reload.enforce_overdue_payment_rule).to eq(false)
+    end
+
     it "updates fiscal profile through nested attributes" do
       patch entity_path(entity), params: {
         entity: {
@@ -201,6 +214,21 @@ RSpec.describe "Entities", type: :request do
 
       expect(response).to redirect_to(customs_agents_dashboard_path)
       expect(customs_broker_entity.reload.name).not_to eq("No deberia")
+    end
+
+    it "does not allow customs broker to modify overdue-rule toggle by forged request" do
+      own_client = create(:entity, :client, customs_agent: customs_broker_user.entity)
+
+      patch entity_path(own_client), params: {
+        entity: {
+          enforce_overdue_payment_rule: false,
+          name: "Cliente Propio"
+        }
+      }
+
+      expect(response).to redirect_to(entity_path(own_client))
+      expect(own_client.reload.name).to eq("Cliente Propio")
+      expect(own_client.enforce_overdue_payment_rule).to eq(true)
     end
 
     it "ignores patent assignment when creating a client" do

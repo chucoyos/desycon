@@ -61,6 +61,25 @@
 
   <% unless current_user.customs_broker? %>
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-rose-50 to-orange-50 border-b border-rose-100">
+        <h3 class="text-base sm:text-lg font-semibold text-gray-900">Regla de restricción por mora</h3>
+        <p class="text-sm text-gray-600">Controla si aplica la regla automática de 72 horas hábiles para esta agencia aduanal.</p>
+      </div>
+      <div class="px-4 sm:px-6 py-4">
+        <label class="flex items-start gap-3 p-4 rounded-lg border border-rose-200 bg-rose-50">
+          <%= form.check_box :enforce_overdue_payment_rule, class: "mt-1 h-5 w-5 text-rose-700 border-rose-300 rounded focus:ring-rose-500", disabled: !entity.role_customs_agent? %>
+          <div>
+            <span class="block text-sm font-semibold text-gray-900">Aplicar regla automática de mora (72h hábiles)</span>
+            <span class="block text-xs text-gray-600">Si está activa, la agencia puede quedar restringida automáticamente por facturas vencidas con saldo pendiente.</span>
+            <% unless entity.role_customs_agent? %>
+              <span class="block text-xs text-rose-700 mt-1">Solo aplica para entidades con rol Agencia Aduanal.</span>
+            <% end %>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-indigo-50 to-indigo-100 border-b border-indigo-200">
         <h3 class="text-base sm:text-lg font-semibold text-gray-900">Datos de Agente Aduanal</h3>
         <p class="text-sm text-gray-600">Solo aplica cuando el rol de agente aduanal está activo.</p>

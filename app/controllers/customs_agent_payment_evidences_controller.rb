@@ -2,10 +2,14 @@ class CustomsAgentPaymentEvidencesController < ApplicationController
   before_action :authenticate_user!
   before_action :ensure_customs_agent!
 
+  def new
+    @agency_invoices_for_payment_evidence = eligible_invoices.preload(:receiver_entity, :invoice_payments).limit(100)
+  end
+
   def create
     invoice = eligible_invoices.find_by(id: payment_evidence_params[:invoice_id])
     unless invoice
-      redirect_to customs_agents_dashboard_path, alert: "Factura no valida para tu agencia." and return
+      redirect_to new_customs_agents_payment_evidence_path, alert: "Factura no valida para tu agencia." and return
     end
 
     evidence = InvoicePaymentEvidence.new(
@@ -19,9 +23,9 @@ class CustomsAgentPaymentEvidencesController < ApplicationController
     evidence.receipt_file.attach(payment_evidence_params[:receipt_file]) if payment_evidence_params[:receipt_file].present?
 
     if evidence.save
-      redirect_to customs_agents_dashboard_path, notice: "Comprobante enviado para revision del ejecutivo."
+      redirect_to new_customs_agents_payment_evidence_path, notice: "Comprobante enviado para revision del ejecutivo."
     else
-      redirect_to customs_agents_dashboard_path, alert: evidence.errors.full_messages.to_sentence
+      redirect_to new_customs_agents_payment_evidence_path, alert: evidence.errors.full_messages.to_sentence
     end
   end
 

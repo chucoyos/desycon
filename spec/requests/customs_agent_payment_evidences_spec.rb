@@ -11,6 +11,15 @@ RSpec.describe "CustomsAgentPaymentEvidences", type: :request do
     admin_user
   end
 
+  it "renders dedicated payment evidence page" do
+    sign_in customs_user, scope: :user
+
+    get new_customs_agents_payment_evidence_path
+
+    expect(response).to have_http_status(:success)
+    expect(response.body).to include("Adjuntar comprobante de pago")
+  end
+
   def uploaded_receipt
     file = Tempfile.new([ "receipt", ".pdf" ])
     file.write("%PDF-1.4 fake test receipt")
@@ -33,7 +42,7 @@ RSpec.describe "CustomsAgentPaymentEvidences", type: :request do
     end.to change(InvoicePaymentEvidence, :count).by(1)
       .and change(InvoicePayment, :count).by(0)
 
-    expect(response).to redirect_to(customs_agents_dashboard_path)
+    expect(response).to redirect_to(new_customs_agents_payment_evidence_path)
     expect(flash[:notice]).to include("Comprobante enviado")
 
     evidence = InvoicePaymentEvidence.order(:id).last
@@ -58,7 +67,7 @@ RSpec.describe "CustomsAgentPaymentEvidences", type: :request do
       }
     end.not_to change(InvoicePaymentEvidence, :count)
 
-    expect(response).to redirect_to(customs_agents_dashboard_path)
+    expect(response).to redirect_to(new_customs_agents_payment_evidence_path)
     expect(flash[:alert]).to include("Factura no valida")
   end
 
@@ -77,7 +86,7 @@ RSpec.describe "CustomsAgentPaymentEvidences", type: :request do
       }
     end.not_to change(InvoicePaymentEvidence, :count)
 
-    expect(response).to redirect_to(customs_agents_dashboard_path)
+    expect(response).to redirect_to(new_customs_agents_payment_evidence_path)
     expect(flash[:alert]).to include("Factura no valida")
   end
 end

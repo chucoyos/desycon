@@ -24,6 +24,16 @@ RSpec.describe "CustomsAgents", type: :request do
       expect(response).to have_http_status(:redirect)
     end
 
+    it "redirects restricted customs agency users to evidence page" do
+      customs_user.entity.update!(restricted_access_enabled: true)
+
+      sign_in customs_user, scope: :user
+      get customs_agents_dashboard_path
+
+      expect(response).to redirect_to(new_customs_agents_payment_evidence_path)
+      expect(flash[:alert]).to be_present
+    end
+
     it "shows assigned BL House Lines" do
       assigned_bl_house_line
       sign_in customs_user, scope: :user
@@ -175,7 +185,7 @@ RSpec.describe "CustomsAgents", type: :request do
       )
 
       sign_in customs_user, scope: :user
-      get customs_agents_dashboard_path
+      get new_customs_agents_payment_evidence_path
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include("A 12345")

@@ -340,9 +340,9 @@ module Facturador
     end
 
     def internal_metadata_snapshot
-      snapshot = invoice.payload_snapshot.to_h
+      snapshot = invoice.payload_snapshot.to_h.deep_stringify_keys
       metadata = snapshot["metadataInterna"]
-      metadata.is_a?(Hash) ? metadata.to_h : snapshot
+      metadata.is_a?(Hash) ? metadata.to_h.deep_stringify_keys : snapshot
     end
 
     def source_balance_metadata(source)
@@ -350,7 +350,8 @@ module Facturador
 
       payment = related_payment
       if payment.present?
-        prior_scope = source.invoice_payments.where("created_at < ? OR (created_at = ? AND id < ?)", payment.created_at, payment.created_at, payment.id)
+        # Use payment insertion sequence for partiality to avoid timestamp edge cases.
+        prior_scope = source.invoice_payments.where("id < ?", payment.id)
         previous_paid = prior_scope.sum(:amount).to_d
         previous_balance = source.total.to_d - previous_paid
         remaining_balance = previous_balance - payment.amount.to_d
