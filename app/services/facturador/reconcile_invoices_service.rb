@@ -25,7 +25,7 @@ module Facturador
       emisor_id = EmisorService.emisor_id!(access_token: access_token)
       client = Client.new(access_token: access_token)
 
-      invoices = Invoice.pending_reconciliation.recent_first.limit(limit)
+      invoices = invoices_scope_for_reconciliation.limit(limit)
       invoices.each { |invoice| reconcile_invoice!(invoice: invoice, client: client, emisor_id: emisor_id) }
       invoices
     end
@@ -46,6 +46,15 @@ module Facturador
     private
 
     attr_reader :limit, :actor
+
+    def invoices_scope_for_reconciliation
+      scope = Invoice.pending_reconciliation.recent_first
+      max_age_days = Config.reconciliation_max_age_days
+      return scope if max_age_days.blank?
+
+      cutoff = max_age_days.days.ago
+      scope.where("COALESCE(invoices.issued_at, invoices.created_at) >= ?", cutoff)
+    end
 
     def reconcile_invoice!(invoice:, client:, emisor_id:)
       invoice.invoice_events.create!(

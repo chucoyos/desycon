@@ -21,6 +21,12 @@ module Facturador
         ActiveModel::Type::Boolean.new.cast(env_value(:reconciliation_enabled, false))
       end
 
+      def reconciliation_max_age_days
+        value = env_value(:reconciliation_max_age_days, 60)
+        days = value.to_i
+        days.positive? ? days : nil
+      end
+
       def payment_complements_enabled?
         ActiveModel::Type::Boolean.new.cast(env_value(:payment_complements_enabled, false))
       end

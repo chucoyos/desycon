@@ -7,6 +7,7 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
     before do
       allow(Facturador::Config).to receive(:enabled?).and_return(true)
       allow(Facturador::Config).to receive(:reconciliation_enabled?).and_return(true)
+      allow(Facturador::Config).to receive(:reconciliation_max_age_days).and_return(60)
       allow(Facturador::AccessTokenService).to receive(:fetch!).and_return('token-123')
       allow(Facturador::EmisorService).to receive(:emisor_id!).and_return(208)
       allow(Facturador::Client).to receive(:new).with(access_token: 'token-123').and_return(client_double)
@@ -118,6 +119,28 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
 
       described_class.call_for_invoice(invoice: invoice)
       expect(invoice.reload.status).to eq('cancelled')
+    end
+
+    it 'excludes invoices older than max age from automatic reconciliation' do
+      old_invoice = create(:invoice, status: 'cancel_pending', sat_uuid: 'UUID-OLD-001')
+      old_invoice.update_columns(created_at: 90.days.ago, issued_at: 90.days.ago)
+
+      recent_invoice = create(:invoice, status: 'cancel_pending', sat_uuid: 'UUID-RECENT-001')
+
+      allow(client_double).to receive(:buscar_comprobantes).and_return([
+        {
+          'uuid' => 'UUID-RECENT-001',
+          'subestatus' => 'Cancelado',
+          'descripcion' => 'Cancelado (Directo)',
+          'subestatusId' => 3
+        }
+      ])
+
+      described_class.call(limit: 10)
+
+      expect(old_invoice.reload.status).to eq('cancel_pending')
+      expect(recent_invoice.reload.status).to eq('cancelled')
+      expect(client_double).to have_received(:buscar_comprobantes).once
     end
   end
 end
