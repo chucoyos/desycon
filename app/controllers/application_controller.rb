@@ -11,6 +11,10 @@ class ApplicationController < ActionController::Base
   before_action :set_current_user
   before_action :redirect_disabled_user
   before_action :redirect_restricted_access_user
+  before_action :set_restricted_access_notice_context
+
+  helper_method :show_restricted_access_notice?, :restricted_access_notice_invoices,
+                :restricted_access_notice_total_count
 
   # Redirect based on user role after sign in
   def after_sign_in_path_for(resource)
@@ -80,6 +84,8 @@ class ApplicationController < ActionController::Base
   end
 
   def restricted_customs_agency_user?
+    return false unless current_user
+
     !current_user.admin_or_executive? &&
       current_user.entity&.role_customs_agent? &&
       current_user.entity&.restricted_access_enabled?
@@ -93,5 +99,70 @@ class ApplicationController < ActionController::Base
 
     actions = allowed_routes[controller_path]
     actions.present? && actions.include?(action_name)
+  end
+
+  def set_restricted_access_notice_context
+    return unless restricted_customs_agency_user?
+
+    overdue_invoices = overdue_unpaid_invoices_for_restricted_notice
+    @restricted_access_notice_total_count = overdue_invoices.size
+    @restricted_access_notice_invoices = overdue_invoices.first(5).map do |invoice|
+      {
+        id: invoice.id,
+        label: invoice_label_for_notice(invoice),
+        issued_at: invoice.issued_at
+      }
+    end
+  end
+
+  def show_restricted_access_notice?
+    restricted_customs_agency_user? && current_user.entity&.restricted_access_for_overdue_rule?
+  end
+
+  def restricted_access_notice_invoices
+    @restricted_access_notice_invoices || []
+  end
+
+  def restricted_access_notice_total_count
+    @restricted_access_notice_total_count || 0
+  end
+
+  def overdue_unpaid_invoices_for_restricted_notice
+    Invoice
+      .joins(:receiver_entity)
+      .where(
+        "invoices.customs_agent_id = :agency_id OR entities.customs_agent_id = :agency_id",
+        agency_id: current_user.entity_id
+      )
+      .where.not(status: "cancelled")
+      .where.not(issued_at: nil)
+      .distinct
+      .sort_by(&:issued_at)
+      .select do |invoice|
+        overdue_by_business_hours_for_restricted_notice?(invoice) && invoice.payment_status != "paid"
+      end
+  end
+
+  def overdue_by_business_hours_for_restricted_notice?(invoice)
+    deadline = CustomsAgents::BusinessHoursService.add_weekday_hours(
+      from_time: invoice.issued_at,
+      hours: CustomsAgents::RestrictionEvaluatorService::BUSINESS_HOURS_TO_RESTRICT
+    )
+
+    Time.zone.now >= deadline
+  end
+
+  def invoice_label_for_notice(invoice)
+    serie = invoice.provider_response.to_h["serie"].presence || invoice.payload_snapshot.to_h["serie"].presence
+    folio = invoice.provider_response.to_h["folio"].presence ||
+            invoice.provider_response.to_h["noComprobante"].presence ||
+            invoice.provider_response.to_h["numeroComprobante"].presence ||
+            invoice.facturador_comprobante_id&.to_s
+
+    return "Factura #{serie} #{folio}" if serie.present? && folio.present?
+    return "Factura #{folio}" if folio.present?
+    return "Factura #{serie}" if serie.present?
+
+    "Factura ##{invoice.id}"
   end
 end

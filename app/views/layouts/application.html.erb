@@ -30,7 +30,10 @@
     <%= render 'shared/navbar' if user_signed_in? %>
     <% if user_signed_in? %>
       <main class="container mx-auto mt-28 px-5 flex">
-        <%= yield %>
+        <div class="w-full">
+          <%= render "shared/restricted_access_notice" if show_restricted_access_notice? %>
+          <%= yield %>
+        </div>
       </main>
     <% else %>
       <%= yield %>
