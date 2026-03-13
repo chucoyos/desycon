@@ -72,6 +72,44 @@ RSpec.describe "Photos", type: :request do
     end
   end
 
+  describe "DELETE /containers/:id/photos_section" do
+    let(:container) { create(:container) }
+
+    it "deletes only photos from the selected section" do
+      admin = create(:user, :admin)
+      login_as admin
+
+      create(:photo, attachable: container, section: "apertura")
+      create(:photo, attachable: container, section: "apertura")
+      create(:photo, attachable: container, section: "vacio")
+
+      expect {
+        delete photos_section_container_path(container), params: { photo: { section: "apertura" } }
+      }.to change { container.photos.for_section("apertura").count }.from(2).to(0)
+
+      expect(container.photos.for_section("vacio").count).to eq(1)
+      expect(response).to redirect_to(container_path(container))
+    end
+  end
+
+  describe "DELETE /bl_house_lines/:id/photos_section" do
+    let(:bl_house_line) { create(:bl_house_line) }
+
+    it "deletes etiquetado photos for executive users" do
+      executive = create(:user, :executive)
+      login_as executive
+
+      create(:photo, :etiquetado, attachable: bl_house_line)
+      create(:photo, :etiquetado, attachable: bl_house_line)
+
+      expect {
+        delete photos_section_bl_house_line_path(bl_house_line), params: { photo: { section: "etiquetado" } }
+      }.to change { bl_house_line.photos.for_section("etiquetado").count }.from(2).to(0)
+
+      expect(response).to redirect_to(bl_house_line_path(bl_house_line))
+    end
+  end
+
   private
 
   def uploaded_image(filename)

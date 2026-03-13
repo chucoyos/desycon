@@ -12,6 +12,16 @@ class PhotosController < ApplicationController
     create_for_attachable(attachable)
   end
 
+  def destroy_section_for_container
+    attachable = Container.find(params[:id])
+    destroy_section_for_attachable(attachable)
+  end
+
+  def destroy_section_for_bl_house_line
+    attachable = BlHouseLine.find(params[:id])
+    destroy_section_for_attachable(attachable)
+  end
+
   def destroy
     @photo = Photo.find(params[:id])
     authorize @photo
@@ -61,5 +71,27 @@ class PhotosController < ApplicationController
 
   def photo_params
     params.require(:photo).permit(:section, images: [])
+  end
+
+  def destroy_section_for_attachable(attachable)
+    authorize Photo, :destroy?
+
+    section = params.dig(:photo, :section).to_s
+    allowed_sections = Photo.allowed_sections_for(attachable)
+
+    unless allowed_sections.include?(section)
+      return redirect_back fallback_location: polymorphic_path(attachable), alert: "Sección inválida para eliminar fotografías."
+    end
+
+    photos = attachable.photos.for_section(section)
+    deleted_count = photos.count
+
+    if deleted_count.zero?
+      return redirect_back fallback_location: polymorphic_path(attachable), alert: "No hay fotografías para eliminar en esta sección."
+    end
+
+    photos.destroy_all
+
+    redirect_back fallback_location: polymorphic_path(attachable), notice: "#{deleted_count} fotografía(s) eliminada(s) de la sección."
   end
 end
