@@ -40,22 +40,36 @@
       { name: "payment_evidence[invoice_id]", required: true, class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" } %>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div>
-      <%= form.label :reference, "Referencia", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
-      <%= form.text_field :reference, value: @payment_evidence&.reference, name: "payment_evidence[reference]", required: true, placeholder: "Ejemplo: BLH123456", class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
+  <section class="rounded-2xl border-2 border-rose-300 bg-gradient-to-r from-rose-50 to-amber-50 px-4 py-4 shadow-sm">
+    <div class="flex items-start gap-3">
+      <div class="mt-0.5 h-8 w-8 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.08em] text-rose-700">Referencia obligatoria</p>
+        <p class="mt-1 text-sm font-semibold text-rose-900">El comprobante de pago debe tener como referencia el BL House.</p>
+      </div>
     </div>
 
-    <div>
-      <%= form.label :tracking_key, "Clave de rastreo", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
-      <%= form.text_field :tracking_key, value: @payment_evidence&.tracking_key, name: "payment_evidence[tracking_key]", placeholder: "Opcional", class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
-    </div>
-  </div>
+    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <%= form.label :reference, "Referencia (BL House)", class: "block text-sm font-semibold text-slate-800 mb-1.5" %>
+        <%= form.text_field :reference, value: @payment_evidence&.reference, name: "payment_evidence[reference]", required: true, placeholder: "Ejemplo: BLH123456", class: "w-full rounded-xl border border-rose-300 bg-white h-11 px-3 text-sm shadow-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-400" %>
+      </div>
 
-  <div>
-    <%= form.label :receipt_file, "Comprobante", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
-    <%= form.file_field :receipt_file, name: "payment_evidence[receipt_file]", required: true, class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
-  </div>
+      <div>
+        <%= form.label :tracking_key, "Clave de rastreo", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
+        <%= form.text_field :tracking_key, value: @payment_evidence&.tracking_key, name: "payment_evidence[tracking_key]", placeholder: "Opcional", class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
+      </div>
+
+      <div class="md:col-span-2">
+        <%= form.label :receipt_file, "Adjuntar comprobante de pago referenciado", class: "block text-sm font-semibold text-slate-800 mb-1.5" %>
+        <%= form.file_field :receipt_file, name: "payment_evidence[receipt_file]", required: true, class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
+      </div>
+    </div>
+  </section>
 
   <div class="flex items-center justify-end gap-2 pt-2">
     <% if local_assigns[:modal] %>
