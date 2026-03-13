@@ -218,3 +218,19 @@ Facturador::EmisorService.clear!
 8. Probar fallo transitorio PAC (FAC119/network) durante emision del complemento:
 	- pago se mantiene en `complement_queued`
 	- reintento posterior puede completar a `complement_issued`
+
+## Monitoreo diario de conciliacion (staging)
+
+Usa este comando desde terminal (bash) para revisar backlog y resultados de la ventana nocturna:
+
+```bash
+heroku run --app desycon-staging -- bin/rails runner 'max_age_days = Facturador::Config.reconciliation_max_age_days; cutoff = max_age_days.days.ago; scope = Invoice.reconciliation_candidates; scope = scope.where("COALESCE(invoices.issued_at, invoices.created_at) >= ?", cutoff) if max_age_days.present?; pending = scope.count; from = Time.zone.yesterday.beginning_of_day + 2.hours; to = Time.zone.yesterday.beginning_of_day + 4.hours; requested = InvoiceEvent.where(event_type: "reconcile_requested", created_at: from..to).count; synced = InvoiceEvent.where(event_type: "reconcile_synced", created_at: from..to).count; failed = InvoiceEvent.where(event_type: "reconcile_failed", created_at: from..to).count; puts({pending: pending, requested: requested, synced: synced, failed: failed, window: [from, to]}.to_json)'
+```
+
+Interpretacion rapida:
+- `pending`: candidatas que siguen pendientes de conciliacion.
+- `requested`: facturas intentadas en la corrida nocturna.
+- `synced`: facturas sincronizadas correctamente.
+- `failed`: intentos fallidos durante la ventana.
+
+Si la corrida cambia de horario, ajusta `from` y `to` (actualmente 2:00 a 4:00).
