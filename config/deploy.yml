@@ -46,7 +46,7 @@ env:
     SOLID_QUEUE_IN_PUMA: true
 
     # Automatic CFDI reconciliation window (days). Old invoices can still be reconciled manually.
-    FACTURADOR_RECONCILIATION_MAX_AGE_DAYS: 60
+    FACTURADOR_RECONCILIATION_MAX_AGE_DAYS: 45
 
     # Set number of processes dedicated to Solid Queue (default: 1)
     # JOB_CONCURRENCY: 3
