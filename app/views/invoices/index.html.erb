@@ -33,7 +33,7 @@
     <%= form_with url: invoices_path, method: :get, class: "w-full" do |f| %>
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Estatus</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Emision</label>
           <%= f.select :status,
             options_for_select([["Todos", ""]] + @invoice_statuses.map { |status| [t("activerecord.attributes.invoice.statuses.#{status}", default: status.humanize), status] }, @selected_status),
               {},
@@ -49,7 +49,7 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Estatus pago</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Pago</label>
           <%= f.select :payment_status,
             options_for_select([["Todos", ""]] + @payment_statuses.map { |status| [Invoice::PAYMENT_STATUS_LABELS[status], status] }, @selected_payment_status),
               {},
@@ -67,7 +67,7 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Cliente</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Receptor</label>
           <%= f.select :client_id,
               options_for_select([["Todos", ""]] + @clients.map { |client| [client.name, client.id] }, @selected_client_id),
               {},
@@ -116,10 +116,11 @@
       <thead class="bg-gradient-to-r from-gray-50 to-white">
         <tr>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Fecha</th>
-          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Cliente</th>
-          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">UUID</th>
-          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Estatus</th>
-          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Estatus pago</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Serie</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Folio</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Receptor</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Emision</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Pago</th>
           <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Saldo</th>
           <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Acciones</th>
         </tr>
@@ -129,6 +130,11 @@
           <% @invoices.each do |invoice| %>
             <% can_view_details = policy(invoice).show? %>
             <% can_attach_payment_evidence = policy(invoice).attach_payment_evidence? %>
+            <% serie = invoice.provider_response.to_h["serie"].presence || invoice.payload_snapshot.to_h["serie"].presence %>
+            <% folio = invoice.provider_response.to_h["folio"].presence ||
+                       invoice.provider_response.to_h["noComprobante"].presence ||
+                       invoice.provider_response.to_h["numeroComprobante"].presence ||
+                       invoice.facturador_comprobante_id&.to_s %>
             <tr class="hover:bg-gray-50 transition-colors duration-150">
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 <% if can_view_details %>
@@ -137,20 +143,49 @@
                   <span><%= l(invoice.created_at, format: :short) %></span>
                 <% end %>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= invoice.receiver_entity&.name || '-' %></td>
               <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-gray-700">
-                <% if invoice.sat_uuid.present? %>
+                <% if serie.present? %>
                   <% if can_view_details %>
-                    <%= link_to invoice.sat_uuid, invoice_path(invoice), class: "text-indigo-700 hover:text-indigo-900" %>
+                    <%= link_to serie, invoice_path(invoice), class: "text-indigo-700 hover:text-indigo-900" %>
                   <% else %>
-                    <span><%= invoice.sat_uuid %></span>
+                    <span><%= serie %></span>
                   <% end %>
                 <% else %>
                   -
                 <% end %>
               </td>
+              <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-gray-700">
+                <% if folio.present? %>
+                  <% if can_view_details %>
+                    <%= link_to folio, invoice_path(invoice), class: "text-indigo-700 hover:text-indigo-900" %>
+                  <% else %>
+                    <span><%= folio %></span>
+                  <% end %>
+                <% else %>
+                  -
+                <% end %>
+                <% if invoice.sat_uuid.present? %>
+                  <span class="sr-only"><%= invoice.sat_uuid %></span>
+                <% end %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= invoice.receiver_entity&.name || '-' %></td>
               <% status_for_display = invoice.effective_status %>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= t("activerecord.attributes.invoice.statuses.#{status_for_display}", default: status_for_display.humanize) %></td>
+              <% issue_status_badge_class = case status_for_display
+                when "issued" then "bg-emerald-100 text-emerald-800 border-emerald-200"
+                when "queued" then "bg-blue-100 text-blue-800 border-blue-200"
+                when "failed" then "bg-rose-100 text-rose-800 border-rose-200"
+                when "cancel_pending" then "bg-amber-100 text-amber-800 border-amber-200"
+                when "cancelled" then "bg-slate-100 text-slate-800 border-slate-200"
+                else "bg-gray-100 text-gray-700 border-gray-200"
+              end %>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border <%= issue_status_badge_class %>">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <%= t("activerecord.attributes.invoice.statuses.#{status_for_display}", default: status_for_display.humanize) %>
+                </span>
+              </td>
               <% payment_status_badge_class = case invoice.payment_status
                 when "paid" then "bg-emerald-100 text-emerald-800 border-emerald-200"
                 when "partial" then "bg-blue-100 text-blue-800 border-blue-200"
@@ -201,7 +236,7 @@
           <% end %>
         <% else %>
           <tr>
-            <td colspan="7" class="px-6 py-12 text-center">
+            <td colspan="8" class="px-6 py-12 text-center">
               <p class="text-gray-500 text-lg font-medium">No hay facturas para los filtros seleccionados</p>
             </td>
           </tr>
