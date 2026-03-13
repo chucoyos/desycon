@@ -4,15 +4,29 @@ class CustomsAgentPaymentEvidencesController < ApplicationController
 
   def new
     @agency_invoices_for_payment_evidence = eligible_invoices.preload(:receiver_entity, :invoice_payments).limit(100)
+    @selected_invoice_id = params[:invoice_id].presence
+    @payment_evidence = InvoicePaymentEvidence.new(invoice_id: @selected_invoice_id)
+
+    return unless turbo_frame_request?
+
+    render partial: "customs_agent_payment_evidences/modal"
   end
 
   def create
     invoice = eligible_invoices.find_by(id: payment_evidence_params[:invoice_id])
     unless invoice
+      if turbo_frame_request?
+        @agency_invoices_for_payment_evidence = eligible_invoices.preload(:receiver_entity, :invoice_payments).limit(100)
+        @selected_invoice_id = payment_evidence_params[:invoice_id]
+        @payment_evidence = InvoicePaymentEvidence.new(invoice_id: @selected_invoice_id)
+        @payment_evidence.errors.add(:invoice_id, "no es valida para tu agencia")
+        return render partial: "customs_agent_payment_evidences/modal", status: :unprocessable_content
+      end
+
       redirect_to new_customs_agents_payment_evidence_path, alert: "Factura no valida para tu agencia." and return
     end
 
-    evidence = InvoicePaymentEvidence.new(
+    @payment_evidence = InvoicePaymentEvidence.new(
       invoice: invoice,
       customs_agent: current_user.entity,
       submitted_by: current_user,
@@ -20,12 +34,22 @@ class CustomsAgentPaymentEvidencesController < ApplicationController
       tracking_key: payment_evidence_params[:tracking_key]
     )
 
-    evidence.receipt_file.attach(payment_evidence_params[:receipt_file]) if payment_evidence_params[:receipt_file].present?
+    @payment_evidence.receipt_file.attach(payment_evidence_params[:receipt_file]) if payment_evidence_params[:receipt_file].present?
 
-    if evidence.save
+    if @payment_evidence.save
+      if turbo_frame_request?
+        return render partial: "customs_agent_payment_evidences/success"
+      end
+
       redirect_to new_customs_agents_payment_evidence_path, notice: "Comprobante enviado para revision del ejecutivo."
     else
-      redirect_to new_customs_agents_payment_evidence_path, alert: evidence.errors.full_messages.to_sentence
+      if turbo_frame_request?
+        @agency_invoices_for_payment_evidence = eligible_invoices.preload(:receiver_entity, :invoice_payments).limit(100)
+        @selected_invoice_id = payment_evidence_params[:invoice_id]
+        return render partial: "customs_agent_payment_evidences/modal", status: :unprocessable_content
+      end
+
+      redirect_to new_customs_agents_payment_evidence_path, alert: @payment_evidence.errors.full_messages.to_sentence
     end
   end
 

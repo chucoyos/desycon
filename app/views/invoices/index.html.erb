@@ -121,12 +121,14 @@
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Estatus</th>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Estatus pago</th>
           <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Saldo</th>
+          <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Acciones</th>
         </tr>
       </thead>
       <tbody class="bg-white divide-y divide-gray-100">
         <% if @invoices.any? %>
           <% @invoices.each do |invoice| %>
             <% can_view_details = policy(invoice).show? %>
+            <% can_attach_payment_evidence = policy(invoice).attach_payment_evidence? %>
             <tr class="hover:bg-gray-50 transition-colors duration-150">
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 <% if can_view_details %>
@@ -151,11 +153,43 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= t("activerecord.attributes.invoice.statuses.#{status_for_display}", default: status_for_display.humanize) %></td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= invoice.payment_status_label %></td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900"><%= number_to_currency(invoice.outstanding_amount || 0) %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <div class="relative inline-block text-left" data-controller="dropdown">
+                  <button type="button" class="h-10 w-10 inline-flex items-center justify-center rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500" data-action="click->dropdown#toggle" title="Opciones">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                    </svg>
+                  </button>
+
+                  <div data-dropdown-target="menu" class="hidden absolute right-0 mt-2 w-64 rounded-2xl border border-slate-200 bg-white shadow-[0_14px_40px_rgba(15,23,42,0.16)] z-50 origin-top-right">
+                    <div class="py-2" role="menu">
+                      <% if can_view_details %>
+                        <%= link_to invoice_path(invoice), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors", role: "menuitem" do %>
+                          <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                          </svg>
+                          Ver detalle
+                        <% end %>
+                      <% end %>
+
+                      <% if can_attach_payment_evidence %>
+                        <%= link_to new_customs_agents_payment_evidence_path(invoice_id: invoice.id), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-700 hover:bg-indigo-50 hover:text-indigo-900 transition-colors", role: "menuitem", data: { turbo_frame: "payment_evidence_modal" } do %>
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                          </svg>
+                          Adjuntar comprobante de pago
+                        <% end %>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              </td>
             </tr>
           <% end %>
         <% else %>
           <tr>
-            <td colspan="6" class="px-6 py-12 text-center">
+            <td colspan="7" class="px-6 py-12 text-center">
               <p class="text-gray-500 text-lg font-medium">No hay facturas para los filtros seleccionados</p>
             </td>
           </tr>
@@ -164,3 +198,5 @@
     </table>
   </div>
 </div>
+
+<turbo-frame id="payment_evidence_modal"></turbo-frame>

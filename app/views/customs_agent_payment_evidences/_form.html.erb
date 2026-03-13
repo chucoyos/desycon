@@ -1,0 +1,69 @@
+<%= form_with url: customs_agents_payment_evidences_path, method: :post, class: "space-y-5", html: { multipart: true } do |form| %>
+  <% if @payment_evidence&.errors&.any? %>
+    <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+      <p class="text-sm font-semibold text-red-700">No se pudo enviar el comprobante</p>
+      <p class="text-sm text-red-600 mt-1"><%= @payment_evidence.errors.full_messages.to_sentence %></p>
+    </div>
+  <% end %>
+
+  <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-amber-700">Importante</p>
+    <p class="text-sm text-amber-800 mt-1">Este envio no registra ni confirma pago automaticamente. Un ejecutivo revisara y lo relacionara a un pago.</p>
+  </div>
+
+  <div>
+    <%= form.label :invoice_id, "Factura", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
+    <%= form.select :invoice_id,
+      options_from_collection_for_select(@agency_invoices_for_payment_evidence || [], :id, ->(invoice) {
+        serie = invoice.provider_response.to_h["serie"].presence || invoice.payload_snapshot.to_h["serie"].presence
+        folio = invoice.provider_response.to_h["folio"].presence ||
+                invoice.provider_response.to_h["noComprobante"].presence ||
+                invoice.provider_response.to_h["numeroComprobante"].presence ||
+                invoice.facturador_comprobante_id&.to_s
+
+        invoice_label = if serie.present? && folio.present?
+          "#{serie} #{folio}"
+        elsif folio.present?
+          folio.to_s
+        elsif serie.present?
+          serie.to_s
+        else
+          "Sin serie/folio"
+        end
+
+        paid_amount = invoice.invoice_payments.sum { |payment| payment.amount.to_d }
+        outstanding_amount = invoice.total.to_d - paid_amount
+        outstanding_amount = 0.to_d if outstanding_amount.negative?
+        "#{invoice_label} - #{invoice.receiver_entity&.name} - Saldo pendiente: #{number_to_currency(outstanding_amount)}"
+      }, @selected_invoice_id || @payment_evidence&.invoice_id),
+      { include_blank: "Selecciona una factura" },
+      { name: "payment_evidence[invoice_id]", required: true, class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" } %>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <%= form.label :reference, "Referencia", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
+      <%= form.text_field :reference, value: @payment_evidence&.reference, name: "payment_evidence[reference]", required: true, placeholder: "Ejemplo: BLH123456", class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
+    </div>
+
+    <div>
+      <%= form.label :tracking_key, "Clave de rastreo", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
+      <%= form.text_field :tracking_key, value: @payment_evidence&.tracking_key, name: "payment_evidence[tracking_key]", placeholder: "Opcional", class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
+    </div>
+  </div>
+
+  <div>
+    <%= form.label :receipt_file, "Comprobante", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
+    <%= form.file_field :receipt_file, name: "payment_evidence[receipt_file]", required: true, class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
+  </div>
+
+  <div class="flex items-center justify-end gap-2 pt-2">
+    <% if local_assigns[:modal] %>
+      <button type="button" onclick="document.getElementById('payment_evidence_modal').innerHTML=''" class="inline-flex items-center justify-center h-10 px-4 rounded-full text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors">Cancelar</button>
+    <% else %>
+      <%= link_to "Ver facturas", invoices_path, class: "inline-flex items-center justify-center h-10 px-4 rounded-full text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors" %>
+    <% end %>
+
+    <%= form.submit "Enviar comprobante", class: "cursor-pointer inline-flex items-center justify-center h-10 px-5 rounded-full text-sm font-semibold bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" %>
+  </div>
+<% end %>

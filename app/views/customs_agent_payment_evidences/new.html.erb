@@ -8,58 +8,7 @@
     </div>
 
     <div class="bg-white shadow rounded-lg p-6">
-      <p class="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mb-4">La referencia debe ser el BL House.</p>
-
-      <%= form_with url: customs_agents_payment_evidences_path, method: :post, local: true, multipart: true, class: "grid grid-cols-1 md:grid-cols-2 gap-4" do |form| %>
-        <div class="md:col-span-2">
-          <%= form.label :invoice_id, "Factura", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= form.select :invoice_id,
-            options_from_collection_for_select(@agency_invoices_for_payment_evidence || [], :id, ->(invoice) {
-              serie = invoice.provider_response.to_h["serie"].presence || invoice.payload_snapshot.to_h["serie"].presence
-              folio = invoice.provider_response.to_h["folio"].presence ||
-                      invoice.provider_response.to_h["noComprobante"].presence ||
-                      invoice.provider_response.to_h["numeroComprobante"].presence ||
-                      invoice.facturador_comprobante_id&.to_s
-
-              invoice_label = if serie.present? && folio.present?
-                "#{serie} #{folio}"
-              elsif folio.present?
-                folio.to_s
-              elsif serie.present?
-                serie.to_s
-              else
-                "Sin serie/folio"
-              end
-
-              paid_amount = invoice.invoice_payments.sum { |payment| payment.amount.to_d }
-              outstanding_amount = invoice.total.to_d - paid_amount
-              outstanding_amount = 0.to_d if outstanding_amount.negative?
-              "#{invoice_label} - #{invoice.receiver_entity&.name} - Saldo pendiente: #{number_to_currency(outstanding_amount)}"
-            }),
-            { include_blank: "Selecciona una factura" },
-            { name: "payment_evidence[invoice_id]", required: true, class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" } %>
-        </div>
-
-        <div>
-          <%= form.label :reference, "Referencia", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= form.text_field :reference, name: "payment_evidence[reference]", required: true, placeholder: "Ejemplo: BLH123456", class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" %>
-        </div>
-
-        <div>
-          <%= form.label :tracking_key, "Clave de rastreo (opcional)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= form.text_field :tracking_key, name: "payment_evidence[tracking_key]", placeholder: "Clave de rastreo", class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" %>
-        </div>
-
-        <div class="md:col-span-2">
-          <%= form.label :receipt_file, "Comprobante", class: "block text-sm font-medium text-gray-700 mb-1" %>
-          <%= form.file_field :receipt_file, name: "payment_evidence[receipt_file]", required: true, class: "w-full text-sm text-gray-700" %>
-        </div>
-
-        <div class="md:col-span-2 flex justify-end gap-2">
-          <%= link_to "Ver facturas", invoices_path, class: "inline-flex items-center px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium" %>
-          <%= form.submit "Enviar comprobante", class: "cursor-pointer bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" %>
-        </div>
-      <% end %>
+      <%= render "customs_agent_payment_evidences/form", modal: false %>
     </div>
   </div>
 </div>

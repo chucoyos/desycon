@@ -1,0 +1,17 @@
+<turbo-frame id="payment_evidence_modal">
+  <div class="fixed inset-0 z-50 flex items-center justify-center px-4" aria-modal="true" role="dialog">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px]" onclick="document.getElementById('payment_evidence_modal').innerHTML=''" aria-hidden="true"></div>
+
+    <section class="relative w-full max-w-2xl rounded-3xl border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.25)] overflow-hidden">
+      <header class="px-6 py-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+        <p class="text-xs font-semibold uppercase tracking-[0.1em] text-indigo-600">Pago</p>
+        <h2 class="text-xl font-semibold text-slate-900 mt-1">Adjuntar comprobante de pago</h2>
+        <p class="text-sm text-slate-600 mt-1">Completa los datos para que el ejecutivo valide el pago y lo relacione con tu factura.</p>
+      </header>
+
+      <div class="px-6 py-6 max-h-[75vh] overflow-y-auto">
+        <%= render "customs_agent_payment_evidences/form", modal: true %>
+      </div>
+    </section>
+  </div>
+</turbo-frame>

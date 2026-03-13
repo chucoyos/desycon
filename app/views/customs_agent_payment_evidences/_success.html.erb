@@ -1,0 +1,23 @@
+<turbo-frame id="payment_evidence_modal">
+  <div class="fixed inset-0 z-50 flex items-center justify-center px-4" aria-modal="true" role="dialog">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px]" onclick="document.getElementById('payment_evidence_modal').innerHTML=''" aria-hidden="true"></div>
+
+    <section class="relative w-full max-w-md rounded-3xl border border-emerald-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.25)] overflow-hidden text-center">
+      <div class="px-6 py-8">
+        <div class="mx-auto w-14 h-14 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+
+        <h3 class="mt-4 text-xl font-semibold text-slate-900">Comprobante enviado</h3>
+        <p class="mt-2 text-sm text-slate-600">Recibimos tu comprobante correctamente. Te notificaremos cuando el ejecutivo lo revise.</p>
+
+        <div class="mt-6 flex items-center justify-center gap-2">
+          <button type="button" onclick="document.getElementById('payment_evidence_modal').innerHTML=''" class="inline-flex items-center justify-center h-10 px-4 rounded-full text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors">Cerrar</button>
+          <a href="<%= invoices_path %>" data-turbo-frame="_top" class="inline-flex items-center justify-center h-10 px-5 rounded-full text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700">Ver facturas</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</turbo-frame>
