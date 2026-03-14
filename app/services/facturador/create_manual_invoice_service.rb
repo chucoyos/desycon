@@ -110,18 +110,32 @@ module Facturador
     end
 
     def build_line_items
-      Array(line_items_params).filter_map do |item|
-        service_catalog = ServiceCatalog.active.find_by(id: item[:service_catalog_id])
-        next if service_catalog.blank?
+      Array(line_items_params).map.with_index(1) do |item, index|
+        service_catalog_id = item[:service_catalog_id].to_s.strip
+        description_raw = item[:description].to_s.strip
+        quantity_raw = item[:quantity].to_s.strip
+        unit_price_raw = item[:unit_price].to_s.strip
+
+        if service_catalog_id.blank? || description_raw.blank? || quantity_raw.blank? || unit_price_raw.blank?
+          raise ValidationError, "El concepto ##{index} está incompleto. Debes capturar concepto, descripción, cantidad y precio unitario."
+        end
+
+        service_catalog = ServiceCatalog.active.find_by(id: service_catalog_id)
+        raise ValidationError, "El concepto ##{index} no existe o está inactivo." if service_catalog.blank?
 
         if service_catalog.sat_clave_prod_serv.to_s.blank? || service_catalog.sat_clave_unidad.to_s.blank?
           raise ValidationError, "El concepto #{service_catalog.name} no tiene claves SAT completas"
         end
 
-        quantity = item[:quantity].to_d
+        unless quantity_raw.match?(/\A\d+\z/)
+          raise ValidationError, "El concepto ##{index} debe tener una cantidad entera mayor o igual a 1."
+        end
+
+        quantity = quantity_raw.to_i
         unit_price = item[:unit_price].to_d
-        next if quantity <= 0
-        next if unit_price.negative?
+
+        raise ValidationError, "El concepto ##{index} debe tener una cantidad entera mayor o igual a 1." if quantity < 1
+        raise ValidationError, "El concepto ##{index} no puede tener precio unitario negativo." if unit_price.negative?
 
         sat_tasa_iva = service_catalog.sat_tasa_iva.to_d
         subtotal = quantity * unit_price
@@ -129,7 +143,7 @@ module Facturador
 
         {
           service_catalog: service_catalog,
-          description: item[:description].to_s.presence || service_catalog.name,
+          description: description_raw,
           sat_clave_prod_serv: service_catalog.sat_clave_prod_serv.to_s,
           sat_clave_unidad: service_catalog.sat_clave_unidad.to_s,
           sat_objeto_imp: service_catalog.sat_objeto_imp.to_s,
