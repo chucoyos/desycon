@@ -162,6 +162,21 @@
       }
     };
 
+    const preventEnterImplicitSubmit = (event) => {
+      if (event.key !== 'Enter') return;
+
+      const target = event.target;
+      if (!target) return;
+
+      const tagName = (target.tagName || '').toLowerCase();
+      const isTextarea = tagName === 'textarea';
+      const isSubmitButton = target === submitButton;
+
+      if (isTextarea || isSubmitButton) return;
+
+      event.preventDefault();
+    };
+
     const filterReceivers = () => {
       const selectedKind = receiverKind.value;
       const selectedAgent = customsAgent.value;
@@ -231,6 +246,7 @@
     receiverKind.addEventListener('change', filterReceivers);
     customsAgent.addEventListener('change', filterReceivers);
     addButton.addEventListener('click', addLineItem);
+    form.addEventListener('keydown', preventEnterImplicitSubmit);
 
     form.addEventListener('submit', enterSubmittingState);
     form.addEventListener('turbo:submit-start', enterSubmittingState);
