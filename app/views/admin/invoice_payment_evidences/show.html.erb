@@ -23,7 +23,7 @@
       <h1 class="font-bold text-3xl text-gray-900">Evidencia #<%= @evidence.id %></h1>
       <p class="text-sm text-gray-500 mt-1"><%= invoice_label %> | Referencia enviada: <span class="font-semibold"><%= @evidence.reference %></span></p>
     </div>
-    <%= link_to "Volver", admin_invoice_payment_evidences_path, class: "inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium" %>
+    <%= link_to "Volver", admin_invoice_payment_evidences_path, class: "cursor-pointer inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium" %>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -55,8 +55,8 @@
 
         <% if @evidence.receipt_file.attached? %>
           <div class="mt-5 flex items-center gap-2">
-            <%= link_to "Ver comprobante", rails_blob_path(@evidence.receipt_file, disposition: "inline"), target: "_blank", rel: "noopener", class: "inline-flex items-center px-3 py-2 rounded-md bg-slate-600 hover:bg-slate-700 text-white text-sm font-semibold" %>
-            <%= link_to "Descargar comprobante", rails_blob_path(@evidence.receipt_file, disposition: "attachment"), class: "inline-flex items-center px-3 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold" %>
+            <%= link_to "Ver comprobante", rails_blob_path(@evidence.receipt_file, disposition: "inline"), target: "_blank", rel: "noopener", class: "cursor-pointer inline-flex items-center px-3 py-2 rounded-md bg-slate-600 hover:bg-slate-700 text-white text-sm font-semibold" %>
+            <%= link_to "Descargar comprobante", rails_blob_path(@evidence.receipt_file, disposition: "attachment"), class: "cursor-pointer inline-flex items-center px-3 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold" %>
           </div>
         <% end %>
       </div>

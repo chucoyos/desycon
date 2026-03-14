@@ -81,7 +81,7 @@ class InvoicesController < ApplicationController
     authorize @invoice
 
     @invoice_events = @invoice.invoice_events.order(created_at: :desc).limit(30)
-    @invoice_payments = @invoice.invoice_payments.includes(:complement_invoice).order(paid_at: :desc)
+    @invoice_payments = @invoice.invoice_payments.includes(complement_invoice: [ :xml_file_attachment, :pdf_file_attachment ]).order(paid_at: :desc)
   end
 
   def new
@@ -251,7 +251,7 @@ class InvoicesController < ApplicationController
   private
 
   def set_invoice
-    @invoice = Invoice.find(params[:id])
+    @invoice = Invoice.includes(:xml_file_attachment, :pdf_file_attachment).find(params[:id])
   end
 
   def find_invoiceable

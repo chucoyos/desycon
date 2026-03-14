@@ -41,7 +41,7 @@
 
       <div class="flex gap-2 items-end">
         <%= f.submit "Filtrar", class: "cursor-pointer px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md" %>
-        <%= link_to "Limpiar", admin_invoice_payment_evidences_path, class: "px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors" %>
+        <%= link_to "Limpiar", admin_invoice_payment_evidences_path, class: "cursor-pointer px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors" %>
       </div>
     <% end %>
   </div>
@@ -98,7 +98,7 @@
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <%= link_to "Revisar", admin_invoice_payment_evidence_path(evidence), class: "inline-flex items-center px-3 py-1.5 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold" %>
+                <%= link_to "Revisar", admin_invoice_payment_evidence_path(evidence), class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold" %>
               </td>
             </tr>
           <% end %>
