@@ -99,6 +99,21 @@
           <%= f.text_field :uuid, value: @selected_uuid, placeholder: "Buscar UUID", class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
         </div>
 
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Contenedor</label>
+          <%= f.text_field :container_number, value: @selected_container_number, placeholder: "Buscar número de contenedor", maxlength: 11, class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">BL House</label>
+          <%= f.text_field :blhouse, value: @selected_blhouse, placeholder: "Buscar BL House", class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Folio</label>
+          <%= f.text_field :folio, value: @selected_folio, placeholder: "Buscar Folio", class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
+        </div>
+
         <div class="md:col-span-2 xl:col-span-3 flex gap-2 items-end">
           <%= f.submit "Filtrar", class: "px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md cursor-pointer" %>
           <%= link_to "Limpiar", invoices_path, class: "cursor-pointer px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors" %>

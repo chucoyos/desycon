@@ -17,6 +17,9 @@ class InvoicesController < ApplicationController
     @selected_client_id = params[:client_id].to_s.presence
     @selected_customs_agent_id = admin_or_executive ? params[:customs_agent_id].to_s.presence : nil
     @selected_consolidator_id = admin_or_executive ? params[:consolidator_id].to_s.presence : nil
+    @selected_container_number = params[:container_number].to_s.strip.first(11).presence
+    @selected_blhouse = params[:blhouse].to_s.strip.presence
+    @selected_folio = params[:folio].to_s.strip.presence
     @selected_uuid = params[:uuid].to_s.strip.presence
 
     start_date = [ @selected_start_date, @selected_end_date ].min
@@ -62,6 +65,53 @@ class InvoicesController < ApplicationController
           )
         SQL
         consolidator_id: @selected_consolidator_id
+      )
+    end
+    if @selected_container_number.present?
+      @invoices = @invoices.where(
+        <<~SQL,
+          (
+            invoices.invoiceable_type = 'ContainerService' AND EXISTS (
+              SELECT 1
+              FROM container_services
+              INNER JOIN containers ON containers.id = container_services.container_id
+              WHERE container_services.id = invoices.invoiceable_id
+                AND containers.number ILIKE :container_number
+            )
+          )
+          OR
+          (
+            invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
+              SELECT 1
+              FROM bl_house_line_services
+              INNER JOIN bl_house_lines ON bl_house_lines.id = bl_house_line_services.bl_house_line_id
+              INNER JOIN containers ON containers.id = bl_house_lines.container_id
+              WHERE bl_house_line_services.id = invoices.invoiceable_id
+                AND containers.number ILIKE :container_number
+            )
+          )
+        SQL
+        container_number: "%#{@selected_container_number}%"
+      )
+    end
+    if @selected_blhouse.present?
+      @invoices = @invoices.where(
+        <<~SQL,
+          invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
+            SELECT 1
+            FROM bl_house_line_services
+            INNER JOIN bl_house_lines ON bl_house_lines.id = bl_house_line_services.bl_house_line_id
+            WHERE bl_house_line_services.id = invoices.invoiceable_id
+              AND bl_house_lines.blhouse ILIKE :blhouse
+          )
+        SQL
+        blhouse: "%#{@selected_blhouse}%"
+      )
+    end
+    if @selected_folio.present?
+      @invoices = @invoices.where(
+        "COALESCE(invoices.provider_response->>'folio', invoices.provider_response->>'noComprobante', invoices.provider_response->>'numeroComprobante', invoices.facturador_comprobante_id::text, '') ILIKE ?",
+        "%#{@selected_folio}%"
       )
     end
     @invoices = @invoices.where("sat_uuid ILIKE ?", "%#{@selected_uuid}%") if @selected_uuid.present?

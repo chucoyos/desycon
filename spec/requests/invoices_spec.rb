@@ -40,6 +40,28 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include(with_uuid.receiver_entity.name)
     end
 
+    it 'filters by container number and blhouse' do
+      matching_container = create(:container, number: 'ABCD1234567')
+      non_matching_container = create(:container, number: 'WXYZ7654321')
+
+      matching_bl = create(:bl_house_line, container: matching_container, blhouse: 'BLH-FILTER-001')
+      non_matching_bl = create(:bl_house_line, container: non_matching_container, blhouse: 'BLH-FILTER-999')
+
+      matching_service = create(:bl_house_line_service, bl_house_line: matching_bl)
+      non_matching_service = create(:bl_house_line_service, bl_house_line: non_matching_bl)
+
+      matching_invoice = create(:invoice, invoiceable: matching_service, sat_uuid: 'UUID-CONT-BLH-MATCH')
+      non_matching_invoice = create(:invoice, invoiceable: non_matching_service, sat_uuid: 'UUID-CONT-BLH-OTHER')
+
+      get invoices_path, params: { container_number: 'ABCD1234567', blhouse: 'BLH-FILTER-001' }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(matching_invoice.sat_uuid)
+      expect(response.body).not_to include(non_matching_invoice.sat_uuid)
+      expect(response.body).to include('BLH-FILTER-001')
+      expect(response.body).to include('ABCD1234567')
+    end
+
     it 'filters by comprobante type' do
       factura_invoice = create(:invoice, kind: 'ingreso', sat_uuid: 'UUID-KIND-FACTURA')
       pago_invoice = create(:invoice, kind: 'pago', sat_uuid: 'UUID-KIND-PAGO')
