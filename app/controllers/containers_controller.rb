@@ -344,7 +344,7 @@ class ContainersController < ApplicationController
   end
 
   def per
-    params[:per]&.to_i&.clamp(10, 100) || 25
+    params[:per]&.to_i&.clamp(10, 100) || 10
   end
 
   def resolved_start_date
