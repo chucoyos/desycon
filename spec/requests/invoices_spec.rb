@@ -211,7 +211,7 @@ RSpec.describe 'Invoices', type: :request do
       get invoice_path(invoice)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Factura ##{invoice.id}")
+      expect(response.body).to include("##{invoice.id}")
       expect(response.body).to include('UUID-SHOW-001')
       expect(response.body).to include('Registrar nuevo pago')
       expect(response.body).to include('Registrar pago')

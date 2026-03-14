@@ -69,7 +69,8 @@
         <p class="text-sm text-gray-700 mb-2">Método de pago: <span class="font-semibold"><%= payment_method_code %> - <%= payment_method_label %></span></p>
         <p class="text-sm text-gray-700 mb-2">Total: <span class="font-semibold"><%= number_to_currency(@invoice.total) %></span></p>
         <p class="text-sm text-gray-700 mb-4">Saldo pendiente: <span class="font-semibold"><%= number_to_currency(@invoice.outstanding_amount) %></span></p>
-        <%= link_to "Ver factura", invoice_path(@invoice), class: "text-blue-600 hover:text-blue-800 text-sm font-semibold" %>
+        <% invoice_series_folio_label = [serie, folio].reject(&:blank?).join(" ").presence || invoice_label %>
+        <%= link_to invoice_series_folio_label, invoice_path(@invoice), class: "text-blue-600 hover:text-blue-800 text-sm font-semibold" %>
       </div>
     </div>
 

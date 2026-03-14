@@ -6,13 +6,13 @@
           @invoice.facturador_comprobante_id&.to_s
 
   invoice_heading = if serie.present? && folio.present?
-    "Factura #{serie} #{folio}"
+    "#{serie} #{folio}"
   elsif folio.present?
-    "Factura #{folio}"
+    folio.to_s
   elsif serie.present?
-    "Factura #{serie}"
+    serie.to_s
   else
-    "Factura ##{@invoice.id}"
+    "##{@invoice.id}"
   end
 %>
 <% content_for :title, invoice_heading %>

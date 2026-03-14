@@ -71,13 +71,13 @@
                       evidence.invoice.provider_response.to_h["numeroComprobante"].presence ||
                       evidence.invoice.facturador_comprobante_id&.to_s %>
             <% invoice_label = if serie.present? && folio.present?
-              "Factura #{serie} #{folio}"
+              "#{serie} #{folio}"
             elsif folio.present?
-              "Factura #{folio}"
+              folio.to_s
             elsif serie.present?
-              "Factura #{serie}"
+              serie.to_s
             else
-              "Factura"
+              "-"
             end %>
             <tr class="hover:bg-gray-50 transition-colors duration-150">
               <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">#<%= evidence.id %></td>
