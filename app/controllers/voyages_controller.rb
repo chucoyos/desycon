@@ -152,7 +152,7 @@ class VoyagesController < ApplicationController
   end
 
   def default_start_date
-    Date.current - 30.days
+    Date.current - 1.week
   end
 
   def default_end_date

@@ -6,7 +6,7 @@ RSpec.describe "Voyages", type: :request do
   describe "GET /voyages" do
     before { sign_in user, scope: :user }
 
-    it "shows only recent voyages by default (last 30 days)" do
+    it "shows only recent voyages by default (last week)" do
       recent_voyage = create(:voyage, viaje: "VREC001")
       old_voyage = create(:voyage, viaje: "VOLD001")
       old_voyage.update_column(:created_at, 45.days.ago)
