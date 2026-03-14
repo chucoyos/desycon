@@ -44,7 +44,7 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
       expect(flash[:alert]).to be_present
     end
 
-    it "limits evidences to the last month by default" do
+    it "limits evidences to the last week by default" do
       sign_in admin_user, scope: :user
 
       recent_evidence = create(

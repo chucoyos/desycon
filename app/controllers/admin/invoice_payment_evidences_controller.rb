@@ -82,7 +82,7 @@ module Admin
 
     def resolve_date_filters
       today = Time.zone.today
-      default_start = today - 1.month
+      default_start = today - 1.week
 
       start_date = parse_date_param(params[:start_date]) || default_start
       end_date = parse_date_param(params[:end_date]) || today
