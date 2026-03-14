@@ -66,7 +66,7 @@ class InvoicesController < ApplicationController
     end
     @invoices = @invoices.where("sat_uuid ILIKE ?", "%#{@selected_uuid}%") if @selected_uuid.present?
 
-    @invoices = @invoices.page(params[:page]).per(params[:per] || 25)
+    @invoices = @invoices.page(params[:page]).per(params[:per] || 10)
 
     @invoice_statuses = Invoice::STATUSES
     @payment_statuses = Invoice::PAYMENT_STATUSES
@@ -330,7 +330,7 @@ class InvoicesController < ApplicationController
   end
 
   def default_start_date
-    Date.current - 60.days
+    Date.current - 1.week
   end
 
   def default_end_date

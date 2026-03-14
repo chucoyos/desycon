@@ -14,7 +14,7 @@ module Admin
         .where(created_at: @start_date.beginning_of_day..@end_date.end_of_day)
         .order(created_at: :desc)
       @invoice_payment_evidences = @invoice_payment_evidences.where(status: @status_filter) if @status_filter.in?(InvoicePaymentEvidence::STATUSES)
-      @invoice_payment_evidences = @invoice_payment_evidences.page(params[:page]).per(params[:per] || 25)
+      @invoice_payment_evidences = @invoice_payment_evidences.page(params[:page]).per(params[:per] || 10)
     end
 
     def show
