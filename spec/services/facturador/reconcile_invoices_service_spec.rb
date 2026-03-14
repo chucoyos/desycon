@@ -7,6 +7,7 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
     before do
       allow(Facturador::Config).to receive(:enabled?).and_return(true)
       allow(Facturador::Config).to receive(:reconciliation_enabled?).and_return(true)
+      allow(Facturador::Config).to receive(:auto_sync_documents_on_reconcile_enabled?).and_return(false)
       allow(Facturador::Config).to receive(:reconciliation_max_age_days).and_return(60)
       allow(Facturador::AccessTokenService).to receive(:fetch!).and_return('token-123')
       allow(Facturador::EmisorService).to receive(:emisor_id!).and_return(208)
@@ -160,6 +161,45 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
       expect(old_invoice.reload.status).to eq('cancel_pending')
       expect(recent_invoice.reload.status).to eq('cancelled')
       expect(client_double).to have_received(:buscar_comprobantes).once
+    end
+
+    it 'enqueues document sync when status changes to cancelled and auto sync flag is enabled' do
+      invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-AUTO-SYNC-001')
+      allow(Facturador::Config).to receive(:auto_sync_documents_on_reconcile_enabled?).and_return(true)
+      allow(client_double).to receive(:buscar_comprobantes).and_return([
+        {
+          'uuid' => 'UUID-AUTO-SYNC-001',
+          'subestatus' => 'Cancelado',
+          'descripcion' => 'Cancelado (Directo)',
+          'subestatusId' => 3
+        }
+      ])
+
+      expect(Facturador::SyncInvoiceDocumentsJob).to receive(:perform_later)
+        .with(invoice_id: invoice.id, actor_id: nil)
+
+      described_class.call(limit: 10)
+
+      expect(invoice.reload.status).to eq('cancelled')
+    end
+
+    it 'does not enqueue document sync when status stays cancel_pending' do
+      invoice = create(:invoice, status: 'cancel_pending', sat_uuid: 'UUID-NO-AUTO-SYNC-001')
+      allow(Facturador::Config).to receive(:auto_sync_documents_on_reconcile_enabled?).and_return(true)
+      allow(client_double).to receive(:buscar_comprobantes).and_return([
+        {
+          'uuid' => 'UUID-NO-AUTO-SYNC-001',
+          'subestatus' => 'Emitido (Espera Cancelación)',
+          'descripcion' => 'Emitido (Espera Cancelación)',
+          'subestatusId' => 4
+        }
+      ])
+
+      expect(Facturador::SyncInvoiceDocumentsJob).not_to receive(:perform_later)
+
+      described_class.call(limit: 10)
+
+      expect(invoice.reload.status).to eq('cancel_pending')
     end
   end
 end

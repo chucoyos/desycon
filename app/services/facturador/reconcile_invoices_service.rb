@@ -90,6 +90,7 @@ module Facturador
         return
       end
 
+      previous_status = invoice.status
       apply_status_sync!(invoice: invoice, provider_invoice: provider_invoice)
       invoice.invoice_events.create!(
         event_type: "reconcile_synced",
@@ -98,6 +99,7 @@ module Facturador
         response_payload: provider_invoice,
         provider_status: provider_invoice["subestatusId"]&.to_s
       )
+      enqueue_documents_sync_if_needed(invoice: invoice, previous_status: previous_status)
     rescue StandardError => e
       error_code = ErrorCodeResolver.call(context: :reconcile, message: e.message, exception: e)
       if invoice.sat_uuid.present? && invoice.status != "cancelled"
@@ -188,6 +190,16 @@ module Facturador
       )
     rescue StandardError, NotImplementedError => e
       Rails.logger.warn("Facturador email enqueue skipped after reconcile for invoice=#{invoice.id}: #{e.message}")
+    end
+
+    def enqueue_documents_sync_if_needed(invoice:, previous_status:)
+      return unless Config.auto_sync_documents_on_reconcile_enabled?
+      return if previous_status == invoice.status
+      return unless invoice.status == "cancelled"
+
+      Facturador::SyncInvoiceDocumentsJob.perform_later(invoice_id: invoice.id, actor_id: actor&.id)
+    rescue StandardError => e
+      Rails.logger.warn("Facturador documents auto-sync enqueue skipped after reconcile for invoice=#{invoice.id}: #{e.message}")
     end
   end
 end

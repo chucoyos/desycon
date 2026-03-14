@@ -21,6 +21,10 @@ module Facturador
         ActiveModel::Type::Boolean.new.cast(env_value(:reconciliation_enabled, false))
       end
 
+      def auto_sync_documents_on_reconcile_enabled?
+        ActiveModel::Type::Boolean.new.cast(env_value(:auto_sync_documents_on_reconcile_enabled, false))
+      end
+
       def reconciliation_max_age_days
         value = env_value(:reconciliation_max_age_days, 60)
         days = value.to_i

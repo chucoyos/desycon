@@ -4,19 +4,20 @@ require "stringio"
 module Facturador
   class SyncInvoiceDocumentsService
     class << self
-      def call(invoice:, actor: nil)
-        new(invoice: invoice, actor: actor).call
+      def call(invoice:, actor: nil, force: false)
+        new(invoice: invoice, actor: actor, force: force).call
       end
     end
 
-    def initialize(invoice:, actor: nil)
+    def initialize(invoice:, actor: nil, force: false)
       @invoice = invoice
       @actor = actor
+      @force = force
     end
 
     def call
       return invoice unless Config.enabled?
-      return invoice unless Config.manual_actions_enabled?
+      return invoice unless force || Config.manual_actions_enabled?
       raise RequestError, "Invoice is not syncable" unless invoice.status.in?(%w[issued cancelled])
       raise RequestError, "Invoice UUID is missing" if invoice.sat_uuid.blank?
 
@@ -32,7 +33,7 @@ module Facturador
 
     private
 
-    attr_reader :invoice, :actor
+    attr_reader :invoice, :actor, :force
 
     def sync_xml!(client:, emisor_id:)
       invoice.invoice_events.create!(
