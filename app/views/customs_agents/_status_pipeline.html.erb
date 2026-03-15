@@ -1,8 +1,9 @@
 <div class="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100">
 
-  <% allowed_statuses = ['activo', 'documentos_rechazados', 'documentos_ok', 'revalidado'] %>
+  <% allowed_statuses = ['activo', 'validar_documentos', 'documentos_ok', 'revalidado', 'despachado'] %>
   <% history_statuses = bl_house_line.bl_house_line_status_histories.map(&:status).uniq %>
-  <% display_statuses = allowed_statuses.reject { |s| s == 'documentos_rechazados' && !history_statuses.include?(s) } %>
+  <% display_statuses = allowed_statuses %>
+  <% normalized_current_status = bl_house_line.status == 'instrucciones_pendientes' ? 'validar_documentos' : bl_house_line.status %>
 
   <% if display_statuses.any? %>
     <div class="relative">
@@ -10,43 +11,36 @@
       <div class="absolute top-2.5 left-0 right-0 h-0.5 bg-gray-200"></div>
 
       <!-- Progress Fill -->
-      <% current_index = display_statuses.index(bl_house_line.status) || display_statuses.length - 1 %>
+      <% current_index = display_statuses.index(normalized_current_status) || 0 %>
       <% progress_width = display_statuses.length > 1 ? (current_index.to_f / (display_statuses.length - 1) * 100) : 100 %>
       <div class="absolute top-2.5 left-0 h-0.5 bg-indigo-500 transition-all duration-300" style="width: <%= progress_width %>%"></div>
 
       <!-- Status Steps -->
       <div class="relative flex justify-between">
         <% display_statuses.each_with_index do |status, index| %>
-          <% is_rejected = status == "documentos_rechazados" %>
-          <% current_status_index = display_statuses.index(bl_house_line.status) || display_statuses.length %>
+          <% current_status_index = display_statuses.index(normalized_current_status) || 0 %>
           <% is_completed = current_status_index >= index %>
-          <% is_current = bl_house_line.status == status %>
-          <% exists_in_history = history_statuses.include?(status) %>
+          <% is_current = normalized_current_status == status %>
+          <% exists_in_history = history_statuses.include?(status) || is_current %>
 
           <div class="flex flex-col items-center">
             <!-- Step Circle -->
             <div class="relative z-10">
               <div class="w-6 h-6 rounded-full border flex items-center justify-center transition-all duration-300 <%=
                 if is_completed && exists_in_history
-                  is_rejected ? 'bg-red-500 border-red-500' : 'bg-green-500 border-green-500'
+                  'bg-green-500 border-green-500'
                 elsif is_current && exists_in_history
-                  is_rejected ? 'bg-red-50 border-red-500' : 'bg-indigo-50 border-indigo-500'
+                  'bg-indigo-50 border-indigo-500'
                 else
                   'bg-white border-gray-300'
                 end
               %>">
                 <% if is_completed && exists_in_history %>
-                  <% if is_rejected %>
-                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                  <% else %>
-                    <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                    </svg>
-                  <% end %>
+                  <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                  </svg>
                 <% elsif is_current && exists_in_history %>
-                  <div class="w-2 h-2 rounded-full <%= is_rejected ? 'bg-red-500' : 'bg-indigo-500' %>"></div>
+                  <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
                 <% else %>
                   <span class="text-xs font-medium text-gray-400"><%= index + 1 %></span>
                 <% end %>
@@ -57,9 +51,9 @@
             <div class="mt-1.5 text-center">
               <div class="text-[11px] leading-tight font-medium <%= 
                 if is_current && exists_in_history
-                  is_rejected ? 'text-red-600' : 'text-indigo-600'
+                  'text-indigo-600'
                 elsif is_completed && exists_in_history
-                  is_rejected ? 'text-red-600' : 'text-green-600'
+                  'text-green-600'
                 else
                   'text-gray-400'
                 end

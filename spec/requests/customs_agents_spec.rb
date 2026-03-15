@@ -172,6 +172,20 @@ RSpec.describe "CustomsAgents", type: :request do
         expect(response.body).to include(despachado_bl.blhouse)
         expect(response.body).not_to include(activo_bl.blhouse)
       end
+
+      it "renders dashboard timeline with fixed five statuses" do
+        create(:bl_house_line, customs_agent: customs_user.entity, status: "activo", blhouse: "TIMELINE-DASH")
+
+        sign_in customs_user, scope: :user
+        get customs_agents_dashboard_path
+
+        expect(response.body).to include("Activo")
+        expect(response.body).to include("Validar Documentos")
+        expect(response.body).to include("Documentos OK")
+        expect(response.body).to include("Revalidado")
+        expect(response.body).to include("Despachado")
+        expect(response.body).not_to include("Documentos Rechazados")
+      end
     end
 
     it "shows invoice series and folio in payment evidence form" do
