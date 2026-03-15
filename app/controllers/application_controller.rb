@@ -31,6 +31,15 @@ class ApplicationController < ActionController::Base
 
   # Catch-all 404 handler for unmatched routes
   def not_found
+    if turbo_frame_request?
+      frame_id = request.headers["Turbo-Frame"].presence || "modal"
+      return render(
+        partial: "shared/turbo_frame_not_found",
+        locals: { frame_id: frame_id, message: "El recurso solicitado ya no existe o fue movido." },
+        status: :not_found
+      )
+    end
+
     render file: Rails.root.join("public", "404.html"), status: :not_found, layout: false
   end
 

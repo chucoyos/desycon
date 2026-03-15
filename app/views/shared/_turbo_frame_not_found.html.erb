@@ -1,0 +1,13 @@
+<%= turbo_frame_tag frame_id do %>
+  <div class="mx-auto my-6 w-full max-w-lg rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 shadow-sm">
+    <div class="flex items-start gap-3">
+      <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M4.93 19h14.14c1.54 0 2.5-1.67 1.73-3L13.73 4a2 2 0 00-3.46 0L3.2 16c-.77 1.33.19 3 1.73 3z" />
+      </svg>
+      <div>
+        <p class="text-sm font-semibold">No fue posible abrir esta notificacion</p>
+        <p class="mt-1 text-sm"><%= message %></p>
+      </div>
+    </div>
+  </div>
+<% end %>
