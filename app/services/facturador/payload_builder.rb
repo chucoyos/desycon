@@ -154,7 +154,7 @@ module Facturador
         claveProdServ: sat_clave_prod_serv,
         cantidad: "1",
         claveUnidad: sat_clave_unidad,
-        descripcion: service_catalog.name,
+        descripcion: enriched_concept_description(service_catalog.name),
         valorUnitario: invoice.subtotal.to_f,
         importe: invoice.subtotal.to_f,
         objetoImp: service_catalog.sat_objeto_imp
@@ -175,7 +175,7 @@ module Facturador
         claveProdServ: item.sat_clave_prod_serv,
         cantidad: item.quantity.to_f,
         claveUnidad: item.sat_clave_unidad,
-        descripcion: item.description,
+        descripcion: enriched_concept_description(item.description),
         valorUnitario: item.unit_price.to_f,
         importe: item.subtotal.to_f,
         objetoImp: item.sat_objeto_imp
@@ -265,6 +265,46 @@ module Facturador
       return "Nota de crédito" if invoice.kind == "egreso"
 
       "Complemento de pago"
+    end
+
+    def enriched_concept_description(base_description)
+      description = normalize_cfdi_description(base_description)
+
+      extras = []
+      extras << "Contenedor #{normalize_cfdi_token(container_number)}" if container_number.present?
+      extras << "BlHouse #{normalize_cfdi_token(blhouse_number)}" if blhouse_number.present?
+      return description if extras.empty?
+
+      normalize_cfdi_description("#{description} #{extras.join(' ')}")
+    end
+
+    def normalize_cfdi_description(value)
+      I18n.transliterate(value.to_s)
+        .gsub(/[^A-Za-z0-9 ]/, " ")
+        .squeeze(" ")
+        .strip
+    end
+
+    def normalize_cfdi_token(value)
+      I18n.transliterate(value.to_s).gsub(/[^A-Za-z0-9]/, "")
+    end
+
+    def container_number
+      if invoice.invoiceable.respond_to?(:container)
+        invoice.invoiceable.container&.number.to_s.presence
+      elsif invoice.invoiceable.respond_to?(:bl_house_line)
+        invoice.invoiceable.bl_house_line&.container&.number.to_s.presence
+      elsif invoice.invoiceable.respond_to?(:number)
+        invoice.invoiceable.number.to_s.presence
+      end
+    end
+
+    def blhouse_number
+      if invoice.invoiceable.respond_to?(:bl_house_line)
+        invoice.invoiceable.bl_house_line&.blhouse.to_s.presence
+      elsif invoice.invoiceable.respond_to?(:blhouse)
+        invoice.invoiceable.blhouse.to_s.presence
+      end
     end
 
     def sat_clave_prod_serv

@@ -2,6 +2,57 @@ require 'rails_helper'
 
 RSpec.describe Facturador::PayloadBuilder, type: :service do
   describe '.build' do
+    context 'when invoice kind is ingreso' do
+      let(:issuer) { create(:entity, :customs_agent) }
+      let(:receiver) { create(:entity, :client) }
+
+      before do
+        create(:fiscal_profile, profileable: issuer) unless issuer.fiscal_profile.present?
+        create(:fiscal_profile, profileable: receiver) unless receiver.fiscal_profile.present?
+        create(:address, addressable: issuer, tipo: 'matriz') unless issuer.fiscal_address.present?
+        create(:address, addressable: receiver, tipo: 'matriz') unless receiver.fiscal_address.present?
+        issuer.reload
+        receiver.reload
+      end
+
+      it 'includes container and blhouse in separate lines when both exist' do
+        bl_service = create(:bl_house_line_service)
+        invoice = create(
+          :invoice,
+          kind: 'ingreso',
+          invoiceable: bl_service,
+          issuer_entity: issuer,
+          receiver_entity: receiver
+        )
+
+        payload = described_class.build(invoice)
+
+        expect(payload[:descripcionFacturador]).to eq('Factura')
+        concepto_descripcion = payload.dig(:conceptos, 0, :descripcion)
+        expect(concepto_descripcion).to include("Contenedor #{bl_service.bl_house_line.container.number}")
+        expect(concepto_descripcion).to include("BlHouse #{bl_service.bl_house_line.blhouse.delete('-')}")
+        expect(concepto_descripcion).not_to include('|')
+        expect(concepto_descripcion).not_to include(':')
+      end
+
+      it 'omits container and blhouse labels when values do not exist' do
+        invoice = create(
+          :invoice,
+          kind: 'ingreso',
+          invoiceable: nil,
+          issuer_entity: issuer,
+          receiver_entity: receiver
+        )
+        create(:invoice_line_item, invoice: invoice)
+
+        payload = described_class.build(invoice)
+
+        expect(payload[:descripcionFacturador]).to eq('Factura')
+        expect(payload[:descripcionFacturador]).not_to include('Contenedor:')
+        expect(payload[:descripcionFacturador]).not_to include('BlHouse:')
+      end
+    end
+
     context 'when invoice kind is pago' do
       let(:issuer) { create(:entity, :customs_agent) }
       let(:receiver) { create(:entity, :client) }
