@@ -273,7 +273,7 @@
     <div class="space-y-6">
 
   <!-- Servicios -->
-  <div class="bg-white shadow-sm rounded-xl p-5 border border-gray-100 mb-6">
+  <div id="servicios" class="bg-white shadow-sm rounded-xl p-5 border border-gray-100 mb-6">
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
         <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-600 shadow-sm">
@@ -384,6 +384,32 @@
                     <% end %>
                   <% else %>
                     <%= button_to "Emitir CFDI", issue_manual_invoices_path(invoiceable_type: "BlHouseLineService", invoiceable_id: service.id), method: :post, class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" %>
+                  <% end %>
+                </div>
+              <% end %>
+
+              <% unless is_customs_agent || service.facturado? %>
+                <div class="col-span-2 pt-2 border-t border-gray-100 flex justify-end">
+                  <%= button_to bl_house_line_path(@bl_house_line),
+                      method: :patch,
+                      params: {
+                        source: "show_services",
+                        service_action: "destroy",
+                        bl_house_line: {
+                          bl_house_line_services_attributes: {
+                            "0" => {
+                              id: service.id,
+                              _destroy: "1"
+                            }
+                          }
+                        }
+                      },
+                      form: { data: { turbo_confirm: "¿Eliminar este servicio? Esta acción no se puede deshacer." } },
+                      class: "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100" do %>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/>
+                    </svg>
+                    Eliminar servicio
                   <% end %>
                 </div>
               <% end %>
@@ -634,6 +660,8 @@
       </div>
 
       <%= form_with model: @bl_house_line, url: bl_house_line_path(@bl_house_line), method: :patch, local: true do |f| %>
+        <%= hidden_field_tag :source, "show_services" %>
+        <%= hidden_field_tag :service_action, "create" %>
         <% service_index = "new_service_#{Time.current.to_i}" %>
         <%= f.fields_for :bl_house_line_services, BlHouseLineService.new(billed_to_entity_id: @bl_house_line.client_id), child_index: service_index do |sf| %>
           <div class="space-y-4">

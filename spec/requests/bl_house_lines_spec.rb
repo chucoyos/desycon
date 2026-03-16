@@ -137,6 +137,26 @@ RSpec.describe "BlHouseLines", type: :request do
       expect(response.body).to include("Agregar servicio")
       expect(response.body).to include("Agregar servicio a partida")
     end
+
+    it "shows delete button only for non-invoiced services" do
+      sign_in user, scope: :user
+      bl_house_line = create(:bl_house_line)
+      create(:bl_house_line_service, bl_house_line: bl_house_line, factura: nil)
+
+      get bl_house_line_url(bl_house_line)
+
+      expect(response.body).to include("Eliminar servicio")
+    end
+
+    it "hides delete button for invoiced services" do
+      sign_in user, scope: :user
+      bl_house_line = create(:bl_house_line)
+      create(:bl_house_line_service, :facturado, bl_house_line: bl_house_line)
+
+      get bl_house_line_url(bl_house_line)
+
+      expect(response.body).not_to include("Eliminar servicio")
+    end
   end
 
   describe "GET /bl_house_lines/new" do
@@ -232,6 +252,53 @@ RSpec.describe "BlHouseLines", type: :request do
             }
           }
         }.to change(bl_house_line.bl_house_line_services, :count).by(1)
+      end
+
+      it "creates a service from show flow" do
+        sign_in user, scope: :user
+        bl_house_line = create(:bl_house_line, client: client)
+        service_catalog = create(:service_catalog, applies_to: "bl_house_line", active: true)
+
+        expect {
+          patch bl_house_line_url(bl_house_line), params: {
+            source: "show_services",
+            service_action: "create",
+            bl_house_line: {
+              bl_house_line_services_attributes: {
+                "0" => {
+                  service_catalog_id: service_catalog.id,
+                  billed_to_entity_id: client.id,
+                  observaciones: "Alta desde modal"
+                }
+              }
+            }
+          }
+        }.to change(bl_house_line.bl_house_line_services, :count).by(1)
+
+        expect(response).to redirect_to(bl_house_line_url(bl_house_line, anchor: "servicios"))
+      end
+
+      it "deletes a non-invoiced service from show flow" do
+        sign_in user, scope: :user
+        bl_house_line = create(:bl_house_line)
+        service = create(:bl_house_line_service, bl_house_line: bl_house_line, factura: nil)
+
+        expect {
+          patch bl_house_line_url(bl_house_line), params: {
+            source: "show_services",
+            service_action: "destroy",
+            bl_house_line: {
+              bl_house_line_services_attributes: {
+                "0" => {
+                  id: service.id,
+                  _destroy: "1"
+                }
+              }
+            }
+          }
+        }.to change(bl_house_line.bl_house_line_services, :count).by(-1)
+
+        expect(response).to redirect_to(bl_house_line_url(bl_house_line, anchor: "servicios"))
       end
     end
 

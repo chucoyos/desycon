@@ -120,6 +120,8 @@ class BlHouseLinesController < ApplicationController
   def update
     authorize @bl_house_line
 
+    return handle_services_update_from_show if params[:source] == "show_services"
+
     assign_container_from_params
 
     if @bl_house_line.update(bl_house_line_params)
@@ -530,6 +532,64 @@ class BlHouseLinesController < ApplicationController
     if params[:bl_master].present? && container.bl_master.blank?
       container.update(bl_master: params[:bl_master])
     end
+  end
+
+  def handle_services_update_from_show
+    attrs = show_service_attributes
+    if attrs.blank?
+      return redirect_to bl_house_line_path(@bl_house_line, anchor: "servicios"), alert: "No se recibieron datos del servicio."
+    end
+
+    if ActiveModel::Type::Boolean.new.cast(attrs[:_destroy])
+      destroy_service_from_show(attrs)
+    else
+      create_service_from_show(attrs)
+    end
+  end
+
+  def create_service_from_show(attrs)
+    service = @bl_house_line.bl_house_line_services.new(attrs.except(:id, :_destroy))
+
+    if service.save
+      redirect_to bl_house_line_path(@bl_house_line, anchor: "servicios"), notice: "Servicio agregado correctamente."
+    else
+      redirect_to bl_house_line_path(@bl_house_line, anchor: "servicios"), alert: service.errors.full_messages.to_sentence
+    end
+  end
+
+  def destroy_service_from_show(attrs)
+    service = @bl_house_line.bl_house_line_services.find_by(id: attrs[:id])
+    return redirect_to(bl_house_line_path(@bl_house_line, anchor: "servicios"), alert: "Servicio no encontrado.") if service.blank?
+
+    if service.facturado?
+      redirect_to bl_house_line_path(@bl_house_line, anchor: "servicios"), alert: "No se puede eliminar un servicio facturado."
+    elsif service.destroy
+      redirect_to bl_house_line_path(@bl_house_line, anchor: "servicios"), notice: "Servicio eliminado correctamente."
+    else
+      redirect_to bl_house_line_path(@bl_house_line, anchor: "servicios"), alert: service.errors.full_messages.to_sentence
+    end
+  end
+
+  def show_service_attributes
+    service_fields = [ :id, :service_catalog_id, :billed_to_entity_id, :fecha_programada, :observaciones, :factura, :_destroy ]
+
+    services_attrs = if params[:bl_house_line].is_a?(ActionController::Parameters)
+      params[:bl_house_line][:bl_house_line_services_attributes]
+    else
+      params[:bl_house_line_services_attributes]
+    end
+
+    return {} if services_attrs.blank?
+
+    attrs_hash = services_attrs.respond_to?(:to_unsafe_h) ? services_attrs.to_unsafe_h : services_attrs.to_h
+    return {} if attrs_hash.blank?
+
+    first_value = attrs_hash.values.first
+    first_entry = first_value.is_a?(Hash) || first_value.is_a?(ActionController::Parameters) ? first_value : attrs_hash
+
+    ActionController::Parameters.new(first_entry).permit(*service_fields).to_h.symbolize_keys
+  rescue StandardError
+    {}
   end
 
   def dispatch_date_params
