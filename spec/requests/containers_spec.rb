@@ -72,6 +72,85 @@ RSpec.describe "Containers", type: :request do
       expect(response.body).to include("Nueva Partida")
       expect(response.body).to include(new_bl_house_line_path(container_id: container.id))
     end
+
+    it "shows add service controls" do
+      sign_in user, scope: :user
+      container = create(:container)
+
+      get container_url(container)
+
+      expect(response.body).to include("Agregar servicio")
+      expect(response.body).to include("Agregar servicio a contenedor")
+    end
+
+    it "shows delete service button only for non-invoiced services" do
+      sign_in user, scope: :user
+      container = create(:container)
+      create(:container_service, container: container, factura: nil)
+
+      get container_url(container)
+
+      expect(response.body).to include("Eliminar servicio")
+    end
+
+    it "hides delete service button for invoiced services" do
+      sign_in user, scope: :user
+      container = create(:container)
+      create(:container_service, :facturado, container: container)
+
+      get container_url(container)
+
+      expect(response.body).not_to include("Eliminar servicio")
+    end
+  end
+
+  describe "PATCH /containers/:id" do
+    before { sign_in user, scope: :user }
+
+    it "creates a service from show flow" do
+      container = create(:container)
+      service_catalog = create(:service_catalog, applies_to: "container", active: true)
+
+      expect {
+        patch container_url(container), params: {
+          source: "show_services",
+          service_action: "create",
+          container: {
+            container_services_attributes: {
+              "0" => {
+                service_catalog_id: service_catalog.id,
+                billed_to_entity_id: container.consolidator_entity_id,
+                observaciones: "Alta desde modal"
+              }
+            }
+          }
+        }
+      }.to change(container.container_services, :count).by(1)
+
+      expect(response).to redirect_to(container_url(container, anchor: "servicios"))
+    end
+
+    it "deletes a non-invoiced service from show flow" do
+      container = create(:container)
+      service = create(:container_service, container: container, factura: nil)
+
+      expect {
+        patch container_url(container), params: {
+          source: "show_services",
+          service_action: "destroy",
+          container: {
+            container_services_attributes: {
+              "0" => {
+                id: service.id,
+                _destroy: "1"
+              }
+            }
+          }
+        }
+      }.to change(container.container_services, :count).by(-1)
+
+      expect(response).to redirect_to(container_url(container, anchor: "servicios"))
+    end
   end
 
   describe "DELETE /containers/:id" do

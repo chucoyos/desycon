@@ -51,6 +51,10 @@ class ContainersController < ApplicationController
 
   def show
     authorize @container
+    return if current_user&.customs_broker?
+
+    @service_catalogs = ServiceCatalog.for_containers
+    @clients = Entity.clients.order(:name)
   end
 
   def new
@@ -78,6 +82,8 @@ class ContainersController < ApplicationController
 
   def update
     authorize @container
+
+    return handle_services_update_from_show if params[:source] == "show_services"
 
     if @container.update(container_params)
       redirect_to @container, notice: "Contenedor actualizado exitosamente."
@@ -322,6 +328,64 @@ class ContainersController < ApplicationController
         :_destroy
       ]
     )
+  end
+
+  def handle_services_update_from_show
+    attrs = show_service_attributes
+    if attrs.blank?
+      return redirect_to container_path(@container, anchor: "servicios"), alert: "No se recibieron datos del servicio."
+    end
+
+    if ActiveModel::Type::Boolean.new.cast(attrs[:_destroy])
+      destroy_service_from_show(attrs)
+    else
+      create_service_from_show(attrs)
+    end
+  end
+
+  def create_service_from_show(attrs)
+    service = @container.container_services.new(attrs.except(:id, :_destroy))
+
+    if service.save
+      redirect_to container_path(@container, anchor: "servicios"), notice: "Servicio agregado correctamente."
+    else
+      redirect_to container_path(@container, anchor: "servicios"), alert: service.errors.full_messages.to_sentence
+    end
+  end
+
+  def destroy_service_from_show(attrs)
+    service = @container.container_services.find_by(id: attrs[:id])
+    return redirect_to(container_path(@container, anchor: "servicios"), alert: "Servicio no encontrado.") if service.blank?
+
+    if service.facturado?
+      redirect_to container_path(@container, anchor: "servicios"), alert: "No se puede eliminar un servicio facturado."
+    elsif service.destroy
+      redirect_to container_path(@container, anchor: "servicios"), notice: "Servicio eliminado correctamente."
+    else
+      redirect_to container_path(@container, anchor: "servicios"), alert: service.errors.full_messages.to_sentence
+    end
+  end
+
+  def show_service_attributes
+    service_fields = [ :id, :service_catalog_id, :billed_to_entity_id, :fecha_programada, :observaciones, :factura, :_destroy ]
+
+    services_attrs = if params[:container].is_a?(ActionController::Parameters)
+      params[:container][:container_services_attributes]
+    else
+      params[:container_services_attributes]
+    end
+
+    return {} if services_attrs.blank?
+
+    attrs_hash = services_attrs.respond_to?(:to_unsafe_h) ? services_attrs.to_unsafe_h : services_attrs.to_h
+    return {} if attrs_hash.blank?
+
+    first_value = attrs_hash.values.first
+    first_entry = first_value.is_a?(Hash) || first_value.is_a?(ActionController::Parameters) ? first_value : attrs_hash
+
+    ActionController::Parameters.new(first_entry).permit(*service_fields).to_h.symbolize_keys
+  rescue StandardError
+    {}
   end
 
   def load_form_data
