@@ -173,6 +173,7 @@ RSpec.describe Facturador::SendInvoiceEmailService, type: :service do
         emisor_id: 208,
         payload: hash_including(
           'para' => receiver_entity.fiscal_address.email,
+          'cc' => receiver_entity.fiscal_address.email,
           'responderA' => receiver_entity.fiscal_address.email
         )
       )
@@ -181,7 +182,7 @@ RSpec.describe Facturador::SendInvoiceEmailService, type: :service do
       expect(client_double).to have_received(:enviar_correo_cfdi) do |args|
         sent_payload = args[:payload]
       end
-      expect(sent_payload.keys).not_to include('cc')
+      expect(sent_payload['cc']).to eq(receiver_entity.fiscal_address.email)
     end
   end
 end

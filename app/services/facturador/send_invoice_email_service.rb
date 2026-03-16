@@ -86,6 +86,7 @@ module Facturador
     def build_payload(client:, emisor_id:)
       {
         "asunto" => Config.email_subject,
+        "cc" => receiver_email,
         "mensaje" => Config.email_message,
         "para" => receiver_email,
         "responderA" => receiver_email,
