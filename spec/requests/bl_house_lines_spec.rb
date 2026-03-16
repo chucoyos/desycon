@@ -127,6 +127,16 @@ RSpec.describe "BlHouseLines", type: :request do
       get bl_house_line_url(bl_house_line)
       expect(response).to be_successful
     end
+
+    it "shows add service controls for executive users" do
+      sign_in user, scope: :user
+      bl_house_line = create(:bl_house_line)
+
+      get bl_house_line_url(bl_house_line)
+
+      expect(response.body).to include("Agregar servicio")
+      expect(response.body).to include("Agregar servicio a partida")
+    end
   end
 
   describe "GET /bl_house_lines/new" do
@@ -202,6 +212,26 @@ RSpec.describe "BlHouseLines", type: :request do
         patch bl_house_line_url(bl_house_line), params: { bl_house_line: new_attributes }
         bl_house_line.reload
         expect(response).to redirect_to(bl_house_line_url(bl_house_line))
+      end
+
+      it "creates a service through nested attributes" do
+        sign_in user, scope: :user
+        bl_house_line = create(:bl_house_line, client: client)
+        service_catalog = create(:service_catalog, applies_to: "bl_house_line", active: true)
+
+        expect {
+          patch bl_house_line_url(bl_house_line), params: {
+            bl_house_line: {
+              bl_house_line_services_attributes: {
+                "0" => {
+                  service_catalog_id: service_catalog.id,
+                  billed_to_entity_id: client.id,
+                  observaciones: "Alta desde modal"
+                }
+              }
+            }
+          }
+        }.to change(bl_house_line.bl_house_line_services, :count).by(1)
       end
     end
 

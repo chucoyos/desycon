@@ -75,6 +75,10 @@ class BlHouseLinesController < ApplicationController
   # GET /bl_house_lines/1
   def show
     authorize @bl_house_line
+    return if customs_agent_user?
+
+    @service_catalogs = ServiceCatalog.for_bl_house_lines
+    load_clients
   end
 
   # GET /bl_house_lines/new
