@@ -162,5 +162,26 @@ RSpec.describe Facturador::SendInvoiceEmailService, type: :service do
         )
       )
     end
+
+    it 'sends email only to receiver and does not require issuer fiscal email' do
+      issuer_entity.fiscal_address.destroy!
+      allow(client_double).to receive(:enviar_correo_cfdi).and_return({ 'esValido' => true, 'mensaje' => 'ok' })
+
+      described_class.call(invoice: invoice, actor: actor, trigger: 'manual')
+
+      expect(client_double).to have_received(:enviar_correo_cfdi).with(
+        emisor_id: 208,
+        payload: hash_including(
+          'para' => receiver_entity.fiscal_address.email,
+          'responderA' => receiver_entity.fiscal_address.email
+        )
+      )
+
+      sent_payload = nil
+      expect(client_double).to have_received(:enviar_correo_cfdi) do |args|
+        sent_payload = args[:payload]
+      end
+      expect(sent_payload.keys).not_to include('cc')
+    end
   end
 end
