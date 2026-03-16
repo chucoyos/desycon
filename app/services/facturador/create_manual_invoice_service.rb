@@ -162,7 +162,7 @@ module Facturador
         [
           line[:service_catalog].id,
           line[:description],
-          line[:quantity].to_s("F"),
+          line[:quantity].to_s,
           line[:unit_price].to_s("F")
         ].join("|")
       end
