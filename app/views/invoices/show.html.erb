@@ -103,7 +103,7 @@
       </div>
     </div>
 
-    <% show_processing_banner = @invoice.status == "queued" || params[:from_manual_create].present? %>
+    <% show_processing_banner = @invoice.status == "queued" %>
     <% if show_processing_banner %>
       <div class="mx-4 sm:mx-6 lg:mx-8 mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
         <div class="flex items-start gap-3">
@@ -111,16 +111,34 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z"/>
           </svg>
           <div>
-            <% if @invoice.status == "queued" %>
-              <p class="text-sm font-semibold text-blue-900">Estamos emitiendo tu CFDI</p>
-              <p class="text-sm text-blue-800 mt-1">Esta vista se actualizará automáticamente en unos segundos.</p>
-            <% else %>
-              <p class="text-sm font-semibold text-blue-900">Tu solicitud de emisión fue procesada</p>
-              <p class="text-sm text-blue-800 mt-1">Estado actual: <strong><%= t("activerecord.attributes.invoice.statuses.#{@invoice.effective_status}", default: @invoice.effective_status.humanize) %></strong>.</p>
-            <% end %>
+            <p class="text-sm font-semibold text-blue-900">Emisión del CFDI en proceso</p>
+            <p class="text-sm text-blue-800 mt-1">Esta vista se actualizará automáticamente. El envío de correo se procesa en segundo plano y no bloquea esta pantalla.</p>
           </div>
         </div>
       </div>
+    <% end %>
+
+    <% if params[:from_manual_create].present? || @invoice.status == "queued" %>
+      <script>
+        (function() {
+          const currentUrl = new URL(window.location.href);
+          if (currentUrl.searchParams.has('from_manual_create')) {
+            currentUrl.searchParams.delete('from_manual_create');
+            const query = currentUrl.searchParams.toString();
+            const nextUrl = currentUrl.pathname + (query ? `?${query}` : '') + currentUrl.hash;
+            window.history.replaceState({}, '', nextUrl);
+          }
+
+          if (<%= @invoice.status == "queued" ? "true" : "false" %>) {
+            const refreshDelayMs = 7000;
+            window.setTimeout(() => {
+              if (document.visibilityState === 'visible') {
+                window.location.reload();
+              }
+            }, refreshDelayMs);
+          }
+        })();
+      </script>
     <% end %>
 
     <div class="p-4 sm:p-6 lg:p-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -174,18 +192,6 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
 
-              <% if @invoice.status == "queued" %>
-                <script>
-                  (function() {
-                    const refreshDelayMs = 7000;
-                    window.setTimeout(() => {
-                      if (document.visibilityState === 'visible') {
-                        window.location.reload();
-                      }
-                    }, refreshDelayMs);
-                  })();
-                </script>
-              <% end %>
                 <p class="text-gray-500">Nombre</p>
                 <p class="font-semibold text-gray-900"><%= receptor["nombre"].presence || @invoice.receiver_entity&.name || '-' %></p>
               </div>

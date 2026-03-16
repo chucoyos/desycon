@@ -309,18 +309,17 @@ RSpec.describe 'Invoices', type: :request do
       get invoice_path(invoice)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include('Estamos emitiendo tu CFDI')
+      expect(response.body).to include('Emisión del CFDI en proceso')
       expect(response.body).to include('se actualizará automáticamente')
     end
 
-    it 'shows post-create processing banner when returning from manual create flow' do
+    it 'does not show processing banner when returning from manual create flow if invoice is not queued' do
       invoice = create(:invoice, status: 'failed', sat_uuid: nil, last_error_code: 'FACTURADOR_ISSUE_NETWORK_ERROR')
 
       get invoice_path(invoice, from_manual_create: 1)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include('Tu solicitud de emisión fue procesada')
-      expect(response.body).to include('Estado actual')
+      expect(response.body).not_to include('Emisión del CFDI en proceso')
     end
 
     it 'shows retry issue button for failed manual invoice without invoiceable' do
