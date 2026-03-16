@@ -380,10 +380,18 @@
                         <%= link_to "PDF", rails_blob_path(invoice.pdf_file, disposition: "attachment"), class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
                       <% end %>
                     <% elsif !invoice.status.in?(["queued", "cancel_pending"]) %>
-                      <%= button_to "Reintentar emisión CFDI", issue_manual_invoices_path(invoiceable_type: "BlHouseLineService", invoiceable_id: service.id), method: :post, class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" %>
+                      <%= button_to "Reintentar emisión CFDI",
+                          issue_manual_invoices_path(invoiceable_type: "BlHouseLineService", invoiceable_id: service.id),
+                          method: :post,
+                          form: { data: { turbo_confirm: "Se enviará nuevamente la solicitud de emisión CFDI para este servicio.\n\n¿Deseas continuar?" } },
+                          class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" %>
                     <% end %>
                   <% else %>
-                    <%= button_to "Emitir CFDI", issue_manual_invoices_path(invoiceable_type: "BlHouseLineService", invoiceable_id: service.id), method: :post, class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" %>
+                    <%= button_to "Emitir CFDI",
+                        issue_manual_invoices_path(invoiceable_type: "BlHouseLineService", invoiceable_id: service.id),
+                        method: :post,
+                        form: { data: { turbo_confirm: "Se emitirá el CFDI para este servicio.\n\n¿Deseas continuar?" } },
+                        class: "inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" %>
                   <% end %>
                 </div>
               <% end %>
