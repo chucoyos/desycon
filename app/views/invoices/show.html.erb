@@ -519,11 +519,29 @@
           <% if @invoice_events.any? %>
             <div class="space-y-3 mt-3">
               <% @invoice_events.each do |event| %>
+                <% event_type = event.event_type.to_s %>
+                <% is_error_event = event_type.include?("failed") %>
+                <% is_success_event = !is_error_event && event_type.match?(/(succeeded|success|sent|synced|issued|cancelled|registered|completed)\z/) %>
+                <% event_title_class = if is_error_event
+                  "text-red-800"
+                elsif is_success_event
+                  "text-emerald-800"
+                else
+                  "text-gray-900"
+                end %>
+                <% event_message_class = if is_error_event
+                  "text-red-600"
+                elsif is_success_event
+                  "text-emerald-700"
+                else
+                  "text-gray-600"
+                end %>
+
                 <div class="pb-3 border-b border-gray-100 last:border-0">
-                  <p class="text-sm font-semibold text-gray-900"><%= event.event_type.humanize %></p>
+                  <p class="text-sm font-semibold <%= event_title_class %>"><%= event.event_type.humanize %></p>
                   <p class="text-xs text-gray-500 mt-0.5"><%= l(event.created_at, format: :short) %></p>
                   <% if event.provider_error_message.present? %>
-                    <p class="text-xs text-red-600 mt-1"><%= event.provider_error_message %></p>
+                    <p class="text-xs mt-1 <%= event_message_class %>"><%= event.provider_error_message %></p>
                   <% end %>
                   <% if event.provider_status.present? %>
                     <p class="text-xs text-gray-500 mt-1">Subestatus: <%= event.provider_status %></p>
