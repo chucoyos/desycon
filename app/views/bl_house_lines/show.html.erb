@@ -3,6 +3,9 @@
 <% is_customs_agent = current_user.customs_broker? && current_user.entity&.role_customs_agent? %>
 
 <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+  <% has_queued_service_invoice = @bl_house_line.bl_house_line_services.any? do |service|
+       service.latest_invoice&.status == "queued"
+     end %>
 
   <!-- Breadcrumb Navigation -->
   <div class="mb-4 sm:mb-6">
@@ -652,6 +655,19 @@
     </div>
   <% end %>
 </div>
+
+<% if has_queued_service_invoice %>
+  <script>
+    (function() {
+      const refreshDelayMs = 7000;
+      window.setTimeout(() => {
+        if (document.visibilityState === 'visible') {
+          window.location.reload();
+        }
+      }, refreshDelayMs);
+    })();
+  </script>
+<% end %>
 
 <turbo-frame id="approval_modal"></turbo-frame>
 
