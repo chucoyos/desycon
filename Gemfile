@@ -50,7 +50,7 @@ gem "prawn", "~> 2.4"
 gem "prawn-table", "~> 0.2"
 
 # Authentication and Authorization
-gem "devise", "~> 4.9"
+gem "devise", "~> 5.0", ">= 5.0.3"
 gem "pundit", "~> 2.4"
 
 # Countries and geographical data
