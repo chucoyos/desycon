@@ -7,6 +7,7 @@ puts "Creando roles..."
 admin_role = Role.find_or_create_by!(name: Role::ADMIN)
 executive_role = Role.find_or_create_by!(name: Role::EXECUTIVE)
 customs_broker_role = Role.find_or_create_by!(name: Role::CUSTOMS_BROKER)
+tramitador_role = Role.find_or_create_by!(name: Role::TRAMITADOR)
 puts "✓ Roles creados"
 
 # Crear permisos
@@ -46,6 +47,7 @@ puts "✓ #{Permission.count} permisos creados"
 admin_role.permissions = permissions
 executive_role.permissions = permissions
 customs_broker_role.permissions = permissions.select { |p| %w[customs.dashboard.access bl_house_lines.read bl_house_lines.update].include?(p.key) }
+tramitador_role.permissions = permissions.select { |p| %w[containers.read bl_house_lines.read].include?(p.key) }
 puts "✓ Permisos asignados a roles"
 
 # Crear usuario admin inicial (solo en desarrollo)

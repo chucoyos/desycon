@@ -279,14 +279,23 @@ class ContainersController < ApplicationController
   end
 
   def set_container_for_show
-    @container = Container.includes(
+    base_scope = Container.includes(
       :consolidator_entity,
       :shipping_line,
       :vessel,
-      :voyage,
-      container_services: [ :service_catalog, :billed_to_entity ],
-      container_status_histories: :user
-    ).find(params[:id])
+      :voyage
+    )
+
+    # Tramitador view does not render services or status history, so avoid
+    # eager loading those associations to keep Bullet happy.
+    @container = if action_name == "show" && !current_user&.tramitador?
+      base_scope.includes(
+        container_services: [ :service_catalog, :billed_to_entity ],
+        container_status_histories: :user
+      ).find(params[:id])
+    else
+      base_scope.find(params[:id])
+    end
 
     bl_ids = @container.bl_house_lines.pluck(:id)
     @bl_house_lines_docs_present = bl_ids.any? && ActiveStorage::Attachment.where(record_type: "BlHouseLine", record_id: bl_ids).exists?

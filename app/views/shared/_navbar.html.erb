@@ -4,6 +4,10 @@
   customs_agency_restricted = customs_agency_portal_user &&
     current_user.entity&.restricted_access_enabled?
   customs_agency_home_path = customs_agency_restricted ? new_customs_agents_payment_evidence_path : customs_agents_dashboard_path
+  can_view_containers = policy(Container).index?
+  can_view_bl_house_lines = policy(BlHouseLine).index?
+  can_view_invoices = policy(Invoice).index?
+  show_catalogs_menu = current_user.admin_or_executive?
 %>
 
 <nav class="bg-gradient-to-r from-white via-blue-50 to-white shadow-lg border-b border-blue-100 fixed top-0 left-0 right-0 z-50 backdrop-blur-sm">
@@ -23,24 +27,31 @@
 
       <!-- Desktop Navigation Links -->
       <div class="hidden md:flex items-center space-x-2">
-        <% if current_user.admin_or_executive? %>
-          <%= link_to "Contenedores", containers_path, class: "inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" %>
-          <%= link_to "Partidas", bl_house_lines_path, class: "inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" %>
-          <%= link_to "Facturas", invoices_path, class: "inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" %>
+        <% if can_view_containers || can_view_bl_house_lines || can_view_invoices || show_catalogs_menu %>
+          <% if can_view_containers %>
+            <%= link_to "Contenedores", containers_path, class: "inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" %>
+          <% end %>
+          <% if can_view_bl_house_lines %>
+            <%= link_to "Partidas", bl_house_lines_path, class: "inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" %>
+          <% end %>
+          <% if can_view_invoices %>
+            <%= link_to "Facturas", invoices_path, class: "inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" %>
+          <% end %>
           
           <!-- Catálogos Dropdown -->
-          <div class="relative" data-controller="dropdown">
-            <button type="button" data-action="click->dropdown#toggle" class="inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-              </svg>
-              Catálogos
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-              </svg>
-            </button>
-            <div data-dropdown-target="menu" class="hidden absolute right-0 mt-2 w-60 rounded-xl shadow-xl bg-white border border-gray-100 overflow-hidden">
-              <div class="py-2" role="menu">
+          <% if show_catalogs_menu %>
+            <div class="relative" data-controller="dropdown">
+              <button type="button" data-action="click->dropdown#toggle" class="inline-flex items-center gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                </svg>
+                Catálogos
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
+              <div data-dropdown-target="menu" class="hidden absolute right-0 mt-2 w-60 rounded-xl shadow-xl bg-white border border-gray-100 overflow-hidden">
+                <div class="py-2" role="menu">
                 <%= link_to shipping_lines_path, class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors", role: "menuitem" do %>
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
@@ -105,9 +116,10 @@
                     Usuarios
                   <% end %>
                 <% end %>
+                </div>
               </div>
             </div>
-          </div>
+          <% end %>
         <% end %>
         
         <% if customs_agency_portal_user %>
@@ -161,79 +173,88 @@
   <!-- Mobile menu -->
   <div class="hidden md:hidden bg-white border-t border-blue-100" id="mobile-menu">
     <div class="px-4 py-3 space-y-2">
-      <% if current_user.admin_or_executive? %>
-        <%= link_to containers_path, class: "flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200" do %>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-          </svg>
-          Contenedores
-        <% end %>
-        <%= link_to bl_house_lines_path, class: "flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200" do %>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-          </svg>
-          Partidas
-        <% end %>
-        <%= link_to invoices_path, class: "flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200" do %>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-          Facturas
+      <% if can_view_containers || can_view_bl_house_lines || can_view_invoices || show_catalogs_menu %>
+        <% if can_view_containers %>
+          <%= link_to containers_path, class: "flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200" do %>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            Contenedores
+          <% end %>
         <% end %>
 
-        <!-- Catálogos Mobile Section -->
-        <div class="bg-gray-50 rounded-lg p-2">
-          <button type="button" id="mobile-catalogos-button" class="w-full flex items-center justify-between text-gray-700 hover:text-blue-600 px-3 py-2.5 rounded-lg text-base font-medium transition-all duration-200">
-            <div class="flex items-center gap-3">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-              </svg>
-              <span>Catálogos</span>
-            </div>
-            <svg class="w-5 h-5 transition-transform duration-200" id="catalogos-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        <% if can_view_bl_house_lines %>
+          <%= link_to bl_house_lines_path, class: "flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200" do %>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
             </svg>
-          </button>
-          <div class="hidden pl-2 mt-2 space-y-1" id="mobile-catalogos-submenu">
-            <%= link_to shipping_lines_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            Partidas
+          <% end %>
+        <% end %>
+
+        <% if can_view_invoices %>
+          <%= link_to invoices_path, class: "flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200" do %>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Facturas
+          <% end %>
+        <% end %>
+
+        <% if show_catalogs_menu %>
+          <div class="bg-gray-50 rounded-lg p-2">
+            <button type="button" id="mobile-catalogos-button" class="w-full flex items-center justify-between text-gray-700 hover:text-blue-600 px-3 py-2.5 rounded-lg text-base font-medium transition-all duration-200">
+              <div class="flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                </svg>
+                <span>Catálogos</span>
+              </div>
+              <svg class="w-5 h-5 transition-transform duration-200" id="catalogos-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
               </svg>
-              Líneas Navieras
-            <% end %>
-            <%= link_to vessels_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
-              </svg>
-              Buques
-            <% end %>
-            <%= link_to voyages_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18m-2 4H5m12 4H7m-2 4h14" />
-              </svg>
-              Viajes
-            <% end %>
-            <%= link_to ports_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg>
-              Puertos
-            <% end %>
-            <%= link_to service_catalogs_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 114 0v6m-8 0h12" />
-              </svg>
-              Servicios
-            <% end %>
-            <%= link_to entities_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/>
-              </svg>
-              Entidades
-            <% end %>
+            </button>
+            <div class="hidden pl-2 mt-2 space-y-1" id="mobile-catalogos-submenu">
+              <%= link_to shipping_lines_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                Líneas Navieras
+              <% end %>
+              <%= link_to vessels_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                </svg>
+                Buques
+              <% end %>
+              <%= link_to voyages_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18m-2 4H5m12 4H7m-2 4h14" />
+                </svg>
+                Viajes
+              <% end %>
+              <%= link_to ports_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Puertos
+              <% end %>
+              <%= link_to service_catalogs_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 114 0v6m-8 0h12" />
+                </svg>
+                Servicios
+              <% end %>
+              <%= link_to entities_path, class: "flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-white px-4 py-2.5 rounded-lg text-sm transition-all duration-200" do %>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"/>
+                </svg>
+                Entidades
+              <% end %>
+            </div>
           </div>
-        </div>
+        <% end %>
       <% end %>
 
       <% if customs_agency_portal_user %>

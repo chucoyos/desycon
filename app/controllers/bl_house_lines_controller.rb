@@ -12,16 +12,8 @@ class BlHouseLinesController < ApplicationController
       redirect_to customs_agents_dashboard_path and return
     end
 
-    scope = policy_scope(BlHouseLine)
-      .includes(
-        { container: :consolidator_entity },
-        :client,
-        :bl_house_line_status_histories,
-        :bl_endosado_documento_attachment,
-        :liberacion_documento_attachment,
-        :encomienda_documento_attachment,
-        :pago_documento_attachment
-      )
+    # Index list only renders core BL fields and client name in mobile cards.
+    scope = policy_scope(BlHouseLine).includes(:client)
 
     @status_filter_options = customs_agent_user? ? customs_agent_statuses : BlHouseLine.statuses.keys
 
@@ -487,12 +479,11 @@ class BlHouseLinesController < ApplicationController
   end
 
   def set_bl_house_line
-    if action_name == "show"
+    if action_name == "show" && !current_user&.tramitador?
       includes_associations = [
         { bl_house_line_status_histories: :user },
         { bl_house_line_services: [ :service_catalog, :billed_to_entity ] }
       ]
-
 
       @bl_house_line = BlHouseLine.includes(includes_associations).find(params[:id])
     else

@@ -8,7 +8,7 @@ class ContainerPolicy < ApplicationPolicy
   end
 
   def create?
-    user.present? && !user.customs_broker?
+    user.present? && user.admin_or_executive?
   end
 
   def new?
@@ -16,7 +16,7 @@ class ContainerPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present? && !user.customs_broker?
+    user.present? && user.admin_or_executive?
   end
 
   def edit?

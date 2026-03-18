@@ -13,5 +13,9 @@ FactoryBot.define do
     trait :customs_broker do
       name { Role::CUSTOMS_BROKER }
     end
+
+    trait :tramitador do
+      name { Role::TRAMITADOR }
+    end
   end
 end

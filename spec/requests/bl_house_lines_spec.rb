@@ -118,6 +118,22 @@ RSpec.describe "BlHouseLines", type: :request do
       expect(response).to be_successful
       expect(response.body.index("ORDER-NEW")).to be < response.body.index("ORDER-OLD")
     end
+
+    it "hides restricted actions and documents access for tramitador users" do
+      tramitador = create(:user, :tramitador)
+      bl_house_line = create(:bl_house_line, status: "revalidado", blhouse: "TRAM-BL-001")
+      sign_in tramitador, scope: :user
+
+      get bl_house_lines_url, params: { status: "revalidado" }
+
+      expect(response).to be_successful
+      expect(response.body).to include(bl_house_line.blhouse)
+      expect(response.body).not_to include(edit_bl_house_line_path(bl_house_line))
+      expect(response.body).not_to include(documents_bl_house_line_path(bl_house_line))
+      expect(response.body).not_to include("Eliminar")
+      expect(response.body).not_to include('data-expandable-row-target="content"')
+      expect(response.body).not_to include('data-expandable-row-target="chevron"')
+    end
   end
 
   describe "GET /bl_house_lines/:id" do
@@ -156,6 +172,20 @@ RSpec.describe "BlHouseLines", type: :request do
       get bl_house_line_url(bl_house_line)
 
       expect(response.body).not_to include("Eliminar servicio")
+    end
+
+    it "shows restricted view for tramitador" do
+      tramitador = create(:user, :tramitador)
+      sign_in tramitador, scope: :user
+      bl_house_line = create(:bl_house_line)
+
+      get bl_house_line_url(bl_house_line)
+
+      expect(response).to be_successful
+      expect(response.body).not_to include("Agregar servicio")
+      expect(response.body).not_to include("Documentos")
+      expect(response.body).not_to include("Historial")
+      expect(response.body).to include("Fotografías de partida")
     end
   end
 

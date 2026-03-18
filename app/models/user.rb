@@ -23,7 +23,7 @@ class User < ApplicationRecord
   validates :password_confirmation, presence: true, if: :password_required?
 
   # Delegaciones para facilitar el acceso a métodos del rol
-  delegate :admin?, :executive?, :customs_broker?, :internal?, :admin_or_executive?, to: :role, allow_nil: true
+  delegate :admin?, :executive?, :customs_broker?, :tramitador?, :internal?, :admin_or_executive?, to: :role, allow_nil: true
 
   # Método para obtener el nombre del rol
   def role_name

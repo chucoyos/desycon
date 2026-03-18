@@ -4,11 +4,11 @@ class PhotoPolicy < ApplicationPolicy
   end
 
   def create?
-    user&.admin_or_executive?
+    user&.admin_or_executive? || user&.tramitador?
   end
 
   def destroy?
-    user&.admin_or_executive?
+    user&.admin_or_executive? || user&.tramitador?
   end
 
   class Scope < Scope

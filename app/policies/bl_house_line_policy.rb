@@ -28,11 +28,13 @@ class BlHouseLinePolicy < ApplicationPolicy
   end
 
   def documents?
+    return false if user&.tramitador?
+
     show?
   end
 
   def create?
-    user.present? && !user.customs_broker?
+    user.present? && user.admin_or_executive?
   end
 
   def new?
@@ -41,6 +43,7 @@ class BlHouseLinePolicy < ApplicationPolicy
 
   def update?
     return false unless user.present?
+    return false if user.tramitador?
 
     return true unless user.customs_broker?
 
@@ -54,7 +57,7 @@ class BlHouseLinePolicy < ApplicationPolicy
   end
 
   def destroy?
-    user.present? && !user.customs_broker?
+    user.present? && user.admin_or_executive?
   end
 
   def import_from_container?

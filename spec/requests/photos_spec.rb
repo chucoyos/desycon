@@ -35,6 +35,22 @@ RSpec.describe "Photos", type: :request do
 
       expect(response).to have_http_status(:found)
     end
+
+    it "allows tramitador users to upload container photos" do
+      tramitador = create(:user, :tramitador)
+      login_as tramitador
+
+      expect {
+        post photos_container_path(container), params: {
+          photo: {
+            section: "apertura",
+            images: [ uploaded_image("tramitador.jpg") ]
+          }
+        }
+      }.to change(Photo, :count).by(1)
+
+      expect(response).to redirect_to(container_path(container))
+    end
   end
 
   describe "POST /bl_house_lines/:id/photos" do
@@ -61,6 +77,19 @@ RSpec.describe "Photos", type: :request do
     it "allows admin users to delete photos" do
       admin = create(:user, :admin)
       login_as admin
+
+      photo = create(:photo)
+
+      expect {
+        delete photo_path(photo)
+      }.to change(Photo, :count).by(-1)
+
+      expect(response).to have_http_status(:found)
+    end
+
+    it "allows tramitador users to delete photos" do
+      tramitador = create(:user, :tramitador)
+      login_as tramitador
 
       photo = create(:photo)
 

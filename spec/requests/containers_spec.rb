@@ -43,6 +43,20 @@ RSpec.describe "Containers", type: :request do
       expect(response.body).to include(old_container.number)
       expect(response.body).to include("Filtros activos:")
     end
+
+    it "hides create/edit/destroy actions for tramitador users" do
+      tramitador = create(:user, :tramitador)
+      container = create(:container, number: "TRAM1234567")
+      sign_in tramitador, scope: :user
+
+      get containers_url
+
+      expect(response).to be_successful
+      expect(response.body).to include(container.number)
+      expect(response.body).not_to include("Nuevo Contenedor")
+      expect(response.body).not_to include(edit_container_path(container))
+      expect(response.body).not_to include("Eliminar")
+    end
   end
 
   describe "GET /containers/:id" do
@@ -101,6 +115,22 @@ RSpec.describe "Containers", type: :request do
       get container_url(container)
 
       expect(response.body).not_to include("Eliminar servicio")
+    end
+
+    it "shows restricted view for tramitador" do
+      tramitador = create(:user, :tramitador)
+      sign_in tramitador, scope: :user
+      container = create(:container)
+
+      get container_url(container)
+
+      expect(response).to be_successful
+      expect(response.body).not_to include("Editar")
+      expect(response.body).not_to include("Eliminar")
+      expect(response.body).not_to include("Servicios")
+      expect(response.body).not_to include("Documentos")
+      expect(response.body).not_to include("Historial")
+      expect(response.body).to include("Fotografías del contenedor")
     end
   end
 
