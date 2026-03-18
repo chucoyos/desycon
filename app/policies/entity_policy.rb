@@ -1,6 +1,6 @@
 class EntityPolicy < ApplicationPolicy
   def index?
-    user.present?
+    user.present? && (user.admin_or_executive? || customs_agent_user?)
   end
 
   def show?
@@ -45,8 +45,10 @@ class EntityPolicy < ApplicationPolicy
         else
           scope.none
         end
-      else
+      elsif user.admin_or_executive?
         scope.all
+      else
+        scope.none
       end
     end
   end

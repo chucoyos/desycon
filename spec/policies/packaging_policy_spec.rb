@@ -53,6 +53,22 @@ RSpec.describe PackagingPolicy, type: :policy do
     end
   end
 
+  context "for tramitador users" do
+    let(:user) { create(:user, :tramitador) }
+
+    it { is_expected.not_to permit_action(:index) }
+    it { is_expected.not_to permit_action(:show) }
+    it { is_expected.not_to permit_action(:create) }
+    it { is_expected.not_to permit_action(:update) }
+    it { is_expected.not_to permit_action(:destroy) }
+
+    describe "scope" do
+      it "returns no packagings" do
+        expect(PackagingPolicy::Scope.new(user, Packaging.all).resolve).to be_empty
+      end
+    end
+  end
+
   context "for unauthenticated users" do
     let(:user) { nil }
 

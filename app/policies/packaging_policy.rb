@@ -1,14 +1,14 @@
 class PackagingPolicy < ApplicationPolicy
   def index?
-    user.present? && !user.customs_broker?
+    user.present? && user.admin_or_executive?
   end
 
   def show?
-    user.present? && !user.customs_broker?
+    user.present? && user.admin_or_executive?
   end
 
   def create?
-    user.present? && !user.customs_broker?
+    user.present? && user.admin_or_executive?
   end
 
   def new?
@@ -16,7 +16,7 @@ class PackagingPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present? && !user.customs_broker?
+    user.present? && user.admin_or_executive?
   end
 
   def edit?
@@ -24,16 +24,12 @@ class PackagingPolicy < ApplicationPolicy
   end
 
   def destroy?
-    user.present? && !user.customs_broker?
+    user.present? && user.admin_or_executive?
   end
 
   class Scope < Scope
     def resolve
-      if user.nil? || user.customs_broker?
-        scope.none
-      else
-        scope.all
-      end
+      user&.admin_or_executive? ? scope.all : scope.none
     end
   end
 end

@@ -88,6 +88,25 @@ RSpec.describe EntityPolicy, type: :policy do
     end
   end
 
+  context "for tramitador users" do
+    let(:user) { create(:user, :tramitador) }
+
+    it { is_expected.not_to permit_action(:index) }
+    it { is_expected.not_to permit_action(:show) }
+    it { is_expected.not_to permit_action(:create) }
+    it { is_expected.not_to permit_action(:new) }
+    it { is_expected.not_to permit_action(:update) }
+    it { is_expected.not_to permit_action(:edit) }
+    it { is_expected.not_to permit_action(:destroy) }
+    it { is_expected.not_to permit_action(:new_address) }
+
+    describe "scope" do
+      it "returns no entities" do
+        expect(EntityPolicy::Scope.new(user, Entity.all).resolve).to be_empty
+      end
+    end
+  end
+
   context "for unauthenticated users" do
     let(:user) { nil }
 

@@ -53,6 +53,22 @@ RSpec.describe ConsolidatorPolicy, type: :policy do
     end
   end
 
+  context "for tramitador users" do
+    let(:user) { create(:user, :tramitador) }
+
+    it { is_expected.not_to permit_action(:index) }
+    it { is_expected.not_to permit_action(:show) }
+    it { is_expected.not_to permit_action(:create) }
+    it { is_expected.not_to permit_action(:update) }
+    it { is_expected.not_to permit_action(:destroy) }
+
+    describe "scope" do
+      it "returns no consolidators" do
+        expect(ConsolidatorPolicy::Scope.new(user, Consolidator.all).resolve).to be_empty
+      end
+    end
+  end
+
   context "for unauthenticated users" do
     let(:user) { nil }
 
