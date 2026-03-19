@@ -29,6 +29,7 @@ class ContainersController < ApplicationController
 
     @selected_start_date = resolved_start_date
     @selected_end_date = resolved_end_date
+    @selected_consolidator_id = current_user&.consolidator? ? current_user.entity_id : params[:consolidator_id].presence
 
     start_date = [ @selected_start_date, @selected_end_date ].min
     end_date = [ @selected_start_date, @selected_end_date ].max
@@ -38,7 +39,7 @@ class ContainersController < ApplicationController
     # Filtros opcionales
     @containers = @containers.by_status(params[:status]) if params[:status].present?
     @containers = @containers.by_tipo_maniobra(params[:tipo_maniobra]) if params[:tipo_maniobra].present?
-    @containers = @containers.by_consolidator(params[:consolidator_id]) if params[:consolidator_id].present?
+    @containers = @containers.by_consolidator(@selected_consolidator_id) if @selected_consolidator_id.present?
     @containers = @containers.by_shipping_line(params[:shipping_line_id]) if params[:shipping_line_id].present?
     @containers = @containers.where("bl_master ILIKE ?", "%#{params[:bl_master]}%") if params[:bl_master].present?
 

@@ -214,6 +214,23 @@ RSpec.describe "Containers", type: :request do
       expect(response.body).not_to include(other_container.number)
       expect(response.body).not_to include("Nuevo Contenedor")
     end
+
+    it "keeps consolidator filter fixed to current user consolidator" do
+      consolidator = create(:user, :consolidator)
+      other_consolidator = create(:entity, :consolidator, name: "Otro Consolidador")
+      own_container = create(:container, number: "CONS1234510", consolidator_entity: consolidator.entity)
+      other_container = create(:container, number: "CONS1234511", consolidator_entity: other_consolidator)
+      sign_in consolidator, scope: :user
+
+      get containers_url, params: { consolidator_id: other_consolidator.id }
+
+      expect(response).to be_successful
+      expect(response.body).to include(own_container.number)
+      expect(response.body).not_to include(other_container.number)
+      expect(response.body).to include("Consolidador: #{consolidator.entity.name}")
+      expect(response.body).to include('name="consolidator_id"')
+      expect(response.body).to include('disabled="disabled"')
+    end
   end
 
   describe "PATCH /containers/:id" do
