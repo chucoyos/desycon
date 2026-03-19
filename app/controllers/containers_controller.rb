@@ -24,6 +24,8 @@ class ContainersController < ApplicationController
     @containers = policy_scope(Container)
                     .with_associations
                     .recent
+    @consolidators = Entity.consolidators.order(:name)
+    @shipping_lines = ShippingLine.alphabetical
 
     @selected_start_date = resolved_start_date
     @selected_end_date = resolved_end_date
@@ -38,6 +40,7 @@ class ContainersController < ApplicationController
     @containers = @containers.by_tipo_maniobra(params[:tipo_maniobra]) if params[:tipo_maniobra].present?
     @containers = @containers.by_consolidator(params[:consolidator_id]) if params[:consolidator_id].present?
     @containers = @containers.by_shipping_line(params[:shipping_line_id]) if params[:shipping_line_id].present?
+    @containers = @containers.where("bl_master ILIKE ?", "%#{params[:bl_master]}%") if params[:bl_master].present?
 
     # Búsqueda por número
     if params[:search].present?

@@ -57,6 +57,48 @@ RSpec.describe "Containers", type: :request do
       expect(response.body).not_to include(edit_container_path(container))
       expect(response.body).not_to include("Eliminar")
     end
+
+    it "filters by consolidator" do
+      selected_consolidator = create(:entity, :consolidator, name: "Consolidador Uno")
+      other_consolidator = create(:entity, :consolidator, name: "Consolidador Dos")
+
+      selected_container = create(:container, number: "ABCD1234511", consolidator_entity: selected_consolidator)
+      other_container = create(:container, number: "ABCD1234512", consolidator_entity: other_consolidator)
+
+      get containers_url, params: { consolidator_id: selected_consolidator.id }
+
+      expect(response).to be_successful
+      expect(response.body).to include(selected_container.number)
+      expect(response.body).not_to include(other_container.number)
+      expect(response.body).to include("Consolidador: #{selected_consolidator.name}")
+    end
+
+    it "filters by bl master" do
+      selected_container = create(:container, number: "ABCD1234513", bl_master: "BLM-001-TEST")
+      other_container = create(:container, number: "ABCD1234514", bl_master: "BLM-XYZ-999")
+
+      get containers_url, params: { bl_master: "001" }
+
+      expect(response).to be_successful
+      expect(response.body).to include(selected_container.number)
+      expect(response.body).not_to include(other_container.number)
+      expect(response.body).to include("BL Master: 001")
+    end
+
+    it "filters by shipping line" do
+      selected_line = create(:shipping_line, iso_code: "SEL")
+      other_line = create(:shipping_line, iso_code: "OTH")
+
+      selected_container = create(:container, number: "ABCD1234515", shipping_line: selected_line)
+      other_container = create(:container, number: "ABCD1234516", shipping_line: other_line)
+
+      get containers_url, params: { shipping_line_id: selected_line.id }
+
+      expect(response).to be_successful
+      expect(response.body).to include(selected_container.number)
+      expect(response.body).not_to include(other_container.number)
+      expect(response.body).to include("Línea: #{selected_line.iso_code}")
+    end
   end
 
   describe "GET /containers/:id" do
