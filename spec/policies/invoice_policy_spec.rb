@@ -49,4 +49,38 @@ RSpec.describe InvoicePolicy, type: :policy do
       expect(resolved).not_to include(unrelated_invoice)
     end
   end
+
+  context 'when consolidator user' do
+    let(:entity) { create(:entity, :consolidator) }
+    let(:user) { create(:user, :consolidator, entity: entity) }
+
+    it 'allows only receiver-related invoices and sync/download actions' do
+      own_invoice = build(:invoice, receiver_entity: entity)
+      other_invoice = build(:invoice, receiver_entity: build(:entity, :client))
+
+      expect(described_class.new(user, own_invoice).index?).to eq(true)
+      expect(described_class.new(user, own_invoice).show?).to eq(true)
+      expect(described_class.new(user, own_invoice).sync_documents?).to eq(true)
+      expect(described_class.new(user, own_invoice).sync_files?).to eq(true)
+
+      expect(described_class.new(user, own_invoice).issue_manual?).to eq(false)
+      expect(described_class.new(user, own_invoice).cancel?).to eq(false)
+      expect(described_class.new(user, own_invoice).register_payment?).to eq(false)
+      expect(described_class.new(user, own_invoice).send_email?).to eq(false)
+
+      expect(described_class.new(user, other_invoice).show?).to eq(false)
+      expect(described_class.new(user, other_invoice).sync_documents?).to eq(false)
+      expect(described_class.new(user, other_invoice).sync_files?).to eq(false)
+    end
+
+    it 'limits scope to invoices where the consolidator is receiver' do
+      own_invoice = create(:invoice, receiver_entity: entity)
+      other_invoice = create(:invoice)
+
+      resolved = described_class::Scope.new(user, Invoice.all).resolve
+
+      expect(resolved).to include(own_invoice)
+      expect(resolved).not_to include(other_invoice)
+    end
+  end
 end

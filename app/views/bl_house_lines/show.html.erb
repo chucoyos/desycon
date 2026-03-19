@@ -2,6 +2,7 @@
 
 <% is_customs_agent = current_user.customs_broker? && current_user.entity&.role_customs_agent? %>
 <% is_tramitador = current_user.tramitador? %>
+<% is_consolidator = current_user.consolidator? %>
 
 <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
   <% has_queued_service_invoice = @bl_house_line.bl_house_line_services.any? do |service|
@@ -70,7 +71,7 @@
             <% end %>
           </div>
         </div>
-        <% unless is_customs_agent || is_tramitador %>
+        <% unless is_customs_agent || is_tramitador || is_consolidator %>
         <div class="flex items-center gap-2">
           <%= link_to edit_bl_house_line_path(@bl_house_line), class: "inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 shadow-sm hover:shadow-md transition-all duration-200" do %>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -292,7 +293,7 @@
         <span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
           <%= @bl_house_line.bl_house_line_services.count %>
         </span>
-        <% unless is_customs_agent %>
+        <% unless is_customs_agent || is_consolidator %>
           <button type="button"
                   data-action="click->modal#open"
                   data-modal-id="bl-service-modal"
@@ -417,7 +418,7 @@
                 </div>
               <% end %>
 
-              <% unless is_customs_agent || service.facturado? %>
+              <% unless is_customs_agent || is_consolidator || service.facturado? %>
                 <div class="col-span-2 pt-2 border-t border-gray-100 flex justify-end">
                   <%= button_to bl_house_line_path(@bl_house_line),
                       method: :patch,
@@ -661,22 +662,20 @@
     </div>
   </div>
 
-  <% if policy(Photo).create? %>
-    <div class="mt-6">
-      <div class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
-        <div class="flex items-center gap-3 mb-5">
-          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-600 shadow-sm">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h3.172a2 2 0 011.414.586l.828.828A2 2 0 0011.828 7H19a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
-            </svg>
-          </div>
-          <h2 class="text-lg font-bold text-gray-900">Fotografías de partida</h2>
+  <div class="mt-6">
+    <div class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-600 shadow-sm">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h3.172a2 2 0 011.414.586l.828.828A2 2 0 0011.828 7H19a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+          </svg>
         </div>
-
-        <%= render "shared/photo_module", attachable: @bl_house_line, section: "etiquetado", title: "Etiquetado", subtitle: "Regularmente 10-20" %>
+        <h2 class="text-lg font-bold text-gray-900">Fotografías de partida</h2>
       </div>
+
+      <%= render "shared/photo_module", attachable: @bl_house_line, section: "etiquetado", title: "Etiquetado", subtitle: "Regularmente 10-20" %>
     </div>
-  <% end %>
+  </div>
 </div>
 
 <% if has_queued_service_invoice %>
@@ -694,7 +693,7 @@
 
 <turbo-frame id="approval_modal"></turbo-frame>
 
-<% unless is_customs_agent || is_tramitador %>
+<% unless is_customs_agent || is_tramitador || is_consolidator %>
   <div id="bl-service-modal" data-modal-target="modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" data-action="click->modal#closeOnBackdrop">
     <div class="relative top-16 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-xl bg-white">
       <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">

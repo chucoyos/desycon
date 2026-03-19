@@ -10,6 +10,7 @@ class Role < ApplicationRecord
   EXECUTIVE = "executive"
   CUSTOMS_BROKER = "agente aduanal"
   TRAMITADOR = "tramitador"
+  CONSOLIDATOR = "consolidador"
 
   def admin?
     name == ADMIN
@@ -25,6 +26,10 @@ class Role < ApplicationRecord
 
   def tramitador?
     name == TRAMITADOR
+  end
+
+  def consolidator?
+    name == CONSOLIDATOR
   end
 
   def internal?
@@ -53,6 +58,8 @@ class Role < ApplicationRecord
       "Agente Aduanal"
     when TRAMITADOR
       "Tramitador"
+    when CONSOLIDATOR
+      "Consolidador"
     else
       name
     end

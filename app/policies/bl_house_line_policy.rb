@@ -7,6 +7,12 @@ class BlHouseLinePolicy < ApplicationPolicy
     # same ownership rules used by `show?`/`update?` so specs behave correctly.
     return false unless user.present?
 
+    if user.consolidator?
+      return true if record.is_a?(Class)
+
+      return owned_by_consolidator?
+    end
+
     return true unless user.customs_broker?
 
     # If `record` is the class (policy for collection), allow — scope will filter.
@@ -19,6 +25,8 @@ class BlHouseLinePolicy < ApplicationPolicy
 
   def show?
     return false unless user.present?
+
+    return owned_by_consolidator? if user.consolidator?
 
     return true unless user.customs_broker?
 
@@ -43,7 +51,7 @@ class BlHouseLinePolicy < ApplicationPolicy
 
   def update?
     return false unless user.present?
-    return false if user.tramitador?
+    return false if user.tramitador? || user.consolidator?
 
     return true unless user.customs_broker?
 
@@ -83,6 +91,10 @@ class BlHouseLinePolicy < ApplicationPolicy
       elsif user.customs_broker?
         # For customs brokers, return only BL House Lines assigned to their entity
         scope.where(customs_agent: user.entity, hidden_from_customs_agent: false)
+      elsif user.consolidator?
+        return scope.none if user.entity_id.blank?
+
+        scope.joins(:container).where(containers: { consolidator_entity_id: user.entity_id })
       else
         scope.all
       end
@@ -93,5 +105,9 @@ class BlHouseLinePolicy < ApplicationPolicy
 
   def owned_by_customs_agent?
     user.customs_broker? && record.customs_agent == user.entity
+  end
+
+  def owned_by_consolidator?
+    user.consolidator? && user.entity_id.present? && record.container&.consolidator_entity_id == user.entity_id
   end
 end

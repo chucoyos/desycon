@@ -174,6 +174,46 @@ RSpec.describe "Containers", type: :request do
       expect(response.body).not_to include("Historial")
       expect(response.body).to include("Fotografías del contenedor")
     end
+
+    it "shows read-only view for consolidator on own container" do
+      consolidator = create(:user, :consolidator)
+      sign_in consolidator, scope: :user
+      container = create(:container, consolidator_entity: consolidator.entity)
+
+      get container_url(container)
+
+      expect(response).to be_successful
+      expect(response.body).not_to include("Editar")
+      expect(response.body).not_to include("Eliminar")
+      expect(response.body).not_to include("Agregar servicio")
+      expect(response.body).to include("Fotografías del contenedor")
+    end
+
+    it "denies consolidator access to container from another consolidator" do
+      consolidator = create(:user, :consolidator)
+      sign_in consolidator, scope: :user
+      other_container = create(:container)
+
+      get container_url(other_container)
+
+      expect(response).to redirect_to(containers_path)
+    end
+  end
+
+  describe "GET /containers for consolidator" do
+    it "returns only own related containers" do
+      consolidator = create(:user, :consolidator)
+      own_container = create(:container, number: "CONS1234501", consolidator_entity: consolidator.entity)
+      other_container = create(:container, number: "CONS1234502")
+      sign_in consolidator, scope: :user
+
+      get containers_url
+
+      expect(response).to be_successful
+      expect(response.body).to include(own_container.number)
+      expect(response.body).not_to include(other_container.number)
+      expect(response.body).not_to include("Nuevo Contenedor")
+    end
   end
 
   describe "PATCH /containers/:id" do

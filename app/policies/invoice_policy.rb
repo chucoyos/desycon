@@ -1,10 +1,10 @@
 class InvoicePolicy < ApplicationPolicy
   def show?
-    issue_manual? || customs_related_invoice?
+    issue_manual? || customs_related_invoice? || consolidator_related_invoice?
   end
 
   def index?
-    issue_manual? || customs_agency_user?
+    issue_manual? || customs_agency_user? || consolidator_user?
   end
 
   def issue_manual?
@@ -28,11 +28,11 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def sync_documents?
-    issue_manual?
+    issue_manual? || consolidator_related_invoice?
   end
 
   def sync_files?
-    issue_manual? || customs_related_invoice?
+    issue_manual? || customs_related_invoice? || consolidator_related_invoice?
   end
 
   def register_payment?
@@ -65,6 +65,10 @@ class InvoicePolicy < ApplicationPolicy
                .distinct
       end
 
+      if user.consolidator? && user.entity_id.present?
+        return scope.where(receiver_entity_id: user.entity_id)
+      end
+
       scope.none
     end
   end
@@ -80,5 +84,16 @@ class InvoicePolicy < ApplicationPolicy
     return false unless record.is_a?(Invoice)
 
     record.customs_agent_id == user.entity_id || record.receiver_entity&.customs_agent_id == user.entity_id
+  end
+
+  def consolidator_user?
+    user.present? && user.consolidator? && user.entity_id.present?
+  end
+
+  def consolidator_related_invoice?
+    return false unless consolidator_user?
+    return false unless record.is_a?(Invoice)
+
+    record.receiver_entity_id == user.entity_id
   end
 end

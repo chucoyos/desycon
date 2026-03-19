@@ -4,7 +4,11 @@ class ContainerPolicy < ApplicationPolicy
   end
 
   def show?
-    user.present? && !user.customs_broker?
+    return false unless user.present? && !user.customs_broker?
+
+    return true unless user.consolidator?
+
+    owned_by_consolidator?
   end
 
   def create?
@@ -35,9 +39,19 @@ class ContainerPolicy < ApplicationPolicy
     def resolve
       if user.nil? || user.customs_broker?
         scope.none
+      elsif user.consolidator?
+        return scope.none if user.entity_id.blank?
+
+        scope.where(consolidator_entity_id: user.entity_id)
       else
         scope.all
       end
     end
+  end
+
+  private
+
+  def owned_by_consolidator?
+    user.entity_id.present? && record.respond_to?(:consolidator_entity_id) && record.consolidator_entity_id == user.entity_id
   end
 end

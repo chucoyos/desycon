@@ -2,6 +2,7 @@ require 'rails_helper'
 
 RSpec.describe 'Invoices', type: :request do
   let(:admin_user) { create(:user, :admin) }
+  let(:consolidator_user) { create(:user, :consolidator) }
 
   describe 'GET /invoices' do
     before { sign_in admin_user, scope: :user }
@@ -170,6 +171,50 @@ RSpec.describe 'Invoices', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('Nuevo CFDI')
       expect(response.body).to include('Generar CFDI')
+    end
+  end
+
+  describe 'GET /invoices as consolidator' do
+    before { sign_in consolidator_user, scope: :user }
+
+    it 'returns only invoices where consolidator is receiver' do
+      own_invoice = create(:invoice, receiver_entity: consolidator_user.entity, sat_uuid: 'UUID-CONS-OWN-001')
+      other_invoice = create(:invoice, sat_uuid: 'UUID-CONS-OTHER-001')
+
+      get invoices_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(own_invoice.sat_uuid)
+      expect(response.body).not_to include(other_invoice.sat_uuid)
+      expect(response.body).not_to include('Nuevo CFDI')
+    end
+  end
+
+  describe 'GET /invoices/:id as consolidator' do
+    before { sign_in consolidator_user, scope: :user }
+
+    it 'allows own receiver invoice with sync and download actions' do
+      own_invoice = create(:invoice, receiver_entity: consolidator_user.entity, status: 'issued', sat_uuid: 'UUID-CONS-SHOW-001')
+      own_invoice.xml_file.attach(io: StringIO.new('<cfdi/>'), filename: 'cons.xml', content_type: 'application/xml')
+      own_invoice.pdf_file.attach(io: StringIO.new('%PDF-1.4 test'), filename: 'cons.pdf', content_type: 'application/pdf')
+
+      get invoice_path(own_invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('Re-sincronizar XML/PDF')
+      expect(response.body).to include('Descargar XML')
+      expect(response.body).to include('Descargar PDF')
+      expect(response.body).not_to include('Cancelar CFDI')
+      expect(response.body).not_to include('Reintentar emisión CFDI')
+      expect(response.body).not_to include('Registrar nuevo pago')
+    end
+
+    it 'denies access to invoice not related as receiver' do
+      other_invoice = create(:invoice)
+
+      get invoice_path(other_invoice)
+
+      expect(response).to redirect_to(containers_path)
     end
   end
 

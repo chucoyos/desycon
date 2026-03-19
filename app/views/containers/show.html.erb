@@ -1,4 +1,5 @@
 <% content_for :title, "Contenedor #{@container.number}" %>
+<% is_consolidator = current_user&.consolidator? %>
 
 <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
   
@@ -295,7 +296,7 @@
             <span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
               <%= @container.container_services.count %>
             </span>
-            <% unless current_user&.customs_broker? %>
+            <% unless current_user&.customs_broker? || is_consolidator %>
               <button type="button"
                       data-action="click->modal#open"
                       data-modal-id="container-service-modal"
@@ -420,7 +421,7 @@
                     </div>
                   <% end %>
 
-                  <% unless current_user&.customs_broker? || service.facturado? %>
+                  <% unless current_user&.customs_broker? || is_consolidator || service.facturado? %>
                     <div class="col-span-2 pt-2 border-t border-gray-100 flex justify-end">
                       <%= button_to container_path(@container),
                           method: :patch,
@@ -589,25 +590,23 @@
     </div>
   </div>
 
-  <% if policy(Photo).create? %>
-    <section class="space-y-4 mt-6">
-      <div class="flex items-center gap-3">
-        <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-600 shadow-sm">
-          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h3.172a2 2 0 011.414.586l.828.828A2 2 0 0011.828 7H19a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
-          </svg>
-        </div>
-        <h2 class="text-lg font-bold text-gray-900">Fotografías del contenedor</h2>
+  <section class="space-y-4 mt-6">
+    <div class="flex items-center gap-3">
+      <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-600 shadow-sm">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h3.172a2 2 0 011.414.586l.828.828A2 2 0 0011.828 7H19a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+        </svg>
       </div>
+      <h2 class="text-lg font-bold text-gray-900">Fotografías del contenedor</h2>
+    </div>
 
-      <%= render "shared/photo_module", attachable: @container, section: "apertura", title: "Apertura", subtitle: "Regularmente 5, hasta 15" %>
-      <%= render "shared/photo_module", attachable: @container, section: "desconsolidacion", title: "Desconsolidación", subtitle: "Regularmente 30-40" %>
-      <%= render "shared/photo_module", attachable: @container, section: "vacio", title: "Vacío", subtitle: "Regularmente 20-30" %>
-    </section>
-  <% end %>
+    <%= render "shared/photo_module", attachable: @container, section: "apertura", title: "Apertura", subtitle: "Regularmente 5, hasta 15" %>
+    <%= render "shared/photo_module", attachable: @container, section: "desconsolidacion", title: "Desconsolidación", subtitle: "Regularmente 30-40" %>
+    <%= render "shared/photo_module", attachable: @container, section: "vacio", title: "Vacío", subtitle: "Regularmente 20-30" %>
+  </section>
 </div>
 
-<% unless current_user&.customs_broker? || current_user&.tramitador? %>
+<% unless current_user&.customs_broker? || current_user&.tramitador? || is_consolidator %>
   <div id="container-service-modal" data-modal-target="modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" data-action="click->modal#closeOnBackdrop">
     <div class="relative top-16 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-xl bg-white">
       <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">

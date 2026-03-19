@@ -37,6 +37,14 @@ RSpec.describe PhotoPolicy, type: :policy do
     it { is_expected.to permit_action(:destroy) }
   end
 
+  context "for consolidator users" do
+    let(:user) { create(:user, :consolidator) }
+
+    it { is_expected.not_to permit_action(:index) }
+    it { is_expected.not_to permit_action(:create) }
+    it { is_expected.not_to permit_action(:destroy) }
+  end
+
   context "for unauthenticated users" do
     let(:user) { nil }
 

@@ -17,5 +17,9 @@ FactoryBot.define do
     trait :tramitador do
       name { Role::TRAMITADOR }
     end
+
+    trait :consolidator do
+      name { Role::CONSOLIDATOR }
+    end
   end
 end

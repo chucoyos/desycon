@@ -25,5 +25,10 @@ FactoryBot.define do
     trait :tramitador do
       association :role, :tramitador
     end
+
+    trait :consolidator do
+      association :role, :consolidator
+      association :entity, :consolidator
+    end
   end
 end

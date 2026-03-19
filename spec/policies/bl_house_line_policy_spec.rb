@@ -118,6 +118,39 @@ RSpec.describe BlHouseLinePolicy, type: :policy do
     end
   end
 
+  context "for consolidator users" do
+    let(:user) { create(:user, :consolidator) }
+    let(:container) { create(:container, consolidator_entity: user.entity) }
+    let(:bl_house_line) { create(:bl_house_line, container: container) }
+
+    it { is_expected.to permit_action(:index) }
+    it { is_expected.to permit_action(:show) }
+    it { is_expected.to permit_action(:documents) }
+    it { is_expected.not_to permit_action(:create) }
+    it { is_expected.not_to permit_action(:new) }
+    it { is_expected.not_to permit_action(:update) }
+    it { is_expected.not_to permit_action(:edit) }
+    it { is_expected.not_to permit_action(:destroy) }
+
+    describe "scope" do
+      it "returns only bl house lines under own containers" do
+        own_bl = create(:bl_house_line, container: create(:container, consolidator_entity: user.entity))
+        other_bl = create(:bl_house_line)
+
+        resolved = BlHouseLinePolicy::Scope.new(user, BlHouseLine.all).resolve
+
+        expect(resolved).to include(own_bl)
+        expect(resolved).not_to include(other_bl)
+      end
+    end
+
+    context "when bl house line belongs to another consolidator" do
+      let(:bl_house_line) { create(:bl_house_line) }
+
+      it { is_expected.not_to permit_action(:show) }
+    end
+  end
+
   context "for unauthenticated users" do
     let(:user) { nil }
 

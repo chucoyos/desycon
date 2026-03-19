@@ -187,6 +187,47 @@ RSpec.describe "BlHouseLines", type: :request do
       expect(response.body).not_to include("Historial")
       expect(response.body).to include("Fotografías de partida")
     end
+
+    it "shows read-only view for consolidator on own bl house line" do
+      consolidator = create(:user, :consolidator)
+      sign_in consolidator, scope: :user
+      own_container = create(:container, consolidator_entity: consolidator.entity)
+      bl_house_line = create(:bl_house_line, container: own_container)
+
+      get bl_house_line_url(bl_house_line)
+
+      expect(response).to be_successful
+      expect(response.body).not_to include("Agregar servicio")
+      expect(response.body).not_to include("Eliminar servicio")
+      expect(response.body).to include("Fotografías de partida")
+    end
+
+    it "denies consolidator access to bl house line from another consolidator" do
+      consolidator = create(:user, :consolidator)
+      sign_in consolidator, scope: :user
+      other_bl_house_line = create(:bl_house_line)
+
+      get bl_house_line_url(other_bl_house_line)
+
+      expect(response).to redirect_to(containers_path)
+    end
+  end
+
+  describe "GET /bl_house_lines for consolidator" do
+    it "returns only bl house lines from own containers" do
+      consolidator = create(:user, :consolidator)
+      sign_in consolidator, scope: :user
+      own_container = create(:container, consolidator_entity: consolidator.entity)
+      own_bl = create(:bl_house_line, container: own_container, blhouse: "OWN-BLH-001")
+      other_bl = create(:bl_house_line, blhouse: "OTH-BLH-001")
+
+      get bl_house_lines_url, params: { status: own_bl.status }
+
+      expect(response).to be_successful
+      expect(response.body).to include(own_bl.blhouse)
+      expect(response.body).not_to include(other_bl.blhouse)
+      expect(response.body).not_to include(new_bl_house_line_path)
+    end
   end
 
   describe "GET /bl_house_lines/new" do
