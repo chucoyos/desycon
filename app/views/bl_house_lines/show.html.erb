@@ -279,8 +279,8 @@
 
   <% unless is_tramitador %>
   <!-- Servicios -->
-  <div id="servicios" class="bg-white shadow-sm rounded-xl p-5 border border-gray-100 mb-6">
-    <div class="flex items-center justify-between mb-4">
+  <details id="servicios" class="group bg-white shadow-sm rounded-xl p-5 border border-gray-100 mb-6" data-collapsible="true">
+    <summary class="flex items-center justify-between cursor-pointer list-none">
       <div class="flex items-center gap-3">
         <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-600 shadow-sm">
           <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -288,11 +288,18 @@
           </svg>
         </div>
         <h2 class="text-lg font-bold text-gray-900">Servicios</h2>
-      </div>
-      <div class="flex items-center gap-2">
         <span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
           <%= @bl_house_line.bl_house_line_services.count %>
         </span>
+      </div>
+      <svg class="w-5 h-5 text-gray-500 transition-transform duration-200 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </summary>
+
+    <div class="mt-4">
+    <div class="flex items-center justify-end mb-4">
+      <div class="flex items-center gap-2">
         <% unless is_customs_agent || is_consolidator %>
           <button type="button"
                   data-action="click->modal#open"
@@ -450,21 +457,29 @@
     <% else %>
       <p class="text-sm text-gray-500">No hay servicios registrados.</p>
     <% end %>
-  </div>
+    </div>
+  </details>
   <% end %>
       
 
   <% unless is_tramitador %>
   <!-- Documentos -->
-  <div class="bg-white shadow-sm rounded-xl p-5 border border-gray-100 mb-6">
-    <div class="flex items-center gap-3 mb-5">
-      <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-600 shadow-sm">
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-        </svg>
+  <details class="group bg-white shadow-sm rounded-xl p-5 border border-gray-100 mb-6" data-collapsible="true">
+    <summary class="flex items-center justify-between cursor-pointer list-none">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-600 shadow-sm">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <h2 class="text-lg font-bold text-gray-900">Documentos</h2>
       </div>
-      <h2 class="text-lg font-bold text-gray-900">Documentos</h2>
-    </div>
+      <svg class="w-5 h-5 text-gray-500 transition-transform duration-200 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </summary>
+
+    <div class="mt-4">
     
     <% required_docs = @bl_house_line.required_revalidation_documents %>
     <div class="space-y-3">
@@ -616,20 +631,28 @@
         </div>
       <% end %>
     </div>
-  </div>
+    </div>
+  </details>
     <% end %>
 
       <% unless is_tramitador %>
       <!-- Historial de Status -->
-      <section class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
-        <div class="flex items-center gap-3 mb-5">
-          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-600 shadow-sm">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
+      <details class="group bg-white shadow-sm rounded-xl p-5 border border-gray-100" data-collapsible="true">
+        <summary class="flex items-center justify-between cursor-pointer list-none">
+          <div class="flex items-center gap-3">
+            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-600 shadow-sm">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <h2 class="text-lg font-bold text-gray-900">Historial</h2>
           </div>
-          <h2 class="text-lg font-bold text-gray-900">Historial</h2>
-        </div>
+          <svg class="w-5 h-5 text-gray-500 transition-transform duration-200 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </summary>
+
+        <div class="mt-4">
 
         <% if @bl_house_line.bl_house_line_status_histories.any? %>
           <div class="space-y-3">
@@ -657,7 +680,8 @@
             <p class="text-sm text-gray-500">Sin historial</p>
           </div>
         <% end %>
-      </section>
+        </div>
+      </details>
       <% end %>
     </div>
   </div>
