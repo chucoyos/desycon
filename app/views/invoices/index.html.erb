@@ -126,7 +126,7 @@
     <%= render 'shared/tailwind_pagination', paginated: @invoices %>
   </div>
 
-  <div class="bg-white shadow-sm rounded-xl overflow-visible border border-gray-100">
+  <div class="hidden lg:block bg-white shadow-sm rounded-xl overflow-visible border border-gray-100">
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gradient-to-r from-gray-50 to-white">
         <tr>
@@ -258,6 +258,18 @@
         <% end %>
       </tbody>
     </table>
+  </div>
+
+  <div class="lg:hidden space-y-4">
+    <% if @invoices.any? %>
+      <% @invoices.each do |invoice| %>
+        <%= render "invoices/mobile_card", invoice: invoice %>
+      <% end %>
+    <% else %>
+      <div class="bg-white shadow-sm rounded-xl p-8 text-center border border-gray-100">
+        <p class="text-gray-500 text-base font-medium">No hay facturas para los filtros seleccionados</p>
+      </div>
+    <% end %>
   </div>
 </div>
 
