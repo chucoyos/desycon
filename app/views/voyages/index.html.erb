@@ -151,7 +151,7 @@
   </div>
 
   <% if @voyages.any? %>
-    <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-visible">
+    <div class="hidden lg:block bg-white shadow-sm rounded-xl border border-gray-100 overflow-visible">
       <div class="overflow-x-auto lg:overflow-visible">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50/80">
@@ -262,6 +262,12 @@
           </tbody>
         </table>
       </div>
+    </div>
+
+    <div class="lg:hidden space-y-4">
+      <% @voyages.each do |voyage| %>
+        <%= render "voyages/mobile_card", voyage: voyage %>
+      <% end %>
     </div>
   <% else %>
     <div class="text-center bg-white border border-dashed border-gray-200 rounded-xl p-10 shadow-sm">

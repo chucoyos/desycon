@@ -1,0 +1,42 @@
+<% serie = evidence.invoice.provider_response.to_h["serie"].presence || evidence.invoice.payload_snapshot.to_h["serie"].presence %>
+<% folio = evidence.invoice.provider_response.to_h["folio"].presence ||
+          evidence.invoice.provider_response.to_h["noComprobante"].presence ||
+          evidence.invoice.provider_response.to_h["numeroComprobante"].presence ||
+          evidence.invoice.facturador_comprobante_id&.to_s %>
+<% invoice_label = if serie.present? && folio.present?
+  "#{serie} #{folio}"
+elsif folio.present?
+  folio.to_s
+elsif serie.present?
+  serie.to_s
+else
+  "-"
+end %>
+<% badge_classes = case evidence.status
+  when "pending" then "bg-amber-100 text-amber-800"
+  when "linked" then "bg-green-100 text-green-800"
+  when "rejected" then "bg-red-100 text-red-800"
+  else "bg-gray-100 text-gray-700"
+end %>
+
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+  <div class="flex items-start justify-between gap-3">
+    <div class="min-w-0">
+      <p class="text-xs text-gray-500">Evidencia #<%= evidence.id %></p>
+      <p class="text-sm font-semibold text-gray-900 mt-1"><%= evidence.customs_agent&.name %></p>
+      <p class="text-xs text-gray-600 mt-1">Referencia: <%= evidence.reference %></p>
+      <p class="text-xs text-gray-600">Factura: <%= invoice_label %></p>
+    </div>
+    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= badge_classes %>">
+      <%= evidence.status_label %>
+    </span>
+  </div>
+
+  <div class="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+    <%= link_to invoice_path(evidence.invoice), class: "text-sm text-blue-600 hover:text-blue-800 font-medium" do %>
+      Ver factura
+    <% end %>
+
+    <%= link_to "Revisar", admin_invoice_payment_evidence_path(evidence), class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold" %>
+  </div>
+</div>

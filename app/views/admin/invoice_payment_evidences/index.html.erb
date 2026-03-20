@@ -50,7 +50,7 @@
     <%= render "shared/tailwind_pagination", paginated: @invoice_payment_evidences %>
   </div>
 
-  <div class="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-100">
+  <div class="hidden lg:block bg-white shadow-sm rounded-xl overflow-hidden border border-gray-100">
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gradient-to-r from-gray-50 to-white">
         <tr>
@@ -109,5 +109,17 @@
         <% end %>
       </tbody>
     </table>
+  </div>
+
+  <div class="lg:hidden space-y-4">
+    <% if @invoice_payment_evidences.any? %>
+      <% @invoice_payment_evidences.each do |evidence| %>
+        <%= render "admin/invoice_payment_evidences/mobile_card", evidence: evidence %>
+      <% end %>
+    <% else %>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center text-gray-500">
+        No hay evidencias de pago para los filtros seleccionados.
+      </div>
+    <% end %>
   </div>
 </div>
