@@ -33,10 +33,25 @@
     <%= form.password_field :password_confirmation, class: "w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm transition-all bg-white", placeholder: "Confirma la contraseña" %>
   </div>
 
-  <div class="mb-6">
-    <%= form.label :role_id, "Role", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-    <%= form.collection_select :role_id, Role.order(:name), :id, :name, { prompt: "Selecciona un role" }, class: "w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm transition-all bg-white" %>
-  </div>
+  <% available_roles = Role.order(:name) %>
+  <% available_entities = Entity.order(:name) %>
+  <div data-controller="role-entity-filter" class="contents">
+    <div class="mb-6">
+      <%= form.label :role_id, "Role", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+      <%= form.select :role_id,
+          options_for_select(
+            available_roles.map { |role| [ role.name, role.id, { "data-entity-role-kind": role.entity_role_kind_for_users.to_s } ] },
+            form.object.role_id
+          ),
+          { prompt: "Selecciona un role" },
+          {
+            class: "w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm transition-all bg-white",
+            data: {
+              role_entity_filter_target: "role",
+              action: "change->role-entity-filter#filter"
+            }
+          } %>
+    </div>
 
   <div class="mb-6">
     <div class="flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
@@ -50,9 +65,19 @@
     </div>
   </div>
 
-  <div class="mb-6">
-    <%= form.label :entity_id, "Entidad", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-    <%= form.collection_select :entity_id, Entity.order(:name), :id, :name, { prompt: "Selecciona una entidad" }, class: "w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm transition-all bg-white" %>
+    <div class="mb-6">
+      <%= form.label :entity_id, "Entidad", class: "block text-sm font-semibold text-gray-700 mb-2" %>
+      <%= form.select :entity_id,
+          options_for_select(
+            available_entities.map { |entity| [ entity.name, entity.id, { "data-role-kind": entity.role_kind.to_s } ] },
+            form.object.entity_id
+          ),
+          { prompt: "Selecciona una entidad" },
+          {
+            class: "w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm transition-all bg-white",
+            data: { role_entity_filter_target: "entity" }
+          } %>
+    </div>
   </div>
 
   <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">

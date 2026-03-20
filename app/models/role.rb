@@ -12,6 +12,11 @@ class Role < ApplicationRecord
   TRAMITADOR = "tramitador"
   CONSOLIDATOR = "consolidador"
 
+  ENTITY_ROLE_KIND_BY_USER_ROLE = {
+    CONSOLIDATOR => "consolidator",
+    CUSTOMS_BROKER => "customs_agent"
+  }.freeze
+
   def admin?
     name == ADMIN
   end
@@ -63,5 +68,11 @@ class Role < ApplicationRecord
     else
       name
     end
+  end
+
+  # Maps user role names to the entity role_kind that can be assigned in user forms.
+  # Returns nil for internal roles that do not require an entity.
+  def entity_role_kind_for_users
+    ENTITY_ROLE_KIND_BY_USER_ROLE[name]
   end
 end
