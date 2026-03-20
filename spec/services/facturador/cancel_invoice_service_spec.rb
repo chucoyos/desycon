@@ -115,7 +115,7 @@ RSpec.describe Facturador::CancelInvoiceService, type: :service do
     it 'stores detailed cancel error context when provider raises request error' do
       allow(client_double).to receive(:cancelar_comprobante).and_raise(
         Facturador::RequestError,
-        '500: An error has occurred. (DELETE /businessEmision/api/v1/emisores/208/comprobantes/UUID-CANCEL-001, query=motivo=02, request_id=abc-123)'
+        '500: An error has occurred. (DELETE /BusinessEmision/api/v1/emisores/208/comprobantes/UUID-CANCEL-001, query=motivo=02, request_id=abc-123)'
       )
 
       expect {
@@ -127,7 +127,7 @@ RSpec.describe Facturador::CancelInvoiceService, type: :service do
       event = invoice.invoice_events.order(:created_at).last
       expect(event.event_type).to eq('cancel_failed')
       expect(event.response_payload['sat_uuid']).to eq('UUID-CANCEL-001')
-      expect(event.provider_error_message).to include('DELETE /businessEmision')
+      expect(event.provider_error_message).to include('DELETE /BusinessEmision')
     end
   end
 end

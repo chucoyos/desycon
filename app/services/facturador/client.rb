@@ -7,7 +7,7 @@ module Facturador
     USER_INFO_PATH = "/connect/userinfo".freeze
     COMPROBANTES_PATH = "/businessEmision/api/v1/emisores/%<emisor_id>s/comprobantes".freeze
     COMPROBANTES_LIST_PATH = "/BusinessEmision/api/v1/emisores/%<emisor_id>s/comprobantes".freeze
-    COMPROBANTE_BY_UUID_PATH = "/businessEmision/api/v1/emisores/%<emisor_id>s/comprobantes/%<uuid>s".freeze
+    COMPROBANTE_BY_UUID_PATH = "/BusinessEmision/api/v1/emisores/%<emisor_id>s/comprobantes/%<uuid>s".freeze
     DESCARGA_COMPROBANTE_PATH = "/businessEmision/api/v1/emisores/%<emisor_id>s/descargacomprobantes/%<uuid>s".freeze
     PDF_GENERATE_PATH = "/businessEmision/api/v1/emisores/%<emisor_id>s/pdfs/%<uuid>s".freeze
     PDF_URL_PATH = "/businessEmision/api/v1/emisores/%<emisor_id>s/comprobantes/%<uuid>s/pdf".freeze
@@ -69,12 +69,12 @@ module Facturador
 
     def cancelar_comprobante(emisor_id:, uuid:, motivo:, folio_sustitucion: nil)
       path = format(COMPROBANTE_BY_UUID_PATH, emisor_id: emisor_id, uuid: uuid)
-      body = { motivo: motivo }
-      body[:folioSustitucion] = folio_sustitucion if folio_sustitucion.present?
       query = { motivo: motivo }
       query[:folioSustitucion] = folio_sustitucion if folio_sustitucion.present?
 
-      # Some PAC gateways ignore/delete request bodies on DELETE; send params in both body and query.
+      body = { motivo: motivo }
+      body[:folioSustitucion] = folio_sustitucion if folio_sustitucion.present?
+
       delete_json(Config.business_base_url, path, body, query: query)
     end
 
@@ -163,10 +163,12 @@ module Facturador
       uri = URI.join(base_url, path)
       uri.query = URI.encode_www_form(query) if query.present?
       request = Net::HTTP::Delete.new(uri)
-      request["Content-Type"] = "application/json"
       request["Accept"] = "application/json"
       request["Authorization"] = "Bearer #{access_token}" if access_token.present?
-      request.body = body.to_json
+      if body.present?
+        request["Content-Type"] = "application/json"
+        request.body = body.to_json
+      end
 
       execute_request(uri, request)
     end
@@ -188,7 +190,13 @@ module Facturador
     end
 
     def perform_request(uri, request)
-      response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") do |http|
+      response = Net::HTTP.start(
+        uri.host,
+        uri.port,
+        use_ssl: uri.scheme == "https",
+        open_timeout: 10,
+        read_timeout: 30
+      ) do |http|
         http.request(request)
       end
 

@@ -136,9 +136,14 @@ module Facturador
     end
 
     def enrich_error_message(base_message, provider_context)
-      return base_message if provider_context.blank?
-
       context_parts = []
+      context_parts << "invoice_id=#{invoice.id}"
+      context_parts << "id_comprobante_local=#{invoice.facturador_comprobante_id}" if invoice.facturador_comprobante_id.present?
+
+      if provider_context.blank?
+        return "#{base_message} [PAC: #{context_parts.join(', ')}]"
+      end
+
       context_parts << "estatus=#{provider_context[:estatus]}" if provider_context[:estatus].present?
       context_parts << "subestatus=#{provider_context[:subestatus]}" if provider_context[:subestatus].present?
       if provider_context[:monto_pagado].present? || provider_context[:total].present?
