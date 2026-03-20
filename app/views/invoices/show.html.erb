@@ -416,7 +416,7 @@
         <% end %>
 
         <% if @invoice_payments.any? %>
-          <div class="overflow-x-auto lg:overflow-visible">
+          <div class="hidden lg:block overflow-x-auto lg:overflow-visible">
             <table class="min-w-full divide-y divide-gray-200 text-sm">
               <thead class="bg-gray-50">
                 <tr>
@@ -507,6 +507,12 @@
                 <% end %>
               </tbody>
             </table>
+          </div>
+
+          <div class="lg:hidden mt-4 space-y-3">
+            <% @invoice_payments.each do |payment| %>
+              <%= render "invoices/payment_mobile_card", invoice: @invoice, payment: payment, can_manage_payments: can_manage_payments %>
+            <% end %>
           </div>
         <% else %>
           <p class="text-sm text-gray-500">No hay pagos registrados para esta factura.</p>
