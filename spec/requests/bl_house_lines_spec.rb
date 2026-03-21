@@ -161,6 +161,7 @@ RSpec.describe "BlHouseLines", type: :request do
 
       get bl_house_line_url(bl_house_line)
 
+      expect(response.body).to include("Editar servicio")
       expect(response.body).to include("Eliminar servicio")
     end
 
@@ -171,6 +172,7 @@ RSpec.describe "BlHouseLines", type: :request do
 
       get bl_house_line_url(bl_house_line)
 
+      expect(response.body).not_to include("Editar servicio")
       expect(response.body).not_to include("Eliminar servicio")
     end
 
@@ -370,6 +372,37 @@ RSpec.describe "BlHouseLines", type: :request do
         }.to change(bl_house_line.bl_house_line_services, :count).by(-1)
 
         expect(response).to redirect_to(bl_house_line_url(bl_house_line, anchor: "servicios"))
+      end
+
+      it "updates a non-invoiced service from show flow" do
+        sign_in user, scope: :user
+        bl_house_line = create(:bl_house_line, client: client)
+        old_service_catalog = create(:service_catalog, applies_to: "bl_house_line", active: true)
+        new_service_catalog = create(:service_catalog, applies_to: "bl_house_line", active: true)
+        service = create(:bl_house_line_service,
+          bl_house_line: bl_house_line,
+          service_catalog: old_service_catalog,
+          factura: nil,
+          observaciones: "Antes")
+
+        patch bl_house_line_url(bl_house_line), params: {
+          source: "show_services",
+          service_action: "update",
+          bl_house_line: {
+            bl_house_line_services_attributes: {
+              "0" => {
+                id: service.id,
+                service_catalog_id: new_service_catalog.id,
+                billed_to_entity_id: client.id,
+                observaciones: "Editado desde modal"
+              }
+            }
+          }
+        }
+
+        expect(response).to redirect_to(bl_house_line_url(bl_house_line, anchor: "servicios"))
+        expect(service.reload.service_catalog_id).to eq(new_service_catalog.id)
+        expect(service.observaciones).to eq("Editado desde modal")
       end
     end
 

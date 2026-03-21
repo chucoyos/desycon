@@ -349,10 +349,17 @@ class ContainersController < ApplicationController
       return redirect_to container_path(@container, anchor: "servicios"), alert: "No se recibieron datos del servicio."
     end
 
-    if ActiveModel::Type::Boolean.new.cast(attrs[:_destroy])
+    case params[:service_action].to_s
+    when "destroy"
       destroy_service_from_show(attrs)
+    when "update"
+      update_service_from_show(attrs)
     else
-      create_service_from_show(attrs)
+      if ActiveModel::Type::Boolean.new.cast(attrs[:_destroy])
+        destroy_service_from_show(attrs)
+      else
+        create_service_from_show(attrs)
+      end
     end
   end
 
@@ -374,6 +381,19 @@ class ContainersController < ApplicationController
       redirect_to container_path(@container, anchor: "servicios"), alert: "No se puede eliminar un servicio facturado."
     elsif service.destroy
       redirect_to container_path(@container, anchor: "servicios"), notice: "Servicio eliminado correctamente."
+    else
+      redirect_to container_path(@container, anchor: "servicios"), alert: service.errors.full_messages.to_sentence
+    end
+  end
+
+  def update_service_from_show(attrs)
+    service = @container.container_services.find_by(id: attrs[:id])
+    return redirect_to(container_path(@container, anchor: "servicios"), alert: "Servicio no encontrado.") if service.blank?
+
+    if service.facturado?
+      redirect_to container_path(@container, anchor: "servicios"), alert: "No se puede editar un servicio facturado."
+    elsif service.update(attrs.except(:id, :_destroy))
+      redirect_to container_path(@container, anchor: "servicios"), notice: "Servicio actualizado correctamente."
     else
       redirect_to container_path(@container, anchor: "servicios"), alert: service.errors.full_messages.to_sentence
     end

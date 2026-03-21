@@ -146,6 +146,7 @@ RSpec.describe "Containers", type: :request do
 
       get container_url(container)
 
+      expect(response.body).to include("Editar servicio")
       expect(response.body).to include("Eliminar servicio")
     end
 
@@ -156,6 +157,7 @@ RSpec.describe "Containers", type: :request do
 
       get container_url(container)
 
+      expect(response.body).not_to include("Editar servicio")
       expect(response.body).not_to include("Eliminar servicio")
     end
 
@@ -279,6 +281,36 @@ RSpec.describe "Containers", type: :request do
       }.to change(container.container_services, :count).by(-1)
 
       expect(response).to redirect_to(container_url(container, anchor: "servicios"))
+    end
+
+    it "updates a non-invoiced service from show flow" do
+      container = create(:container)
+      old_service_catalog = create(:service_catalog, applies_to: "container", active: true)
+      new_service_catalog = create(:service_catalog, applies_to: "container", active: true)
+      service = create(:container_service,
+        container: container,
+        service_catalog: old_service_catalog,
+        factura: nil,
+        observaciones: "Antes")
+
+      patch container_url(container), params: {
+        source: "show_services",
+        service_action: "update",
+        container: {
+          container_services_attributes: {
+            "0" => {
+              id: service.id,
+              service_catalog_id: new_service_catalog.id,
+              billed_to_entity_id: container.consolidator_entity_id,
+              observaciones: "Editado desde modal"
+            }
+          }
+        }
+      }
+
+      expect(response).to redirect_to(container_url(container, anchor: "servicios"))
+      expect(service.reload.service_catalog_id).to eq(new_service_catalog.id)
+      expect(service.observaciones).to eq("Editado desde modal")
     end
   end
 
