@@ -40,7 +40,10 @@
       <%= form.label :role_id, "Role", class: "block text-sm font-semibold text-gray-700 mb-2" %>
       <%= form.select :role_id,
           options_for_select(
-            available_roles.map { |role| [ role.name, role.id, { "data-entity-role-kind": role.entity_role_kind_for_users.to_s } ] },
+            available_roles.map { |role|
+              label = role.customs_broker? ? "Agencia Aduanal" : role.display_name
+              [ label, role.id, { "data-entity-role-kind": role.entity_role_kind_for_users.to_s } ]
+            },
             form.object.role_id
           ),
           { prompt: "Selecciona un role" },
