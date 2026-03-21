@@ -6,7 +6,9 @@
 puts "Creando roles..."
 admin_role = Role.find_or_create_by!(name: Role::ADMIN)
 executive_role = Role.find_or_create_by!(name: Role::EXECUTIVE)
-customs_broker_role = Role.find_or_create_by!(name: Role::CUSTOMS_BROKER)
+# Compatibilidad: se mantiene Role::CUSTOMS_BROKER como clave tecnica legacy en DB,
+# pero en negocio/UI se muestra como "Agencia Aduanal".
+customs_agency_role = Role.find_or_create_by!(name: Role::CUSTOMS_BROKER)
 tramitador_role = Role.find_or_create_by!(name: Role::TRAMITADOR)
 consolidator_role = Role.find_or_create_by!(name: Role::CONSOLIDATOR)
 puts "✓ Roles creados"
@@ -37,17 +39,18 @@ permissions_data = [
 ]
 
 permissions = permissions_data.map do |perm|
-  Permission.find_or_create_by!(key: perm[:key]) do |p|
-    p.name = perm[:name]
-    p.description = perm[:description]
-  end
+  permission = Permission.find_or_initialize_by(key: perm[:key])
+  permission.name = perm[:name]
+  permission.description = perm[:description]
+  permission.save! if permission.changed? || permission.new_record?
+  permission
 end
 puts "✓ #{Permission.count} permisos creados"
 
 # Asignar permisos por rol (por defecto admin y ejecutivo tienen todos)
 admin_role.permissions = permissions
 executive_role.permissions = permissions
-customs_broker_role.permissions = permissions.select { |p| %w[customs.dashboard.access bl_house_lines.read bl_house_lines.update].include?(p.key) }
+customs_agency_role.permissions = permissions.select { |p| %w[customs.dashboard.access bl_house_lines.read bl_house_lines.update].include?(p.key) }
 tramitador_role.permissions = permissions.select { |p| %w[containers.read bl_house_lines.read].include?(p.key) }
 consolidator_role.permissions = permissions.select { |p| %w[containers.read bl_house_lines.read].include?(p.key) }
 puts "✓ Permisos asignados a roles"
@@ -91,13 +94,14 @@ china_ports = [
   { name: 'Hong Kong', code: 'HKHKG', country_code: 'HK' },
   { name: 'Yantian', code: 'CNYTN', country_code: 'CN' },
   { name: 'Fuzhou', code: 'CNFOC', country_code: 'CN' },
-  { name: 'Zhangjiagang', code: 'CNZJG', country_code: 'CN' },
+  { name: 'Zhenjiang',    code: 'CNZHE', country_code: 'CN' },
+  { name: 'Jiaxing',      code: 'CNJIA', country_code: 'CN' },
   { name: 'Jiangyin', code: 'CNJIY', country_code: 'CN' },
   { name: 'Lianyungang', code: 'CNLYG', country_code: 'CN' },
   { name: 'Nansha', code: 'CNNAS', country_code: 'CN' },
   { name: 'Taicang', code: 'CNTCG', country_code: 'CN' },
   { name: 'Weihai', code: 'CNWEH', country_code: 'CN' },
-  { name: 'Zhenjiang', code: 'CNZJG', country_code: 'CN' },
+  { name: 'Zhangjiagang', code: 'CNZJG', country_code: 'CN' },
   { name: 'Zhoushan', code: 'CNZOS', country_code: 'CN' },
   { name: 'Beihai', code: 'CNBHY', country_code: 'CN' },
   { name: 'Changshu', code: 'CNCSU', country_code: 'CN' },
@@ -217,40 +221,48 @@ shipping_lines_data = [
 
 shipping_lines_data.each do |line_data|
   shipping_line = ShippingLine.find_or_initialize_by(name: line_data[:name])
-  shipping_line.iso_code = line_data[:iso_code] if shipping_line.iso_code.blank?
-  shipping_line.save!(validate: false) if shipping_line.new_record? || shipping_line.changed?
+  shipping_line.iso_code = line_data[:iso_code]
+  shipping_line.save! if shipping_line.new_record? || shipping_line.changed?
 end
 
 puts "✓ #{ShippingLine.count} líneas navieras creadas"
 
-# Crear entidades de ejemplo
-puts "Creando entidades de ejemplo..."
+seed_demo_data = !Rails.env.production?
+puts "Modo producción: se omiten datos de ejemplo" unless seed_demo_data
 
-# Agentes aduanales de ejemplo
-customs_agents_data = [
-  { name: "Agencia Aduanal García & Asociados", role_kind: "customs_agent" },
-  { name: "Despachos Aduanales Ramírez S.A.", role_kind: "customs_agent" },
-  { name: "Servicios Aduanales López", role_kind: "customs_agent" },
-  { name: "Agencia Aduanal Martínez", role_kind: "customs_agent" }
-]
-
-customs_agents_data.each do |agent_data|
-  entity = Entity.find_or_initialize_by(name: agent_data[:name])
-  entity.assign_attributes(agent_data)
+upsert_entity = lambda do |attrs|
+  entity = Entity.find_or_initialize_by(name: attrs[:name])
+  entity.assign_attributes(attrs)
   entity.save! if entity.changed? || entity.new_record?
+  entity
 end
 
-# Clientes de ejemplo
-clients_data = [
-  { name: "Importadora ABC S.A. de C.V.", role_kind: "client" },
-  { name: "Comercial XYZ Ltda.", role_kind: "client" },
-  { name: "Distribuidora Nacional", role_kind: "client" }
-]
+# Crear entidades de ejemplo
+if seed_demo_data
+  puts "Creando entidades de ejemplo..."
 
-clients_data.each do |client_data|
-  entity = Entity.find_or_initialize_by(name: client_data[:name])
-  entity.assign_attributes(client_data)
-  entity.save! if entity.changed? || entity.new_record?
+  # Agentes aduanales de ejemplo
+  customs_agents_data = [
+    { name: "Agencia Aduanal García & Asociados", role_kind: "customs_agent" },
+    { name: "Despachos Aduanales Ramírez S.A.", role_kind: "customs_agent" },
+    { name: "Servicios Aduanales López", role_kind: "customs_agent" },
+    { name: "Agencia Aduanal Martínez", role_kind: "customs_agent" }
+  ]
+
+  customs_agents_data.each do |agent_data|
+    upsert_entity.call(agent_data)
+  end
+
+  # Clientes de ejemplo
+  clients_data = [
+    { name: "Importadora ABC S.A. de C.V.", role_kind: "client" },
+    { name: "Comercial XYZ Ltda.", role_kind: "client" },
+    { name: "Distribuidora Nacional", role_kind: "client" }
+  ]
+
+  clients_data.each do |client_data|
+    upsert_entity.call(client_data)
+  end
 end
 
 # Catálogo de servicios base
@@ -271,118 +283,117 @@ end
 puts "✓ #{ServiceCatalog.count} servicios en catálogo"
 
 # Consolidador de ejemplo (requerido por Container)
-consolidators_data = [
-  { name: "Consolidadora Demo", role_kind: "consolidator" }
-]
-
-consolidators_data.each do |consolidator_data|
-  entity = Entity.find_or_initialize_by(name: consolidator_data[:name])
-  entity.assign_attributes(consolidator_data)
-  entity.save! if entity.changed? || entity.new_record?
-end
-
-puts "✓ #{Entity.count} entidades creadas"
-
-# Crear usuarios de ejemplo asociados a entidades
-puts "Creando usuarios de ejemplo..."
-
-# Usuario para agencia aduanal
-customs_broker_role = Role.find_by(name: Role::CUSTOMS_BROKER)
-customs_agent_entity = Entity.find_by(name: "Agencia Aduanal García & Asociados")
-
-if customs_broker_role && customs_agent_entity
-  customs_user = User.find_or_initialize_by(email: 'agente@garcia.com')
-  customs_user.password = 'password123' if customs_user.new_record?
-  customs_user.password_confirmation = 'password123' if customs_user.new_record?
-  customs_user.role = customs_broker_role
-  customs_user.entity = customs_agent_entity
-  customs_user.save! if customs_user.changed? || customs_user.new_record?
-  puts "✓ Usuario agente aduanal creado (agente@garcia.com / password123)"
-end
-
-# Crear BL House Lines de ejemplo
-puts "Creando BL House Lines de ejemplo..."
-
-customs_agent_entity = Entity.find_by(name: "Agencia Aduanal García & Asociados")
-client_entity = Entity.find_by(name: "Importadora ABC S.A. de C.V.")
-consolidator_entity = Entity.find_by(role_kind: "consolidator")
-shipping_line = ShippingLine.first
-vessel = Vessel.first || Vessel.find_or_create_by!(name: "SEED VESSEL")
-origin_port = Port.first || Port.find_or_create_by!(code: "MXMZO", name: "Manzanillo", country: "México")
-destination_port = Port.where.not(id: origin_port&.id).first ||
-                   Port.find_or_create_by!(code: "MXVER", name: "Veracruz", country: "México")
-
-voyage = nil
-if vessel && destination_port
-  voyage = Voyage.find_or_create_by!(vessel: vessel, viaje: "SEED-001") do |v|
-    v.voyage_type = "arribo"
-    v.destination_port = destination_port
-    v.eta = 7.days.from_now
-  end
-end
-
-# Crear contenedor de ejemplo si no existe
-container = Container.find_or_initialize_by(number: "ABCD1234567", bl_master: "BL-SEED-001")
-container.assign_attributes(
-  consolidator_entity: consolidator_entity,
-  shipping_line: shipping_line,
-  vessel: vessel,
-  voyage: voyage,
-  origin_port: origin_port,
-  status: "activo",
-  tipo_maniobra: "importacion",
-  type_size: "40HC",
-  recinto: "CONTECON",
-  almacen: "SSA",
-  archivo_nr: "NR-SEED-001",
-  sello: "SELLO001",
-  ejecutivo: "Seed Ejecutivo"
-)
-container.save! if container.changed? || container.new_record?
-
-service_catalog_container = ServiceCatalog.find_by(name: "Coordinación de contenedor a almacén", applies_to: "container") || ServiceCatalog.for_containers.first
-if container && service_catalog_container
-  ContainerService.find_or_create_by!(container: container, service_catalog: service_catalog_container) do |service|
-    service.fecha_programada = Date.today + 3.days
-    service.observaciones = "Servicio de coordinación para traslado a almacén"
-  end
-end
-
-packaging = Packaging.first || Packaging.create!(nombre: "Cajas")
-
-if customs_agent_entity && client_entity && container && packaging
-  bl_house_lines_data = [
-    { blhouse: "ABC123456789", status: "activo", cantidad: 100, partida: 1 },
-    { blhouse: "DEF987654321", status: "documentos_ok", cantidad: 200, partida: 2 },
-    { blhouse: "GHI456789123", status: "listo", cantidad: 150, partida: 3 },
-    { blhouse: "JKL789123456", status: "revalidado", cantidad: 80, partida: 4 }
+if seed_demo_data
+  consolidators_data = [
+    { name: "Consolidadora Demo", role_kind: "consolidator" }
   ]
 
-  bl_house_lines_data.each do |bl_data|
-    bl = BlHouseLine.find_or_initialize_by(blhouse: bl_data[:blhouse])
-    bl.assign_attributes(
-      customs_agent: customs_agent_entity,
-      client: client_entity,
-      container: container,
-      packaging: packaging,
-      status: bl_data[:status],
-      cantidad: bl_data[:cantidad],
-      partida: bl_data[:partida],
-      peso: 1000.0,
-      volumen: 10.0,
-      contiene: "Mercancía de ejemplo",
-      marcas: "SEED-MARCA"
-    )
-    bl.save! if bl.changed? || bl.new_record?
+  consolidators_data.each do |consolidator_data|
+    upsert_entity.call(consolidator_data)
   end
 
-  puts "✓ #{BlHouseLine.count} BL House Lines creadas"
+  puts "✓ #{Entity.count} entidades creadas"
 
-  service_catalog_bl = ServiceCatalog.find_by(name: "Asignación electrónica de carga", applies_to: "bl_house_line") || ServiceCatalog.for_bl_house_lines.first
-  if service_catalog_bl && (bl = BlHouseLine.find_by(blhouse: bl_house_lines_data.first[:blhouse]))
-    BlHouseLineService.find_or_create_by!(bl_house_line: bl, service_catalog: service_catalog_bl) do |service|
-      service.fecha_programada = Date.today + 5.days
-      service.observaciones = "Asignación electrónica de la carga para despacho aduanal"
+  # Crear usuarios de ejemplo asociados a entidades
+  puts "Creando usuarios de ejemplo..."
+
+  # Usuario para agencia aduanal
+  customs_agency_role = Role.find_by(name: Role::CUSTOMS_BROKER)
+  customs_agent_entity = Entity.find_by(name: "Agencia Aduanal García & Asociados")
+
+  if customs_agency_role && customs_agent_entity
+    customs_user = User.find_or_initialize_by(email: 'agente@garcia.com')
+    customs_user.password = 'password123' if customs_user.new_record?
+    customs_user.password_confirmation = 'password123' if customs_user.new_record?
+    customs_user.role = customs_agency_role
+    customs_user.entity = customs_agent_entity
+    customs_user.save! if customs_user.changed? || customs_user.new_record?
+    puts "✓ Usuario agente aduanal creado (agente@garcia.com / password123)"
+  end
+
+  # Crear BL House Lines de ejemplo
+  puts "Creando BL House Lines de ejemplo..."
+
+  client_entity = Entity.find_by(name: "Importadora ABC S.A. de C.V.")
+  consolidator_entity = Entity.find_by(role_kind: "consolidator")
+  shipping_line = ShippingLine.first
+  vessel = Vessel.first || Vessel.find_or_create_by!(name: "SEED VESSEL")
+  origin_port = Port.first || Port.find_or_create_by!(code: "MXMZO", name: "Manzanillo", country_code: "MX")
+  destination_port = Port.where.not(id: origin_port&.id).first ||
+                     Port.find_or_create_by!(code: "MXVER", name: "Veracruz", country_code: "MX")
+
+  voyage = nil
+  if vessel && destination_port
+    voyage = Voyage.find_or_create_by!(vessel: vessel, viaje: "SEED-001") do |v|
+      v.voyage_type = "arribo"
+      v.destination_port = destination_port
+      v.eta = 7.days.from_now
+    end
+  end
+
+  # Crear contenedor de ejemplo si no existe
+  container = Container.find_or_initialize_by(number: "ABCD1234567", bl_master: "BL-SEED-001")
+  container.assign_attributes(
+    consolidator_entity: consolidator_entity,
+    shipping_line: shipping_line,
+    vessel: vessel,
+    voyage: voyage,
+    origin_port: origin_port,
+    status: "activo",
+    tipo_maniobra: "importacion",
+    type_size: "40HC",
+    recinto: "CONTECON",
+    almacen: "SSA",
+    archivo_nr: "NR-SEED-001",
+    sello: "SELLO001",
+    ejecutivo: "Seed Ejecutivo"
+  )
+  container.save! if container.changed? || container.new_record?
+
+  service_catalog_container = ServiceCatalog.find_by(name: "Coordinación de contenedor a almacén", applies_to: "container") || ServiceCatalog.for_containers.first
+  if container && service_catalog_container
+    ContainerService.find_or_create_by!(container: container, service_catalog: service_catalog_container) do |service|
+      service.fecha_programada = Date.today + 3.days
+      service.observaciones = "Servicio de coordinación para traslado a almacén"
+    end
+  end
+
+  packaging = Packaging.first || Packaging.create!(nombre: "Cajas")
+
+  if customs_agent_entity && client_entity && container && packaging
+    bl_house_lines_data = [
+      { blhouse: "ABC123456789", status: "activo", cantidad: 100, partida: 1 },
+      { blhouse: "DEF987654321", status: "documentos_ok", cantidad: 200, partida: 2 },
+      { blhouse: "GHI456789123", status: "listo", cantidad: 150, partida: 3 },
+      { blhouse: "JKL789123456", status: "revalidado", cantidad: 80, partida: 4 }
+    ]
+
+    bl_house_lines_data.each do |bl_data|
+      bl = BlHouseLine.find_or_initialize_by(blhouse: bl_data[:blhouse])
+      bl.assign_attributes(
+        customs_agent: customs_agent_entity,
+        client: client_entity,
+        container: container,
+        packaging: packaging,
+        status: bl_data[:status],
+        cantidad: bl_data[:cantidad],
+        partida: bl_data[:partida],
+        peso: 1000.0,
+        volumen: 10.0,
+        contiene: "Mercancía de ejemplo",
+        marcas: "SEED-MARCA"
+      )
+      bl.save! if bl.changed? || bl.new_record?
+    end
+
+    puts "✓ #{BlHouseLine.count} BL House Lines creadas"
+
+    service_catalog_bl = ServiceCatalog.find_by(name: "Asignación electrónica de carga", applies_to: "bl_house_line") || ServiceCatalog.for_bl_house_lines.first
+    if service_catalog_bl && (bl = BlHouseLine.find_by(blhouse: bl_house_lines_data.first[:blhouse]))
+      BlHouseLineService.find_or_create_by!(bl_house_line: bl, service_catalog: service_catalog_bl) do |service|
+        service.fecha_programada = Date.today + 5.days
+        service.observaciones = "Asignación electrónica de la carga para despacho aduanal"
+      end
     end
   end
 end
