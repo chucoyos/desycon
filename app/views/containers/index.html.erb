@@ -183,8 +183,10 @@
         <tr>
           <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Número</th>
           <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-          <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Maniobra</th>
-          <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Consolidador</th>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Terminal</th>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Almacén</th>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Buque</th>
+          <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Viaje</th>
           <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Línea Naviera</th>
           <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Acciones</th>
         </tr>
@@ -202,14 +204,18 @@
                   <%= status_nombre(container.status) %>
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border <%= tipo_maniobra_badge_class(container.tipo_maniobra) %>">
-                  <%= tipo_maniobra_icon(container.tipo_maniobra) %>
-                  <%= tipo_maniobra_nombre(container.tipo_maniobra) %>
-                </span>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <%= container.recinto.presence || '-' %>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                <%= container.consolidator_entity&.name || '-' %>
+                <% almacen_value = container.almacen.to_s %>
+                <span title="<%= almacen_value %>"><%= almacen_value.present? ? truncate(almacen_value, length: 17) : '-' %></span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <%= container.vessel&.name || '-' %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <%= container.voyage&.viaje || '-' %>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 <%= container.shipping_line&.iso_code || "Sin línea" %>
@@ -265,7 +271,7 @@
           <% end %>
         <% else %>
           <tr>
-            <td colspan="6" class="px-6 py-12 text-center">
+            <td colspan="8" class="px-6 py-12 text-center">
               <div class="flex flex-col items-center">
                 <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
@@ -293,10 +299,6 @@
                   <%= status_icon(container.status) %>
                   <%= status_nombre(container.status) %>
                 </span>
-                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border <%= tipo_maniobra_badge_class(container.tipo_maniobra) %>">
-                  <%= tipo_maniobra_icon(container.tipo_maniobra) %>
-                  <%= tipo_maniobra_nombre(container.tipo_maniobra) %>
-                </span>
               </div>
             </div>
           </div>
@@ -306,13 +308,32 @@
               <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
               </svg>
-              <span class="font-medium"><%= container.consolidator_entity&.name || '-' %></span>
+              <span class="font-medium">Terminal: <%= container.recinto.presence || '-' %></span>
             </div>
             <div class="flex items-center text-gray-600">
               <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
               </svg>
-              <span><%= container.shipping_line&.iso_code || "Sin línea" %></span>
+              <% almacen_value = container.almacen.to_s %>
+              <span title="<%= almacen_value %>">Almacén: <%= almacen_value.present? ? truncate(almacen_value, length: 14) : '-' %></span>
+            </div>
+            <div class="flex items-center text-gray-600">
+              <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4 4 4-4m0-5l-4-4-4 4"/>
+              </svg>
+              <span>Buque: <%= container.vessel&.name || '-' %></span>
+            </div>
+            <div class="flex items-center text-gray-600">
+              <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              <span>Viaje: <%= container.voyage&.viaje || '-' %></span>
+            </div>
+            <div class="flex items-center text-gray-600">
+              <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+              <span>Línea: <%= container.shipping_line&.iso_code || "Sin línea" %></span>
             </div>
           </div>
           

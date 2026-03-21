@@ -107,7 +107,7 @@ class Container < ApplicationRecord
   scope :by_consolidator, ->(entity_id) { where(consolidator_entity_id: entity_id) }
   scope :by_shipping_line, ->(shipping_line_id) { where(shipping_line_id: shipping_line_id) }
   scope :recent, -> { order(created_at: :desc) }
-  scope :with_associations, -> { includes(:consolidator_entity, :shipping_line) }
+  scope :with_associations, -> { includes(:shipping_line, :vessel, :voyage) }
 
   # Callbacks para historial de status
   before_create :capture_current_user

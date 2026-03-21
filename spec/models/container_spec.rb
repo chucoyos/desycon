@@ -310,8 +310,9 @@ RSpec.describe Container, type: :model do
       result = Container.with_associations.find(container.id)
 
       # Verify associations are preloaded
-      expect(result.association(:consolidator_entity).loaded?).to be_truthy
       expect(result.association(:shipping_line).loaded?).to be_truthy
+      expect(result.association(:vessel).loaded?).to be_truthy
+      expect(result.association(:voyage).loaded?).to be_truthy
     end
   end
 
