@@ -268,8 +268,36 @@ end
 # Catálogo de servicios base
 puts "Creando catálogo de servicios..."
 services_catalog_data = [
-  { name: "Coordinación de contenedor a almacén", applies_to: "container", code: "CONT-COOR", amount: 1500.00, currency: "MXN" },
-  { name: "Asignación electrónica de carga", applies_to: "bl_house_line", code: "BL-ASIG", amount: 950.00, currency: "MXN" }
+  {
+    name: "Coordinación de contenedor a almacén",
+    applies_to: "container",
+    code: "CONT-COOR",
+    amount: 3500.00,
+    currency: "MXN",
+    sat_clave_prod_serv: "80151600",
+    sat_clave_unidad: "E48",
+    sat_objeto_imp: "02"
+  },
+  {
+    name: "Asignación electrónica de carga",
+    applies_to: "bl_house_line",
+    code: "BL-ASIG",
+    amount: 1200.00,
+    currency: "MXN",
+    sat_clave_prod_serv: "80151600",
+    sat_clave_unidad: "E48",
+    sat_objeto_imp: "02"
+  },
+  {
+    name: "Almacenaje",
+    applies_to: "bl_house_line",
+    code: "BL-ALMA",
+    amount: 170.91,
+    currency: "MXN",
+    sat_clave_prod_serv: "80151600",
+    sat_clave_unidad: "E48",
+    sat_objeto_imp: "02"
+  }
 ]
 
 services_catalog_data.each do |service_data|
@@ -277,6 +305,9 @@ services_catalog_data.each do |service_data|
   service.code = service_data[:code]
   service.amount = service_data[:amount]
   service.currency = service_data[:currency]
+  service.sat_clave_prod_serv = service_data[:sat_clave_prod_serv]
+  service.sat_clave_unidad = service_data[:sat_clave_unidad]
+  service.sat_objeto_imp = service_data[:sat_objeto_imp]
   service.active = true
   service.save! if service.changed? || service.new_record?
 end
