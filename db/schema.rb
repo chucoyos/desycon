@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_11_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_21_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -360,6 +360,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_130000) do
     t.check_constraint "status::text = ANY (ARRAY['registered'::character varying, 'complement_queued'::character varying, 'complement_issued'::character varying, 'failed'::character varying]::text[])", name: "check_invoice_payments_status"
   end
 
+  create_table "invoice_service_links", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "invoice_id", null: false
+    t.bigint "serviceable_id", null: false
+    t.string "serviceable_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id", "serviceable_type", "serviceable_id"], name: "index_invoice_service_links_uniqueness", unique: true
+    t.index ["invoice_id"], name: "index_invoice_service_links_on_invoice_id"
+    t.index ["serviceable_type", "serviceable_id"], name: "index_invoice_service_links_on_serviceable"
+  end
+
   create_table "invoices", force: :cascade do |t|
     t.string "cancellation_motive"
     t.datetime "cancelled_at"
@@ -569,6 +580,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_130000) do
   add_foreign_key "invoice_payment_evidences", "users", column: "submitted_by_id"
   add_foreign_key "invoice_payments", "invoices"
   add_foreign_key "invoice_payments", "invoices", column: "complement_invoice_id"
+  add_foreign_key "invoice_service_links", "invoices"
   add_foreign_key "invoices", "entities", column: "customs_agent_id"
   add_foreign_key "invoices", "entities", column: "issuer_entity_id"
   add_foreign_key "invoices", "entities", column: "receiver_entity_id"

@@ -314,6 +314,15 @@
                 Agregar servicio
               </button>
             <% end %>
+
+            <% if current_user&.admin_or_executive? && Rails.application.config.x.facturador.enabled && Rails.application.config.x.facturador.manual_actions_enabled %>
+              <%= form_with url: issue_manual_batch_invoices_path, method: :post, local: true, id: "container-batch-invoice-form", class: "inline-flex items-center gap-2" do %>
+                <%= hidden_field_tag :invoiceable_type, "ContainerService" %>
+                <%= submit_tag "Facturar seleccionados",
+                    class: "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all duration-200 cursor-pointer",
+                    data: { turbo_confirm: "Se emitirá un CFDI único para los servicios seleccionados.\n\n¿Deseas continuar?" } %>
+              <% end %>
+            <% end %>
           </div>
         </div>
 
@@ -322,11 +331,22 @@
             <% @container.container_services.each do |service| %>
               <div class="border border-gray-200 rounded-lg p-4 hover:border-purple-300 hover:bg-purple-50/30 transition-all duration-200">
                 <div class="flex justify-between items-start mb-2">
-                  <div class="flex-1">
+                  <div class="flex items-start gap-3 flex-1">
+                    <% if current_user&.admin_or_executive? && Rails.application.config.x.facturador.enabled && Rails.application.config.x.facturador.manual_actions_enabled && !service.facturado? %>
+                      <div class="pt-0.5">
+                        <%= check_box_tag "invoiceable_ids[]", service.id, false,
+                            form: "container-batch-invoice-form",
+                            id: "container_service_batch_#{service.id}",
+                            class: "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer" %>
+                      </div>
+                    <% end %>
+
+                    <div class="flex-1">
                     <h3 class="font-semibold text-gray-900"><%= service.service_catalog.name %></h3>
                     <% if service.billed_to_entity.present? %>
                       <p class="text-xs text-gray-600 mt-1">Facturar a: <%= service.billed_to_entity.name %></p>
                     <% end %>
+                    </div>
                   </div>
                   <div class="text-right">
                     <p class="text-base font-bold text-gray-900">$<%= number_with_delimiter(service.amount, delimiter: ',') %> <%= service.currency || 'MXN' %></p>

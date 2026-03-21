@@ -186,6 +186,25 @@ class InvoicesController < ApplicationController
     redirect_back fallback_location: containers_path, alert: "Error al emitir CFDI: #{e.message}"
   end
 
+  def issue_manual_batch
+    authorize Invoice, :issue_manual?
+
+    serviceables = find_invoiceables_batch
+    if serviceables.blank?
+      return redirect_back fallback_location: containers_path, alert: "Selecciona al menos un servicio válido."
+    end
+
+    result = Facturador::IssueGroupedServicesService.call(serviceables: serviceables, actor: current_user)
+
+    if result.success?
+      redirect_back fallback_location: containers_path, notice: "Emisión agrupada encolada/ejecutada correctamente."
+    else
+      redirect_back fallback_location: containers_path, alert: "No fue posible emitir CFDI agrupado: #{result.error_message}"
+    end
+  rescue Facturador::Error => e
+    redirect_back fallback_location: containers_path, alert: "Error al emitir CFDI agrupado: #{e.message}"
+  end
+
   def retry_issue
     authorize @invoice, :retry_issue?
 
@@ -318,6 +337,27 @@ class InvoicesController < ApplicationController
     else
       nil
     end
+  end
+
+  def find_invoiceables_batch
+    type = params[:invoiceable_type].to_s
+    ids = Array(params[:invoiceable_ids]).map(&:to_s).reject(&:blank?)
+    return [] if type.blank? || ids.empty?
+
+    model = case type
+    when "ContainerService"
+      ContainerService
+    when "BlHouseLineService"
+      BlHouseLineService
+    else
+      nil
+    end
+    return [] if model.nil?
+
+    services = model.where(id: ids).to_a
+    return [] unless services.size == ids.uniq.size
+
+    services
   end
 
   def payment_params

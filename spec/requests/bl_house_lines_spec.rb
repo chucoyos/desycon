@@ -152,6 +152,7 @@ RSpec.describe "BlHouseLines", type: :request do
 
       expect(response.body).to include("Agregar servicio")
       expect(response.body).to include("Agregar servicio a partida")
+      expect(response.body).to include("Facturar seleccionados")
     end
 
     it "shows delete button only for non-invoiced services" do

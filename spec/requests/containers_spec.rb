@@ -137,6 +137,7 @@ RSpec.describe "Containers", type: :request do
 
       expect(response.body).to include("Agregar servicio")
       expect(response.body).to include("Agregar servicio a contenedor")
+      expect(response.body).to include("Facturar seleccionados")
     end
 
     it "shows delete service button only for non-invoiced services" do

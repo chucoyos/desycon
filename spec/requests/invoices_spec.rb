@@ -269,6 +269,42 @@ RSpec.describe 'Invoices', type: :request do
     end
   end
 
+  describe 'POST /invoices/issue_manual_batch' do
+    before { sign_in admin_user, scope: :user }
+
+    it 'issues one grouped invoice for selected container services' do
+      receiver = create(:entity, :client, :with_fiscal_profile, :with_address)
+      container = create(:container, consolidator_entity: receiver)
+      first_service = create(:container_service, container: container, billed_to_entity: receiver, factura: nil)
+      second_service = create(:container_service, container: container, billed_to_entity: receiver, factura: nil)
+
+      allow(Facturador::IssueGroupedServicesService).to receive(:call)
+        .and_return(Facturador::IssueGroupedServicesService::Result.new(invoice: create(:invoice, invoiceable: nil)))
+
+      post issue_manual_batch_invoices_path, params: {
+        invoiceable_type: 'ContainerService',
+        invoiceable_ids: [ first_service.id, second_service.id ]
+      }
+
+      expect(Facturador::IssueGroupedServicesService).to have_received(:call) do |args|
+        expect(args[:serviceables].map(&:id)).to match_array([ first_service.id, second_service.id ])
+        expect(args[:actor]).to eq(admin_user)
+      end
+      expect(response).to have_http_status(:found)
+    end
+
+    it 'rejects request when no valid services are selected' do
+      post issue_manual_batch_invoices_path, params: {
+        invoiceable_type: 'ContainerService',
+        invoiceable_ids: []
+      }
+
+      expect(response).to have_http_status(:found)
+      follow_redirect!
+      expect(response.body).to include('Selecciona al menos un servicio válido')
+    end
+  end
+
   describe 'GET /invoices/:id' do
     before { sign_in admin_user, scope: :user }
 

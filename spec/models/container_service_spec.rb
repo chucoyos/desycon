@@ -52,5 +52,17 @@ RSpec.describe ContainerService, type: :model do
       expect(service.destroy).to be(false)
       expect(service.errors[:base]).to include('No se puede eliminar un servicio facturado.')
     end
+
+    it 'bloquea edicion y eliminacion cuando existe CFDI emitido por facturacion agrupada' do
+      service = create(:container_service, factura: nil)
+      invoice = create(:invoice, invoiceable: nil, status: 'issued')
+      create(:invoice_service_link, invoice: invoice, serviceable: service)
+
+      expect(service.update(observaciones: 'Cambio no permitido')).to be(false)
+      expect(service.errors[:base]).to include('No se puede editar un servicio facturado.')
+
+      expect(service.destroy).to be(false)
+      expect(service.errors[:base]).to include('No se puede eliminar un servicio facturado.')
+    end
   end
 end

@@ -35,6 +35,7 @@ Rails.application.routes.draw do
   resources :invoices, only: [ :index, :show, :new, :create ] do
     collection do
       post :issue_manual
+      post :issue_manual_batch
     end
 
     resources :invoice_payments, only: [ :show, :edit, :update, :destroy ]

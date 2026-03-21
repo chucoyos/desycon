@@ -6,6 +6,7 @@ class BlHouseLineService < ApplicationRecord
   belongs_to :service_catalog
   belongs_to :billed_to_entity, class_name: "Entity", optional: true
   has_many :invoices, as: :invoiceable, dependent: :nullify
+  has_many :invoice_service_links, as: :serviceable, dependent: :destroy
 
   before_validation :assign_default_billed_to_entity
   before_update :prevent_changes_if_facturado
@@ -31,7 +32,13 @@ class BlHouseLineService < ApplicationRecord
   end
 
   def latest_invoice
-    invoices.recent_first.first
+    direct_invoice = invoices.recent_first.first
+    linked_invoice = Invoice.joins(:invoice_service_links)
+                          .where(invoice_service_links: { serviceable_type: self.class.name, serviceable_id: id })
+                          .recent_first
+                          .first
+
+    [ direct_invoice, linked_invoice ].compact.max_by(&:created_at)
   end
 
   def amount
@@ -78,6 +85,12 @@ class BlHouseLineService < ApplicationRecord
   end
 
   def billed_by_invoice?
-    invoices.where(status: BILLING_LOCK_STATUSES).exists?
+    direct_billing = invoices.where(status: BILLING_LOCK_STATUSES).exists?
+    return true if direct_billing
+
+    Invoice.joins(:invoice_service_links)
+      .where(invoice_service_links: { serviceable_type: self.class.name, serviceable_id: id })
+      .where(status: BILLING_LOCK_STATUSES)
+      .exists?
   end
 end
