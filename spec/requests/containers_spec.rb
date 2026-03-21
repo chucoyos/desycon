@@ -137,6 +137,15 @@ RSpec.describe "Containers", type: :request do
 
       expect(response.body).to include("Agregar servicio")
       expect(response.body).to include("Agregar servicio a contenedor")
+    end
+
+    it "shows grouped invoice controls when services exist" do
+      sign_in user, scope: :user
+      container = create(:container)
+      create(:container_service, container: container, factura: nil)
+
+      get container_url(container)
+
       expect(response.body).to include("Facturar seleccionados")
     end
 

@@ -152,6 +152,15 @@ RSpec.describe "BlHouseLines", type: :request do
 
       expect(response.body).to include("Agregar servicio")
       expect(response.body).to include("Agregar servicio a partida")
+    end
+
+    it "shows grouped invoice controls when services exist" do
+      sign_in user, scope: :user
+      bl_house_line = create(:bl_house_line)
+      create(:bl_house_line_service, bl_house_line: bl_house_line, factura: nil)
+
+      get bl_house_line_url(bl_house_line)
+
       expect(response.body).to include("Facturar seleccionados")
     end
 
