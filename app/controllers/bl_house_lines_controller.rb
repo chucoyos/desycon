@@ -512,6 +512,7 @@ class BlHouseLinesController < ApplicationController
       bl_house_line_services_attributes: [
         :id,
         :service_catalog_id,
+        :amount,
         :billed_to_entity_id,
         :fecha_programada,
         :observaciones,
@@ -590,7 +591,7 @@ class BlHouseLinesController < ApplicationController
   end
 
   def show_service_attributes
-    service_fields = [ :id, :service_catalog_id, :billed_to_entity_id, :fecha_programada, :observaciones, :factura, :_destroy ]
+    service_fields = [ :id, :service_catalog_id, :amount, :billed_to_entity_id, :fecha_programada, :observaciones, :factura, :_destroy ]
 
     services_attrs = if params[:bl_house_line].is_a?(ActionController::Parameters)
       params[:bl_house_line][:bl_house_line_services_attributes]

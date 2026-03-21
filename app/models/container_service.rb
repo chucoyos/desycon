@@ -9,6 +9,7 @@ class ContainerService < ApplicationRecord
   has_many :invoice_service_links, as: :serviceable, dependent: :destroy
 
   before_validation :assign_default_billed_to_entity
+  before_validation :assign_default_amount
   before_update :prevent_changes_if_facturado
   before_destroy :prevent_destroy_if_facturado, prepend: true
   after_commit :enqueue_facturador_auto_issue, on: :create
@@ -50,10 +51,6 @@ class ContainerService < ApplicationRecord
     [ direct_invoice, linked_invoice ].compact.max_by(&:created_at)
   end
 
-  def amount
-    service_catalog&.amount
-  end
-
   def currency
     service_catalog&.currency
   end
@@ -76,6 +73,12 @@ class ContainerService < ApplicationRecord
     return if billed_to_entity_id.present?
 
     self.billed_to_entity_id = container&.consolidator_entity_id || container&.consolidator_id
+  end
+
+  def assign_default_amount
+    return if amount.present?
+
+    self.amount = service_catalog&.amount
   end
 
   def prevent_changes_if_facturado

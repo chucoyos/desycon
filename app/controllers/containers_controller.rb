@@ -338,6 +338,7 @@ class ContainersController < ApplicationController
       container_services_attributes: [
         :id,
         :service_catalog_id,
+        :amount,
         :billed_to_entity_id,
         :fecha_programada,
         :observaciones,
@@ -404,7 +405,7 @@ class ContainersController < ApplicationController
   end
 
   def show_service_attributes
-    service_fields = [ :id, :service_catalog_id, :billed_to_entity_id, :fecha_programada, :observaciones, :factura, :_destroy ]
+    service_fields = [ :id, :service_catalog_id, :amount, :billed_to_entity_id, :fecha_programada, :observaciones, :factura, :_destroy ]
 
     services_attrs = if params[:container].is_a?(ActionController::Parameters)
       params[:container][:container_services_attributes]

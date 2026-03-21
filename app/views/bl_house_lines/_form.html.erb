@@ -397,6 +397,73 @@
 <% end %>
 
 <script>
+  function normalizeCatalogAmountValue(rawAmount) {
+    if (rawAmount === null || rawAmount === undefined || rawAmount === '') return null;
+    const parsed = Number.parseFloat(String(rawAmount).replace(',', '.'));
+    return Number.isFinite(parsed) ? parsed.toFixed(2) : null;
+  }
+
+  function getCatalogAmountFromSelect(serviceCatalogSelect) {
+    let amountFromMap = null;
+    const selectedValue = serviceCatalogSelect.value;
+    const rawMap = serviceCatalogSelect.getAttribute('data-catalog-amounts');
+
+    if (rawMap && selectedValue) {
+      try {
+        const catalogAmountsMap = JSON.parse(rawMap);
+        amountFromMap = catalogAmountsMap[selectedValue] ?? null;
+      } catch (error) {
+        amountFromMap = null;
+      }
+    }
+
+    const selectedOption = serviceCatalogSelect.selectedOptions[0];
+    const amountFromOption = selectedOption?.dataset?.amount;
+
+    return normalizeCatalogAmountValue(amountFromMap ?? amountFromOption);
+  }
+
+  function syncBlServiceAmountField(serviceCatalogSelect) {
+    if (!serviceCatalogSelect) return;
+
+    const amountInput = serviceCatalogSelect
+      .closest('.service-card')
+      ?.querySelector('.js-service-amount-input');
+
+    if (!amountInput || amountInput.disabled) return;
+
+    const catalogAmount = getCatalogAmountFromSelect(serviceCatalogSelect);
+    if (!catalogAmount) return;
+
+    if (amountInput.value.trim() === '' || amountInput.dataset.autofilledFromCatalog === 'true') {
+      amountInput.value = catalogAmount;
+      amountInput.dataset.autofilledFromCatalog = 'true';
+    }
+  }
+
+  function initBlServiceAmountSync(root = document) {
+    root.querySelectorAll('.js-service-catalog-select').forEach((select) => {
+      syncBlServiceAmountField(select);
+
+      if (select.dataset.amountSyncInitialized === 'true') return;
+      select.dataset.amountSyncInitialized = 'true';
+
+      select.addEventListener('change', () => {
+        const amountInput = select.closest('.service-card')?.querySelector('.js-service-amount-input');
+        if (amountInput) amountInput.dataset.autofilledFromCatalog = 'true';
+        syncBlServiceAmountField(select);
+      });
+    });
+
+    root.querySelectorAll('.js-service-amount-input').forEach((input) => {
+      if (input.dataset.amountSyncInitialized === 'true') return;
+      input.dataset.amountSyncInitialized = 'true';
+      input.addEventListener('input', () => {
+        input.dataset.autofilledFromCatalog = 'false';
+      });
+    });
+  }
+
   const initBlServices = () => {
     const addServiceBtn = document.getElementById('add-bl-service');
     const servicesContainer = document.getElementById('bl-services-container');
@@ -410,6 +477,7 @@
         const newService = serviceTemplate.innerHTML.replace(/NEW_RECORD/g, Date.now());
         servicesContainer.insertAdjacentHTML('afterbegin', newService);
         const newCard = servicesContainer.firstElementChild;
+        initBlServiceAmountSync(newCard);
         if (newCard) {
           newCard.classList.add('service-card-appear');
           newCard.addEventListener('animationend', () => newCard.classList.remove('service-card-appear'), { once: true });
@@ -436,8 +504,23 @@
         }
       }
     });
+
+    initBlServiceAmountSync(servicesContainer);
   };
 
   document.addEventListener('turbo:load', initBlServices);
   document.addEventListener('DOMContentLoaded', initBlServices);
+
+  document.addEventListener('change', (event) => {
+    const select = event.target.closest('.js-service-catalog-select');
+    if (!select) return;
+    const amountInput = select.closest('.service-card')?.querySelector('.js-service-amount-input');
+    if (!amountInput || amountInput.disabled) return;
+
+    const catalogAmount = getCatalogAmountFromSelect(select);
+    if (!catalogAmount) return;
+
+    amountInput.value = catalogAmount;
+    amountInput.dataset.autofilledFromCatalog = 'true';
+  });
 </script>

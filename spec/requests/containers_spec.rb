@@ -141,6 +141,8 @@ RSpec.describe "Containers", type: :request do
 
     it "shows grouped invoice controls when services exist" do
       sign_in user, scope: :user
+      allow(Rails.application.config.x.facturador).to receive(:enabled).and_return(true)
+      allow(Rails.application.config.x.facturador).to receive(:manual_actions_enabled).and_return(true)
       container = create(:container)
       create(:container_service, container: container, factura: nil)
 
@@ -260,6 +262,7 @@ RSpec.describe "Containers", type: :request do
             container_services_attributes: {
               "0" => {
                 service_catalog_id: service_catalog.id,
+                amount: "321.50",
                 billed_to_entity_id: container.consolidator_entity_id,
                 observaciones: "Alta desde modal"
               }
@@ -269,6 +272,7 @@ RSpec.describe "Containers", type: :request do
       }.to change(container.container_services, :count).by(1)
 
       expect(response).to redirect_to(container_url(container, anchor: "servicios"))
+      expect(container.container_services.order(:id).last.amount).to eq(321.5)
     end
 
     it "deletes a non-invoiced service from show flow" do
@@ -311,6 +315,7 @@ RSpec.describe "Containers", type: :request do
             "0" => {
               id: service.id,
               service_catalog_id: new_service_catalog.id,
+              amount: "999.99",
               billed_to_entity_id: container.consolidator_entity_id,
               observaciones: "Editado desde modal"
             }
@@ -320,6 +325,7 @@ RSpec.describe "Containers", type: :request do
 
       expect(response).to redirect_to(container_url(container, anchor: "servicios"))
       expect(service.reload.service_catalog_id).to eq(new_service_catalog.id)
+      expect(service.amount).to eq(999.99)
       expect(service.observaciones).to eq("Editado desde modal")
     end
   end

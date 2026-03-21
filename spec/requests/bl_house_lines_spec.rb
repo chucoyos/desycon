@@ -156,6 +156,8 @@ RSpec.describe "BlHouseLines", type: :request do
 
     it "shows grouped invoice controls when services exist" do
       sign_in user, scope: :user
+      allow(Rails.application.config.x.facturador).to receive(:enabled).and_return(true)
+      allow(Rails.application.config.x.facturador).to receive(:manual_actions_enabled).and_return(true)
       bl_house_line = create(:bl_house_line)
       create(:bl_house_line_service, bl_house_line: bl_house_line, factura: nil)
 
@@ -328,6 +330,7 @@ RSpec.describe "BlHouseLines", type: :request do
               bl_house_line_services_attributes: {
                 "0" => {
                   service_catalog_id: service_catalog.id,
+                  amount: "210.25",
                   billed_to_entity_id: client.id,
                   observaciones: "Alta desde modal"
                 }
@@ -350,6 +353,7 @@ RSpec.describe "BlHouseLines", type: :request do
               bl_house_line_services_attributes: {
                 "0" => {
                   service_catalog_id: service_catalog.id,
+                  amount: "210.25",
                   billed_to_entity_id: client.id,
                   observaciones: "Alta desde modal"
                 }
@@ -359,6 +363,7 @@ RSpec.describe "BlHouseLines", type: :request do
         }.to change(bl_house_line.bl_house_line_services, :count).by(1)
 
         expect(response).to redirect_to(bl_house_line_url(bl_house_line, anchor: "servicios"))
+        expect(bl_house_line.bl_house_line_services.order(:id).last.amount).to eq(210.25)
       end
 
       it "deletes a non-invoiced service from show flow" do
@@ -403,6 +408,7 @@ RSpec.describe "BlHouseLines", type: :request do
               "0" => {
                 id: service.id,
                 service_catalog_id: new_service_catalog.id,
+                amount: "845.10",
                 billed_to_entity_id: client.id,
                 observaciones: "Editado desde modal"
               }
@@ -412,6 +418,7 @@ RSpec.describe "BlHouseLines", type: :request do
 
         expect(response).to redirect_to(bl_house_line_url(bl_house_line, anchor: "servicios"))
         expect(service.reload.service_catalog_id).to eq(new_service_catalog.id)
+        expect(service.amount).to eq(845.1)
         expect(service.observaciones).to eq("Editado desde modal")
       end
     end

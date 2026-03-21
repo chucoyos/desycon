@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_21_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_21_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -73,6 +73,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_21_110000) do
   end
 
   create_table "bl_house_line_services", force: :cascade do |t|
+    t.decimal "amount", precision: 12, scale: 2, null: false
     t.bigint "billed_to_entity_id"
     t.bigint "bl_house_line_id", null: false
     t.datetime "created_at", null: false
@@ -162,6 +163,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_21_110000) do
   end
 
   create_table "container_services", force: :cascade do |t|
+    t.decimal "amount", precision: 12, scale: 2, null: false
     t.bigint "billed_to_entity_id"
     t.bigint "container_id", null: false
     t.datetime "created_at", null: false

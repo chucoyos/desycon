@@ -65,4 +65,24 @@ RSpec.describe ContainerService, type: :model do
       expect(service.errors[:base]).to include('No se puede eliminar un servicio facturado.')
     end
   end
+
+  describe 'monto por servicio' do
+    it 'usa el monto del catalogo por defecto al crear' do
+      catalog = create(:service_catalog, applies_to: 'container', amount: 150.75)
+
+      service = create(:container_service, service_catalog: catalog, amount: nil)
+
+      expect(service.amount).to eq(150.75)
+    end
+
+    it 'permite conservar un monto distinto al catalogo' do
+      catalog = create(:service_catalog, applies_to: 'container', amount: 100)
+      service = create(:container_service, service_catalog: catalog, amount: 180.5)
+
+      catalog.update!(amount: 220)
+      service.reload
+
+      expect(service.amount).to eq(180.5)
+    end
+  end
 end

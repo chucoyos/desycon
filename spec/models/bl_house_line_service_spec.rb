@@ -65,4 +65,24 @@ RSpec.describe BlHouseLineService, type: :model do
       expect(service.errors[:base]).to include('No se puede eliminar un servicio facturado.')
     end
   end
+
+  describe 'monto por servicio' do
+    it 'usa el monto del catalogo por defecto al crear' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', amount: 180.25)
+
+      service = create(:bl_house_line_service, service_catalog: catalog, amount: nil)
+
+      expect(service.amount).to eq(180.25)
+    end
+
+    it 'permite conservar un monto distinto al catalogo' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', amount: 95)
+      service = create(:bl_house_line_service, service_catalog: catalog, amount: 210.4)
+
+      catalog.update!(amount: 300)
+      service.reload
+
+      expect(service.amount).to eq(210.4)
+    end
+  end
 end
