@@ -58,7 +58,11 @@ class ContainersController < ApplicationController
     return if current_user&.customs_broker?
 
     @service_catalogs = ServiceCatalog.for_containers
-    @clients = Entity.clients.order(:name)
+    @clients = Entity.clients.order(:name).to_a
+    if @container.consolidator_entity.present? && @clients.none? { |client| client.id == @container.consolidator_entity_id }
+      @clients << @container.consolidator_entity
+      @clients.sort_by!(&:name)
+    end
   end
 
   def new
