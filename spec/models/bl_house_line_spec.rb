@@ -279,7 +279,7 @@ RSpec.describe BlHouseLine, type: :model do
       }.to change { bl_house_line.reload.bl_house_line_services.where(service_catalog: catalog).count }.by(1)
 
       service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)
-      expect(service.amount).to eq(BigDecimal("8203.68"))
+      expect(service.amount).to eq(BigDecimal("6048"))
       expect(service.creation_origin).to be_blank
     end
 
@@ -294,11 +294,11 @@ RSpec.describe BlHouseLine, type: :model do
     it 'recalculates amount when weight changes and service is not invoiced' do
       bl_house_line.update!(status: "despachado")
       service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)
-      expect(service.amount).to eq(BigDecimal("8203.68"))
+      expect(service.amount).to eq(BigDecimal("6048"))
 
       bl_house_line.update!(peso: 14.2)
 
-      expect(service.reload.amount).to eq(BigDecimal("10254.60"))
+      expect(service.reload.amount).to eq(BigDecimal("7560"))
     end
 
     it 'removes storage service if recalculation falls into grace period' do

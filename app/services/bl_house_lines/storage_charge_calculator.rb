@@ -2,6 +2,11 @@ module BlHouseLines
   class StorageChargeCalculator
     GRACE_DAYS = 7
     MINIMUM_UNITS = 9
+    DAILY_RATE_TIERS = [
+      { from: 1, to: 15, rate: BigDecimal("126") },
+      { from: 16, to: 45, rate: BigDecimal("196") },
+      { from: 46, to: nil, rate: BigDecimal("299") }
+    ].freeze
 
     Result = Struct.new(
       :weight_units,
@@ -38,6 +43,7 @@ module BlHouseLines
       volume_units = ceil_units(bl_house_line.volumen)
       billable_units = [ weight_units, volume_units, MINIMUM_UNITS ].max
       billable_days = calculate_billable_days
+      daily_subtotal = calculate_daily_subtotal(billable_days)
       price = unit_price.to_d
 
       Result.new(
@@ -46,7 +52,7 @@ module BlHouseLines
         billable_units: billable_units,
         billable_days: billable_days,
         unit_price: price,
-        total: (billable_units * billable_days * price).round(2)
+        total: (billable_units * daily_subtotal).round(2)
       )
     end
 
@@ -64,6 +70,31 @@ module BlHouseLines
       days = (dispatch - grace_end).to_i
 
       [ days, 0 ].max
+    end
+
+    def calculate_daily_subtotal(billable_days)
+      remaining = billable_days
+      return BigDecimal("0") if remaining <= 0
+
+      subtotal = BigDecimal("0")
+      DAILY_RATE_TIERS.each do |tier|
+        break if remaining <= 0
+
+        days_in_tier = tier_days_for(remaining: remaining, tier: tier)
+        remaining -= days_in_tier
+        subtotal += days_in_tier * tier[:rate]
+      end
+
+      subtotal
+    end
+
+    def tier_days_for(remaining:, tier:)
+      if tier[:to].nil?
+        remaining
+      else
+        tier_span = tier[:to] - tier[:from] + 1
+        [ remaining, tier_span ].min
+      end
     end
   end
 end

@@ -289,10 +289,10 @@ services_catalog_data = [
     sat_objeto_imp: "02"
   },
   {
-    name: "Almacenaje",
+    name: "Almacenaje de Carga Suelta en Bodega",
     applies_to: "bl_house_line",
     code: "BL-ALMA",
-    amount: 170.91,
+    amount: 126.00,
     currency: "MXN",
     sat_clave_prod_serv: "80151600",
     sat_clave_unidad: "E48",

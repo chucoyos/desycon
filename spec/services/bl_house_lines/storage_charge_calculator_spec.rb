@@ -23,7 +23,7 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
       it "charges by weight units" do
         expect(result.billable_units).to eq(12)
         expect(result.billable_days).to eq(4)
-        expect(result.total).to eq(BigDecimal("8203.68"))
+        expect(result.total).to eq(BigDecimal("6048"))
       end
     end
 
@@ -73,6 +73,50 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
 
       it "returns nil" do
         expect(result).to be_nil
+      end
+    end
+
+    context "when billable days are 15" do
+      let(:peso) { 12 }
+      let(:volumen) { 10 }
+      let(:dispatch_date) { Time.zone.local(2026, 4, 10, 10, 0, 0) }
+
+      it "uses only first tier" do
+        expect(result.billable_days).to eq(15)
+        expect(result.total).to eq(BigDecimal("22680"))
+      end
+    end
+
+    context "when billable days are 16" do
+      let(:peso) { 12 }
+      let(:volumen) { 10 }
+      let(:dispatch_date) { Time.zone.local(2026, 4, 11, 10, 0, 0) }
+
+      it "uses first tier plus one day of second tier" do
+        expect(result.billable_days).to eq(16)
+        expect(result.total).to eq(BigDecimal("25032"))
+      end
+    end
+
+    context "when billable days are 45" do
+      let(:peso) { 12 }
+      let(:volumen) { 10 }
+      let(:dispatch_date) { Time.zone.local(2026, 5, 10, 10, 0, 0) }
+
+      it "uses full first and second tiers" do
+        expect(result.billable_days).to eq(45)
+        expect(result.total).to eq(BigDecimal("93240"))
+      end
+    end
+
+    context "when billable days are 46" do
+      let(:peso) { 12 }
+      let(:volumen) { 10 }
+      let(:dispatch_date) { Time.zone.local(2026, 5, 11, 10, 0, 0) }
+
+      it "adds third tier from day 46 onwards" do
+        expect(result.billable_days).to eq(46)
+        expect(result.total).to eq(BigDecimal("96828"))
       end
     end
   end
