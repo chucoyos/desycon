@@ -12,7 +12,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
       <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider">Datos Generales</h2>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <%= f.label :receiver_kind, "Tipo de receptor", class: "block text-xs font-medium text-gray-600 mb-1" %>
           <%= f.select :receiver_kind,
@@ -42,6 +42,15 @@
             class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg",
             required: true,
             id: "manual_receiver_entity_id" %>
+        </div>
+
+        <div>
+          <%= f.label :serie, "Serie", class: "block text-xs font-medium text-gray-600 mb-1" %>
+          <%= f.select :serie,
+            options_for_select(@manual_series_options || [["Automática", ""]], manual_form_values["serie"]),
+            {},
+            class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg",
+            id: "manual_serie" %>
         </div>
       </div>
     </div>

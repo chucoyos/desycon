@@ -241,6 +241,27 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         expect(payload[:serie]).to eq('GMZO')
       end
 
+      it 'uses manual serie override from payload snapshot for manual invoices' do
+        allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')
+
+        invoice = create(
+          :invoice,
+          kind: 'ingreso',
+          invoiceable: nil,
+          issuer_entity: issuer,
+          receiver_entity: receiver,
+          payload_snapshot: {
+            manual: true,
+            serie_override: 'MZ'
+          }
+        )
+        create(:invoice_line_item, invoice: invoice)
+
+        payload = described_class.build(invoice)
+
+        expect(payload[:serie]).to eq('MZ')
+      end
+
       it 'uses simplified sandbox mapping for importacion destination ports' do
         allow(Facturador::Config).to receive(:environment).and_return('sandbox')
         allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')

@@ -171,6 +171,7 @@ RSpec.describe 'Invoices', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('Nuevo CFDI')
       expect(response.body).to include('Generar CFDI')
+      expect(response.body).to include('Serie')
     end
   end
 
@@ -236,6 +237,7 @@ RSpec.describe 'Invoices', type: :request do
           receiver_kind: 'client',
           receiver_entity_id: receiver.id,
           customs_agent_id: '',
+          serie: 'MZ',
           line_items: [
             {
               service_catalog_id: create(:service_catalog).id,
@@ -247,6 +249,14 @@ RSpec.describe 'Invoices', type: :request do
         }
       }
 
+      expect(Facturador::CreateManualInvoiceService).to have_received(:call).with(
+        hash_including(
+          actor: admin_user,
+          receiver_entity_id: receiver.id.to_s,
+          customs_agent_id: '',
+          serie: 'MZ'
+        )
+      )
       expect(response).to redirect_to(invoice_path(invoice, from_manual_create: 1))
       expect(flash[:notice]).to include('CFDI manual creado')
     end
@@ -260,6 +270,7 @@ RSpec.describe 'Invoices', type: :request do
           receiver_kind: 'client',
           receiver_entity_id: receiver.id,
           customs_agent_id: '',
+          serie: '',
           line_items: []
         }
       }

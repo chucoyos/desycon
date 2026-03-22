@@ -141,7 +141,8 @@ class InvoicesController < ApplicationController
     @manual_form_values = {
       "receiver_kind" => @selected_receiver_kind,
       "customs_agent_id" => "",
-      "receiver_entity_id" => ""
+      "receiver_entity_id" => "",
+      "serie" => ""
     }
     @manual_line_items_prefill = []
   end
@@ -153,6 +154,7 @@ class InvoicesController < ApplicationController
       actor: current_user,
       receiver_entity_id: manual_invoice_params[:receiver_entity_id],
       customs_agent_id: manual_invoice_params[:customs_agent_id],
+      serie: manual_invoice_params[:serie],
       line_items_params: manual_line_items_params
     )
 
@@ -365,7 +367,7 @@ class InvoicesController < ApplicationController
   end
 
   def manual_invoice_params
-    params.require(:manual_invoice).permit(:receiver_kind, :receiver_entity_id, :customs_agent_id)
+    params.require(:manual_invoice).permit(:receiver_kind, :receiver_entity_id, :customs_agent_id, :serie)
   end
 
   def manual_line_items_params
@@ -401,6 +403,22 @@ class InvoicesController < ApplicationController
     @receiver_consolidators = Entity.consolidators.order(:name)
     @customs_agents_for_manual = Entity.customs_agents.order(:name)
     @service_catalogs_for_manual = ServiceCatalog.active.order(:name)
+    @manual_series_options = build_manual_series_options
+  end
+
+  def build_manual_series_options
+    environment = Facturador::Config.environment.to_s.downcase
+    mapped_series = if environment == "sandbox"
+      [ "MZ", "A", "B", "C" ]
+    else
+      [ "GMZO", "GLZC", "GVRZ", "GATM" ]
+    end
+
+    global_serie = Facturador::Config.serie.to_s.strip
+    series = mapped_series.dup
+    series << global_serie if global_serie.present?
+
+    [ [ "Automática", "" ] ] + series.uniq.map { |serie| [ serie, serie ] }
   end
 
   def resolved_start_date

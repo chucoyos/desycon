@@ -9,20 +9,22 @@ module Facturador
     end
 
     class << self
-      def call(actor:, receiver_entity_id:, customs_agent_id:, line_items_params:)
+      def call(actor:, receiver_entity_id:, customs_agent_id:, line_items_params:, serie: nil)
         new(
           actor: actor,
           receiver_entity_id: receiver_entity_id,
           customs_agent_id: customs_agent_id,
+          serie: serie,
           line_items_params: line_items_params
         ).call
       end
     end
 
-    def initialize(actor:, receiver_entity_id:, customs_agent_id:, line_items_params:)
+    def initialize(actor:, receiver_entity_id:, customs_agent_id:, line_items_params:, serie:)
       @actor = actor
       @receiver_entity_id = receiver_entity_id
       @customs_agent_id = customs_agent_id
+      @serie = serie
       @line_items_params = line_items_params
     end
 
@@ -78,6 +80,7 @@ module Facturador
             manual: true,
             receiver_kind: receiver.role_kind,
             customs_agent_id: customs_agent&.id,
+            serie_override: normalized_serie_override,
             line_items: parsed_line_items
           }
         )
@@ -97,7 +100,11 @@ module Facturador
 
     private
 
-    attr_reader :actor, :receiver_entity_id, :customs_agent_id, :line_items_params
+    attr_reader :actor, :receiver_entity_id, :customs_agent_id, :line_items_params, :serie
+
+    def normalized_serie_override
+      serie.to_s.strip.presence
+    end
 
     def resolve_customs_agent
       return nil if customs_agent_id.blank?
