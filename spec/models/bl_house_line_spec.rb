@@ -249,6 +249,79 @@ RSpec.describe BlHouseLine, type: :model do
     end
   end
 
+  describe 'almacenaje service' do
+    let!(:catalog) do
+      create(
+        :service_catalog,
+        name: "Almacenaje",
+        code: "BL-ALMA",
+        applies_to: "bl_house_line",
+        amount: 170.91,
+        currency: "MXN"
+      )
+    end
+
+    let(:container) { create(:container, fecha_desconsolidacion: Date.new(2026, 3, 20)) }
+    let(:bl_house_line) do
+      create(
+        :bl_house_line,
+        container: container,
+        status: "revalidado",
+        peso: 12,
+        volumen: 10,
+        fecha_despacho: Time.zone.local(2026, 3, 30, 9, 0, 0)
+      )
+    end
+
+    it 'creates storage service on despachado when grace period is exceeded' do
+      expect {
+        bl_house_line.update!(status: "despachado")
+      }.to change { bl_house_line.reload.bl_house_line_services.where(service_catalog: catalog).count }.by(1)
+
+      service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)
+      expect(service.amount).to eq(BigDecimal("8203.68"))
+      expect(service.creation_origin).to be_blank
+    end
+
+    it 'does not create storage service within grace period' do
+      bl_house_line.update!(fecha_despacho: Time.zone.local(2026, 3, 26, 9, 0, 0))
+
+      expect {
+        bl_house_line.update!(status: "despachado")
+      }.not_to change { bl_house_line.reload.bl_house_line_services.where(service_catalog: catalog).count }
+    end
+
+    it 'recalculates amount when weight changes and service is not invoiced' do
+      bl_house_line.update!(status: "despachado")
+      service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)
+      expect(service.amount).to eq(BigDecimal("8203.68"))
+
+      bl_house_line.update!(peso: 14.2)
+
+      expect(service.reload.amount).to eq(BigDecimal("10254.60"))
+    end
+
+    it 'removes storage service if recalculation falls into grace period' do
+      bl_house_line.update!(status: "despachado")
+      service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)
+      expect(service).to be_present
+
+      bl_house_line.update!(fecha_despacho: Time.zone.local(2026, 3, 26, 9, 0, 0))
+
+      expect(BlHouseLineService.exists?(service.id)).to be(false)
+    end
+
+    it 'does not recalculate when storage service is invoiced' do
+      bl_house_line.update!(status: "despachado")
+      service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)
+      service.update!(factura: "A-001")
+
+      expect {
+        bl_house_line.update!(peso: 20)
+      }.not_to change { service.reload.amount }
+    end
+  end
+
   describe '#documentos_completos?' do
     let(:bl_house_line) { create(:bl_house_line) }
 

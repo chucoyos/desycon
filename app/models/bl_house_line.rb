@@ -63,6 +63,8 @@ class BlHouseLine < ApplicationRecord
   after_update :notify_revalidation_request, if: -> { !skip_revalidation_notification && saved_change_to_status? && validar_documentos? }
   after_update :notify_customs_agent_revalidation, if: -> { saved_change_to_status? && revalidado? }
   after_update :ensure_asignacion_electronica_service, if: -> { saved_change_to_status? && revalidado? }
+  after_update :ensure_storage_service_on_despachado, if: -> { saved_change_to_status? && despachado? }
+  after_update :recalculate_storage_service_if_needed, if: :storage_recalculation_triggered?
   def documentos_completos?
     required_revalidation_documents.all? { |field| public_send(field).attached? }
   end
@@ -137,6 +139,61 @@ class BlHouseLine < ApplicationRecord
     Rails.logger.error("Failed to create asignación electrónica de carga service for BL #{id}: #{e.message}")
   end
 
+  def ensure_storage_service_on_despachado
+    catalog = storage_catalog
+    return unless catalog
+
+    result = storage_charge_result(unit_price: catalog.amount)
+    if result.blank?
+      Rails.logger.warn("Storage service skipped for BL #{id}: missing dispatch or desconsolidation date")
+      return
+    end
+
+    if result.billable_days <= 0
+      Rails.logger.info("Storage service skipped for BL #{id}: within grace period")
+      return
+    end
+
+    service = bl_house_line_services.find_or_initialize_by(service_catalog: catalog)
+
+    if service.persisted? && service.facturado?
+      Rails.logger.info("Storage service unchanged for BL #{id}: already invoiced")
+      return
+    end
+
+    service.billed_to_entity_id ||= client_id
+    service.amount = result.total
+    service.save! if service.new_record? || service.changed?
+  rescue StandardError => e
+    Rails.logger.error("Failed to create/update storage service for BL #{id}: #{e.message}")
+  end
+
+  def recalculate_storage_service_if_needed
+    catalog = storage_catalog
+    return unless catalog
+
+    service = bl_house_line_services.find_by(service_catalog: catalog)
+    return unless service
+    return if service.facturado?
+
+    result = storage_charge_result(unit_price: catalog.amount)
+    if result.blank?
+      Rails.logger.warn("Storage service recalculation skipped for BL #{id}: missing dispatch or desconsolidation date")
+      return
+    end
+
+    if result.billable_days <= 0
+      service.destroy!
+      Rails.logger.info("Storage service removed for BL #{id}: within grace period")
+      return
+    end
+
+    service.amount = result.total
+    service.save! if service.changed?
+  rescue StandardError => e
+    Rails.logger.error("Failed to recalculate storage service for BL #{id}: #{e.message}")
+  end
+
   def broker_matches_agency
     return if customs_broker_id.blank? || customs_agent_id.blank?
 
@@ -146,6 +203,23 @@ class BlHouseLine < ApplicationRecord
   end
 
   private
+
+  def storage_recalculation_triggered?
+    saved_change_to_peso? || saved_change_to_volumen? || saved_change_to_fecha_despacho?
+  end
+
+  def storage_catalog
+    ServiceCatalog.active.find_by(code: "BL-ALMA", applies_to: "bl_house_line")
+  end
+
+  def storage_charge_result(unit_price:)
+    BlHouseLines::StorageChargeCalculator.call(
+      bl_house_line: self,
+      desconsolidation_date: container&.fecha_desconsolidacion,
+      dispatch_date: fecha_despacho,
+      unit_price: unit_price
+    )
+  end
 
   def assign_next_partida_number
     return if partida.present? || container_id.blank?
