@@ -84,5 +84,42 @@ RSpec.describe BlHouseLineService, type: :model do
 
       expect(service.amount).to eq(210.4)
     end
+
+    it 'calcula ENTCAM por formula aunque llegue monto manual' do
+      catalog = create(
+        :service_catalog,
+        applies_to: 'bl_house_line',
+        code: 'BL-ENTCAM',
+        amount: 126,
+        currency: 'MXN'
+      )
+      bl_house_line = create(:bl_house_line, peso: 13.2, volumen: 8.1)
+
+      service = create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, amount: 1)
+
+      expect(service.amount).to eq(BigDecimal('1764'))
+    end
+
+    it 'calcula ALMA por formula aunque llegue monto manual cuando hay dias cobrables' do
+      catalog = create(
+        :service_catalog,
+        applies_to: 'bl_house_line',
+        code: 'BL-ALMA',
+        amount: 170.91,
+        currency: 'MXN'
+      )
+      container = create(:container, fecha_desconsolidacion: Date.new(2026, 3, 20))
+      bl_house_line = create(
+        :bl_house_line,
+        container: container,
+        peso: 12,
+        volumen: 10,
+        fecha_despacho: Time.zone.local(2026, 3, 30, 9, 0, 0)
+      )
+
+      service = create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, amount: 1)
+
+      expect(service.amount).to eq(BigDecimal('6048'))
+    end
   end
 end

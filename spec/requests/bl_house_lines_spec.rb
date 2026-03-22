@@ -366,6 +366,78 @@ RSpec.describe "BlHouseLines", type: :request do
         expect(bl_house_line.bl_house_line_services.order(:id).last.amount).to eq(210.25)
       end
 
+      it "calculates BL-ENTCAM amount from formula on show flow create" do
+        sign_in user, scope: :user
+        bl_house_line = create(:bl_house_line, client: client, peso: 13.2, volumen: 8.1)
+        service_catalog = create(
+          :service_catalog,
+          applies_to: "bl_house_line",
+          code: "BL-ENTCAM",
+          amount: 126,
+          active: true
+        )
+
+        expect {
+          patch bl_house_line_url(bl_house_line), params: {
+            source: "show_services",
+            service_action: "create",
+            bl_house_line: {
+              bl_house_line_services_attributes: {
+                "0" => {
+                  service_catalog_id: service_catalog.id,
+                  amount: "1.00",
+                  billed_to_entity_id: client.id,
+                  observaciones: "Alta ENTCAM"
+                }
+              }
+            }
+          }
+        }.to change(bl_house_line.bl_house_line_services, :count).by(1)
+
+        service = bl_house_line.bl_house_line_services.order(:id).last
+        expect(service.amount).to eq(1764)
+      end
+
+      it "calculates BL-ALMA amount from formula on show flow create" do
+        sign_in user, scope: :user
+        container = create(:container, fecha_desconsolidacion: Date.new(2026, 3, 20))
+        bl_house_line = create(
+          :bl_house_line,
+          client: client,
+          container: container,
+          peso: 12,
+          volumen: 10,
+          fecha_despacho: Time.zone.local(2026, 3, 30, 9, 0, 0)
+        )
+        service_catalog = create(
+          :service_catalog,
+          applies_to: "bl_house_line",
+          code: "BL-ALMA",
+          amount: 170.91,
+          active: true
+        )
+
+        expect {
+          patch bl_house_line_url(bl_house_line), params: {
+            source: "show_services",
+            service_action: "create",
+            bl_house_line: {
+              bl_house_line_services_attributes: {
+                "0" => {
+                  service_catalog_id: service_catalog.id,
+                  amount: "1.00",
+                  billed_to_entity_id: client.id,
+                  observaciones: "Alta ALMA"
+                }
+              }
+            }
+          }
+        }.to change(bl_house_line.bl_house_line_services, :count).by(1)
+
+        service = bl_house_line.bl_house_line_services.order(:id).last
+        expect(service.amount).to eq(6048)
+      end
+
       it "deletes a non-invoiced service from show flow" do
         sign_in user, scope: :user
         bl_house_line = create(:bl_house_line)

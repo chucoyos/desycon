@@ -10,6 +10,7 @@ class BlHouseLineService < ApplicationRecord
 
   before_validation :assign_default_billed_to_entity
   before_validation :assign_default_amount
+  before_validation :assign_formula_amount_for_bl_services
   before_update :prevent_changes_if_facturado
   before_destroy :prevent_destroy_if_facturado, prepend: true
   after_commit :enqueue_facturador_auto_issue, on: :create
@@ -72,6 +73,20 @@ class BlHouseLineService < ApplicationRecord
     self.amount = service_catalog&.amount
   end
 
+  def assign_formula_amount_for_bl_services
+    return if service_catalog.blank? || bl_house_line.blank?
+
+    case service_catalog.code.to_s
+    when "BL-ENTCAM"
+      self.amount = entcam_charge_result.total
+    when "BL-ALMA"
+      result = storage_charge_result
+      return if result.blank? || result.billable_days <= 0
+
+      self.amount = result.total
+    end
+  end
+
   def prevent_changes_if_facturado
     return unless factura_in_database.present? || billed_by_invoice?
     return if changes.except("updated_at").blank?
@@ -95,5 +110,21 @@ class BlHouseLineService < ApplicationRecord
       .where(invoice_service_links: { serviceable_type: self.class.name, serviceable_id: id })
       .where(status: BILLING_LOCK_STATUSES)
       .exists?
+  end
+
+  def entcam_charge_result
+    BlHouseLines::EntregaAlmacenCamionCalculator.call(
+      bl_house_line: bl_house_line,
+      unit_price: service_catalog.amount
+    )
+  end
+
+  def storage_charge_result
+    BlHouseLines::StorageChargeCalculator.call(
+      bl_house_line: bl_house_line,
+      desconsolidation_date: bl_house_line.container&.fecha_desconsolidacion,
+      dispatch_date: bl_house_line.fecha_despacho,
+      unit_price: service_catalog.amount
+    )
   end
 end
