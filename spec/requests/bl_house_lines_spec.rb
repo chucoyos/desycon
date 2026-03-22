@@ -438,6 +438,38 @@ RSpec.describe "BlHouseLines", type: :request do
         expect(service.amount).to eq(6048)
       end
 
+      it "calculates BL-PREVIO amount from formula on show flow create" do
+        sign_in user, scope: :user
+        bl_house_line = create(:bl_house_line, client: client, peso: 13.2, volumen: 8.1)
+        service_catalog = create(
+          :service_catalog,
+          applies_to: "bl_house_line",
+          code: "BL-PREVIO",
+          amount: 126,
+          active: true
+        )
+
+        expect {
+          patch bl_house_line_url(bl_house_line), params: {
+            source: "show_services",
+            service_action: "create",
+            bl_house_line: {
+              bl_house_line_services_attributes: {
+                "0" => {
+                  service_catalog_id: service_catalog.id,
+                  amount: "1.00",
+                  billed_to_entity_id: client.id,
+                  observaciones: "Alta PREVIO"
+                }
+              }
+            }
+          }
+        }.to change(bl_house_line.bl_house_line_services, :count).by(1)
+
+        service = bl_house_line.bl_house_line_services.order(:id).last
+        expect(service.amount).to eq(1764)
+      end
+
       it "blocks BL-ALMA create from show flow when it is within grace period" do
         sign_in user, scope: :user
         container = create(:container, fecha_desconsolidacion: Date.new(2026, 3, 20))
@@ -532,6 +564,48 @@ RSpec.describe "BlHouseLines", type: :request do
         expect(service.reload.service_catalog_id).to eq(new_service_catalog.id)
         expect(service.amount).to eq(845.1)
         expect(service.observaciones).to eq("Editado desde modal")
+      end
+
+      it "recalculates BL-PREVIO amount from formula on show flow update" do
+        sign_in user, scope: :user
+        bl_house_line = create(:bl_house_line, client: client, peso: 13.2, volumen: 8.1)
+        service_catalog = create(
+          :service_catalog,
+          applies_to: "bl_house_line",
+          code: "BL-PREVIO",
+          amount: 126,
+          active: true
+        )
+        service = create(
+          :bl_house_line_service,
+          bl_house_line: bl_house_line,
+          service_catalog: service_catalog,
+          factura: nil,
+          amount: 1,
+          observaciones: "Antes"
+        )
+
+        bl_house_line.update!(peso: 20.1)
+
+        patch bl_house_line_url(bl_house_line), params: {
+          source: "show_services",
+          service_action: "update",
+          bl_house_line: {
+            bl_house_line_services_attributes: {
+              "0" => {
+                id: service.id,
+                service_catalog_id: service_catalog.id,
+                amount: "999.00",
+                billed_to_entity_id: client.id,
+                observaciones: "Editado PREVIO"
+              }
+            }
+          }
+        }
+
+        expect(response).to redirect_to(bl_house_line_url(bl_house_line, anchor: "servicios"))
+        expect(service.reload.amount).to eq(2646)
+        expect(service.observaciones).to eq("Editado PREVIO")
       end
     end
 

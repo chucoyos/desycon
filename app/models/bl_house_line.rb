@@ -67,6 +67,7 @@ class BlHouseLine < ApplicationRecord
   after_update :ensure_entcam_service_on_despachado, if: -> { saved_change_to_status? && despachado? }
   after_update :recalculate_storage_service_if_needed, if: :storage_recalculation_triggered?
   after_update :recalculate_entcam_service_if_needed, if: :storage_recalculation_triggered?
+  after_update :recalculate_previo_service_if_needed, if: :storage_recalculation_triggered?
   def documentos_completos?
     required_revalidation_documents.all? { |field| public_send(field).attached? }
   end
@@ -233,6 +234,21 @@ class BlHouseLine < ApplicationRecord
     Rails.logger.error("Failed to recalculate ENTCAM service for BL #{id}: #{e.message}")
   end
 
+  def recalculate_previo_service_if_needed
+    catalog = previo_catalog
+    return unless catalog
+
+    service = bl_house_line_services.find_by(service_catalog: catalog)
+    return unless service
+    return if service.facturado?
+
+    result = entcam_charge_result(unit_price: catalog.amount)
+    service.amount = result.total
+    service.save! if service.changed?
+  rescue StandardError => e
+    Rails.logger.error("Failed to recalculate PREVIO service for BL #{id}: #{e.message}")
+  end
+
   def broker_matches_agency
     return if customs_broker_id.blank? || customs_agent_id.blank?
 
@@ -253,6 +269,10 @@ class BlHouseLine < ApplicationRecord
 
   def entcam_catalog
     ServiceCatalog.active.find_by(code: "BL-ENTCAM", applies_to: "bl_house_line")
+  end
+
+  def previo_catalog
+    ServiceCatalog.active.find_by(code: "BL-PREVIO", applies_to: "bl_house_line")
   end
 
   def storage_charge_result(unit_price:)
