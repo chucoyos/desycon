@@ -438,6 +438,46 @@ RSpec.describe "BlHouseLines", type: :request do
         expect(service.amount).to eq(6048)
       end
 
+      it "blocks BL-ALMA create from show flow when it is within grace period" do
+        sign_in user, scope: :user
+        container = create(:container, fecha_desconsolidacion: Date.new(2026, 3, 20))
+        bl_house_line = create(
+          :bl_house_line,
+          client: client,
+          container: container,
+          peso: 12,
+          volumen: 10,
+          fecha_despacho: Time.zone.local(2026, 3, 26, 9, 0, 0)
+        )
+        service_catalog = create(
+          :service_catalog,
+          applies_to: "bl_house_line",
+          code: "BL-ALMA",
+          amount: 170.91,
+          active: true
+        )
+
+        expect {
+          patch bl_house_line_url(bl_house_line), params: {
+            source: "show_services",
+            service_action: "create",
+            bl_house_line: {
+              bl_house_line_services_attributes: {
+                "0" => {
+                  service_catalog_id: service_catalog.id,
+                  amount: "1.00",
+                  billed_to_entity_id: client.id,
+                  observaciones: "Alta ALMA en gracia"
+                }
+              }
+            }
+          }
+        }.not_to change(bl_house_line.bl_house_line_services, :count)
+
+        expect(response).to redirect_to(bl_house_line_url(bl_house_line, anchor: "servicios"))
+        expect(flash[:alert]).to include("No se puede crear BL-ALMA durante periodo de gracia.")
+      end
+
       it "deletes a non-invoiced service from show flow" do
         sign_in user, scope: :user
         bl_house_line = create(:bl_house_line)

@@ -20,6 +20,7 @@ class BlHouseLineService < ApplicationRecord
   validates :currency, presence: true, inclusion: { in: [ "MXN" ] }
   validates :observaciones, length: { maximum: 1000 }, allow_blank: true
   validates :factura, length: { maximum: 100 }, allow_blank: true
+  validate :prevent_manual_storage_service_within_grace_period, on: :create
 
   scope :facturados, -> { where.not(factura: nil) }
   scope :pendientes, -> { where(factura: nil) }
@@ -85,6 +86,17 @@ class BlHouseLineService < ApplicationRecord
 
       self.amount = result.total
     end
+  end
+
+  def prevent_manual_storage_service_within_grace_period
+    return unless service_catalog&.code.to_s == "BL-ALMA"
+    return if auto_issue_origin_for_status_transition?
+
+    result = storage_charge_result
+    return if result.blank?
+    return if result.billable_days.positive?
+
+    errors.add(:base, "No se puede crear BL-ALMA durante periodo de gracia.")
   end
 
   def prevent_changes_if_facturado
