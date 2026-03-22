@@ -19,6 +19,7 @@ class InvoicesController < ApplicationController
     @selected_consolidator_id = admin_or_executive ? params[:consolidator_id].to_s.presence : nil
     @selected_container_number = params[:container_number].to_s.strip.first(11).presence
     @selected_blhouse = params[:blhouse].to_s.strip.presence
+    @selected_serie = params[:serie].to_s.strip.presence
     @selected_folio = params[:folio].to_s.strip.presence
     @selected_uuid = params[:uuid].to_s.strip.presence
 
@@ -108,6 +109,12 @@ class InvoicesController < ApplicationController
         blhouse: "%#{@selected_blhouse}%"
       )
     end
+    if @selected_serie.present?
+      @invoices = @invoices.where(
+        "COALESCE(invoices.provider_response->>'serie', invoices.payload_snapshot->>'serie', invoices.payload_snapshot->>'serie_override', '') ILIKE ?",
+        "%#{@selected_serie}%"
+      )
+    end
     if @selected_folio.present?
       @invoices = @invoices.where(
         "COALESCE(invoices.provider_response->>'folio', invoices.provider_response->>'noComprobante', invoices.provider_response->>'numeroComprobante', invoices.facturador_comprobante_id::text, '') ILIKE ?",
@@ -125,6 +132,7 @@ class InvoicesController < ApplicationController
     @customs_agents = admin_or_executive ? Entity.customs_agents.order(:name) : Entity.customs_agents.where(id: current_user.entity_id)
     @consolidators = admin_or_executive ? Entity.consolidators.order(:name) : Entity.none
     @admin_or_executive = admin_or_executive
+    @series_filter_options = build_series_filter_options
   end
 
   def show
@@ -407,6 +415,14 @@ class InvoicesController < ApplicationController
   end
 
   def build_manual_series_options
+    [ [ "Automática", "" ] ] + series_for_current_environment.map { |serie| [ serie, serie ] }
+  end
+
+  def build_series_filter_options
+    [ [ "Todas", "" ] ] + series_for_current_environment.map { |serie| [ serie, serie ] }
+  end
+
+  def series_for_current_environment
     environment = Facturador::Config.environment.to_s.downcase
     mapped_series = if environment == "sandbox"
       [ "MZ", "A", "B", "C" ]
@@ -418,7 +434,7 @@ class InvoicesController < ApplicationController
     series = mapped_series.dup
     series << global_serie if global_serie.present?
 
-    [ [ "Automática", "" ] ] + series.uniq.map { |serie| [ serie, serie ] }
+    series.uniq
   end
 
   def resolved_start_date

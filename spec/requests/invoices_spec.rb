@@ -41,6 +41,19 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include(with_uuid.receiver_entity.name)
     end
 
+    it 'filters by serie from provider response or payload snapshot' do
+      provider_invoice = create(:invoice, provider_response: { 'serie' => 'GVRZ' }, sat_uuid: 'UUID-SERIE-PROVIDER')
+      snapshot_invoice = create(:invoice, payload_snapshot: { 'serie_override' => 'MZ' }, sat_uuid: 'UUID-SERIE-SNAPSHOT')
+      other_invoice = create(:invoice, provider_response: { 'serie' => 'ZZZ' }, sat_uuid: 'UUID-SERIE-OTHER')
+
+      get invoices_path, params: { serie: 'MZ' }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(snapshot_invoice.sat_uuid)
+      expect(response.body).not_to include(provider_invoice.sat_uuid)
+      expect(response.body).not_to include(other_invoice.sat_uuid)
+    end
+
     it 'filters by container number and blhouse' do
       matching_container = create(:container, number: 'ABCD1234567')
       non_matching_container = create(:container, number: 'WXYZ7654321')
