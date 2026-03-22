@@ -334,6 +334,12 @@ RSpec.describe 'Invoices', type: :request do
 
     it 'renders show successfully' do
       invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-SHOW-001')
+      invoice.invoice_events.create!(
+        event_type: 'issue_requested',
+        created_by: admin_user,
+        request_payload: {},
+        response_payload: {}
+      )
 
       get invoice_path(invoice)
 
@@ -344,6 +350,8 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include('Registrar pago')
       expect(response.body).to include('Sincronizar XML/PDF')
       expect(response.body).not_to include('Re-sincronizar XML/PDF')
+      expect(response.body).to include('Actor:')
+      expect(response.body).to include(admin_user.email)
     end
 
     it 'shows re-sync label for admin when xml and pdf are already attached' do

@@ -528,6 +528,23 @@
                 <% event_type = event.event_type.to_s %>
                 <% is_error_event = event_type.include?("failed") %>
                 <% is_success_event = !is_error_event && event_type.match?(/(succeeded|success|sent|synced|issued|cancelled|registered|completed)\z/) %>
+                <% actor = event.created_by %>
+                <% actor_label = if actor.present?
+                  if actor.respond_to?(:email) && actor.email.present?
+                    actor.email
+                  elsif actor.respond_to?(:name) && actor.name.present?
+                    actor.name
+                  else
+                    [event.created_by_type, event.created_by_id].compact.join(" #")
+                  end
+                else
+                  "Sistema"
+                end %>
+                <% actor_meta = if actor.respond_to?(:role_name)
+                  actor.role_name.to_s.humanize
+                elsif actor.present?
+                  event.created_by_type.to_s
+                end %>
                 <% event_title_class = if is_error_event
                   "text-red-800"
                 elsif is_success_event
@@ -546,6 +563,7 @@
                 <div class="pb-3 border-b border-gray-100 last:border-0">
                   <p class="text-sm font-semibold <%= event_title_class %>"><%= event.event_type.humanize %></p>
                   <p class="text-xs text-gray-500 mt-0.5"><%= l(event.created_at, format: :short) %></p>
+                  <p class="text-xs text-gray-500 mt-1">Actor: <span class="font-medium text-gray-700"><%= actor_label %></span><% if actor_meta.present? %> · <%= actor_meta %><% end %></p>
                   <% if event.provider_error_message.present? %>
                     <p class="text-xs mt-1 <%= event_message_class %>"><%= event.provider_error_message %></p>
                   <% end %>

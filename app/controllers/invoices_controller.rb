@@ -138,7 +138,7 @@ class InvoicesController < ApplicationController
   def show
     authorize @invoice
 
-    @invoice_events = @invoice.invoice_events.order(created_at: :desc).limit(30)
+    @invoice_events = @invoice.invoice_events.includes(:created_by).order(created_at: :desc).limit(30)
     @invoice_payments = @invoice.invoice_payments.includes(complement_invoice: [ :xml_file_attachment, :pdf_file_attachment ]).order(paid_at: :desc)
   end
 
