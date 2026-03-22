@@ -337,9 +337,6 @@
 
                 <div class="flex-1">
                 <h3 class="font-semibold text-gray-900"><%= service.service_catalog.name %></h3>
-                <% if service.billed_to_entity.present? %>
-                  <p class="text-xs text-gray-600 mt-1">Facturar a: <%= service.billed_to_entity.name %></p>
-                <% end %>
                 </div>
               </div>
               <div class="text-right">
@@ -351,6 +348,12 @@
                 <% end %>
               </div>
             </div>
+            <% if service.billed_to_entity.present? %>
+              <div class="mb-3 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700">
+                <span class="text-gray-500">Facturar a:</span>
+                <span class="font-medium text-gray-900"><%= service.billed_to_entity.name %></span>
+              </div>
+            <% end %>
             <div class="grid grid-cols-2 gap-3 text-xs text-gray-700">
               <% if (invoice = service.latest_invoice).present? %>
                 <div class="col-span-2">
@@ -386,10 +389,6 @@
                   <% end %>
                 </div>
               <% end %>
-              <div>
-                <span class="text-gray-500">Fecha programada:</span>
-                <span class="font-medium"><%= service.fecha_programada ? l(service.fecha_programada, format: :short) : '-' %></span>
-              </div>
               <% if service.factura.present? %>
                 <div>
                   <span class="text-gray-500">Factura:</span>
