@@ -317,6 +317,16 @@ services_catalog_data = [
     sat_clave_prod_serv: "80151600",
     sat_clave_unidad: "E48",
     sat_objeto_imp: "02"
+  },
+  {
+    name: "Reacomodo de Carga Suelta",
+    applies_to: "bl_house_line",
+    code: "BL-RECASU",
+    amount: 183.00,
+    currency: "MXN",
+    sat_clave_prod_serv: "80151600",
+    sat_clave_unidad: "E48",
+    sat_objeto_imp: "02"
   }
 ]
 

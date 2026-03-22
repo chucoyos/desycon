@@ -438,6 +438,62 @@ RSpec.describe BlHouseLine, type: :model do
     end
   end
 
+  describe 'recasu service' do
+    let!(:catalog) do
+      create(
+        :service_catalog,
+        name: 'Reacomodo de Carga Suelta',
+        code: 'BL-RECASU',
+        applies_to: 'bl_house_line',
+        amount: 126.0,
+        currency: 'MXN'
+      )
+    end
+
+    let(:bl_house_line) do
+      create(
+        :bl_house_line,
+        status: 'revalidado',
+        peso: 13.2,
+        volumen: 8.1
+      )
+    end
+
+    it 'does not auto-create RECASU service on despachado' do
+      expect {
+        bl_house_line.update!(status: 'despachado')
+      }.not_to change { bl_house_line.reload.bl_house_line_services.where(service_catalog: catalog).count }
+    end
+
+    it 'recalculates RECASU amount when peso/volumen changes if service exists and is not invoiced' do
+      service = create(
+        :bl_house_line_service,
+        bl_house_line: bl_house_line,
+        service_catalog: catalog,
+        factura: nil,
+        amount: 1
+      )
+      expect(service.reload.amount).to eq(BigDecimal('1764'))
+
+      bl_house_line.update!(volumen: 15.2)
+
+      expect(service.reload.amount).to eq(BigDecimal('2016'))
+    end
+
+    it 'does not recalculate RECASU when service is invoiced' do
+      service = create(
+        :bl_house_line_service,
+        bl_house_line: bl_house_line,
+        service_catalog: catalog,
+        factura: 'A-778'
+      )
+
+      expect {
+        bl_house_line.update!(peso: 20)
+      }.not_to change { service.reload.amount }
+    end
+  end
+
   describe '#documentos_completos?' do
     let(:bl_house_line) { create(:bl_house_line) }
 

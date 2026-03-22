@@ -78,7 +78,7 @@ class BlHouseLineService < ApplicationRecord
     return if service_catalog.blank? || bl_house_line.blank?
 
     case service_catalog.code.to_s
-    when "BL-ENTCAM", "BL-PREVIO"
+    when "BL-ENTCAM", "BL-PREVIO", "BL-RECASU"
       self.amount = entcam_charge_result.total
     when "BL-ALMA"
       result = storage_charge_result
