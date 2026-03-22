@@ -1,5 +1,19 @@
 module Facturador
   class PayloadBuilder
+    IMPORT_DESTINATION_SERIES_BY_PORT_CODE_PRODUCTION = {
+      "MXZLO" => "GMZO",
+      "MXLZC" => "GLZC",
+      "MXVER" => "GVRZ",
+      "MXATM" => "GATM"
+    }.freeze
+
+    IMPORT_DESTINATION_SERIES_BY_PORT_CODE_SANDBOX = {
+      "MXZLO" => "MZ",
+      "MXLZC" => "A",
+      "MXVER" => "B",
+      "MXATM" => "C"
+    }.freeze
+
     class << self
       def build(invoice)
         new(invoice).build
@@ -32,7 +46,8 @@ module Facturador
         descripcionFacturador: descripcion_facturador
       }
 
-      payload[:serie] = Config.serie if Config.serie.present?
+      resolved_serie = resolved_ingreso_serie
+      payload[:serie] = resolved_serie if resolved_serie.present?
       payload[:impuestos] = impuestos_payload if requires_tax_breakdown?
       payload
     end
@@ -296,6 +311,36 @@ module Facturador
         invoice.invoiceable.bl_house_line&.container&.number.to_s.presence
       elsif invoice.invoiceable.respond_to?(:number)
         invoice.invoiceable.number.to_s.presence
+      end
+    end
+
+    def resolved_ingreso_serie
+      fallback_serie = Config.serie
+      container = invoiceable_container
+      return fallback_serie unless container&.tipo_maniobra_importacion?
+
+      port_code = container.destination_port&.code.to_s.upcase
+      import_destination_series_map[port_code].presence || fallback_serie
+    end
+
+    def import_destination_series_map
+      return IMPORT_DESTINATION_SERIES_BY_PORT_CODE_SANDBOX if sandbox_facturador_environment?
+
+      IMPORT_DESTINATION_SERIES_BY_PORT_CODE_PRODUCTION
+    end
+
+    def sandbox_facturador_environment?
+      Config.environment.to_s.casecmp("sandbox").zero?
+    end
+
+    def invoiceable_container
+      invoiceable = invoice.invoiceable
+      return if invoiceable.blank?
+
+      if invoiceable.respond_to?(:container)
+        invoiceable.container
+      elsif invoiceable.respond_to?(:bl_house_line)
+        invoiceable.bl_house_line&.container
       end
     end
 

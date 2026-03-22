@@ -13,6 +13,7 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         create(:address, addressable: receiver, tipo: 'matriz') unless receiver.fiscal_address.present?
         issuer.reload
         receiver.reload
+        allow(Facturador::Config).to receive(:environment).and_return('production')
       end
 
       it 'includes container and blhouse in separate lines when both exist' do
@@ -50,6 +51,230 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         expect(payload[:descripcionFacturador]).to eq('Factura')
         expect(payload[:descripcionFacturador]).not_to include('Contenedor:')
         expect(payload[:descripcionFacturador]).not_to include('BlHouse:')
+      end
+
+      it 'uses mapped serie for importacion with destination port Manzanillo (container service)' do
+        allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')
+
+        destination_port = create(:port, :manzanillo)
+        voyage = create(:voyage, destination_port: destination_port)
+        container = create(
+          :container,
+          tipo_maniobra: 'importacion',
+          voyage: voyage,
+          recinto: 'CONTECON',
+          almacen: 'SSA'
+        )
+        container_service = create(:container_service, container: container)
+        invoice = create(
+          :invoice,
+          kind: 'ingreso',
+          invoiceable: container_service,
+          issuer_entity: issuer,
+          receiver_entity: receiver
+        )
+
+        payload = described_class.build(invoice)
+
+        expect(payload[:serie]).to eq('GMZO')
+      end
+
+      it 'uses mapped serie for importacion with destination port Altamira (bl house line service)' do
+        allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')
+
+        destination_port = create(:port, name: 'Altamira', code: 'MXATM', country_code: 'MX')
+        voyage = create(:voyage, destination_port: destination_port)
+        container = create(
+          :container,
+          tipo_maniobra: 'importacion',
+          voyage: voyage,
+          recinto: 'ATP',
+          almacen: 'SERVICIOS CARRIER INTERPUERTOS'
+        )
+        bl_house_line = create(:bl_house_line, container: container)
+        bl_service = create(:bl_house_line_service, bl_house_line: bl_house_line)
+        invoice = create(
+          :invoice,
+          kind: 'ingreso',
+          invoiceable: bl_service,
+          issuer_entity: issuer,
+          receiver_entity: receiver
+        )
+
+        payload = described_class.build(invoice)
+
+        expect(payload[:serie]).to eq('GATM')
+      end
+
+      it 'uses mapped serie for importacion with destination port Veracruz' do
+        allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')
+
+        destination_port = create(:port, :veracruz)
+        voyage = create(:voyage, destination_port: destination_port)
+        container = create(
+          :container,
+          tipo_maniobra: 'importacion',
+          voyage: voyage,
+          recinto: 'ICAVE',
+          almacen: 'CICE'
+        )
+        container_service = create(:container_service, container: container)
+        invoice = create(
+          :invoice,
+          kind: 'ingreso',
+          invoiceable: container_service,
+          issuer_entity: issuer,
+          receiver_entity: receiver
+        )
+
+        payload = described_class.build(invoice)
+
+        expect(payload[:serie]).to eq('GVRZ')
+      end
+
+      it 'uses mapped serie for importacion with destination port Lazaro Cardenas' do
+        allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')
+
+        destination_port = create(:port, name: 'Lazaro Cardenas', code: 'MXLZC', country_code: 'MX')
+        voyage = create(:voyage, destination_port: destination_port)
+        container = create(
+          :container,
+          tipo_maniobra: 'importacion',
+          voyage: voyage,
+          recinto: 'LCTPC TERMINAL PORTUARIA DE CONTENEDORES (HPH)',
+          almacen: 'UTTSA RECINTO 173'
+        )
+        container_service = create(:container_service, container: container)
+        invoice = create(
+          :invoice,
+          kind: 'ingreso',
+          invoiceable: container_service,
+          issuer_entity: issuer,
+          receiver_entity: receiver
+        )
+
+        payload = described_class.build(invoice)
+
+        expect(payload[:serie]).to eq('GLZC')
+      end
+
+      it 'falls back to global serie for importacion with unmapped destination port' do
+        allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')
+
+        destination_port = create(:port, :los_angeles)
+        voyage = create(:voyage, destination_port: destination_port)
+        container = create(:container, tipo_maniobra: 'importacion', voyage: voyage)
+        container_service = create(:container_service, container: container)
+        invoice = create(
+          :invoice,
+          kind: 'ingreso',
+          invoiceable: container_service,
+          issuer_entity: issuer,
+          receiver_entity: receiver
+        )
+
+        payload = described_class.build(invoice)
+
+        expect(payload[:serie]).to eq('GLOBAL')
+      end
+
+      it 'keeps global serie for exportacion' do
+        allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')
+
+        destination_port = create(:port, :manzanillo)
+        voyage = create(:voyage, destination_port: destination_port)
+        container = create(:container, tipo_maniobra: 'exportacion', voyage: voyage)
+        container_service = create(:container_service, container: container)
+        invoice = create(
+          :invoice,
+          kind: 'ingreso',
+          invoiceable: container_service,
+          issuer_entity: issuer,
+          receiver_entity: receiver
+        )
+
+        payload = described_class.build(invoice)
+
+        expect(payload[:serie]).to eq('GLOBAL')
+      end
+
+      it 'falls back to global serie when invoiceable has no container context' do
+        allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')
+
+        invoice = create(
+          :invoice,
+          kind: 'ingreso',
+          invoiceable: nil,
+          issuer_entity: issuer,
+          receiver_entity: receiver
+        )
+        create(:invoice_line_item, invoice: invoice)
+
+        payload = described_class.build(invoice)
+
+        expect(payload[:serie]).to eq('GLOBAL')
+      end
+
+      it 'uses mapped serie for importacion even when global serie is nil' do
+        allow(Facturador::Config).to receive(:serie).and_return(nil)
+
+        destination_port = create(:port, :manzanillo)
+        voyage = create(:voyage, destination_port: destination_port)
+        container = create(
+          :container,
+          tipo_maniobra: 'importacion',
+          voyage: voyage,
+          recinto: 'CONTECON',
+          almacen: 'SSA'
+        )
+        container_service = create(:container_service, container: container)
+        invoice = create(
+          :invoice,
+          kind: 'ingreso',
+          invoiceable: container_service,
+          issuer_entity: issuer,
+          receiver_entity: receiver
+        )
+
+        payload = described_class.build(invoice)
+
+        expect(payload[:serie]).to eq('GMZO')
+      end
+
+      it 'uses simplified sandbox mapping for importacion destination ports' do
+        allow(Facturador::Config).to receive(:environment).and_return('sandbox')
+        allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')
+
+        test_cases = [
+          { code: 'MXZLO', recinto: 'CONTECON', almacen: 'SSA', expected_serie: 'MZ' },
+          { code: 'MXLZC', recinto: 'LCTPC TERMINAL PORTUARIA DE CONTENEDORES (HPH)', almacen: 'UTTSA RECINTO 173', expected_serie: 'A' },
+          { code: 'MXVER', recinto: 'ICAVE', almacen: 'CICE', expected_serie: 'B' },
+          { code: 'MXATM', recinto: 'ATP', almacen: 'SERVICIOS CARRIER INTERPUERTOS', expected_serie: 'C' }
+        ]
+
+        test_cases.each do |tc|
+          destination_port = create(:port, name: "Port #{tc[:code]}", code: tc[:code], country_code: 'MX')
+          voyage = create(:voyage, destination_port: destination_port)
+          container = create(
+            :container,
+            tipo_maniobra: 'importacion',
+            voyage: voyage,
+            recinto: tc[:recinto],
+            almacen: tc[:almacen]
+          )
+          container_service = create(:container_service, container: container)
+          invoice = create(
+            :invoice,
+            kind: 'ingreso',
+            invoiceable: container_service,
+            issuer_entity: issuer,
+            receiver_entity: receiver
+          )
+
+          payload = described_class.build(invoice)
+
+          expect(payload[:serie]).to eq(tc[:expected_serie])
+        end
       end
     end
 
