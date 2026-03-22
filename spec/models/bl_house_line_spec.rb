@@ -322,6 +322,66 @@ RSpec.describe BlHouseLine, type: :model do
     end
   end
 
+  describe 'entcam service' do
+    let!(:catalog) do
+      create(
+        :service_catalog,
+        name: "Maniobra de Entrega Almacén a Camión",
+        code: "BL-ENTCAM",
+        applies_to: "bl_house_line",
+        amount: 126.0,
+        currency: "MXN"
+      )
+    end
+
+    let(:bl_house_line) do
+      create(
+        :bl_house_line,
+        status: "revalidado",
+        peso: 13.2,
+        volumen: 8.1
+      )
+    end
+
+    it 'creates ENTCAM service on despachado using catalog amount' do
+      expect {
+        bl_house_line.update!(status: "despachado")
+      }.to change { bl_house_line.reload.bl_house_line_services.where(service_catalog: catalog).count }.by(1)
+
+      service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)
+      expect(service.amount).to eq(BigDecimal("1764"))
+      expect(service.creation_origin).to be_blank
+    end
+
+    it 'does not duplicate ENTCAM service on repeated despachado updates' do
+      bl_house_line.update!(status: "despachado")
+
+      expect {
+        bl_house_line.update!(status: "despachado")
+      }.not_to change { bl_house_line.reload.bl_house_line_services.where(service_catalog: catalog).count }
+    end
+
+    it 'recalculates ENTCAM amount when peso/volumen changes if not invoiced' do
+      bl_house_line.update!(status: "despachado")
+      service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)
+      expect(service.amount).to eq(BigDecimal("1764"))
+
+      bl_house_line.update!(volumen: 15.2)
+
+      expect(service.reload.amount).to eq(BigDecimal("2016"))
+    end
+
+    it 'does not recalculate ENTCAM when service is invoiced' do
+      bl_house_line.update!(status: "despachado")
+      service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)
+      service.update!(factura: "A-002")
+
+      expect {
+        bl_house_line.update!(peso: 20)
+      }.not_to change { service.reload.amount }
+    end
+  end
+
   describe '#documentos_completos?' do
     let(:bl_house_line) { create(:bl_house_line) }
 

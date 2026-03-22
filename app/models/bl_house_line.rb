@@ -64,7 +64,9 @@ class BlHouseLine < ApplicationRecord
   after_update :notify_customs_agent_revalidation, if: -> { saved_change_to_status? && revalidado? }
   after_update :ensure_asignacion_electronica_service, if: -> { saved_change_to_status? && revalidado? }
   after_update :ensure_storage_service_on_despachado, if: -> { saved_change_to_status? && despachado? }
+  after_update :ensure_entcam_service_on_despachado, if: -> { saved_change_to_status? && despachado? }
   after_update :recalculate_storage_service_if_needed, if: :storage_recalculation_triggered?
+  after_update :recalculate_entcam_service_if_needed, if: :storage_recalculation_triggered?
   def documentos_completos?
     required_revalidation_documents.all? { |field| public_send(field).attached? }
   end
@@ -194,6 +196,43 @@ class BlHouseLine < ApplicationRecord
     Rails.logger.error("Failed to recalculate storage service for BL #{id}: #{e.message}")
   end
 
+  def ensure_entcam_service_on_despachado
+    catalog = entcam_catalog
+    unless catalog
+      Rails.logger.warn("ENTCAM service skipped for BL #{id}: missing catalog BL-ENTCAM")
+      return
+    end
+
+    service = bl_house_line_services.find_or_initialize_by(service_catalog: catalog)
+
+    if service.persisted? && service.facturado?
+      Rails.logger.info("ENTCAM service unchanged for BL #{id}: already invoiced")
+      return
+    end
+
+    result = entcam_charge_result(unit_price: catalog.amount)
+    service.billed_to_entity_id ||= client_id
+    service.amount = result.total
+    service.save! if service.new_record? || service.changed?
+  rescue StandardError => e
+    Rails.logger.error("Failed to create/update ENTCAM service for BL #{id}: #{e.message}")
+  end
+
+  def recalculate_entcam_service_if_needed
+    catalog = entcam_catalog
+    return unless catalog
+
+    service = bl_house_line_services.find_by(service_catalog: catalog)
+    return unless service
+    return if service.facturado?
+
+    result = entcam_charge_result(unit_price: catalog.amount)
+    service.amount = result.total
+    service.save! if service.changed?
+  rescue StandardError => e
+    Rails.logger.error("Failed to recalculate ENTCAM service for BL #{id}: #{e.message}")
+  end
+
   def broker_matches_agency
     return if customs_broker_id.blank? || customs_agent_id.blank?
 
@@ -212,11 +251,22 @@ class BlHouseLine < ApplicationRecord
     ServiceCatalog.active.find_by(code: "BL-ALMA", applies_to: "bl_house_line")
   end
 
+  def entcam_catalog
+    ServiceCatalog.active.find_by(code: "BL-ENTCAM", applies_to: "bl_house_line")
+  end
+
   def storage_charge_result(unit_price:)
     BlHouseLines::StorageChargeCalculator.call(
       bl_house_line: self,
       desconsolidation_date: container&.fecha_desconsolidacion,
       dispatch_date: fecha_despacho,
+      unit_price: unit_price
+    )
+  end
+
+  def entcam_charge_result(unit_price:)
+    BlHouseLines::EntregaAlmacenCamionCalculator.call(
+      bl_house_line: self,
       unit_price: unit_price
     )
   end
