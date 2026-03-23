@@ -18,6 +18,8 @@ class Invoice < ApplicationRecord
 
   has_many :invoice_events, dependent: :destroy
   has_many :invoice_payments, dependent: :destroy
+  has_many :invoice_payment_evidence_links, dependent: :destroy
+  has_many :invoice_payment_evidences, through: :invoice_payment_evidence_links
   has_many :invoice_line_items, -> { order(:position, :id) }, dependent: :destroy
   has_many :invoice_service_links, dependent: :destroy
   has_many :payment_complements, class_name: "InvoicePayment", foreign_key: :complement_invoice_id, dependent: :nullify

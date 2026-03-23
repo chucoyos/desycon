@@ -175,12 +175,21 @@
           <% end %>
         <% elsif notification.notifiable_type == "InvoicePaymentEvidence" %>
           <% evidence = notification.notifiable %>
+          <% evidence_invoices = evidence.invoices_for_review %>
+          <% evidence_invoice_ids = evidence_invoices.map(&:id) %>
+          <% evidence_label = if evidence_invoice_ids.size <= 1
+               "Evidencia de pago factura ##{evidence_invoice_ids.first || evidence.invoice_id}"
+             else
+               "Evidencia de pago facturas ##{evidence_invoice_ids.join(', #')}"
+             end %>
           <% evidence_target_path = if notification.recipient&.admin_or_executive?
                admin_invoice_payment_evidence_path(evidence)
              elsif notification.recipient&.customs_broker?
                customs_agents_dashboard_path
+             elsif notification.recipient&.consolidator?
+               invoices_path
              else
-               invoice_path(evidence.invoice)
+               evidence_invoices.first.present? ? invoice_path(evidence_invoices.first) : notifications_path
              end %>
           <%= link_to evidence_target_path, data: { action: "click->notification#deleteNotification" }, class: "group/item flex items-center justify-between" do %>
             <div class="flex items-center gap-3">
@@ -188,7 +197,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
               </svg>
               <span class="text-sm font-semibold text-slate-700 group-hover/item:text-blue-600 transition-colors">
-                Evidencia de pago factura #<%= evidence.invoice_id %>
+                <%= evidence_label %>
               </span>
             </div>
             <svg class="h-4 w-4 text-slate-300 group-hover/item:text-blue-500 group-hover/item:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">

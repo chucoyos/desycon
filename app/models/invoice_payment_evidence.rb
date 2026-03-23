@@ -1,10 +1,12 @@
 class InvoicePaymentEvidence < ApplicationRecord
   STATUSES = %w[pending linked rejected].freeze
 
-  belongs_to :invoice
+  belongs_to :invoice, optional: true
   belongs_to :customs_agent, class_name: "Entity"
   belongs_to :submitted_by, class_name: "User"
   belongs_to :invoice_payment, optional: true
+  has_many :invoice_payment_evidence_links, dependent: :destroy
+  has_many :invoices, through: :invoice_payment_evidence_links
 
   has_one_attached :receipt_file
 
@@ -22,6 +24,22 @@ class InvoicePaymentEvidence < ApplicationRecord
 
   def status_label
     self.class.status_label_for(status)
+  end
+
+  # Maintains backward compatibility with legacy records that only have invoice_id.
+  def invoices_for_review
+    linked = invoices.to_a
+    return linked if linked.any?
+
+    invoice.present? ? [ invoice ] : []
+  end
+
+  def invoice_for_admin_registration(invoice_id = nil)
+    review_invoices = invoices_for_review
+    return review_invoices.first if invoice_id.blank? && review_invoices.one?
+    return nil if invoice_id.blank?
+
+    review_invoices.find { |review_invoice| review_invoice.id == invoice_id.to_i }
   end
 
   after_create_commit :notify_admins_and_executives

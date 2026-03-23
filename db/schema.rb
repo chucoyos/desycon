@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_21_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_23_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -323,6 +323,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_21_130000) do
     t.index ["service_catalog_id"], name: "index_invoice_line_items_on_service_catalog_id"
   end
 
+  create_table "invoice_payment_evidence_links", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "invoice_id", null: false
+    t.bigint "invoice_payment_evidence_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id"], name: "index_invoice_payment_evidence_links_on_invoice_id"
+    t.index ["invoice_payment_evidence_id", "invoice_id"], name: "idx_unique_invoice_payment_evidence_links", unique: true
+    t.index ["invoice_payment_evidence_id"], name: "idx_on_invoice_payment_evidence_id_2fcdb17036"
+  end
+
   create_table "invoice_payment_evidences", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "customs_agent_id", null: false
@@ -576,6 +586,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_21_130000) do
   add_foreign_key "invoice_events", "invoices"
   add_foreign_key "invoice_line_items", "invoices"
   add_foreign_key "invoice_line_items", "service_catalogs"
+  add_foreign_key "invoice_payment_evidence_links", "invoice_payment_evidences"
+  add_foreign_key "invoice_payment_evidence_links", "invoices"
   add_foreign_key "invoice_payment_evidences", "entities", column: "customs_agent_id"
   add_foreign_key "invoice_payment_evidences", "invoice_payments"
   add_foreign_key "invoice_payment_evidences", "invoices"

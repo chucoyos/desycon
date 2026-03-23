@@ -1,19 +1,21 @@
 <% content_for :title, "Revisión de evidencia ##{@evidence.id}" %>
 <%
-  serie = @invoice.provider_response.to_h["serie"].presence || @invoice.payload_snapshot.to_h["serie"].presence
-  folio = @invoice.provider_response.to_h["folio"].presence ||
-          @invoice.provider_response.to_h["noComprobante"].presence ||
-          @invoice.provider_response.to_h["numeroComprobante"].presence ||
-          @invoice.facturador_comprobante_id&.to_s
+  serie = @invoice&.provider_response.to_h["serie"].presence || @invoice&.payload_snapshot.to_h["serie"].presence
+  folio = @invoice&.provider_response.to_h["folio"].presence ||
+          @invoice&.provider_response.to_h["noComprobante"].presence ||
+          @invoice&.provider_response.to_h["numeroComprobante"].presence ||
+          @invoice&.facturador_comprobante_id&.to_s
 
-  invoice_label = if serie.present? && folio.present?
+  invoice_label = if @invoice.blank?
+    "Sin factura seleccionada"
+  elsif serie.present? && folio.present?
     "Factura #{serie} #{folio}"
   elsif folio.present?
     "Factura #{folio}"
   elsif serie.present?
     "Factura #{serie}"
   else
-    "Factura"
+    "Factura ##{@invoice.id}"
   end
 %>
 
@@ -62,25 +64,71 @@
       </div>
 
       <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-        <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4">Factura</h2>
-        <% payment_method_code = @invoice.payment_method_code %>
-        <% payment_method_label = FiscalProfile::METODOS_PAGO[payment_method_code].presence || "No definido" %>
-        <p class="text-sm text-gray-700 mb-2">Cliente: <span class="font-semibold"><%= @invoice.receiver_entity&.name %></span></p>
-        <p class="text-sm text-gray-700 mb-2">Método de pago: <span class="font-semibold"><%= payment_method_code %> - <%= payment_method_label %></span></p>
-        <p class="text-sm text-gray-700 mb-2">Total: <span class="font-semibold"><%= number_to_currency(@invoice.total) %></span></p>
-        <p class="text-sm text-gray-700 mb-4">Saldo pendiente: <span class="font-semibold"><%= number_to_currency(@invoice.outstanding_amount) %></span></p>
-        <% invoice_series_folio_label = [serie, folio].reject(&:blank?).join(" ").presence || invoice_label %>
-        <%= link_to invoice_series_folio_label, invoice_path(@invoice), class: "text-blue-600 hover:text-blue-800 text-sm font-semibold" %>
+        <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4">Facturas vinculadas</h2>
+        <% if @evidence_invoices.any? %>
+          <ul class="space-y-2 max-h-56 overflow-y-auto pr-1">
+            <% @evidence_invoices.each do |evidence_invoice| %>
+              <% inv_serie = evidence_invoice.provider_response.to_h["serie"].presence || evidence_invoice.payload_snapshot.to_h["serie"].presence %>
+              <% inv_folio = evidence_invoice.provider_response.to_h["folio"].presence || evidence_invoice.provider_response.to_h["noComprobante"].presence || evidence_invoice.provider_response.to_h["numeroComprobante"].presence || evidence_invoice.facturador_comprobante_id&.to_s %>
+              <% inv_label = [inv_serie, inv_folio].compact.join(" ").presence || "Factura ##{evidence_invoice.id}" %>
+              <li class="rounded-lg border border-gray-200 px-3 py-2 text-sm flex items-center justify-between gap-2 <%= @invoice&.id == evidence_invoice.id ? 'bg-indigo-50 border-indigo-200' : '' %>">
+                <%= link_to inv_label, admin_invoice_payment_evidence_path(@evidence, invoice_id: evidence_invoice.id), class: "font-semibold text-indigo-700 hover:text-indigo-900" %>
+                <span class="text-gray-500"><%= number_to_currency(evidence_invoice.outstanding_amount) %></span>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="text-sm text-gray-500">No hay facturas vinculadas a esta evidencia.</p>
+        <% end %>
       </div>
     </div>
 
     <div class="lg:col-span-2 space-y-6">
       <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Registrar pago nuevo desde evidencia</h2>
+        <% grouped_ppd_available = @evidence_invoices.many? && @evidence_invoices.all? { |linked_invoice| linked_invoice.payment_method_code == FiscalProfile::METODO_PAGO_PPD } %>
+        <% if @invoice.present? %>
+          <% payment_method_code = @invoice.payment_method_code %>
+          <% payment_method_label = FiscalProfile::METODOS_PAGO[payment_method_code].presence || "No definido" %>
+          <div class="mb-4 rounded-lg border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700">
+            <p class="mb-1">Factura seleccionada: <span class="font-semibold"><%= invoice_label %></span></p>
+            <p class="mb-1">Cliente: <span class="font-semibold"><%= @invoice.receiver_entity&.name %></span></p>
+            <p class="mb-1">Método de pago: <span class="font-semibold"><%= payment_method_code %> - <%= payment_method_label %></span></p>
+            <p>Total: <span class="font-semibold"><%= number_to_currency(@invoice.total) %></span> | Saldo pendiente: <span class="font-semibold"><%= number_to_currency(@invoice.outstanding_amount) %></span></p>
+          </div>
+        <% else %>
+          <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-800">
+            <% if grouped_ppd_available %>
+              Ingresa montos por factura para registrar pagos y emitir un solo REP agrupado.
+            <% else %>
+              Selecciona una factura vinculada para registrar el pago.
+            <% end %>
+          </div>
+        <% end %>
         <%= form_with url: register_payment_admin_invoice_payment_evidence_path(@evidence), method: :post, scope: :register_payment, local: true, class: "grid grid-cols-1 md:grid-cols-2 gap-4" do |f| %>
+          <% if grouped_ppd_available %>
+            <div class="md:col-span-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-3">
+              <p class="text-sm font-semibold text-indigo-900">Registro agrupado de pagos (un solo REP)</p>
+              <p class="text-xs text-indigo-700 mt-0.5">Captura el monto pagado por cada factura incluida en el comprobante.</p>
+              <div class="mt-3 space-y-2">
+                <% @evidence_invoices.each do |linked_invoice| %>
+                  <% linked_serie = linked_invoice.provider_response.to_h["serie"].presence || linked_invoice.payload_snapshot.to_h["serie"].presence %>
+                  <% linked_folio = linked_invoice.provider_response.to_h["folio"].presence || linked_invoice.provider_response.to_h["noComprobante"].presence || linked_invoice.provider_response.to_h["numeroComprobante"].presence || linked_invoice.facturador_comprobante_id&.to_s %>
+                  <% linked_label = [linked_serie, linked_folio].compact.join(" ").presence || "Factura ##{linked_invoice.id}" %>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-2 items-center rounded-md border border-indigo-100 bg-white px-3 py-2">
+                    <p class="text-sm font-medium text-slate-800"><%= linked_label %></p>
+                    <p class="text-xs text-slate-500">Saldo: <%= number_to_currency(linked_invoice.outstanding_amount) %></p>
+                    <%= number_field_tag "register_payment[invoice_amounts][#{linked_invoice.id}]", linked_invoice.outstanding_amount.to_s("F"), step: "0.01", min: "0", class: "w-full px-3 py-2 border border-gray-300 rounded-md text-sm" %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% else %>
+            <%= f.hidden_field :invoice_id, value: @invoice&.id %>
+          <% end %>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Monto</label>
-            <%= f.number_field :amount, step: "0.01", min: "0.01", value: @invoice.outstanding_amount.to_s("F"), required: true, class: "w-full px-3 py-2 border border-gray-300 rounded-md" %>
+            <%= f.number_field :amount, step: "0.01", min: "0.01", value: @invoice&.outstanding_amount&.to_s("F"), required: !grouped_ppd_available, disabled: grouped_ppd_available, class: "w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-100" %>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de pago</label>
@@ -107,7 +155,8 @@
             <%= f.text_area :review_comment, rows: 2, class: "w-full px-3 py-2 border border-gray-300 rounded-md" %>
           </div>
           <div class="md:col-span-2">
-            <%= f.submit "Registrar y vincular pago", class: "cursor-pointer inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold" %>
+            <% disable_submit = grouped_ppd_available ? false : @invoice.blank? %>
+            <%= f.submit "Registrar y vincular pago", disabled: disable_submit, class: "cursor-pointer inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed" %>
           </div>
         <% end %>
       </div>

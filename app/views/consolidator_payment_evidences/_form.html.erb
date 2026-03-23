@@ -1,0 +1,65 @@
+<%= form_with url: consolidators_payment_evidences_path, method: :post, class: "space-y-5", html: { multipart: true } do |form| %>
+  <% if @payment_evidence&.errors&.any? %>
+    <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+      <p class="text-sm font-semibold text-red-700">No se pudo enviar el comprobante</p>
+      <p class="text-sm text-red-600 mt-1"><%= @payment_evidence.errors.full_messages.to_sentence %></p>
+    </div>
+  <% end %>
+
+  <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-amber-700">Importante</p>
+    <p class="text-sm text-amber-800 mt-1">Este envío no registra ni confirma pagos automáticamente. Un ejecutivo revisará y vinculará los pagos correspondientes por factura.</p>
+  </div>
+
+  <div class="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600">Facturas seleccionadas</p>
+    <ul class="mt-3 space-y-2 text-sm text-slate-700 max-h-44 overflow-y-auto pr-1">
+      <% @eligible_invoices.each do |invoice| %>
+        <% serie = invoice.provider_response.to_h["serie"].presence || invoice.payload_snapshot.to_h["serie"].presence %>
+        <% folio = invoice.provider_response.to_h["folio"].presence ||
+                   invoice.provider_response.to_h["noComprobante"].presence ||
+                   invoice.provider_response.to_h["numeroComprobante"].presence ||
+                   invoice.facturador_comprobante_id&.to_s %>
+        <% invoice_label = [serie, folio].compact.join(" ").presence || "Factura ##{invoice.id}" %>
+        <li class="rounded-xl border border-slate-200 px-3 py-2 flex items-center justify-between gap-2">
+          <span class="font-medium text-slate-800"><%= invoice_label %></span>
+          <span class="text-slate-500"><%= number_to_currency(invoice.outstanding_amount) %></span>
+        </li>
+      <% end %>
+    </ul>
+
+    <% @selected_invoice_ids.each do |invoice_id| %>
+      <%= hidden_field_tag "payment_evidence[invoice_ids][]", invoice_id %>
+    <% end %>
+  </div>
+
+  <section class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 shadow-sm">
+
+    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <%= form.label :reference, "Referencia", class: "block text-sm font-semibold text-slate-800 mb-1.5" %>
+        <%= form.text_field :reference, value: @payment_evidence&.reference, name: "payment_evidence[reference]", required: true, placeholder: "Ingresa una referencia", class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
+      </div>
+
+      <div>
+        <%= form.label :tracking_key, "Clave de rastreo", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
+        <%= form.text_field :tracking_key, value: @payment_evidence&.tracking_key, name: "payment_evidence[tracking_key]", placeholder: "Opcional", class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
+      </div>
+
+      <div class="md:col-span-2">
+        <%= form.label :receipt_file, "Adjuntar comprobante de pago referenciado", class: "block text-sm font-semibold text-slate-800 mb-1.5" %>
+        <%= form.file_field :receipt_file, name: "payment_evidence[receipt_file]", required: true, class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
+      </div>
+    </div>
+  </section>
+
+  <div class="flex items-center justify-end gap-2 pt-2">
+    <% if local_assigns[:modal] %>
+      <button type="button" onclick="document.getElementById('payment_evidence_modal').innerHTML=''" class="cursor-pointer inline-flex items-center justify-center h-10 px-4 rounded-full text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors">Cancelar</button>
+    <% else %>
+      <%= link_to "Ver facturas", invoices_path, class: "cursor-pointer inline-flex items-center justify-center h-10 px-4 rounded-full text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors" %>
+    <% end %>
+
+    <%= form.submit "Enviar comprobante", class: "cursor-pointer inline-flex items-center justify-center h-10 px-5 rounded-full text-sm font-semibold bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" %>
+  </div>
+<% end %>

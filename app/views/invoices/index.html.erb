@@ -134,10 +134,28 @@
     <%= render 'shared/tailwind_pagination', paginated: @invoices %>
   </div>
 
+  <% if @consolidator_portal_user %>
+    <div class="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <p class="text-sm font-semibold text-indigo-900">Adjuntar comprobante a múltiples facturas</p>
+        <p class="text-xs text-indigo-700 mt-0.5">Selecciona facturas con saldo pendiente y envía un solo comprobante para revisión.</p>
+      </div>
+      <%= form_with url: new_consolidators_payment_evidence_path, method: :get, html: { id: "consolidator-payment-evidence-batch-form" }, data: { turbo_frame: "payment_evidence_modal" }, class: "flex items-center gap-3" do %>
+        <span id="consolidator-selected-invoices-count" class="text-xs font-semibold text-indigo-800">0 seleccionadas</span>
+        <%= submit_tag "Adjuntar comprobante", id: "consolidator-open-payment-evidence-modal", disabled: true, class: "cursor-pointer inline-flex items-center justify-center h-10 px-4 rounded-full text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed" %>
+      <% end %>
+    </div>
+  <% end %>
+
   <div class="hidden lg:block bg-white shadow-sm rounded-xl overflow-visible border border-gray-100">
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gradient-to-r from-gray-50 to-white">
         <tr>
+          <% if @consolidator_portal_user %>
+            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-12">
+              <input type="checkbox" id="consolidator-select-all-invoices" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+            </th>
+          <% end %>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Fecha</th>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Serie</th>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Folio</th>
@@ -153,12 +171,30 @@
           <% @invoices.each do |invoice| %>
             <% can_view_details = policy(invoice).show? %>
             <% can_attach_payment_evidence = policy(invoice).attach_payment_evidence? %>
+            <% payment_evidence_new_path = if current_user.consolidator? && current_user.entity&.role_consolidator?
+              new_consolidators_payment_evidence_path(invoice_ids: [ invoice.id ])
+            else
+              new_customs_agents_payment_evidence_path(invoice_id: invoice.id)
+            end %>
             <% serie = invoice.provider_response.to_h["serie"].presence || invoice.payload_snapshot.to_h["serie"].presence %>
             <% folio = invoice.provider_response.to_h["folio"].presence ||
                        invoice.provider_response.to_h["noComprobante"].presence ||
                        invoice.provider_response.to_h["numeroComprobante"].presence ||
                        invoice.facturador_comprobante_id&.to_s %>
             <tr class="hover:bg-gray-50 transition-colors duration-150">
+              <% if @consolidator_portal_user %>
+                <td class="px-4 py-4 align-top">
+                  <% if can_attach_payment_evidence %>
+                    <input
+                      type="checkbox"
+                      name="invoice_ids[]"
+                      value="<%= invoice.id %>"
+                      form="consolidator-payment-evidence-batch-form"
+                      class="consolidator-invoice-selector h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                  <% end %>
+                </td>
+              <% end %>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 <% if can_view_details %>
                   <%= link_to l(invoice.created_at, format: :short), invoice_path(invoice), class: "text-indigo-700 hover:text-indigo-900 font-medium" %>
@@ -244,7 +280,7 @@
                       <% end %>
 
                       <% if can_attach_payment_evidence %>
-                        <%= link_to new_customs_agents_payment_evidence_path(invoice_id: invoice.id), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-700 hover:bg-indigo-50 hover:text-indigo-900 transition-colors", role: "menuitem", data: { turbo_frame: "payment_evidence_modal" } do %>
+                        <%= link_to payment_evidence_new_path, class: "flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-700 hover:bg-indigo-50 hover:text-indigo-900 transition-colors", role: "menuitem", data: { turbo_frame: "payment_evidence_modal" } do %>
                           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
                           </svg>
@@ -259,7 +295,7 @@
           <% end %>
         <% else %>
           <tr>
-            <td colspan="8" class="px-6 py-12 text-center">
+            <td colspan="<%= @consolidator_portal_user ? 9 : 8 %>" class="px-6 py-12 text-center">
               <p class="text-gray-500 text-lg font-medium">No hay facturas para los filtros seleccionados</p>
             </td>
           </tr>
@@ -271,6 +307,18 @@
   <div class="lg:hidden space-y-4">
     <% if @invoices.any? %>
       <% @invoices.each do |invoice| %>
+        <% if @consolidator_portal_user && policy(invoice).attach_payment_evidence? %>
+          <label class="flex items-center gap-2 px-2 text-xs font-semibold text-indigo-800">
+            <input
+              type="checkbox"
+              name="invoice_ids[]"
+              value="<%= invoice.id %>"
+              form="consolidator-payment-evidence-batch-form"
+              class="consolidator-invoice-selector h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            Seleccionar para comprobante
+          </label>
+        <% end %>
         <%= render "invoices/mobile_card", invoice: invoice %>
       <% end %>
     <% else %>
@@ -286,3 +334,40 @@
 </div>
 
 <turbo-frame id="payment_evidence_modal"></turbo-frame>
+
+<script>
+  document.addEventListener("turbo:load", initConsolidatorInvoiceEvidenceSelection);
+  document.addEventListener("turbo:render", initConsolidatorInvoiceEvidenceSelection);
+
+  function initConsolidatorInvoiceEvidenceSelection() {
+    const form = document.getElementById("consolidator-payment-evidence-batch-form");
+    if (!form) return;
+
+    const checkboxes = Array.from(document.querySelectorAll(".consolidator-invoice-selector"));
+    const selectAll = document.getElementById("consolidator-select-all-invoices");
+    const submitButton = document.getElementById("consolidator-open-payment-evidence-modal");
+    const countElement = document.getElementById("consolidator-selected-invoices-count");
+
+    const updateState = () => {
+      const selected = checkboxes.filter((checkbox) => checkbox.checked).length;
+      if (submitButton) submitButton.disabled = selected === 0;
+      if (countElement) countElement.textContent = `${selected} seleccionadas`;
+      if (selectAll) {
+        const selectable = checkboxes.length;
+        selectAll.checked = selectable > 0 && selected === selectable;
+      }
+    };
+
+    if (selectAll) {
+      selectAll.addEventListener("change", () => {
+        checkboxes.forEach((checkbox) => {
+          checkbox.checked = selectAll.checked;
+        });
+        updateState();
+      });
+    }
+
+    checkboxes.forEach((checkbox) => checkbox.addEventListener("change", updateState));
+    updateState();
+  }
+</script>

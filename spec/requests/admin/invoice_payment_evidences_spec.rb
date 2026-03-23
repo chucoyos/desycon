@@ -1,4 +1,5 @@
 require "rails_helper"
+require "ostruct"
 
 RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
   let(:admin_user) { create(:user, :admin) }
@@ -159,6 +160,53 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
       expect(evidence.status).to eq("linked")
       expect(evidence.invoice_payment_id).to eq(payment.id)
       expect(evidence.review_comment).to include("Registrado por ejecutivo")
+    end
+
+    it "registers grouped payments for multi-invoice evidence" do
+      sign_in admin_user, scope: :user
+
+      second_invoice = create(:invoice, status: "issued", receiver_entity: client_entity)
+      create(:invoice_payment_evidence_link, invoice_payment_evidence: evidence, invoice: invoice)
+      create(:invoice_payment_evidence_link, invoice_payment_evidence: evidence, invoice: second_invoice)
+
+      first_payment = create(:invoice_payment, invoice: invoice)
+      grouped_result = OpenStruct.new(payments: [ first_payment ], complement_invoice: nil)
+
+      expect(Facturador::RegisterGroupedInvoicePaymentsService).to receive(:call).with(
+        evidence: evidence,
+        invoice_amounts: {
+          invoice.id.to_s => "500.00",
+          second_invoice.id.to_s => "300.00"
+        },
+        paid_at: Date.current.iso8601,
+        payment_method: "03",
+        reference: "BLH-GROUP-001",
+        tracking_key: "TRACK-GROUP-001",
+        notes: "Pago agrupado",
+        actor: admin_user
+      ).and_return(grouped_result)
+
+      post register_payment_admin_invoice_payment_evidence_path(evidence), params: {
+        register_payment: {
+          invoice_amounts: {
+            invoice.id.to_s => "500.00",
+            second_invoice.id.to_s => "300.00"
+          },
+          paid_at: Date.current.iso8601,
+          payment_method: "03",
+          reference: "BLH-GROUP-001",
+          tracking_key: "TRACK-GROUP-001",
+          notes: "Pago agrupado",
+          review_comment: "Registrado en bloque"
+        }
+      }
+
+      evidence.reload
+      expect(response).to redirect_to(admin_invoice_payment_evidence_path(evidence))
+      expect(evidence.status).to eq("linked")
+      expect(evidence.invoice_payment_id).to eq(first_payment.id)
+      expect(evidence.review_comment).to include("Registrado en bloque")
+      expect(evidence.review_comment).to include("2 facturas")
     end
   end
 end

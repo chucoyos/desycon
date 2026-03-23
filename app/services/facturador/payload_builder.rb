@@ -53,6 +53,9 @@ module Facturador
     end
 
     def build_payment_complement_payload
+      grouped_items = grouped_payment_items
+      return build_grouped_payment_complement_payload(grouped_items) if grouped_items.any?
+
       payment_data = payment_payload_data
       source = source_invoice
       taxes = payment_related_taxes(source: source, payment_data: payment_data)
@@ -90,6 +93,86 @@ module Facturador
             pago: [
               payment_entry(source: source, payment_data: payment_data, taxes: taxes)
             ]
+          }
+        }
+      }
+
+      payload[:serie] = Config.payment_serie if Config.payment_serie.present?
+      payload
+    end
+
+    def build_grouped_payment_complement_payload(grouped_items)
+      total_amount = grouped_items.sum { |item| item[:amount].to_d }
+      paid_at = grouped_items.first[:paid_at]
+      payment_method = grouped_items.first[:payment_method]
+      currency = grouped_items.first[:currency]
+
+      doctos = grouped_items.map do |item|
+        payment_related_document(source: item[:source], payment_data: item, taxes: item[:taxes])
+      end
+
+      grouped_taxes = grouped_items.map { |item| item[:taxes] }.compact
+      taxes = if grouped_taxes.any?
+        {
+          base: grouped_taxes.sum { |tax_item| tax_item[:base].to_d },
+          tax: grouped_taxes.sum { |tax_item| tax_item[:tax].to_d },
+          rate: grouped_taxes.first[:rate]
+        }
+      end
+
+      entry = {
+        fechaPago: paid_at.in_time_zone.strftime("%Y-%m-%dT%H:%M:%S"),
+        formaDePagoP: payment_method,
+        monedaP: currency,
+        monto: total_amount.to_f,
+        doctoRelacionado: doctos
+      }
+
+      if taxes.present?
+        entry[:impuestosP] = {
+          trasladosP: [
+            {
+              baseP: taxes[:base].to_f,
+              impuestoP: "002",
+              tipoFactorP: "Tasa",
+              tasaOCuotaP: format("%.6f", taxes[:rate].to_f),
+              importeP: taxes[:tax].to_f
+            }
+          ]
+        }
+      end
+
+      payload = {
+        emisor: emisor_payload,
+        receptor: receptor_payload(for_payment: true),
+        conceptos: [
+          {
+            claveProdServ: "84111506",
+            cantidad: "1",
+            claveUnidad: "ACT",
+            descripcion: "Pago",
+            valorUnitario: 0,
+            importe: 0,
+            objetoImp: "01"
+          }
+        ],
+        version: "4.0",
+        fecha: Time.current.strftime("%Y-%m-%dT%H:%M:%S"),
+        formaPago: "99",
+        subTotal: 0,
+        moneda: "XXX",
+        total: 0,
+        tipoDeComprobante: "P",
+        exportacion: "01",
+        metodoPago: "PUE",
+        lugarExpedicion: emisor_address.codigo_postal,
+        descripcionFacturador: descripcion_facturador,
+        metadataInterna: internal_metadata_snapshot,
+        complemento: {
+          complementoPago20: {
+            version: "2.0",
+            totales: payment_complement_totals(payment_data: { amount: total_amount }, taxes: taxes),
+            pago: [ entry ]
           }
         }
       }
@@ -433,6 +516,67 @@ module Facturador
       end
     end
 
+    def grouped_payment_items
+      grouped_snapshots = internal_metadata_snapshot.fetch("grouped_payments", []).to_a
+      return [] if grouped_snapshots.empty?
+
+      grouped_snapshots.filter_map do |snapshot|
+        data = snapshot.to_h.deep_stringify_keys
+        payment = InvoicePayment.find_by(id: data["payment_id"])
+        source_invoice = Invoice.find_by(id: data["source_invoice_id"])
+        next if payment.blank? || source_invoice.blank?
+
+        source_currency = source_invoice.currency.to_s.presence || "MXN"
+        previous_balance, remaining_balance, partiality_number, series, folio = source_balance_metadata_from_payment(source_invoice, payment)
+        source = {
+          sat_uuid: source_invoice.sat_uuid,
+          currency: source_currency,
+          previous_balance: previous_balance,
+          remaining_balance: remaining_balance,
+          partiality_number: partiality_number,
+          serie: series,
+          folio: folio,
+          objeto_imp: source_tax_object(source_invoice)
+        }
+
+        payment_data = {
+          amount: payment.amount.to_d,
+          paid_at: payment.paid_at,
+          payment_method: payment.payment_method,
+          currency: payment.currency
+        }
+
+        {
+          source: source,
+          amount: payment_data[:amount],
+          paid_at: payment_data[:paid_at],
+          payment_method: payment_data[:payment_method],
+          currency: payment_data[:currency],
+          taxes: payment_related_taxes_for_source(source_record: source_invoice, paid_amount: payment.amount.to_d)
+        }
+      end
+    end
+
+    def source_balance_metadata_from_payment(source_invoice, payment)
+      prior_scope = source_invoice.invoice_payments.where("id < ?", payment.id)
+      previous_paid = prior_scope.sum(:amount).to_d
+      previous_balance = source_invoice.total.to_d - previous_paid
+      remaining_balance = previous_balance - payment.amount.to_d
+      partiality_number = prior_scope.count + 1
+
+      provider = source_invoice.provider_response.to_h
+      series = sanitize_source_serie(provider["serie"].presence || source_invoice.payload_snapshot.to_h["serie"].presence)
+      folio = provider["folio"].presence || provider["noComprobante"].presence || provider["numeroComprobante"].presence || source_invoice.facturador_comprobante_id&.to_s
+
+      [
+        previous_balance.positive? ? previous_balance : 0.to_d,
+        remaining_balance.positive? ? remaining_balance : 0.to_d,
+        partiality_number,
+        series,
+        folio
+      ]
+    end
+
     def internal_metadata_snapshot
       snapshot = invoice.payload_snapshot.to_h.deep_stringify_keys
       metadata = snapshot["metadataInterna"]
@@ -582,6 +726,28 @@ module Facturador
       return nil unless total.positive?
 
       ratio = paid_amount / total
+      base = (subtotal * ratio).round(2)
+      tax = (tax_total * ratio).round(2)
+      rate = tax_total / subtotal
+
+      {
+        base: base,
+        tax: tax,
+        rate: rate
+      }
+    end
+
+    def payment_related_taxes_for_source(source_record:, paid_amount:)
+      return nil if source_tax_object(source_record).to_s != "02"
+
+      subtotal = source_record.subtotal.to_d
+      tax_total = source_record.tax_total.to_d
+      return nil unless subtotal.positive? && tax_total.positive?
+
+      total = source_record.total.to_d
+      return nil unless total.positive?
+
+      ratio = paid_amount.to_d / total
       base = (subtotal * ratio).round(2)
       tax = (tax_total * ratio).round(2)
       rate = tax_total / subtotal
