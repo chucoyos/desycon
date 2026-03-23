@@ -295,7 +295,11 @@ class BlHouseLine < ApplicationRecord
   end
 
   def storage_recalculation_triggered?
-    saved_change_to_peso? || saved_change_to_volumen? || saved_change_to_fecha_despacho?
+    saved_change_to_peso? ||
+      saved_change_to_volumen? ||
+      saved_change_to_fecha_despacho? ||
+      saved_change_to_clase_imo? ||
+      saved_change_to_tipo_imo?
   end
 
   def storage_catalog

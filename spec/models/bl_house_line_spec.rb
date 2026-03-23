@@ -318,6 +318,16 @@ RSpec.describe BlHouseLine, type: :model do
       expect(service.reload.amount).to eq(BigDecimal("7560"))
     end
 
+    it 'recalculates amount when IMO changes and service is not invoiced' do
+      bl_house_line.update!(status: "despachado")
+      service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)
+      expect(service.amount).to eq(BigDecimal("6048"))
+
+      bl_house_line.update!(clase_imo: "1", tipo_imo: "2")
+
+      expect(service.reload.amount).to eq(BigDecimal("12096"))
+    end
+
     it 'removes storage service if recalculation falls into grace period' do
       bl_house_line.update!(status: "despachado")
       service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)
@@ -388,6 +398,16 @@ RSpec.describe BlHouseLine, type: :model do
       expect(service.reload.amount).to eq(BigDecimal("2016"))
     end
 
+    it 'recalculates ENTCAM amount when IMO changes if not invoiced' do
+      bl_house_line.update!(status: "despachado")
+      service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)
+      expect(service.amount).to eq(BigDecimal("1764"))
+
+      bl_house_line.update!(clase_imo: "1", tipo_imo: "2")
+
+      expect(service.reload.amount).to eq(BigDecimal("3528"))
+    end
+
     it 'does not recalculate ENTCAM when service is invoiced' do
       bl_house_line.update!(status: "despachado")
       service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)
@@ -439,6 +459,21 @@ RSpec.describe BlHouseLine, type: :model do
       bl_house_line.update!(volumen: 15.2)
 
       expect(service.reload.amount).to eq(BigDecimal('2016'))
+    end
+
+    it 'recalculates PREVIO amount when IMO changes if service exists and is not invoiced' do
+      service = create(
+        :bl_house_line_service,
+        bl_house_line: bl_house_line,
+        service_catalog: catalog,
+        factura: nil,
+        amount: 1
+      )
+      expect(service.reload.amount).to eq(BigDecimal('1764'))
+
+      bl_house_line.update!(clase_imo: '1', tipo_imo: '2')
+
+      expect(service.reload.amount).to eq(BigDecimal('3528'))
     end
 
     it 'does not recalculate PREVIO when service is invoiced' do
@@ -495,6 +530,21 @@ RSpec.describe BlHouseLine, type: :model do
       bl_house_line.update!(volumen: 15.2)
 
       expect(service.reload.amount).to eq(BigDecimal('2016'))
+    end
+
+    it 'recalculates RECASU amount when IMO changes if service exists and is not invoiced' do
+      service = create(
+        :bl_house_line_service,
+        bl_house_line: bl_house_line,
+        service_catalog: catalog,
+        factura: nil,
+        amount: 1
+      )
+      expect(service.reload.amount).to eq(BigDecimal('1764'))
+
+      bl_house_line.update!(clase_imo: '1', tipo_imo: '2')
+
+      expect(service.reload.amount).to eq(BigDecimal('3528'))
     end
 
     it 'does not recalculate RECASU when service is invoiced' do
