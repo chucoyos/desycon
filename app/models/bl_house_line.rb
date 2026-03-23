@@ -46,8 +46,8 @@ class BlHouseLine < ApplicationRecord
   validates :marcas, presence: true
   validates :peso, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :volumen, presence: true, numericality: { greater_than_or_equal_to: 0 }
-  validates :clase_imo, length: { maximum: 4 }, allow_blank: true
-  validates :tipo_imo, length: { maximum: 4 }, allow_blank: true
+  validates :clase_imo, presence: true, length: { maximum: 4 }
+  validates :tipo_imo, presence: true, length: { maximum: 4 }
   validate :broker_matches_agency
 
   scope :visible_to_customs_agent, -> { where(hidden_from_customs_agent: false) }
@@ -55,6 +55,7 @@ class BlHouseLine < ApplicationRecord
   attr_accessor :skip_revalidation_notification
 
   # Callbacks
+  before_validation :normalize_imo_fields
   before_create :capture_current_user
   before_update :capture_current_user
   before_save :assign_next_partida_number, if: -> { partida.blank? && container_id.present? }
@@ -100,6 +101,14 @@ class BlHouseLine < ApplicationRecord
 
   def documents_attached?
     DOCUMENT_FIELDS.any? { |field| public_send(field).attached? }
+  end
+
+  def imo_double_charge_applicable?
+    clase_imo.to_s.strip != "0" && tipo_imo.to_s.strip != "0"
+  end
+
+  def imo_charge_multiplier
+    imo_double_charge_applicable? ? 2.to_d : 1.to_d
   end
 
   def required_revalidation_documents
@@ -274,6 +283,16 @@ class BlHouseLine < ApplicationRecord
   end
 
   private
+
+  def normalize_imo_fields
+    self.clase_imo = normalize_imo_value(clase_imo)
+    self.tipo_imo = normalize_imo_value(tipo_imo)
+  end
+
+  def normalize_imo_value(value)
+    normalized = value.to_s.strip
+    normalized.present? ? normalized : "0"
+  end
 
   def storage_recalculation_triggered?
     saved_change_to_peso? || saved_change_to_volumen? || saved_change_to_fecha_despacho?

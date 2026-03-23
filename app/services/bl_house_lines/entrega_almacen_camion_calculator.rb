@@ -33,7 +33,7 @@ module BlHouseLines
         volume_units: volume_units,
         billable_units: billable_units,
         unit_price: price,
-        total: (billable_units * price).round(2)
+        total: (billable_units * price * imo_charge_multiplier).round(2)
       )
     end
 
@@ -43,6 +43,12 @@ module BlHouseLines
 
     def ceil_units(value)
       value.to_d.ceil
+    end
+
+    def imo_charge_multiplier
+      return 1.to_d unless bl_house_line.respond_to?(:imo_charge_multiplier)
+
+      bl_house_line.imo_charge_multiplier.to_d
     end
   end
 end

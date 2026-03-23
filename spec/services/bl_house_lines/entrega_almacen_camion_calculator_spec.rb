@@ -42,5 +42,26 @@ RSpec.describe BlHouseLines::EntregaAlmacenCamionCalculator do
         expect(result.total).to eq(BigDecimal("1512"))
       end
     end
+
+    context "when imo applies with clase and tipo different from 0" do
+      let(:peso) { 13.2 }
+      let(:volumen) { 8.1 }
+      let(:bl_house_line) { build(:bl_house_line, peso: peso, volumen: volumen, clase_imo: "1", tipo_imo: "2") }
+
+      it "doubles the total charge" do
+        expect(result.billable_units).to eq(14)
+        expect(result.total).to eq(BigDecimal("3528"))
+      end
+    end
+
+    context "when only one imo field is different from 0" do
+      let(:peso) { 13.2 }
+      let(:volumen) { 8.1 }
+      let(:bl_house_line) { build(:bl_house_line, peso: peso, volumen: volumen, clase_imo: "1", tipo_imo: "0") }
+
+      it "does not double the total charge" do
+        expect(result.total).to eq(BigDecimal("1764"))
+      end
+    end
   end
 end

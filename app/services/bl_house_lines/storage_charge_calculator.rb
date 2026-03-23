@@ -52,7 +52,7 @@ module BlHouseLines
         billable_units: billable_units,
         billable_days: billable_days,
         unit_price: price,
-        total: (billable_units * daily_subtotal).round(2)
+        total: (billable_units * daily_subtotal * imo_charge_multiplier).round(2)
       )
     end
 
@@ -95,6 +95,12 @@ module BlHouseLines
         tier_span = tier[:to] - tier[:from] + 1
         [ remaining, tier_span ].min
       end
+    end
+
+    def imo_charge_multiplier
+      return 1.to_d unless bl_house_line.respond_to?(:imo_charge_multiplier)
+
+      bl_house_line.imo_charge_multiplier.to_d
     end
   end
 end

@@ -119,5 +119,26 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
         expect(result.total).to eq(BigDecimal("96828"))
       end
     end
+
+    context "when imo applies with clase and tipo different from 0" do
+      let(:peso) { 12 }
+      let(:volumen) { 10 }
+      let(:bl_house_line) { build(:bl_house_line, peso: peso, volumen: volumen, clase_imo: "1", tipo_imo: "2") }
+
+      it "doubles the total charge" do
+        expect(result.billable_days).to eq(4)
+        expect(result.total).to eq(BigDecimal("12096"))
+      end
+    end
+
+    context "when only one imo field is different from 0" do
+      let(:peso) { 12 }
+      let(:volumen) { 10 }
+      let(:bl_house_line) { build(:bl_house_line, peso: peso, volumen: volumen, clase_imo: "1", tipo_imo: "0") }
+
+      it "does not double the total charge" do
+        expect(result.total).to eq(BigDecimal("6048"))
+      end
+    end
   end
 end

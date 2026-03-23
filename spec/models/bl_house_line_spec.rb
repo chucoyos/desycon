@@ -218,6 +218,23 @@ RSpec.describe BlHouseLine, type: :model do
     end
   end
 
+  describe 'imo normalization and multiplier' do
+    it 'normalizes blank imo fields to 0 before validation' do
+      bl_house_line = create(:bl_house_line, clase_imo: '  ', tipo_imo: '')
+
+      expect(bl_house_line.clase_imo).to eq('0')
+      expect(bl_house_line.tipo_imo).to eq('0')
+    end
+
+    it 'returns multiplier 2 only when clase and tipo are different from 0' do
+      bl_house_line = create(:bl_house_line, clase_imo: '1', tipo_imo: '2')
+      expect(bl_house_line.imo_charge_multiplier).to eq(BigDecimal('2'))
+
+      bl_house_line.update!(tipo_imo: '0')
+      expect(bl_house_line.imo_charge_multiplier).to eq(BigDecimal('1'))
+    end
+  end
+
   describe 'asignación electrónica de carga service' do
     let!(:catalog) { create(:service_catalog, name: "Asignación electrónica de carga", applies_to: "bl_house_line", amount: 950.0, currency: "MXN") }
     let(:bl_house_line) { create(:bl_house_line, status: "documentos_ok") }
