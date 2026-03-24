@@ -382,6 +382,72 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include('PDF')
     end
 
+    it 'shows included CFDIs table for REP with one row per related document' do
+      receiver = create(:entity, :client, name: 'Cliente Receptor Con Nombre Muy Largo Para Probar Tabla REP Sin Romper Layout')
+      source_invoice_one = create(
+        :invoice,
+        status: 'issued',
+        sat_uuid: 'UUID-REL-001',
+        receiver_entity: receiver,
+        provider_response: { 'serie' => 'A', 'folio' => '1001' },
+        total: 1160
+      )
+      source_invoice_two = create(
+        :invoice,
+        status: 'issued',
+        sat_uuid: 'UUID-REL-002',
+        receiver_entity: receiver,
+        provider_response: { 'serie' => 'B', 'folio' => '1002' },
+        total: 2320
+      )
+
+      rep_invoice = create(
+        :invoice,
+        kind: 'pago',
+        status: 'issued',
+        sat_uuid: 'UUID-REP-001',
+        payload_snapshot: {
+          complemento: {
+            complementoPago20: {
+              pago: [
+                {
+                  doctoRelacionado: [
+                    {
+                      folio: '1001',
+                      idDocumento: source_invoice_one.sat_uuid
+                    },
+                    {
+                      serie: 'B',
+                      folio: '1002',
+                      idDocumento: source_invoice_two.sat_uuid
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      )
+
+      get invoice_path(rep_invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('CFDIs incluidos en este REP')
+      expect(response.body).to include('RECEPTOR')
+      expect(response.body).to include('Saldo')
+      expect(response.body).to include('UUID-REL-001')
+      expect(response.body).to include('UUID-REL-002')
+      expect(response.body).to include('A')
+      expect(response.body).to include('1001')
+      expect(response.body).to include('B')
+      expect(response.body).to include('1002')
+      expect(response.body).to include('Cliente Receptor Con Nombre')
+      expect(response.body).to include(invoice_path(source_invoice_one))
+      expect(response.body).to include(invoice_path(source_invoice_two))
+      expect(response.body).to include('$1,160.00')
+      expect(response.body).to include('$2,320.00')
+    end
+
     it 'keeps payment registration form available for PUE invoices' do
       invoice = create(
         :invoice,

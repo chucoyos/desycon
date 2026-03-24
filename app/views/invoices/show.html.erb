@@ -165,10 +165,14 @@
       <section class="bg-white shadow-sm rounded-xl p-5 border border-gray-100">
         <h2 class="text-lg font-bold text-gray-900 mb-4">Información fiscal</h2>
 
-        <% payload = @invoice.payload_snapshot.to_h %>
-        <% provider = @invoice.provider_response.to_h %>
+        <% payload = @invoice.payload_snapshot.to_h.deep_stringify_keys %>
+        <% provider = @invoice.provider_response.to_h.deep_stringify_keys %>
         <% receptor = payload.fetch("receptor", {}).to_h %>
         <% conceptos = Array(payload["conceptos"]) %>
+        <% payment_entries = Array(payload.dig("complemento", "complementoPago20", "pago")).map { |entry| entry.to_h.deep_stringify_keys } %>
+        <% related_payment_documents = payment_entries.flat_map { |entry| Array(entry["doctoRelacionado"]).map { |doc| doc.to_h.deep_stringify_keys } } %>
+        <% related_uuids = related_payment_documents.map { |doc| doc["idDocumento"].to_s }.reject(&:blank?).uniq %>
+        <% source_invoices_by_uuid = Invoice.includes(:receiver_entity).where(sat_uuid: related_uuids).index_by(&:sat_uuid) %>
         <% uso_cfdi_code = receptor["usoCFDI"].presence %>
         <% regimen_receptor_code = receptor["regimenFiscalReceptor"].presence %>
         <% forma_pago_code = payload["formaPago"].presence %>
@@ -251,6 +255,58 @@
               </div>
             </div>
           </div>
+
+          <% if @invoice.kind == "pago" %>
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <h3 class="text-sm font-bold text-gray-900 mb-3">CFDIs incluidos en este REP</h3>
+
+              <% if related_payment_documents.any? %>
+                <div class="overflow-x-auto">
+                  <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-white">
+                      <tr>
+                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Serie</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Folio</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">RECEPTOR</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">UUID</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Total</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Saldo</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 bg-white">
+                      <% related_payment_documents.each do |related_doc| %>
+                        <% source_invoice = source_invoices_by_uuid[related_doc["idDocumento"].to_s] %>
+                        <% source_provider = source_invoice&.provider_response.to_h.deep_stringify_keys || {} %>
+                        <% source_snapshot = source_invoice&.payload_snapshot.to_h.deep_stringify_keys || {} %>
+                        <% source_serie = source_provider["serie"].presence || source_snapshot["serie"].presence %>
+                        <% source_folio = source_provider["folio"].presence || source_provider["noComprobante"].presence || source_provider["numeroComprobante"].presence || source_invoice&.facturador_comprobante_id&.to_s %>
+                        <% row_serie = related_doc["serie"].presence || source_serie.presence || (source_provider["serie"].to_s.strip.casecmp("sin serie").zero? ? "Sin Serie" : nil) %>
+                        <% row_folio = related_doc["folio"].presence || source_folio %>
+                        <% row_receiver_name = source_invoice&.receiver_entity&.name.presence || source_snapshot.dig("receptor", "nombre").presence %>
+                        <% row_saldo = related_doc["impSaldoInsoluto"].present? ? related_doc["impSaldoInsoluto"].to_d : source_invoice&.outstanding_amount %>
+                        <tr>
+                          <td class="px-3 py-2 text-gray-700"><%= row_serie.presence || '-' %></td>
+                          <td class="px-3 py-2 text-gray-700"><%= row_folio.presence || '-' %></td>
+                          <td class="px-3 py-2 text-gray-700" title="<%= row_receiver_name.presence || '' %>"><%= row_receiver_name.present? ? truncate(row_receiver_name, length: 38) : '-' %></td>
+                          <td class="px-3 py-2 text-gray-900 font-mono">
+                            <% if source_invoice.present? %>
+                              <%= link_to related_doc["idDocumento"].presence || source_invoice.sat_uuid, invoice_path(source_invoice), class: "text-indigo-700 hover:text-indigo-900" %>
+                            <% else %>
+                              <%= related_doc["idDocumento"].presence || '-' %>
+                            <% end %>
+                          </td>
+                          <td class="px-3 py-2 text-gray-700"><%= source_invoice.present? ? number_to_currency(source_invoice.total) : '-' %></td>
+                          <td class="px-3 py-2 text-gray-700"><%= row_saldo.present? ? number_to_currency(row_saldo) : '-' %></td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              <% else %>
+                <p class="text-sm text-gray-500">No hay CFDIs relacionados registrados en el complemento de pago.</p>
+              <% end %>
+            </div>
+          <% end %>
 
           <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
             <h3 class="text-sm font-bold text-gray-900 mb-3">Conceptos</h3>
