@@ -52,6 +52,10 @@
       </div>
     <% end %>
 
+    <% if entity.role_customs_agent? || entity.role_consolidator? %>
+      <%= render partial: "entities/email_recipients_section", locals: { entity: entity } %>
+    <% end %>
+
     <!-- Addresses Section -->
     <%= render partial: "entities/addresses_section", locals: { entity: entity } %>
   </div>

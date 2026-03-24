@@ -81,4 +81,54 @@ RSpec.describe Invoice, type: :model do
       expect(invoice.payment_status_label).to eq('Pagado')
     end
   end
+
+  describe '#email_delivery_recipients' do
+    it 'returns consolidator emails for container service invoices' do
+      consolidator = create(:entity, :consolidator)
+      create(:entity_email_recipient, :primary, entity: consolidator, email: 'conso1@correo.com')
+      create(:entity_email_recipient, entity: consolidator, email: 'conso2@correo.com', position: 1)
+
+      container = create(:container, consolidator_entity: consolidator)
+      invoice = create(:invoice, invoiceable: create(:container_service, container: container))
+
+      expect(invoice.email_delivery_target_entity).to eq(consolidator)
+      expect(invoice.email_delivery_recipients).to eq([ 'conso1@correo.com', 'conso2@correo.com' ])
+      expect(invoice.email_delivery_recipients_csv).to eq('conso1@correo.com;conso2@correo.com')
+    end
+
+    it 'returns customs agency emails for bl house line service invoices' do
+      customs_agent = create(:entity, :customs_agent)
+      create(:entity_email_recipient, :primary, entity: customs_agent, email: 'agencia1@correo.com')
+      create(:entity_email_recipient, entity: customs_agent, email: 'agencia2@correo.com', position: 1)
+
+      bl_house_line = create(:bl_house_line, customs_agent: customs_agent)
+      invoice = create(:invoice, invoiceable: create(:bl_house_line_service, bl_house_line: bl_house_line))
+
+      expect(invoice.email_delivery_target_entity).to eq(customs_agent)
+      expect(invoice.email_delivery_recipients).to eq([ 'agencia1@correo.com', 'agencia2@correo.com' ])
+      expect(invoice.email_delivery_recipients_csv).to eq('agencia1@correo.com;agencia2@correo.com')
+    end
+
+    it 'resolves consolidator target from invoice_service_links when invoiceable is nil' do
+      consolidator = create(:entity, :consolidator)
+      create(:entity_email_recipient, :primary, entity: consolidator, email: 'conso1@correo.com')
+      create(:entity_email_recipient, entity: consolidator, email: 'conso2@correo.com', position: 1)
+
+      container = create(:container, consolidator_entity: consolidator)
+      service = create(:container_service, container: container)
+      invoice = create(:invoice, invoiceable: nil)
+      create(:invoice_service_link, invoice: invoice, serviceable: service)
+
+      expect(invoice.email_delivery_target_entity).to eq(consolidator)
+      expect(invoice.email_delivery_recipients).to eq([ 'conso1@correo.com', 'conso2@correo.com' ])
+    end
+
+    it 'returns empty recipients when no routing target exists' do
+      receiver = create(:entity, :client, :with_address)
+      invoice = create(:invoice, invoiceable: nil, receiver_entity: receiver, customs_agent: nil)
+
+      expect(invoice.email_delivery_target_entity).to be_nil
+      expect(invoice.email_delivery_recipients).to eq([])
+    end
+  end
 end

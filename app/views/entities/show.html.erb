@@ -10,6 +10,12 @@
       <%= render "entities/fiscal_profile_section", entity: @entity %>
     </div>
 
+    <% if @entity.role_customs_agent? || @entity.role_consolidator? %>
+      <div id="email_recipients_container">
+        <%= render "entities/email_recipients_section", entity: @entity %>
+      </div>
+    <% end %>
+
     <% if @entity.role_customs_broker? %>
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-indigo-50 to-indigo-100 border-b border-indigo-200">

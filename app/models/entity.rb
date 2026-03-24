@@ -21,6 +21,7 @@ class Entity < ApplicationRecord
 
   # Relaciones polimórficas con tablas existentes
   has_many :addresses, as: :addressable, dependent: :destroy
+  has_many :entity_email_recipients, dependent: :destroy
   has_one :fiscal_profile, as: :profileable, dependent: :destroy
   has_many :users, dependent: :restrict_with_error
 
@@ -54,6 +55,7 @@ class Entity < ApplicationRecord
 
   # Nested attributes
   accepts_nested_attributes_for :addresses, allow_destroy: true, reject_if: :all_blank
+  accepts_nested_attributes_for :entity_email_recipients, allow_destroy: true, reject_if: :all_blank
   accepts_nested_attributes_for :fiscal_profile, reject_if: :all_blank
   # No nested brokers here; brokers are managed separately
 
@@ -92,6 +94,14 @@ class Entity < ApplicationRecord
   # Address helper methods
   def fiscal_address
     addresses.matriz.first
+  end
+
+  def delivery_email_recipients
+    entity_email_recipients.active.ordered.pluck(:email)
+  end
+
+  def primary_delivery_email
+    delivery_email_recipients.first
   end
 
   def shipping_addresses

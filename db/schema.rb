@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_23_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_24_123000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -260,6 +260,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_23_120000) do
     t.index ["restricted_access_enabled_at"], name: "index_entities_on_restricted_access_enabled_at"
     t.index ["role_kind"], name: "index_entities_on_role_kind"
     t.check_constraint "role_kind IS NULL OR (role_kind::text = ANY (ARRAY['customs_agent'::character varying, 'consolidator'::character varying, 'customs_broker'::character varying, 'client'::character varying, 'forwarder'::character varying]::text[]))", name: "check_entities_role_kind"
+  end
+
+  create_table "entity_email_recipients", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.bigint "entity_id", null: false
+    t.integer "position", default: 0, null: false
+    t.boolean "primary_recipient", default: false, null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_id", "active"], name: "index_entity_email_recipients_on_entity_id_and_active"
+    t.index ["entity_id", "email"], name: "index_entity_email_recipients_on_entity_id_and_email", unique: true
+    t.index ["entity_id", "primary_recipient"], name: "idx_on_entity_id_primary_recipient_2475f48de5"
+    t.index ["entity_id"], name: "index_entity_email_recipients_on_entity_id"
   end
 
   create_table "fiscal_profiles", force: :cascade do |t|
@@ -582,6 +596,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_23_120000) do
   add_foreign_key "containers", "vessels"
   add_foreign_key "containers", "voyages"
   add_foreign_key "entities", "entities", column: "customs_agent_id"
+  add_foreign_key "entity_email_recipients", "entities"
   add_foreign_key "forwarders", "entities"
   add_foreign_key "invoice_events", "invoices"
   add_foreign_key "invoice_line_items", "invoices"

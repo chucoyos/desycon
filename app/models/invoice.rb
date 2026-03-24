@@ -159,6 +159,30 @@ class Invoice < ApplicationRecord
     true
   end
 
+  def email_delivery_target_entity
+    direct_target = target_entity_from_invoiceable(invoiceable)
+    return direct_target if direct_target.present?
+
+    linked_target = target_entity_from_service_links
+    return linked_target if linked_target.present?
+
+    return customs_agent if customs_agent.present?
+    return receiver_entity if receiver_entity&.role_consolidator?
+
+    nil
+  end
+
+  def email_delivery_recipients
+    target_entity = email_delivery_target_entity
+    return [] if target_entity.blank?
+
+    target_entity.delivery_email_recipients
+  end
+
+  def email_delivery_recipients_csv
+    email_delivery_recipients.join(";")
+  end
+
   def mark_queued!
     update!(status: "queued", last_error_code: nil, last_error_message: nil)
   end
@@ -215,6 +239,30 @@ class Invoice < ApplicationRecord
   end
 
   private
+
+  def target_entity_from_invoiceable(record)
+    case record
+    when ContainerService
+      record.container&.consolidator_entity
+    when BlHouseLineService
+      record.bl_house_line&.customs_agent
+    else
+      nil
+    end
+  end
+
+  def target_entity_from_service_links
+    links = invoice_service_links.includes(:serviceable)
+    return nil if links.empty?
+
+    serviceables = links.map(&:serviceable).compact
+    return nil if serviceables.empty?
+
+    types = serviceables.map(&:class).uniq
+    return nil if types.size > 1
+
+    target_entity_from_invoiceable(serviceables.first)
+  end
 
   def ensure_idempotency_key
     return if idempotency_key.present?

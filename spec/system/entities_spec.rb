@@ -113,4 +113,78 @@ RSpec.describe "Entities", type: :system do
       expect(page).to have_text("Nueva Razón Social")
     end
   end
+
+  describe "email recipients management" do
+    let(:agency) { create(:entity, :customs_agent) }
+
+    it "persists multiple email recipients from the form" do
+      visit edit_entity_path(agency)
+
+      within "#email-recipients-container" do
+        all(".email-recipient-row").first.tap do |row|
+          row.fill_in "Correo", with: "agencia1@correo.com"
+          row.fill_in "Orden", with: "0"
+          row.check "Principal"
+          row.check "Activo"
+        end
+      end
+
+      find("#add-email-recipient-btn").click
+      find("#add-email-recipient-btn").click
+
+      within "#email-recipients-container" do
+        rows = all(".email-recipient-row")
+
+        rows[1].fill_in "Correo", with: "agencia2@correo.com"
+        rows[1].fill_in "Orden", with: "1"
+        rows[1].uncheck "Principal"
+        rows[1].check "Activo"
+
+        rows[2].fill_in "Correo", with: "agencia3@correo.com"
+        rows[2].fill_in "Orden", with: "2"
+        rows[2].uncheck "Principal"
+        rows[2].check "Activo"
+      end
+
+      click_button "Actualizar Entidad"
+
+      expect(page).to have_text("Entidad actualizada exitosamente")
+      expect(agency.reload.delivery_email_recipients).to eq([ "agencia1@correo.com", "agencia2@correo.com", "agencia3@correo.com" ])
+    end
+
+    it "persists multiple email recipients when creating a new customs agency" do
+      visit new_entity_path
+
+      fill_in "entity_name", with: "Agencia Nueva"
+      select "Agencia Aduanal", from: "entity_role_kind"
+
+      find("#add-email-recipient-btn").click
+      find("#add-email-recipient-btn").click
+
+      within "#email-recipients-container" do
+        rows = all(".email-recipient-row")
+        expect(rows.size).to eq(2)
+
+        rows[0].fill_in "Correo", with: "nueva1@correo.com"
+        rows[0].fill_in "Orden", with: "0"
+        rows[0].check "Principal"
+        rows[0].check "Activo"
+
+        rows[1].fill_in "Correo", with: "nueva2@correo.com"
+        rows[1].fill_in "Orden", with: "1"
+        rows[1].uncheck "Principal"
+        rows[1].check "Activo"
+      end
+
+      fill_in "entity_addresses_attributes_0_codigo_postal", with: "64000"
+      fill_in "entity_addresses_attributes_0_email", with: "fiscal@agencianueva.com"
+
+      click_button "Crear Entidad"
+
+      created = Entity.order(:id).last
+      expect(page).to have_text("Entidad creada exitosamente")
+      expect(created.role_kind).to eq("customs_agent")
+      expect(created.delivery_email_recipients).to eq([ "nueva1@correo.com", "nueva2@correo.com" ])
+    end
+  end
 end

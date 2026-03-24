@@ -1,0 +1,39 @@
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-sky-50 to-cyan-50 border-b border-sky-100">
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <h2 class="text-base sm:text-lg font-semibold text-gray-900">Correos de envío CFDI</h2>
+        <p class="text-sm text-gray-600">Destinatarios configurados para envío automático.</p>
+      </div>
+      <% if policy(entity).update? %>
+        <%= link_to "Editar", edit_entity_path(entity), class: "inline-flex items-center px-3 py-1.5 rounded-md border border-sky-200 text-sky-700 text-sm font-semibold hover:bg-sky-100" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="p-4 sm:p-6">
+    <% recipients = entity.entity_email_recipients.ordered %>
+    <% if recipients.any? %>
+      <div class="space-y-2">
+        <% recipients.each do |recipient| %>
+          <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 <%= recipient.active? ? 'bg-white' : 'bg-slate-50' %>">
+            <div>
+              <p class="text-sm font-medium text-slate-900"><%= recipient.email %></p>
+              <p class="text-xs text-slate-500">Orden: <%= recipient.position %></p>
+            </div>
+            <div class="flex items-center gap-2">
+              <% if recipient.primary_recipient? %>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-teal-100 text-teal-800">Principal</span>
+              <% end %>
+              <% unless recipient.active? %>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">Inactivo</span>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-sm text-slate-500">No hay correos configurados para esta entidad.</p>
+    <% end %>
+  </div>
+</div>

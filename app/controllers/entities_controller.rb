@@ -31,6 +31,7 @@ class EntitiesController < ApplicationController
     # Build associated objects for the form
     @entity.build_fiscal_profile
     @entity.addresses.build
+    build_email_recipient_if_needed(@entity)
     authorize @entity
   end
 
@@ -46,6 +47,7 @@ class EntitiesController < ApplicationController
     # Ensure at least one address field is available for editing
     @entity.addresses.build if @entity.addresses.empty?
     @entity.build_fiscal_profile unless @entity.fiscal_profile.present?
+    build_email_recipient_if_needed(@entity)
     authorize @entity
   end
 
@@ -71,6 +73,7 @@ class EntitiesController < ApplicationController
       # Rebuild associated objects for form display when validation fails
       @entity.build_fiscal_profile unless @entity.fiscal_profile
       @entity.addresses.build if @entity.addresses.empty?
+      build_email_recipient_if_needed(@entity)
       render :new, status: :unprocessable_content
     end
   end
@@ -129,6 +132,7 @@ class EntitiesController < ApplicationController
       else
         @entity.build_fiscal_profile unless @entity.fiscal_profile
         @entity.addresses.build if @entity.addresses.empty?
+        build_email_recipient_if_needed(@entity)
 
         if modal_context
           format.turbo_stream do
@@ -159,7 +163,7 @@ class EntitiesController < ApplicationController
   private
 
   def set_entity
-    @entity = Entity.includes(:fiscal_profile).find(params.expect(:id))
+    @entity = Entity.includes(:fiscal_profile, :addresses).find(params.expect(:id))
   end
 
   def load_patents
@@ -192,6 +196,9 @@ class EntitiesController < ApplicationController
       addresses_attributes: [
         :id, :calle, :numero_exterior, :numero_interior, :colonia, :municipio, :localidad,
         :estado, :codigo_postal, :pais, :email, :tipo, :_destroy
+      ],
+      entity_email_recipients_attributes: [
+        :id, :email, :position, :active, :primary_recipient, :_destroy
       ]
     ]
 
@@ -200,5 +207,12 @@ class EntitiesController < ApplicationController
     end
 
     params.require(:entity).permit(permitted_attributes)
+  end
+
+  def build_email_recipient_if_needed(entity)
+    return unless entity.role_customs_agent? || entity.role_consolidator?
+    return if entity.entity_email_recipients.reject(&:marked_for_destruction?).any?
+
+    entity.entity_email_recipients.build(active: true, primary_recipient: true, position: 0)
   end
 end

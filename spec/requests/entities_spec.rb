@@ -105,6 +105,25 @@ RSpec.describe "Entities", type: :request do
 
       expect(response).to have_http_status(:unprocessable_content)
     end
+
+    it "creates customs agency with multiple email recipients" do
+      expect {
+        post entities_path, params: {
+          entity: {
+            name: "Agencia con Correos",
+            role_kind: "customs_agent",
+            entity_email_recipients_attributes: {
+              "0" => { email: "agencia1@correo.com", position: "0", primary_recipient: "1", active: "1" },
+              "1" => { email: "agencia2@correo.com", position: "1", primary_recipient: "0", active: "1" }
+            }
+          }
+        }
+      }.to change(EntityEmailRecipient, :count).by(2)
+
+      created = Entity.order(:id).last
+      expect(created.role_kind).to eq("customs_agent")
+      expect(created.delivery_email_recipients).to eq([ "agencia1@correo.com", "agencia2@correo.com" ])
+    end
   end
 
   describe "PATCH /update" do
@@ -148,6 +167,54 @@ RSpec.describe "Entities", type: :request do
       expect(response).to redirect_to(entity_path(entity))
       expect(flash[:notice]).to eq("Entidad actualizada exitosamente.")
       expect(entity.reload.fiscal_profile.razon_social).to eq("Razon Actualizada")
+    end
+
+    it "updates consolidator email recipients through nested attributes" do
+      consolidator = create(:entity, :consolidator)
+      existing = create(:entity_email_recipient, :primary, entity: consolidator, email: "old@correo.com", position: 0)
+
+      patch entity_path(consolidator), params: {
+        entity: {
+          entity_email_recipients_attributes: {
+            "0" => {
+              id: existing.id,
+              email: "principal@correo.com",
+              position: "0",
+              primary_recipient: "1",
+              active: "1"
+            },
+            "1" => {
+              email: "secundario@correo.com",
+              position: "1",
+              primary_recipient: "0",
+              active: "1"
+            }
+          }
+        }
+      }
+
+      expect(response).to redirect_to(entity_path(consolidator))
+      expect(consolidator.reload.delivery_email_recipients).to eq([ "principal@correo.com", "secundario@correo.com" ])
+    end
+
+    it "removes an email recipient using _destroy" do
+      agency = create(:entity, :customs_agent)
+      recipient = create(:entity_email_recipient, entity: agency, email: "remove@correo.com")
+
+      expect {
+        patch entity_path(agency), params: {
+          entity: {
+            entity_email_recipients_attributes: {
+              "0" => {
+                id: recipient.id,
+                _destroy: "1"
+              }
+            }
+          }
+        }
+      }.to change(EntityEmailRecipient, :count).by(-1)
+
+      expect(response).to redirect_to(entity_path(agency))
     end
   end
 

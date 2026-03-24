@@ -76,20 +76,28 @@ module Facturador
     def validate_invoice!
       raise ValidationError, "Invoice UUID is missing" if invoice.sat_uuid.blank?
       raise ValidationError, "Invoice is not in a mailable state" unless invoice.status.in?(%w[issued cancelled])
-      raise ValidationError, "Receiver fiscal email is missing" if receiver_email.blank?
+      raise ValidationError, "Invoice delivery recipients are missing" if recipient_email_list.empty?
     end
 
-    def receiver_email
-      @receiver_email ||= invoice.receiver_entity&.fiscal_address&.email.to_s.strip
+    def recipient_email_list
+      @recipient_email_list ||= invoice.email_delivery_recipients.map { |email| email.to_s.strip }.reject(&:blank?).uniq
+    end
+
+    def recipient_emails_csv
+      @recipient_emails_csv ||= recipient_email_list.join(";")
+    end
+
+    def reply_to_email
+      recipient_email_list.first.to_s
     end
 
     def build_payload(client:, emisor_id:)
       {
         "asunto" => Config.email_subject,
-        "cc" => receiver_email,
+        "cc" => "",
         "mensaje" => Config.email_message,
-        "para" => receiver_email,
-        "responderA" => receiver_email,
+        "para" => recipient_emails_csv,
+        "responderA" => reply_to_email,
         "cfdi" => build_cfdi_payload(client: client, emisor_id: emisor_id)
       }
     end
