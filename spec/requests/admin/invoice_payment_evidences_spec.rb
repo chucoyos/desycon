@@ -104,6 +104,18 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
     end
   end
 
+  describe "GET /admin/invoice_payment_evidences/:id" do
+    it "renders linked invoice navigation to invoice show without selection link" do
+      sign_in admin_user, scope: :user
+
+      get admin_invoice_payment_evidence_path(evidence)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include(invoice_path(invoice))
+      expect(response.body).not_to include("Seleccionar")
+    end
+  end
+
   describe "PATCH /admin/invoice_payment_evidences/:id/reject" do
     it "rejects evidence with mandatory comment" do
       sign_in admin_user, scope: :user
