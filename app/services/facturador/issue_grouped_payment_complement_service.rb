@@ -19,6 +19,15 @@ module Facturador
       raise RequestError, "All payments must reference issued invoices" unless invoices.all?(&:issued?)
       raise RequestError, "All source invoices must include UUID" unless invoices.all? { |invoice| invoice.sat_uuid.present? }
 
+      payment_currencies = payments.map(&:currency).uniq
+      raise RequestError, "Grouped payment complement requires the same payment currency" if payment_currencies.size > 1
+
+      invoice_currencies = invoices.map(&:currency).uniq
+      raise RequestError, "Grouped payment complement requires the same source currency" if invoice_currencies.size > 1
+
+      inconsistent_currency = payments.any? { |payment| payment.currency != payment.invoice.currency }
+      raise RequestError, "Grouped payment complement requires payment currency to match source invoice currency" if inconsistent_currency
+
       issuer_ids = invoices.map(&:issuer_entity_id).uniq
       receiver_ids = invoices.map(&:receiver_entity_id).uniq
       raise RequestError, "Grouped payment complement requires the same issuer" if issuer_ids.size > 1
@@ -44,7 +53,7 @@ module Facturador
       complement
     rescue Error
       payments.each do |payment|
-        payment.update!(status: "failed")
+        payment.update_columns(status: "failed", updated_at: Time.current)
       rescue StandardError
         nil
       end

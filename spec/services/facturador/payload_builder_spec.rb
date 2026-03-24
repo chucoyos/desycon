@@ -518,6 +518,72 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         expect(pago[:doctoRelacionado].size).to eq(2)
         expect(pago[:doctoRelacionado].map { |docto| docto[:idDocumento] }).to match_array([ 'UUID-SOURCE-001', 'UUID-SOURCE-002' ])
       end
+
+      it 'raises when grouped REP includes mixed tax rates' do
+        lower_rate_invoice = create(
+          :invoice,
+          status: 'issued',
+          sat_uuid: 'UUID-SOURCE-003',
+          issuer_entity: issuer,
+          receiver_entity: receiver,
+          currency: 'MXN',
+          subtotal: 1000,
+          tax_total: 80,
+          total: 1080,
+          provider_response: { 'folio' => '789' }
+        )
+
+        lower_rate_payment = create(
+          :invoice_payment,
+          invoice: lower_rate_invoice,
+          amount: 200,
+          paid_at: current_payment.paid_at,
+          created_at: current_payment.created_at,
+          payment_method: '03',
+          status: 'registered'
+        )
+
+        grouped_complement = create(
+          :invoice,
+          kind: 'pago',
+          status: 'draft',
+          sat_uuid: nil,
+          issuer_entity: issuer,
+          receiver_entity: receiver,
+          currency: 'MXN',
+          subtotal: 500,
+          tax_total: 0,
+          total: 500,
+          payload_snapshot: {
+            metadataInterna: {
+              grouped_payments: [
+                {
+                  payment_id: current_payment.id,
+                  source_invoice_id: source_invoice.id,
+                  source_invoice_uuid: source_invoice.sat_uuid,
+                  amount: current_payment.amount.to_s,
+                  paid_at: current_payment.paid_at.iso8601,
+                  payment_method: current_payment.payment_method,
+                  currency: current_payment.currency
+                },
+                {
+                  payment_id: lower_rate_payment.id,
+                  source_invoice_id: lower_rate_invoice.id,
+                  source_invoice_uuid: lower_rate_invoice.sat_uuid,
+                  amount: lower_rate_payment.amount.to_s,
+                  paid_at: lower_rate_payment.paid_at.iso8601,
+                  payment_method: lower_rate_payment.payment_method,
+                  currency: lower_rate_payment.currency
+                }
+              ]
+            }
+          }
+        )
+
+        expect do
+          described_class.build(grouped_complement)
+        end.to raise_error(Facturador::ValidationError, /mixed tax rates/)
+      end
     end
   end
 end

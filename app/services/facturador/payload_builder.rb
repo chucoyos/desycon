@@ -112,6 +112,11 @@ module Facturador
       end
 
       grouped_taxes = grouped_items.map { |item| item[:taxes] }.compact
+      grouped_tax_rates = grouped_taxes.map { |tax_item| tax_item[:rate].to_d }.uniq
+      if grouped_tax_rates.size > 1
+        raise ValidationError, "Grouped payment complement does not support mixed tax rates"
+      end
+
       taxes = if grouped_taxes.any?
         {
           base: grouped_taxes.sum { |tax_item| tax_item[:base].to_d },

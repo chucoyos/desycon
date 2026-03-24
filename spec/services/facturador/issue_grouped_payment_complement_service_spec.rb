@@ -63,5 +63,28 @@ RSpec.describe Facturador::IssueGroupedPaymentComplementService, type: :service 
       expect(first_payment.reload.status).to eq("failed")
       expect(second_payment.reload.status).to eq("failed")
     end
+
+    it "marks payments as failed when payment currencies are mixed" do
+      second_payment.update_column(:currency, "USD")
+
+      expect do
+        described_class.call(payments: [ first_payment, second_payment ])
+      end.to raise_error(Facturador::RequestError, /same payment currency/)
+
+      expect(first_payment.reload.status).to eq("failed")
+      expect(second_payment.reload.status).to eq("failed")
+    end
+
+    it "marks payments as failed when payment and invoice currencies do not match" do
+      first_payment.update_column(:currency, "USD")
+      second_payment.update_column(:currency, "USD")
+
+      expect do
+        described_class.call(payments: [ first_payment, second_payment ])
+      end.to raise_error(Facturador::RequestError, /match source invoice currency/)
+
+      expect(first_payment.reload.status).to eq("failed")
+      expect(second_payment.reload.status).to eq("failed")
+    end
   end
 end
