@@ -6,7 +6,7 @@
 
 <%= form_with(model: [entity, address], method: :post, class: "space-y-5 bg-white px-6 pb-6 pt-3 sm:px-8 sm:pb-7 sm:pt-4", id: "new_address_form") do |form| %>
   <div class="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-xs text-emerald-800">
-    Por defecto se recomienda capturar el domicilio fiscal (matriz). Campos obligatorios: <span class="font-semibold">CP y Email</span>.
+    Por defecto se recomienda capturar el domicilio fiscal (matriz). El único campo obligatorio es el código postal.
   </div>
 
   <% if address.errors.any? %>
@@ -22,8 +22,8 @@
       <%= form.select :tipo, Address::TIPOS.map { |k, v| [v, k] }, { include_blank: "Seleccionar tipo", selected: address.tipo.presence || "matriz" }, class: select_input_class %>
     </div>
     <div>
-      <%= form.label :email, "Email (obligatorio)", class: label_class %>
-      <%= form.email_field :email, class: text_input_class, placeholder: "Ej. facturacion@empresa.com", required: true %>
+      <%= form.label :email, "Email (opcional)", class: label_class %>
+      <%= form.email_field :email, class: text_input_class, placeholder: "Ej. facturacion@empresa.com" %>
     </div>
   </div>
 

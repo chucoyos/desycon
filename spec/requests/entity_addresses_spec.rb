@@ -77,15 +77,16 @@ RSpec.describe 'EntityAddresses', type: :request do
 
     it 'returns unprocessable_content with invalid params' do
       address = create(:address, addressable: entity, tipo: 'sucursal')
+      original_codigo_postal = address.codigo_postal
 
       patch entity_address_path(entity, address), params: {
         address: {
-          email: ''
+          codigo_postal: ''
         }
       }
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(address.reload.email).to be_present
+      expect(address.reload.codigo_postal).to eq(original_codigo_postal)
     end
   end
 

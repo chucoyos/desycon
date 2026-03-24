@@ -36,6 +36,24 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         expect(concepto_descripcion).not_to include(':')
       end
 
+      it 'omits receiver correo when fiscal address email is blank' do
+        receiver.fiscal_address.update!(email: nil)
+
+        invoice = create(
+          :invoice,
+          kind: 'ingreso',
+          invoiceable: nil,
+          issuer_entity: issuer,
+          receiver_entity: receiver
+        )
+        create(:invoice_line_item, invoice: invoice)
+
+        payload = described_class.build(invoice)
+
+        expect(payload.dig(:receptor, :direccion, :correo)).to be_nil
+        expect(payload.dig(:receptor, :direccion).key?(:correo)).to be(false)
+      end
+
       it 'omits container and blhouse labels when values do not exist' do
         invoice = create(
           :invoice,

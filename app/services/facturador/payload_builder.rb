@@ -236,6 +236,13 @@ module Facturador
     end
 
     def receptor_payload(for_payment: false)
+      direccion = {
+        nombre: "Principal",
+        codigoPostal: receiver_address.codigo_postal,
+        pais: "MEX"
+      }
+      direccion[:correo] = receiver_address.email if receiver_address.email.present?
+
       {
         rfc: receiver_fiscal_profile.rfc,
         nombre: receiver_fiscal_profile.razon_social,
@@ -243,12 +250,7 @@ module Facturador
         regimenFiscalReceptor: receiver_fiscal_profile.regimen,
         domicilioFiscalReceptor: receiver_address.codigo_postal,
         direccionIDFacturador: 0,
-        direccion: {
-          nombre: "Principal",
-          codigoPostal: receiver_address.codigo_postal,
-          pais: "MEX",
-          correo: receiver_address.email
-        }
+        direccion: direccion
       }
     end
 

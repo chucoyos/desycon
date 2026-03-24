@@ -1,5 +1,6 @@
 <%# Update the addresses container %>
-<% if params[:context] == "edit" %>
+<% edit_context = params[:context] == "edit" || request.referer.to_s.include?(edit_entity_path(@entity)) %>
+<% if edit_context %>
   <%= turbo_stream.replace "addresses_container" do %>
     <%= render partial: "entities/addresses_editor", locals: { entity: @entity } %>
   <% end %>

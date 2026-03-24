@@ -55,9 +55,9 @@ RSpec.describe Address, type: :model do
     end
 
     describe 'email' do
-      it 'requires email' do
+      it 'allows blank email' do
         address.email = nil
-        expect(address).not_to be_valid
+        expect(address).to be_valid
       end
 
       it 'validates email format' do

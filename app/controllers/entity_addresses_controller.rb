@@ -26,7 +26,7 @@ class EntityAddressesController < ApplicationController
 
     if @address.update(address_params)
       flash.now[:notice] = "Dirección actualizada exitosamente."
-      success_path = params[:context] == "edit" ? edit_entity_path(@entity) : @entity
+      success_path = edit_context_request? ? edit_entity_path(@entity) : @entity
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to success_path, notice: "Dirección actualizada exitosamente." }
@@ -92,5 +92,9 @@ class EntityAddressesController < ApplicationController
     return false unless @entity.fiscal_profile.present?
 
     @entity.addresses.where(tipo: "matriz").where.not(id: address.id).none?
+  end
+
+  def edit_context_request?
+    params[:context] == "edit" || request.referer.to_s.include?(edit_entity_path(@entity))
   end
 end

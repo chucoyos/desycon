@@ -66,7 +66,7 @@ class Address < ApplicationRecord
   validates :pais, length: { is: 2 }, format: { with: /\A[A-Z]{2}\z/ }, allow_blank: true
   validates :codigo_postal, presence: true, length: { maximum: 10 }
   validates :estado, length: { maximum: 100 }, allow_blank: true
-  validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validates :calle, length: { maximum: 200 }, allow_blank: true
   validates :municipio, length: { maximum: 100 }, allow_blank: true
   validates :localidad, length: { maximum: 100 }, allow_blank: true
