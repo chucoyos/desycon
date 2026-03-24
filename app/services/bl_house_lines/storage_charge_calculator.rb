@@ -2,10 +2,15 @@ module BlHouseLines
   class StorageChargeCalculator
     GRACE_DAYS = 7
     MINIMUM_UNITS = 9
-    DAILY_RATE_TIERS = [
+    VERACRUZ_DAILY_RATE_TIERS = [
       { from: 1, to: 15, rate: BigDecimal("126") },
       { from: 16, to: 45, rate: BigDecimal("196") },
       { from: 46, to: nil, rate: BigDecimal("299") }
+    ].freeze
+    ALTAMIRA_DAILY_RATE_TIERS = [
+      { from: 1, to: 15, rate: BigDecimal("60") },
+      { from: 16, to: 45, rate: BigDecimal("95") },
+      { from: 46, to: nil, rate: BigDecimal("125") }
     ].freeze
 
     Result = Struct.new(
@@ -77,7 +82,7 @@ module BlHouseLines
       return BigDecimal("0") if remaining <= 0
 
       subtotal = BigDecimal("0")
-      DAILY_RATE_TIERS.each do |tier|
+      daily_rate_tiers.each do |tier|
         break if remaining <= 0
 
         days_in_tier = tier_days_for(remaining: remaining, tier: tier)
@@ -86,6 +91,21 @@ module BlHouseLines
       end
 
       subtotal
+    end
+
+    def daily_rate_tiers
+      return VERACRUZ_DAILY_RATE_TIERS unless bl_house_line&.container&.tipo_maniobra_importacion?
+
+      case destination_port_code
+      when "MXATM"
+        ALTAMIRA_DAILY_RATE_TIERS
+      else
+        VERACRUZ_DAILY_RATE_TIERS
+      end
+    end
+
+    def destination_port_code
+      bl_house_line&.container&.destination_port&.code.to_s.upcase
     end
 
     def tier_days_for(remaining:, tier:)

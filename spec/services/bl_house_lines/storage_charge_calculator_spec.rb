@@ -140,5 +140,19 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
         expect(result.total).to eq(BigDecimal("6048"))
       end
     end
+
+    context "when destination port is Altamira" do
+      let(:peso) { 12 }
+      let(:volumen) { 10 }
+      let(:altamira_port) { build(:port, name: "Altamira", code: "MXATM", country_code: "MX") }
+      let(:altamira_voyage) { build(:voyage, destination_port: altamira_port) }
+      let(:altamira_container) { build(:container, voyage: altamira_voyage, tipo_maniobra: "importacion") }
+      let(:bl_house_line) { build(:bl_house_line, peso: peso, volumen: volumen, container: altamira_container) }
+
+      it "uses Altamira daily rates while preserving the same formula" do
+        expect(result.billable_days).to eq(4)
+        expect(result.total).to eq(BigDecimal("2880"))
+      end
+    end
   end
 end

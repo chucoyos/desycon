@@ -64,10 +64,10 @@ class BlHouseLine < ApplicationRecord
   after_update :notify_revalidation_request, if: -> { !skip_revalidation_notification && saved_change_to_status? && validar_documentos? }
   after_update :notify_customs_agent_revalidation, if: -> { saved_change_to_status? && revalidado? }
   after_update :ensure_asignacion_electronica_service, if: -> { saved_change_to_status? && revalidado? }
-  after_update :ensure_storage_service_on_despachado, if: -> { saved_change_to_status? && despachado? }
-  after_update :ensure_entcam_service_on_despachado, if: -> { saved_change_to_status? && despachado? }
-  after_update :recalculate_storage_service_if_needed, if: :storage_recalculation_triggered?
-  after_update :recalculate_entcam_service_if_needed, if: :storage_recalculation_triggered?
+  after_update :ensure_storage_service_on_despachado, if: -> { saved_change_to_status? && despachado? && auto_partida_services_allowed_by_port? }
+  after_update :ensure_entcam_service_on_despachado, if: -> { saved_change_to_status? && despachado? && auto_partida_services_allowed_by_port? }
+  after_update :recalculate_storage_service_if_needed, if: -> { storage_recalculation_triggered? && auto_partida_services_allowed_by_port? }
+  after_update :recalculate_entcam_service_if_needed, if: -> { storage_recalculation_triggered? && auto_partida_services_allowed_by_port? }
   after_update :recalculate_previo_service_if_needed, if: :storage_recalculation_triggered?
   after_update :recalculate_recasu_service_if_needed, if: :storage_recalculation_triggered?
   def documentos_completos?
@@ -300,6 +300,16 @@ class BlHouseLine < ApplicationRecord
       saved_change_to_fecha_despacho? ||
       saved_change_to_clase_imo? ||
       saved_change_to_tipo_imo?
+  end
+
+  def auto_partida_services_allowed_by_port?
+    return false unless container&.tipo_maniobra_importacion?
+
+    destination_port_code.in?(%w[MXVER MXATM])
+  end
+
+  def destination_port_code
+    container&.destination_port&.code.to_s.upcase
   end
 
   def storage_catalog

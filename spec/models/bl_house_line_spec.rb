@@ -278,7 +278,18 @@ RSpec.describe BlHouseLine, type: :model do
       )
     end
 
-    let(:container) { create(:container, fecha_desconsolidacion: Date.new(2026, 3, 20)) }
+    let(:veracruz_port) { create(:port, :veracruz) }
+    let(:veracruz_voyage) { create(:voyage, destination_port: veracruz_port) }
+    let(:container) do
+      create(
+        :container,
+        voyage: veracruz_voyage,
+        fecha_desconsolidacion: Date.new(2026, 3, 20),
+        tipo_maniobra: 'importacion',
+        recinto: 'ICAVE',
+        almacen: 'CICE'
+      )
+    end
     let(:bl_house_line) do
       create(
         :bl_house_line,
@@ -306,6 +317,31 @@ RSpec.describe BlHouseLine, type: :model do
       expect {
         bl_house_line.update!(status: "despachado")
       }.not_to change { bl_house_line.reload.bl_house_line_services.where(service_catalog: catalog).count }
+    end
+
+    it 'does not create storage service automatically for non-eligible destination ports' do
+      manzanillo_port = create(:port, :manzanillo)
+      manzanillo_voyage = create(:voyage, destination_port: manzanillo_port)
+      other_container = create(
+        :container,
+        voyage: manzanillo_voyage,
+        fecha_desconsolidacion: Date.new(2026, 3, 20),
+        tipo_maniobra: 'importacion',
+        recinto: 'CONTECON',
+        almacen: 'SSA'
+      )
+      other_line = create(
+        :bl_house_line,
+        container: other_container,
+        status: 'revalidado',
+        peso: 12,
+        volumen: 10,
+        fecha_despacho: Time.zone.local(2026, 3, 30, 9, 0, 0)
+      )
+
+      expect {
+        other_line.update!(status: 'despachado')
+      }.not_to change { other_line.reload.bl_house_line_services.where(service_catalog: catalog).count }
     end
 
     it 'recalculates amount when weight changes and service is not invoiced' do
@@ -361,9 +397,22 @@ RSpec.describe BlHouseLine, type: :model do
       )
     end
 
+    let(:veracruz_port) { create(:port, :veracruz) }
+    let(:veracruz_voyage) { create(:voyage, destination_port: veracruz_port) }
+    let(:container) do
+      create(
+        :container,
+        voyage: veracruz_voyage,
+        tipo_maniobra: 'importacion',
+        recinto: 'ICAVE',
+        almacen: 'CICE'
+      )
+    end
+
     let(:bl_house_line) do
       create(
         :bl_house_line,
+        container: container,
         status: "revalidado",
         peso: 13.2,
         volumen: 8.1
@@ -386,6 +435,29 @@ RSpec.describe BlHouseLine, type: :model do
       expect {
         bl_house_line.update!(status: "despachado")
       }.not_to change { bl_house_line.reload.bl_house_line_services.where(service_catalog: catalog).count }
+    end
+
+    it 'does not create ENTCAM service automatically for non-eligible destination ports' do
+      manzanillo_port = create(:port, :manzanillo)
+      manzanillo_voyage = create(:voyage, destination_port: manzanillo_port)
+      other_container = create(
+        :container,
+        voyage: manzanillo_voyage,
+        tipo_maniobra: 'importacion',
+        recinto: 'CONTECON',
+        almacen: 'SSA'
+      )
+      other_line = create(
+        :bl_house_line,
+        container: other_container,
+        status: 'revalidado',
+        peso: 13.2,
+        volumen: 8.1
+      )
+
+      expect {
+        other_line.update!(status: 'despachado')
+      }.not_to change { other_line.reload.bl_house_line_services.where(service_catalog: catalog).count }
     end
 
     it 'recalculates ENTCAM amount when peso/volumen changes if not invoiced' do
