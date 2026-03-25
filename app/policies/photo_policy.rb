@@ -11,6 +11,10 @@ class PhotoPolicy < ApplicationPolicy
     user&.admin_or_executive? || user&.tramitador?
   end
 
+  def download?
+    user&.admin_or_executive? || user&.tramitador?
+  end
+
   class Scope < Scope
     def resolve
       if user&.admin_or_executive?

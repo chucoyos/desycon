@@ -3,6 +3,7 @@
   total_photos = attachable.photos.for_section(section).count
   upload_path = attachable.is_a?(Container) ? photos_container_path(attachable) : photos_bl_house_line_path(attachable)
   bulk_delete_path = attachable.is_a?(Container) ? photos_section_container_path(attachable) : photos_section_bl_house_line_path(attachable)
+  download_path = attachable.is_a?(Container) ? photos_download_container_path(attachable, section: section) : photos_download_bl_house_line_path(attachable, section: section)
 %>
 
 <section class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
@@ -85,14 +86,22 @@
         <% end %>
       </div>
 
-      <% if total_photos.positive? && policy(Photo).destroy? %>
-        <div class="pt-1 sm:pt-2 flex justify-end">
-          <%= button_to "Eliminar #{total_photos} foto(s) de esta sección",
-                bulk_delete_path,
-                method: :delete,
-                params: { photo: { section: section } },
-                form: { data: { turbo_confirm: "¿Eliminar todas las fotografías de #{title}? Esta acción no se puede deshacer." } },
-                class: "w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100" %>
+      <% if total_photos.positive? %>
+        <div class="pt-1 sm:pt-2 flex flex-col sm:flex-row sm:justify-end gap-2">
+          <% if policy(Photo).download? %>
+            <%= link_to "Descargar #{total_photos} foto(s)",
+                  download_path,
+                  class: "w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100" %>
+          <% end %>
+
+          <% if policy(Photo).destroy? %>
+            <%= button_to "Eliminar #{total_photos} foto(s) de esta sección",
+                  bulk_delete_path,
+                  method: :delete,
+                  params: { photo: { section: section } },
+                  form: { data: { turbo_confirm: "¿Eliminar todas las fotografías de #{title}? Esta acción no se puede deshacer." } },
+                  class: "w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100" %>
+          <% end %>
         </div>
       <% end %>
     </div>

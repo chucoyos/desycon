@@ -139,6 +139,84 @@ RSpec.describe "Photos", type: :request do
     end
   end
 
+  describe "GET /containers/:id/photos_download" do
+    let(:container) { create(:container) }
+
+    it "downloads a zip with photos from the selected section" do
+      admin = create(:user, :admin)
+      login_as admin
+
+      create(:photo, attachable: container, section: "apertura")
+      create(:photo, attachable: container, section: "apertura")
+      create(:photo, attachable: container, section: "vacio")
+
+      get photos_download_container_path(container, section: "apertura")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/zip")
+      expect(response.headers["Content-Disposition"]).to include("attachment")
+      expect(response.headers["Content-Disposition"]).to include("contenedor")
+      expect(response.headers["Content-Disposition"]).to include("apertura")
+    end
+  end
+
+  describe "GET /bl_house_lines/:id/photos_download" do
+    let(:bl_house_line) { create(:bl_house_line) }
+
+    it "downloads a zip with etiquetado photos" do
+      executive = create(:user, :executive)
+      login_as executive
+
+      create(:photo, :etiquetado, attachable: bl_house_line)
+      create(:photo, :etiquetado, attachable: bl_house_line)
+
+      get photos_download_bl_house_line_path(bl_house_line, section: "etiquetado")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/zip")
+      expect(response.headers["Content-Disposition"]).to include("attachment")
+      expect(response.headers["Content-Disposition"]).to include("partida")
+      expect(response.headers["Content-Disposition"]).to include("etiquetado")
+    end
+  end
+
+  describe "GET /containers/:id/photos_download_all" do
+    let(:container) { create(:container) }
+
+    it "downloads a zip with photos from all sections" do
+      admin = create(:user, :admin)
+      login_as admin
+
+      create(:photo, attachable: container, section: "apertura")
+      create(:photo, attachable: container, section: "vacio")
+
+      get photos_download_all_container_path(container)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/zip")
+      expect(response.headers["Content-Disposition"]).to include("attachment")
+      expect(response.headers["Content-Disposition"]).to include("todas_las_secciones")
+    end
+  end
+
+  describe "GET /bl_house_lines/:id/photos_download_all" do
+    let(:bl_house_line) { create(:bl_house_line) }
+
+    it "downloads a zip with all partida photos" do
+      executive = create(:user, :executive)
+      login_as executive
+
+      create(:photo, :etiquetado, attachable: bl_house_line)
+
+      get photos_download_all_bl_house_line_path(bl_house_line)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/zip")
+      expect(response.headers["Content-Disposition"]).to include("attachment")
+      expect(response.headers["Content-Disposition"]).to include("todas_las_secciones")
+    end
+  end
+
   private
 
   def uploaded_image(filename)
