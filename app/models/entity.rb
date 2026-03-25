@@ -75,6 +75,15 @@ class Entity < ApplicationRecord
   scope :customs_brokers, -> { where(role_kind: "customs_broker") }
   scope :forwarders, -> { where(role_kind: "forwarder") }
   scope :clients, -> { where(role_kind: "client") }
+  scope :search_by_name, lambda { |query|
+    term = query.to_s.strip
+    if term.blank?
+      none
+    else
+      sanitized = ActiveRecord::Base.sanitize_sql_like(term.downcase)
+      where("LOWER(name) LIKE ?", "%#{sanitized}%").order(:name)
+    end
+  }
   scope :with_restricted_access, -> { where(restricted_access_enabled: true) }
   scope :with_overdue_rule_enabled, -> { where(enforce_overdue_payment_rule: true) }
 

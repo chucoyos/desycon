@@ -60,4 +60,40 @@ RSpec.describe "Containers autocomplete", type: :system do
     expect(voyage_select.value).to eq(recent_voyage.id.to_s)
     expect(voyage_select.value).not_to eq(older_voyage.id.to_s)
   end
+
+  it "selects consolidator from autocomplete and sets consolidator id" do
+    selected_consolidator = create(:entity, :consolidator, name: "Consolidador Alpha")
+    create(:entity, :consolidator, name: "Consolidador Beta")
+
+    visit new_container_path
+
+    consolidator_input = find_field("consolidator_search")
+    consolidator_input.fill_in(with: "Consolidador Al")
+
+    expect(page).to have_css("button[data-index='0']", text: selected_consolidator.name)
+    consolidator_input.send_keys(:enter)
+
+    expect(page).to have_field("consolidator_search", with: selected_consolidator.name)
+
+    hidden_consolidator = find("#container_consolidator_entity_id", visible: :all)
+    expect(hidden_consolidator.value).to eq(selected_consolidator.id.to_s)
+  end
+
+  it "uses selected consolidator as default billed_to for new services" do
+    selected_consolidator = create(:entity, :consolidator, name: "Consolidador Servicios")
+
+    visit new_container_path
+
+    consolidator_input = find_field("consolidator_search")
+    consolidator_input.fill_in(with: "Consolidador Serv")
+    expect(page).to have_css("button[data-index='0']", text: selected_consolidator.name)
+    consolidator_input.send_keys(:enter)
+
+    click_button "Agregar Servicio"
+
+    service_card = first("#services-container .service-card")
+    billed_to_select = service_card.find("select.js-billed-to-entity-select", visible: :all)
+
+    expect(billed_to_select.value).to eq(selected_consolidator.id.to_s)
+  end
 end

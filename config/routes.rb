@@ -85,6 +85,7 @@ Rails.application.routes.draw do
   resources :consolidators
   resources :containers do
     collection do
+      get :consolidators_search
       get :shipping_lines_search
       get :vessels_search
     end

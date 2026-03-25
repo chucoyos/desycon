@@ -282,6 +282,41 @@ RSpec.describe "Containers", type: :request do
     end
   end
 
+  describe "GET /containers/consolidators_search" do
+    before { sign_in user, scope: :user }
+
+    it "returns empty results when query is too short" do
+      get consolidators_search_containers_url, params: { q: "a" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"]).to eq([])
+      expect(payload.dig("meta", "min_chars")).to eq(2)
+    end
+
+    it "returns up to 20 matching consolidators" do
+      25.times do |i|
+        create(:entity, :consolidator, name: "Consolidador Stress #{i}")
+      end
+
+      get consolidators_search_containers_url, params: { q: "Consolidador Stress" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"].size).to eq(20)
+      expect(payload.dig("meta", "limit")).to eq(20)
+    end
+
+    it "requires create permissions" do
+      restricted_user = create(:user, :customs_broker)
+      sign_in restricted_user, scope: :user
+
+      get consolidators_search_containers_url, params: { q: "Consolidador" }, as: :json
+
+      expect(response).to have_http_status(:redirect)
+    end
+  end
+
   describe "GET /containers/vessels_search" do
     before { sign_in user, scope: :user }
 
