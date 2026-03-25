@@ -35,7 +35,7 @@
       </svg>
       <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Búsqueda</h2>
     </div>
-    <%= form_with url: bl_house_lines_path, method: :get, class: "w-full" do |f| %>
+    <%= form_with url: bl_house_lines_path, method: :get, class: "w-full", data: { turbo: false } do |f| %>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         <div class="min-w-0">
           <%= f.label :blhouse, "BL House", class: "sr-only" %>
@@ -49,12 +49,76 @@
 
         <div class="relative w-full sm:w-auto">
           <%= f.label :client_id, "Cliente", class: "sr-only" %>
-          <%= f.select :client_id, options_from_collection_for_select(@clients || Entity.clients.order(:name), :id, :name, params[:client_id]), { include_blank: "Todos los clientes" }, class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+          <% selected_client = @clients.find { |client| client.id.to_s == params[:client_id].to_s } if params[:client_id].present? %>
+
+          <div
+            data-controller="catalog-autocomplete"
+            data-catalog-autocomplete-url-value="<%= clients_search_bl_house_lines_path %>"
+            data-catalog-autocomplete-min-chars-value="2"
+            data-catalog-autocomplete-debounce-value="300"
+            class="relative"
+          >
+            <%= hidden_field_tag :client_id,
+                  params[:client_id],
+                  data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+            <%= text_field_tag :client_search,
+                  selected_client&.name,
+                  autocomplete: "off",
+                  placeholder: "Todos los clientes",
+                  class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm",
+                  data: {
+                    catalog_autocomplete_target: "input",
+                    action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+                  } %>
+
+            <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+            <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+          </div>
+
+          <noscript>
+            <%= f.select :client_id,
+              options_from_collection_for_select(@clients || Entity.clients.order(:name), :id, :name, params[:client_id]),
+              { include_blank: "Todos los clientes" },
+              class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+          </noscript>
         </div>
 
         <div class="relative w-full sm:w-auto">
           <%= f.label :customs_agent_id, "Agencia Aduanal", class: "sr-only" %>
-          <%= f.select :customs_agent_id, options_from_collection_for_select(@customs_agents || Entity.customs_agents.order(:name), :id, :display_name, params[:customs_agent_id]), { include_blank: "Todas las agencias" }, class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+          <% selected_customs_agent = @customs_agents.find { |agent| agent.id.to_s == params[:customs_agent_id].to_s } if params[:customs_agent_id].present? %>
+
+          <div
+            data-controller="catalog-autocomplete"
+            data-catalog-autocomplete-url-value="<%= customs_agents_search_bl_house_lines_path %>"
+            data-catalog-autocomplete-min-chars-value="2"
+            data-catalog-autocomplete-debounce-value="300"
+            class="relative"
+          >
+            <%= hidden_field_tag :customs_agent_id,
+                  params[:customs_agent_id],
+                  data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+            <%= text_field_tag :customs_agent_search,
+                  selected_customs_agent&.display_name,
+                  autocomplete: "off",
+                  placeholder: "Todas las agencias",
+                  class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm",
+                  data: {
+                    catalog_autocomplete_target: "input",
+                    action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+                  } %>
+
+            <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+            <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+          </div>
+
+          <noscript>
+            <%= f.select :customs_agent_id,
+              options_from_collection_for_select(@customs_agents || Entity.customs_agents.order(:name), :id, :display_name, params[:customs_agent_id]),
+              { include_blank: "Todas las agencias" },
+              class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+          </noscript>
         </div>
 
         <div class="relative w-full sm:w-auto">

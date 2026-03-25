@@ -124,6 +124,11 @@ Rails.application.routes.draw do
     end
   end
   resources :bl_house_lines do
+    collection do
+      get :clients_search
+      get :customs_agents_search
+    end
+
     member do
       post :photos, to: "photos#create_for_bl_house_line"
       delete :photos_section, to: "photos#destroy_section_for_bl_house_line"

@@ -244,6 +244,94 @@ RSpec.describe "BlHouseLines", type: :request do
     end
   end
 
+  describe "GET /bl_house_lines/clients_search" do
+    before { sign_in user, scope: :user }
+
+    it "returns empty results when query is too short" do
+      get clients_search_bl_house_lines_url, params: { q: "a" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"]).to eq([])
+      expect(payload.dig("meta", "min_chars")).to eq(2)
+    end
+
+    it "returns up to 20 matching clients" do
+      25.times do |i|
+        create(:entity, :client, name: "Cliente Stress #{i}")
+      end
+
+      get clients_search_bl_house_lines_url, params: { q: "Cliente Stress" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"].size).to eq(20)
+      expect(payload.dig("meta", "limit")).to eq(20)
+    end
+
+    it "allows tramitador users" do
+      tramitador = create(:user, :tramitador)
+      sign_in tramitador, scope: :user
+
+      get clients_search_bl_house_lines_url, params: { q: "Cliente" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "returns forbidden for customs broker users" do
+      customs_broker = create(:user, :customs_broker)
+      sign_in customs_broker, scope: :user
+
+      get clients_search_bl_house_lines_url, params: { q: "Cliente" }, as: :json
+
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
+
+  describe "GET /bl_house_lines/customs_agents_search" do
+    before { sign_in user, scope: :user }
+
+    it "returns empty results when query is too short" do
+      get customs_agents_search_bl_house_lines_url, params: { q: "a" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"]).to eq([])
+      expect(payload.dig("meta", "min_chars")).to eq(2)
+    end
+
+    it "returns up to 20 matching customs agents" do
+      25.times do |i|
+        create(:entity, :customs_agent, name: "Agencia Stress #{i}")
+      end
+
+      get customs_agents_search_bl_house_lines_url, params: { q: "Agencia Stress" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"].size).to eq(20)
+      expect(payload.dig("meta", "limit")).to eq(20)
+    end
+
+    it "allows tramitador users" do
+      tramitador = create(:user, :tramitador)
+      sign_in tramitador, scope: :user
+
+      get customs_agents_search_bl_house_lines_url, params: { q: "Agencia" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "returns forbidden for customs broker users" do
+      customs_broker = create(:user, :customs_broker)
+      sign_in customs_broker, scope: :user
+
+      get customs_agents_search_bl_house_lines_url, params: { q: "Agencia" }, as: :json
+
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
+
   describe "GET /bl_house_lines/new" do
     it "renders a successful response" do
       sign_in user, scope: :user
