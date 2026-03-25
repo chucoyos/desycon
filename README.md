@@ -134,6 +134,92 @@ Notas:
 - Si `AUTO_ISSUE_NIPON_EXCEPTION_ENABLED` es `false`, la regla no aplica.
 - Si `AUTO_ISSUE_NIPON_RFC` esta vacio, la regla no aplica.
 
+### Patron reusable: autocomplete para catalogos extensos
+
+Para evitar lentitud en formularios con listas largas, se implemento un patron reusable de
+autocomplete con busqueda en servidor. El primer piloto esta en el formulario de contenedores
+para `Linea Naviera`, pero el mismo enfoque puede aplicarse a otros campos.
+
+Objetivo:
+
+- Mejorar UX en listas grandes sin cargar miles de opciones en el navegador.
+- Reducir carga de servidor con limites, debounce y cache corta.
+- Mantener compatibilidad con Turbo/Stimulus y fallback cuando no hay JavaScript.
+
+Parametros de rendimiento (estandar):
+
+- `minChars`: 2
+- `limit`: 20 resultados maximos por consulta
+- `debounce`: 300ms en cliente
+- `cache TTL`: 60 segundos por termino
+
+Implementacion actual del patron (estado vigente):
+
+- Endpoint de busqueda dedicado por recurso (en el piloto: `shipping_lines_search`).
+- Retorno temprano cuando el termino tiene menos de 2 caracteres.
+- Limite duro de 20 resultados aplicado en backend.
+- Cache corta por termino (60s) para reducir consultas repetidas.
+- Payload compacto para UI (`id`, `label`, `subtitle`, `meta`).
+- Input visible + hidden field para enviar el `*_id` real al submit.
+- Componente Stimulus reusable con debounce y cancelacion de requests obsoletos (`AbortController`).
+- Estado visual de carga, sin resultados y errores de red.
+- Navegacion por teclado (flechas arriba/abajo, Enter, Escape).
+- Preseleccion automatica de la primera opcion para seleccionar con Enter sin clic.
+- Fallback funcional para no-JS usando `noscript`.
+
+Comportamiento UX esperado del componente:
+
+1. Usuario escribe 2+ caracteres.
+2. Se ejecuta busqueda con debounce.
+3. Se muestran resultados y la primera opcion queda activa.
+4. Enter selecciona la opcion activa y llena el input + hidden id.
+5. Si cambia el texto manualmente, se limpia el hidden id para evitar submit inconsistente.
+
+Contrato JSON recomendado:
+
+```json
+{
+   "results": [
+      {
+         "id": 123,
+         "label": "Nombre visible",
+         "subtitle": "Dato secundario opcional"
+      }
+   ],
+   "meta": {
+      "query": "na",
+      "min_chars": 2,
+      "limit": 20,
+      "count": 1
+   }
+}
+```
+
+Checklist para implementar en otro formulario:
+
+1. Modelo: agregar scope de busqueda seguro (sanitizar termino y ordenar por nombre).
+2. Ruta: exponer endpoint `collection` de busqueda para ese recurso.
+3. Controlador: validar `minChars`, aplicar `limit` duro, cachear resultados y autorizar acceso.
+4. Vista: usar input visible + hidden field para el `*_id` real enviado al submit.
+5. Frontend: reutilizar `catalog_autocomplete_controller.js` con `data-*` para URL, minChars y debounce.
+6. Fallback: mantener una opcion funcional para usuarios sin JS (por ejemplo `noscript` + `collection_select`).
+7. Pruebas: cubrir endpoint JSON, limites, autorizacion y persistencia de `*_id` en create/update.
+8. UX: verificar que la primera opcion se preselecciona y Enter funciona sin clic.
+
+Archivos de referencia del piloto:
+
+- `app/javascript/controllers/catalog_autocomplete_controller.js`
+- `app/controllers/containers_controller.rb` (`shipping_lines_search`)
+- `app/models/shipping_line.rb` (`search_by_name`)
+- `app/views/containers/_form.html.erb`
+- `spec/requests/containers_spec.rb`
+
+Recomendacion de adopcion incremental:
+
+1. Migrar primero campos de alta frecuencia de uso.
+2. Medir latencia p95 del endpoint antes y despues.
+3. Mantener los mismos guardrails (2 caracteres, limite 20, cache 60s) salvo justificacion puntual.
+
 ## CI/CD
 
 El proyecto usa GitHub Actions para:

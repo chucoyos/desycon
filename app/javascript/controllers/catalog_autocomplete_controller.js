@@ -181,7 +181,9 @@ export default class extends Controller {
 
     this.resultsTarget.innerHTML = ""
     this.resultsTarget.appendChild(list)
+    this.activeIndex = 0
     this.showResults()
+    this.highlightActiveOption()
     this.setStatus(`${options.length} resultado${options.length === 1 ? "" : "s"}.`)
   }
 
