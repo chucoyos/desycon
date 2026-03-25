@@ -220,6 +220,93 @@ Recomendacion de adopcion incremental:
 2. Medir latencia p95 del endpoint antes y despues.
 3. Mantener los mismos guardrails (2 caracteres, limite 20, cache 60s) salvo justificacion puntual.
 
+Plantilla minima de integracion (copiar y adaptar):
+
+1. Ruta (collection):
+
+```ruby
+resources :mi_recurso do
+   collection do
+      get :catalog_search
+   end
+end
+```
+
+2. Accion en controlador:
+
+```ruby
+def catalog_search
+   authorize MiRecurso, :create?
+
+   query = params[:q].to_s.strip
+   min_chars = 2
+   limit = 20
+
+   if query.length < min_chars
+      return render json: { results: [], meta: { query: query, min_chars: min_chars, limit: limit, count: 0 } }
+   end
+
+   cache_key = ["mi_recurso", "catalog_search", query.downcase, limit].join(":")
+   results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      CatalogModel.search_by_name(query).limit(limit).pluck(:id, :name).map do |id, name|
+         { id: id, label: name }
+      end
+   end
+
+   render json: { results: results, meta: { query: query, min_chars: min_chars, limit: limit, count: results.size } }
+end
+```
+
+3. Scope en modelo:
+
+```ruby
+scope :search_by_name, lambda { |query|
+   term = query.to_s.strip
+   return none if term.blank?
+
+   sanitized = ActiveRecord::Base.sanitize_sql_like(term.downcase)
+   where("LOWER(name) LIKE ?", "%#{sanitized}%").order(:name)
+}
+```
+
+4. Vista (input visible + hidden id):
+
+```erb
+<div
+   data-controller="catalog-autocomplete"
+   data-catalog-autocomplete-url-value="<%= catalog_search_mi_recurso_index_path %>"
+   data-catalog-autocomplete-min-chars-value="2"
+   data-catalog-autocomplete-debounce-value="300"
+>
+   <%= form.hidden_field :catalog_model_id,
+            disabled: true,
+            data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+   <%= text_field_tag :catalog_model_search,
+            @registro.catalog_model&.name,
+            autocomplete: "off",
+            data: {
+               catalog_autocomplete_target: "input",
+               action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+            } %>
+
+   <div data-catalog-autocomplete-target="status"></div>
+   <div data-catalog-autocomplete-target="results" class="hidden"></div>
+</div>
+
+<noscript>
+   <%= form.collection_select :catalog_model_id, @catalog_models, :id, :name, { prompt: "Seleccione" }, required: true %>
+</noscript>
+```
+
+5. Reglas de QA rapido:
+
+- Con 1 caracter: no debe consultar ni mostrar lista.
+- Con 2+ caracteres: debe consultar con debounce.
+- Enter sin clic: debe seleccionar la primera opcion activa.
+- Si el usuario edita texto despues de seleccionar: hidden id debe limpiarse.
+- Submit final: debe persistir `*_id`, no el texto visible.
+
 ## CI/CD
 
 El proyecto usa GitHub Actions para:
