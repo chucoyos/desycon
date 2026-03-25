@@ -86,6 +86,7 @@ Rails.application.routes.draw do
   resources :containers do
     collection do
       get :shipping_lines_search
+      get :vessels_search
     end
 
     member do

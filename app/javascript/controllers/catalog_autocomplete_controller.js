@@ -31,8 +31,12 @@ export default class extends Controller {
     const query = this.inputTarget.value.trim()
 
     if (query !== this.selectedLabel) {
+      const hadValue = this.hiddenInputTarget.value !== ""
       this.hiddenInputTarget.value = ""
       this.selectedLabel = ""
+      if (hadValue) {
+        this.hiddenInputTarget.dispatchEvent(new Event("change", { bubbles: true }))
+      }
     }
 
     if (query.length < this.minCharsValue) {
@@ -135,6 +139,7 @@ export default class extends Controller {
     this.hiddenInputTarget.value = option.id
     this.inputTarget.value = option.label
     this.selectedLabel = option.label
+    this.hiddenInputTarget.dispatchEvent(new Event("change", { bubbles: true }))
     this.setStatus("")
     this.renderOptions([])
   }

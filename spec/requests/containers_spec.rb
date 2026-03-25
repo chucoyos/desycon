@@ -282,6 +282,41 @@ RSpec.describe "Containers", type: :request do
     end
   end
 
+  describe "GET /containers/vessels_search" do
+    before { sign_in user, scope: :user }
+
+    it "returns empty results when query is too short" do
+      get vessels_search_containers_url, params: { q: "a" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"]).to eq([])
+      expect(payload.dig("meta", "min_chars")).to eq(2)
+    end
+
+    it "returns up to 20 matching vessels" do
+      25.times do |i|
+        create(:vessel, name: "Buque Stress #{i}")
+      end
+
+      get vessels_search_containers_url, params: { q: "Buque Stress" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"].size).to eq(20)
+      expect(payload.dig("meta", "limit")).to eq(20)
+    end
+
+    it "requires create permissions" do
+      restricted_user = create(:user, :customs_broker)
+      sign_in restricted_user, scope: :user
+
+      get vessels_search_containers_url, params: { q: "Buque" }, as: :json
+
+      expect(response).to have_http_status(:redirect)
+    end
+  end
+
   describe "PATCH /containers/:id" do
     before { sign_in user, scope: :user }
 
