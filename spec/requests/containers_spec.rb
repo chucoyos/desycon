@@ -324,6 +324,24 @@ RSpec.describe "Containers", type: :request do
 
       expect(response).to have_http_status(:ok)
     end
+
+    it "limits consolidator users to their own consolidator" do
+      consolidator_user = create(:user, :consolidator)
+      own_entity = consolidator_user.entity
+      other_entity = create(:entity, :consolidator, name: "Consolidador Externo")
+
+      own_entity.update!(name: "Consolidador Propio")
+      sign_in consolidator_user, scope: :user
+
+      get consolidators_search_containers_url, params: { q: "Consolidador" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      ids = payload.fetch("results").map { |result| result.fetch("id") }
+
+      expect(ids).to include(own_entity.id)
+      expect(ids).not_to include(other_entity.id)
+    end
   end
 
   describe "GET /containers/vessels_search" do

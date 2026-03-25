@@ -118,8 +118,10 @@ class ContainersController < ApplicationController
 
     cache_key = [ "containers", "consolidators_search", query.downcase, limit ].join(":")
     results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
-      Entity
-        .consolidators
+      scope = Entity.consolidators
+      scope = scope.where(id: current_user.entity_id) if current_user&.consolidator?
+
+      scope
         .search_by_name(query)
         .limit(limit)
         .pluck(:id, :name)

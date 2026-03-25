@@ -167,6 +167,20 @@ Implementacion actual del patron (estado vigente):
 - Preseleccion automatica de la primera opcion para seleccionar con Enter sin clic.
 - Fallback funcional para no-JS usando `noscript`.
 
+Nota operativa importante (filtros GET en index):
+
+- Si el autocomplete vive dentro de un formulario de filtros (`form_with method: :get`), puede fallar de forma intermitente con Turbo (por ejemplo: funciona una vez y en intentos posteriores no aplica el filtro correctamente hasta recargar).
+- Solucion recomendada: desactivar Turbo solo para ese formulario de filtros con `data: { turbo: false }`.
+- Esta medida mantiene el componente Stimulus estable entre busquedas consecutivas y evita estados residuales del snapshot de navegacion.
+
+Ejemplo recomendado para filtros con autocomplete:
+
+```erb
+<%= form_with url: containers_path, method: :get, class: "w-full", data: { turbo: false } do |f| %>
+   <!-- filtros -->
+<% end %>
+```
+
 Comportamiento UX esperado del componente:
 
 1. Usuario escribe 2+ caracteres.
@@ -205,6 +219,7 @@ Checklist para implementar en otro formulario:
 6. Fallback: mantener una opcion funcional para usuarios sin JS (por ejemplo `noscript` + `collection_select`).
 7. Pruebas: cubrir endpoint JSON, limites, autorizacion y persistencia de `*_id` en create/update.
 8. UX: verificar que la primera opcion se preselecciona y Enter funciona sin clic.
+9. Si es filtro GET en index: desactivar Turbo en ese `form_with` para evitar comportamiento intermitente del autocomplete.
 
 Archivos de referencia del piloto:
 
@@ -306,6 +321,7 @@ scope :search_by_name, lambda { |query|
 - Enter sin clic: debe seleccionar la primera opcion activa.
 - Si el usuario edita texto despues de seleccionar: hidden id debe limpiarse.
 - Submit final: debe persistir `*_id`, no el texto visible.
+- Repetir 2+ ciclos de filtrar-cambiar-filtar sin recarga manual: el filtro debe seguir aplicando correctamente.
 
 ## CI/CD
 
