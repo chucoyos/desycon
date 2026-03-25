@@ -141,17 +141,17 @@ export default class extends Controller {
     this.selectedLabel = option.label
     this.hiddenInputTarget.dispatchEvent(new Event("change", { bubbles: true }))
     this.setStatus("")
-    this.renderOptions([])
+    this.renderOptions([], { suppressEmptyStatus: true })
   }
 
-  renderOptions(options) {
+  renderOptions(options, { suppressEmptyStatus = false } = {}) {
     this.options = options
     this.activeIndex = -1
 
     if (options.length === 0) {
       this.resultsTarget.innerHTML = ""
       this.hideResults()
-      if (this.inputTarget.value.trim().length >= this.minCharsValue) {
+      if (!suppressEmptyStatus && this.inputTarget.value.trim().length >= this.minCharsValue) {
         this.setStatus("Sin resultados.")
       }
       return
