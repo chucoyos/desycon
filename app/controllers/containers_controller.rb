@@ -77,7 +77,7 @@ class ContainersController < ApplicationController
   end
 
   def shipping_lines_search
-    authorize Container, :create?
+    authorize Container, :index?
 
     query = params[:q].to_s.strip
     min_chars = 2

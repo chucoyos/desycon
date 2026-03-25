@@ -272,13 +272,22 @@ RSpec.describe "Containers", type: :request do
       expect(payload.dig("meta", "limit")).to eq(20)
     end
 
-    it "requires create permissions" do
+    it "requires index permissions" do
       restricted_user = create(:user, :customs_broker)
       sign_in restricted_user, scope: :user
 
       get shipping_lines_search_containers_url, params: { q: "Naviera" }, as: :json
 
       expect(response).to have_http_status(:redirect)
+    end
+
+    it "allows tramitador users" do
+      tramitador = create(:user, :tramitador)
+      sign_in tramitador, scope: :user
+
+      get shipping_lines_search_containers_url, params: { q: "Naviera" }, as: :json
+
+      expect(response).to have_http_status(:ok)
     end
   end
 
