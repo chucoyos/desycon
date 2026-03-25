@@ -35,6 +35,27 @@ RSpec.describe 'EntityAddresses', type: :request do
     end
   end
 
+  describe 'GET /entities/:entity_id/addresses/countries_search' do
+    it 'returns filtered countries for valid query' do
+      get countries_search_entity_addresses_path(entity), params: { q: 'mex' }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload['results']).not_to be_empty
+      expect(payload['results'].first).to include('id', 'label')
+      expect(payload['results'].map { |result| result['id'] }).to include('MX')
+    end
+
+    it 'returns empty results when query length is below min chars' do
+      get countries_search_entity_addresses_path(entity), params: { q: 'm' }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload['results']).to eq([])
+      expect(payload['meta']).to include('min_chars' => 2)
+    end
+  end
+
   describe 'PATCH /entities/:entity_id/addresses/:id' do
     it 'updates an address with valid params' do
       address = create(:address, addressable: entity, tipo: 'sucursal', calle: 'Calle Original')
@@ -159,6 +180,22 @@ RSpec.describe 'EntityAddresses', type: :request do
 
       expect(response).to redirect_to(entity_path(own_client))
       expect(own_address.reload.calle).to eq('Permitido')
+    end
+
+    it 'blocks countries search for a foreign client' do
+      foreign_client = create(:entity, :client)
+
+      get countries_search_entity_addresses_path(foreign_client), params: { q: 'mex' }
+
+      expect(response).to redirect_to(customs_agents_dashboard_path)
+    end
+
+    it 'allows countries search for own client' do
+      own_client = create(:entity, :client, customs_agent: customs_broker_user.entity)
+
+      get countries_search_entity_addresses_path(own_client), params: { q: 'mex' }
+
+      expect(response).to have_http_status(:ok)
     end
   end
 end

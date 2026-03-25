@@ -73,9 +73,17 @@ Rails.application.routes.draw do
   end
 
   resources :entities do
+    collection do
+      get :countries_search
+    end
+
     get :new_address, on: :collection
     resources :agency_brokers, only: [ :create, :destroy ]
-    resources :addresses, controller: "entity_addresses", only: [ :create, :update, :destroy, :edit ]
+    resources :addresses, controller: "entity_addresses", only: [ :create, :update, :destroy, :edit ] do
+      collection do
+        get :countries_search
+      end
+    end
   end
   resources :ports
 

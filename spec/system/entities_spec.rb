@@ -50,7 +50,12 @@ RSpec.describe "Entities", type: :system do
         fill_in "address_municipio", with: "Nuevo Municipio"
         fill_in "address_estado", with: "Nuevo Estado"
         fill_in "address_email", with: "test@example.com"
-        find("option[value='MX']").select_option
+
+        country_input = find("input[name='address_country_search']")
+        country_input.fill_in(with: "mex")
+        expect(page).to have_css("[data-catalog-autocomplete-target='results'] button", wait: 5)
+        country_input.send_keys(:enter)
+
         click_button "Guardar Dirección"
       end
 

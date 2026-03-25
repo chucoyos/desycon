@@ -85,10 +85,37 @@
 
   <div>
     <%= f.label :pais, "Pais", class: label_class %>
-    <%= f.select :pais,
-        Address.paises_con_banderas.map { |display, code| [display, code] },
-        { include_blank: "Seleccionar pais" },
-        class: select_input_class %>
+
+    <div
+      data-controller="catalog-autocomplete"
+      data-catalog-autocomplete-url-value="<%= countries_search_entity_addresses_path(entity) %>"
+      data-catalog-autocomplete-min-chars-value="2"
+      data-catalog-autocomplete-debounce-value="300"
+      class="relative"
+    >
+      <%= f.hidden_field :pais,
+            data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+      <%= text_field_tag :address_country_search,
+            Address.country_display_label(f.object.pais),
+            autocomplete: "off",
+            placeholder: "Escribe para buscar un pais",
+            class: text_input_class,
+            data: {
+              catalog_autocomplete_target: "input",
+              action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+            } %>
+
+      <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-slate-500"></div>
+      <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-slate-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+    </div>
+
+    <noscript>
+      <%= f.select :pais,
+          Address.paises_con_banderas.map { |display, code| [display, code] },
+          { include_blank: "Seleccionar pais" },
+          class: select_input_class %>
+    </noscript>
   </div>
 
   <% if f.object.errors.any? %>

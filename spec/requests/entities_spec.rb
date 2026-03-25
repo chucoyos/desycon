@@ -68,6 +68,26 @@ RSpec.describe "Entities", type: :request do
     end
   end
 
+  describe "GET /entities/countries_search" do
+    it "returns filtered countries for valid query" do
+      get countries_search_entities_path, params: { q: "mex" }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"]).not_to be_empty
+      expect(payload["results"].map { |result| result["id"] }).to include("MX")
+    end
+
+    it "returns empty results when query length is below min chars" do
+      get countries_search_entities_path, params: { q: "m" }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"]).to eq([])
+      expect(payload["meta"]).to include("min_chars" => 2)
+    end
+  end
+
   describe "GET /edit" do
     it "returns http success" do
       get edit_entity_path(entity)

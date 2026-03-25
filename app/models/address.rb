@@ -27,6 +27,47 @@ class Address < ApplicationRecord
     .map { |display, code, _sort_key| [ display, code ] }
   end
 
+  def self.country_display_label(country_code)
+    return "" if country_code.blank?
+
+    country = ISO3166::Country[country_code.to_s.upcase]
+    return country_code.to_s.upcase if country.blank?
+
+    name = country.iso_short_name || country.translations["en"] || country.name
+    "#{country_code_to_emoji(country.alpha2)} #{name}"
+  end
+
+  def self.search_countries(query, limit: 20)
+    normalized_query = I18n.transliterate(query.to_s).downcase
+    return [] if normalized_query.blank?
+
+    ISO3166::Country.all
+      .map do |country|
+        code = country.alpha2
+        name = country.iso_short_name || country.translations["en"] || country.name
+        normalized_name = I18n.transliterate(name).downcase
+
+        {
+          code:,
+          label: "#{country_code_to_emoji(code)} #{name}",
+          normalized_name:,
+          starts_with: normalized_name.start_with?(normalized_query)
+        }
+      end
+      .select do |country|
+        country[:normalized_name].include?(normalized_query) || country[:code].downcase.include?(normalized_query)
+      end
+      .sort_by { |country| [ country[:starts_with] ? 0 : 1, country[:normalized_name] ] }
+      .first(limit)
+      .map do |country|
+        {
+          id: country[:code],
+          label: country[:label],
+          subtitle: country[:code]
+        }
+      end
+  end
+
   def to_s
     [
       calle,

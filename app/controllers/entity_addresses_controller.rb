@@ -70,6 +70,23 @@ class EntityAddressesController < ApplicationController
     end
   end
 
+  def countries_search
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    cache_key = [ "entity_addresses", "countries_search", query.downcase, limit ].join(":")
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      Address.search_countries(query, limit:)
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
   private
 
   def authorize_entity_management
