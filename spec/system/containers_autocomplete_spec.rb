@@ -96,4 +96,22 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     expect(billed_to_select.value).to eq(selected_consolidator.id.to_s)
   end
+
+  it "selects origin port from autocomplete and sets origin_port_id" do
+    selected_port = create(:port, name: "Puerto de Origen Alpha", code: "MXALP")
+    create(:port, name: "Puerto de Origen Beta", code: "MXBET")
+
+    visit new_container_path
+
+    origin_port_input = find_field("origin_port_search")
+    origin_port_input.fill_in(with: "Origen Alp")
+
+    expect(page).to have_css("button[data-index='0']", text: selected_port.display_name)
+    origin_port_input.send_keys(:enter)
+
+    expect(page).to have_field("origin_port_search", with: selected_port.display_name)
+
+    hidden_origin_port = find("#container_origin_port_id", visible: :all)
+    expect(hidden_origin_port.value).to eq(selected_port.id.to_s)
+  end
 end
