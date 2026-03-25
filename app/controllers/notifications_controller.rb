@@ -7,7 +7,7 @@ class NotificationsController < ApplicationController
     per = 10 unless allowed.include?(per)
     @per_page = per
 
-    @notifications = current_user.notifications.includes(:recipient, :notifiable, actor: :entity)
+    @notifications = current_user.notifications.includes(:notifiable, actor: :entity)
 
     # Aplicar filtros de búsqueda
     apply_filters
@@ -16,7 +16,7 @@ class NotificationsController < ApplicationController
   end
 
   def mark_as_read
-    @notification = current_user.notifications.includes(:recipient, :notifiable, actor: :entity).find(params[:id])
+    @notification = current_user.notifications.includes(:notifiable, actor: :entity).find(params[:id])
     @notification.mark_as_read!
 
     respond_to do |format|

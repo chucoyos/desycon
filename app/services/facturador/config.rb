@@ -13,6 +13,14 @@ module Facturador
         ActiveModel::Type::Boolean.new.cast(env_value(:auto_issue_enabled, false))
       end
 
+      def auto_issue_nipon_exception_enabled?
+        ActiveModel::Type::Boolean.new.cast(ENV.fetch("AUTO_ISSUE_NIPON_EXCEPTION_ENABLED", false))
+      end
+
+      def auto_issue_nipon_rfc
+        ENV.fetch("AUTO_ISSUE_NIPON_RFC", "").to_s.upcase.strip.presence
+      end
+
       def manual_actions_enabled?
         ActiveModel::Type::Boolean.new.cast(env_value(:manual_actions_enabled, false))
       end

@@ -99,6 +99,41 @@ RAILS_MASTER_KEY=      # Rails credentials master key
 SECRET_KEY_BASE=       # Rails secret key
 ```
 
+### Excepcion de auto-facturacion (partida)
+
+La regla especial para omitir auto-facturacion en nivel partida cuando consolidador = cliente a facturar
+se controla con variables de entorno del proceso Rails.
+
+Variables:
+
+```env
+AUTO_ISSUE_NIPON_EXCEPTION_ENABLED=false
+AUTO_ISSUE_NIPON_RFC=
+```
+
+Donde configurarlas:
+
+- Development local: archivo `.env` en la raiz del proyecto (cargado por `dotenv-rails`).
+- Staging: variables del entorno de despliegue (pipeline/servidor/contenedor).
+- Produccion: secret manager o variables del runtime del servicio.
+
+Valores recomendados por entorno:
+
+```env
+# development / staging (pruebas)
+AUTO_ISSUE_NIPON_EXCEPTION_ENABLED=true
+AUTO_ISSUE_NIPON_RFC=EWE1709045U0
+
+# produccion (dato real)
+AUTO_ISSUE_NIPON_EXCEPTION_ENABLED=true
+AUTO_ISSUE_NIPON_RFC=<RFC_REAL_NIPON>
+```
+
+Notas:
+
+- Si `AUTO_ISSUE_NIPON_EXCEPTION_ENABLED` es `false`, la regla no aplica.
+- Si `AUTO_ISSUE_NIPON_RFC` esta vacio, la regla no aplica.
+
 ## CI/CD
 
 El proyecto usa GitHub Actions para:
