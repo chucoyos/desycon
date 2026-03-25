@@ -76,6 +76,35 @@ class ContainersController < ApplicationController
     load_form_data
   end
 
+  def shipping_lines_search
+    authorize Container, :create?
+
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    cache_key = [ "containers", "shipping_lines_search", query.downcase, limit ].join(":")
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      ShippingLine
+        .search_by_name(query)
+        .limit(limit)
+        .pluck(:id, :name, :iso_code)
+        .map do |id, name, iso_code|
+          {
+            id:,
+            label: name,
+            subtitle: iso_code
+          }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
   def create
     @container = Container.new(container_params)
     authorize @container

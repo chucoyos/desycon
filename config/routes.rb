@@ -84,6 +84,10 @@ Rails.application.routes.draw do
   resources :voyages
   resources :consolidators
   resources :containers do
+    collection do
+      get :shipping_lines_search
+    end
+
     member do
       post :photos, to: "photos#create_for_container"
       delete :photos_section, to: "photos#destroy_section_for_container"

@@ -247,6 +247,41 @@ RSpec.describe "Containers", type: :request do
     end
   end
 
+  describe "GET /containers/shipping_lines_search" do
+    before { sign_in user, scope: :user }
+
+    it "returns empty results when query is too short" do
+      get shipping_lines_search_containers_url, params: { q: "a" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"]).to eq([])
+      expect(payload.dig("meta", "min_chars")).to eq(2)
+    end
+
+    it "returns up to 20 matching results" do
+      25.times do |i|
+        create(:shipping_line, name: "Naviera Stress #{i}", iso_code: format("%03d", i))
+      end
+
+      get shipping_lines_search_containers_url, params: { q: "Naviera Stress" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"].size).to eq(20)
+      expect(payload.dig("meta", "limit")).to eq(20)
+    end
+
+    it "requires create permissions" do
+      restricted_user = create(:user, :customs_broker)
+      sign_in restricted_user, scope: :user
+
+      get shipping_lines_search_containers_url, params: { q: "Naviera" }, as: :json
+
+      expect(response).to have_http_status(:redirect)
+    end
+  end
+
   describe "PATCH /containers/:id" do
     before { sign_in user, scope: :user }
 
