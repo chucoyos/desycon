@@ -106,7 +106,7 @@ class ContainersController < ApplicationController
   end
 
   def consolidators_search
-    authorize Container, :create?
+    authorize Container, :index?
 
     query = params[:q].to_s.strip
     min_chars = 2
