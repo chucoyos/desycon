@@ -105,20 +105,76 @@
         <% if @admin_or_executive %>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Agencia aduanal</label>
-            <%= f.select :customs_agent_id,
+            <% selected_customs_agent = @customs_agents.find { |agent| agent.id.to_s == @selected_customs_agent_id.to_s } if @selected_customs_agent_id.present? %>
+            <div
+              data-controller="catalog-autocomplete"
+              data-catalog-autocomplete-url-value="<%= customs_agents_search_invoices_path %>"
+              data-catalog-autocomplete-min-chars-value="2"
+              data-catalog-autocomplete-debounce-value="300"
+              class="relative"
+            >
+              <%= hidden_field_tag :customs_agent_id,
+                @selected_customs_agent_id,
+                data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+              <%= text_field_tag :customs_agent_search,
+                selected_customs_agent&.name,
+                autocomplete: "off",
+                placeholder: "Todos",
+                class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all",
+                data: {
+                  catalog_autocomplete_target: "input",
+                  action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+                } %>
+
+              <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+              <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+            </div>
+
+            <noscript>
+              <%= f.select :customs_agent_id,
                 options_for_select([["Todos", ""]] + @customs_agents.map { |agent| [agent.name, agent.id] }, @selected_customs_agent_id),
                 {},
                 class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
+            </noscript>
           </div>
         <% end %>
 
         <% if @admin_or_executive %>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Consolidador</label>
-            <%= f.select :consolidator_id,
+            <% selected_consolidator = @consolidators.find { |consolidator| consolidator.id.to_s == @selected_consolidator_id.to_s } if @selected_consolidator_id.present? %>
+            <div
+              data-controller="catalog-autocomplete"
+              data-catalog-autocomplete-url-value="<%= consolidators_search_invoices_path %>"
+              data-catalog-autocomplete-min-chars-value="2"
+              data-catalog-autocomplete-debounce-value="300"
+              class="relative"
+            >
+              <%= hidden_field_tag :consolidator_id,
+                @selected_consolidator_id,
+                data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+              <%= text_field_tag :consolidator_search,
+                selected_consolidator&.name,
+                autocomplete: "off",
+                placeholder: "Todos",
+                class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all",
+                data: {
+                  catalog_autocomplete_target: "input",
+                  action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+                } %>
+
+              <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+              <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+            </div>
+
+            <noscript>
+              <%= f.select :consolidator_id,
                 options_for_select([["Todos", ""]] + @consolidators.map { |consolidator| [consolidator.name, consolidator.id] }, @selected_consolidator_id),
                 {},
                 class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
+            </noscript>
           </div>
         <% end %>
 

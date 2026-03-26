@@ -283,6 +283,110 @@ RSpec.describe 'Invoices', type: :request do
     end
   end
 
+  describe 'GET /invoices/customs_agents_search' do
+    before { sign_in admin_user, scope: :user }
+
+    it 'returns empty results when query is too short' do
+      get customs_agents_search_invoices_path, params: { q: 'a' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload['results']).to eq([])
+      expect(payload.dig('meta', 'min_chars')).to eq(2)
+    end
+
+    it 'returns up to 20 matching customs agencies' do
+      25.times do |i|
+        create(:entity, :customs_agent, name: "Agencia Search #{i}")
+      end
+
+      get customs_agents_search_invoices_path, params: { q: 'Agencia Search' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload['results'].size).to eq(20)
+      expect(payload.dig('meta', 'limit')).to eq(20)
+    end
+
+    it 'returns forbidden for consolidator users' do
+      sign_in consolidator_user, scope: :user
+
+      get customs_agents_search_invoices_path, params: { q: 'Agencia' }, as: :json
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'returns forbidden for customs broker users' do
+      customs_broker = create(:user, :customs_broker)
+      sign_in customs_broker, scope: :user
+
+      get customs_agents_search_invoices_path, params: { q: 'Agencia' }, as: :json
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'rejects users without invoices index permission' do
+      tramitador = create(:user, :tramitador)
+      sign_in tramitador, scope: :user
+
+      get customs_agents_search_invoices_path, params: { q: 'Agencia' }, as: :json
+
+      expect(response).to have_http_status(:redirect)
+    end
+  end
+
+  describe 'GET /invoices/consolidators_search' do
+    before { sign_in admin_user, scope: :user }
+
+    it 'returns empty results when query is too short' do
+      get consolidators_search_invoices_path, params: { q: 'a' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload['results']).to eq([])
+      expect(payload.dig('meta', 'min_chars')).to eq(2)
+    end
+
+    it 'returns up to 20 matching consolidators' do
+      25.times do |i|
+        create(:entity, :consolidator, name: "Consolidador Search #{i}")
+      end
+
+      get consolidators_search_invoices_path, params: { q: 'Consolidador Search' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload['results'].size).to eq(20)
+      expect(payload.dig('meta', 'limit')).to eq(20)
+    end
+
+    it 'returns forbidden for consolidator users' do
+      sign_in consolidator_user, scope: :user
+
+      get consolidators_search_invoices_path, params: { q: 'Consolidador' }, as: :json
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'returns forbidden for customs broker users' do
+      customs_broker = create(:user, :customs_broker)
+      sign_in customs_broker, scope: :user
+
+      get consolidators_search_invoices_path, params: { q: 'Consolidador' }, as: :json
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it 'rejects users without invoices index permission' do
+      tramitador = create(:user, :tramitador)
+      sign_in tramitador, scope: :user
+
+      get consolidators_search_invoices_path, params: { q: 'Consolidador' }, as: :json
+
+      expect(response).to have_http_status(:redirect)
+    end
+  end
+
   describe 'GET /invoices/:id as consolidator' do
     before { sign_in consolidator_user, scope: :user }
 

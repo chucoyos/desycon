@@ -175,6 +175,86 @@ class InvoicesController < ApplicationController
     render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
   end
 
+  def customs_agents_search
+    authorize Invoice, :index?
+
+    unless current_user.admin_or_executive?
+      return render json: { results: [], meta: { query: params[:q].to_s.strip, min_chars: 2, limit: 20, count: 0 } }, status: :forbidden
+    end
+
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    cache_key = [
+      "invoices",
+      "customs_agents_search",
+      current_user.id,
+      query.downcase,
+      limit
+    ].join(":")
+
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      Entity
+        .customs_agents
+        .search_by_name(query)
+        .limit(limit)
+        .pluck(:id, :name)
+        .map do |id, name|
+          {
+            id:,
+            label: name
+          }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
+  def consolidators_search
+    authorize Invoice, :index?
+
+    unless current_user.admin_or_executive?
+      return render json: { results: [], meta: { query: params[:q].to_s.strip, min_chars: 2, limit: 20, count: 0 } }, status: :forbidden
+    end
+
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    cache_key = [
+      "invoices",
+      "consolidators_search",
+      current_user.id,
+      query.downcase,
+      limit
+    ].join(":")
+
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      Entity
+        .consolidators
+        .search_by_name(query)
+        .limit(limit)
+        .pluck(:id, :name)
+        .map do |id, name|
+          {
+            id:,
+            label: name
+          }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
   def show
     authorize @invoice
 
