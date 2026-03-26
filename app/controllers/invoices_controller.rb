@@ -136,6 +136,45 @@ class InvoicesController < ApplicationController
     @series_filter_options = build_series_filter_options
   end
 
+  def receivers_search
+    authorize Invoice, :index?
+
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    scoped_invoice_receivers = policy_scope(Invoice).select(:receiver_entity_id)
+    scoped_clients = Entity.clients.where(id: scoped_invoice_receivers)
+
+    cache_key = [
+      "invoices",
+      "receivers_search",
+      current_user.id,
+      current_user.entity_id,
+      query.downcase,
+      limit
+    ].join(":")
+
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      scoped_clients
+        .search_by_name(query)
+        .limit(limit)
+        .pluck(:id, :name)
+        .map do |id, name|
+          {
+            id:,
+            label: name
+          }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
   def show
     authorize @invoice
 

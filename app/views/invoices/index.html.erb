@@ -30,7 +30,7 @@
       <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Filtros</h2>
     </div>
 
-    <%= form_with url: invoices_path, method: :get, class: "w-full" do |f| %>
+    <%= form_with url: invoices_path, method: :get, class: "w-full", data: { turbo: false } do |f| %>
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">Emision</label>
@@ -68,10 +68,38 @@
 
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">Receptor</label>
-          <%= f.select :client_id,
+          <% selected_client = @clients.find { |client| client.id.to_s == @selected_client_id.to_s } if @selected_client_id.present? %>
+          <div
+            data-controller="catalog-autocomplete"
+            data-catalog-autocomplete-url-value="<%= receivers_search_invoices_path %>"
+            data-catalog-autocomplete-min-chars-value="2"
+            data-catalog-autocomplete-debounce-value="300"
+            class="relative"
+          >
+            <%= hidden_field_tag :client_id,
+              @selected_client_id,
+              data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+            <%= text_field_tag :client_search,
+              selected_client&.name,
+              autocomplete: "off",
+              placeholder: "Todos",
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all",
+              data: {
+                catalog_autocomplete_target: "input",
+                action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+              } %>
+
+            <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+            <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+          </div>
+
+          <noscript>
+            <%= f.select :client_id,
               options_for_select([["Todos", ""]] + @clients.map { |client| [client.name, client.id] }, @selected_client_id),
               {},
               class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
+          </noscript>
         </div>
 
         <% if @admin_or_executive %>

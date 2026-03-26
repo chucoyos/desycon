@@ -204,6 +204,85 @@ RSpec.describe 'Invoices', type: :request do
     end
   end
 
+  describe 'GET /invoices/receivers_search' do
+    before { sign_in admin_user, scope: :user }
+
+    it 'returns empty results when query is too short' do
+      get receivers_search_invoices_path, params: { q: 'a' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload['results']).to eq([])
+      expect(payload.dig('meta', 'min_chars')).to eq(2)
+    end
+
+    it 'returns up to 20 matching receivers' do
+      25.times do |i|
+        receiver = create(:entity, :client, name: "Receptor Stress #{i}")
+        create(:invoice, receiver_entity: receiver)
+      end
+
+      get receivers_search_invoices_path, params: { q: 'Receptor Stress' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload['results'].size).to eq(20)
+      expect(payload.dig('meta', 'limit')).to eq(20)
+    end
+
+    it 'returns empty results for consolidator users under client-only receiver filter' do
+      own_user = create(:user, :consolidator)
+      own_entity = own_user.entity
+      own_entity.update!(name: 'Consolidador Receptor')
+      other_receiver = create(:entity, :client, name: 'Consolidador Receptor Externo')
+
+      create(:invoice, receiver_entity: own_entity)
+      create(:invoice, receiver_entity: other_receiver)
+
+      sign_in own_user, scope: :user
+
+      get receivers_search_invoices_path, params: { q: 'Consolidador Receptor' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      ids = payload.fetch('results').map { |result| result.fetch('id') }
+
+      expect(ids).to eq([])
+      expect(ids).not_to include(other_receiver.id)
+    end
+
+    it 'returns only agency-related receivers for customs broker users' do
+      customs_broker = create(:user, :customs_broker)
+      own_agency = customs_broker.entity
+      own_client = create(:entity, :client, name: 'Cliente Agencia Propia', customs_agent: own_agency)
+      other_agency = create(:entity, :customs_agent)
+      other_client = create(:entity, :client, name: 'Cliente Agencia Externa', customs_agent: other_agency)
+
+      create(:invoice, receiver_entity: own_client)
+      create(:invoice, receiver_entity: other_client)
+
+      sign_in customs_broker, scope: :user
+
+      get receivers_search_invoices_path, params: { q: 'Cliente Agencia' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      ids = payload.fetch('results').map { |result| result.fetch('id') }
+
+      expect(ids).to include(own_client.id)
+      expect(ids).not_to include(other_client.id)
+    end
+
+    it 'rejects users without invoices index permission' do
+      tramitador = create(:user, :tramitador)
+      sign_in tramitador, scope: :user
+
+      get receivers_search_invoices_path, params: { q: 'Receptor' }, as: :json
+
+      expect(response).to have_http_status(:redirect)
+    end
+  end
+
   describe 'GET /invoices/:id as consolidator' do
     before { sign_in consolidator_user, scope: :user }
 
