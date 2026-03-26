@@ -1,4 +1,4 @@
-<%= form_with(model: container, class: "space-y-6") do |form| %>
+<%= form_with(model: container, class: "space-y-6", data: { turbo: false }) do |form| %>
   
   <% if container.errors.any? %>
     <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 shadow-sm">
@@ -91,7 +91,6 @@
           class="relative"
         >
           <%= form.hidden_field :consolidator_entity_id,
-                disabled: true,
                 data: { catalog_autocomplete_target: "hiddenInput" } %>
 
           <%= text_field_tag :consolidator_search,
@@ -129,7 +128,6 @@
           class="relative"
         >
           <%= form.hidden_field :shipping_line_id,
-                disabled: true,
                 data: { catalog_autocomplete_target: "hiddenInput" } %>
 
           <%= text_field_tag :shipping_line_search,
@@ -167,7 +165,6 @@
           class="relative"
         >
           <%= form.hidden_field :vessel_id,
-                disabled: true,
                 data: { catalog_autocomplete_target: "hiddenInput" } %>
 
           <%= text_field_tag :vessel_search,
@@ -244,7 +241,6 @@
           class="relative"
         >
           <%= form.hidden_field :origin_port_id,
-                disabled: true,
                 data: { catalog_autocomplete_target: "hiddenInput" } %>
 
           <%= text_field_tag :origin_port_search,
