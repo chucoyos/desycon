@@ -114,4 +114,66 @@ RSpec.describe "Containers autocomplete", type: :system do
     hidden_origin_port = find("#container_origin_port_id", visible: :all)
     expect(hidden_origin_port.value).to eq(selected_port.id.to_s)
   end
+
+  it "creates a container successfully from new form" do
+    consolidator = create(:entity, :consolidator, name: "Consolidador Creacion")
+    shipping_line = create(:shipping_line, name: "Linea Creacion")
+    vessel = create(:vessel, name: "Buque Creacion")
+
+    destination_port = create(:port, :manzanillo)
+    voyage = create(:voyage, vessel: vessel, destination_port: destination_port, viaje: "CREA-001")
+
+    origin_port = create(:port, name: "Puerto Origen Creacion", code: "MXORC")
+
+    visit new_container_path
+
+    fill_in "container_number", with: "ABCD1234567"
+    fill_in "container_type_size", with: "40HC"
+    fill_in "container_bl_master", with: "BLM-CR-001"
+    fill_in "container_archivo_nr", with: "NR-CR-001"
+    fill_in "container_sello", with: "SELLO123"
+    fill_in "container_ejecutivo", with: "Usuario QA"
+
+    consolidator_input = find_field("consolidator_search")
+    consolidator_input.fill_in(with: "Consolidador Crea")
+    expect(page).to have_css("button[data-index='0']", text: consolidator.name)
+    consolidator_input.send_keys(:enter)
+
+    shipping_input = find_field("shipping_line_search")
+    shipping_input.fill_in(with: "Linea Crea")
+    expect(page).to have_css("button[data-index='0']", text: shipping_line.name)
+    shipping_input.send_keys(:enter)
+
+    vessel_input = find_field("vessel_search")
+    vessel_input.fill_in(with: "Buque Crea")
+    expect(page).to have_css("button[data-index='0']", text: vessel.name)
+    vessel_input.send_keys(:enter)
+
+    expect(page).to have_css("#container_voyage_id option", text: "CREA-001")
+    find("#container_voyage_id", visible: :all)
+      .find("option[value='#{voyage.id}']", visible: :all)
+      .select_option
+
+    origin_port_input = find_field("origin_port_search")
+    origin_port_input.fill_in(with: "Origen Crea")
+    expect(page).to have_css("button[data-index='0']", text: origin_port.display_name)
+    origin_port_input.send_keys(:enter)
+
+    select "CONTECON", from: "container_recinto"
+
+    before_count = Container.count
+    click_button "Crear Contenedor"
+
+    expect(page).to have_text("Contenedor creado exitosamente.")
+    expect(Container.count).to eq(before_count + 1)
+
+    created_container = Container.order(:id).last
+    expect(created_container.number).to eq("ABCD1234567")
+    expect(created_container.consolidator_entity_id).to eq(consolidator.id)
+    expect(created_container.shipping_line_id).to eq(shipping_line.id)
+    expect(created_container.vessel_id).to eq(vessel.id)
+    expect(created_container.voyage_id).to eq(voyage.id)
+    expect(created_container.origin_port_id).to eq(origin_port.id)
+    expect(created_container.recinto).to eq("CONTECON")
+  end
 end
