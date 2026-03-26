@@ -20,6 +20,16 @@ RSpec.describe BlHouseLines::EntregaAlmacenCamionCalculator do
         expect(result.weight_units).to eq(14)
         expect(result.billable_units).to eq(14)
         expect(result.total).to eq(BigDecimal("1764"))
+        expect(result.breakdown).to include(
+          weight_units: 14,
+          volume_units: 9,
+          minimum_units: 12,
+          billable_units: 14,
+          unit_price: BigDecimal("126"),
+          imo_multiplier: BigDecimal("1"),
+          formula: "unidades_cobrables * precio_unitario * multiplicador_imo",
+          total: BigDecimal("1764")
+        )
       end
     end
 

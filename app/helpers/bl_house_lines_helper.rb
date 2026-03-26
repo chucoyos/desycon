@@ -1,4 +1,68 @@
 module BlHouseLinesHelper
+  def temporary_service_breakdown_enabled?
+    Rails.env.development? || Rails.env.test?
+  end
+
+  def bl_service_calculation_breakdown(service)
+    return nil unless temporary_service_breakdown_enabled?
+    return nil if service.blank? || service.service_catalog.blank? || service.bl_house_line.blank?
+
+    code = service.service_catalog.code.to_s
+    calculator_result = case code
+    when "BL-ENTCAM", "BL-PREVIO", "BL-RECASU"
+      BlHouseLines::EntregaAlmacenCamionCalculator.call(
+        bl_house_line: service.bl_house_line,
+        unit_price: service.service_catalog.amount
+      )
+    when "BL-ALMA"
+      BlHouseLines::StorageChargeCalculator.call(
+        bl_house_line: service.bl_house_line,
+        desconsolidation_date: service.bl_house_line.container&.fecha_desconsolidacion,
+        dispatch_date: service.bl_house_line.fecha_despacho,
+        unit_price: service.service_catalog.amount
+      )
+    else
+      nil
+    end
+
+    return nil if calculator_result.blank?
+
+    # TEMPORAL DEBUG: bloque de desglose para validar formula y variables en QA.
+    # Remover al cerrar validacion operativa y antes de consolidar para produccion.
+    calculator_result.breakdown.to_h.merge(
+      service_code: code,
+      calculated_amount: calculator_result.total,
+      persisted_amount: service.amount.to_d,
+      delta_vs_persisted: (service.amount.to_d - calculator_result.total.to_d).round(2)
+    )
+  end
+
+  def bl_service_breakdown_rows(breakdown)
+    return [] if breakdown.blank?
+
+    rows = []
+    rows << [ "Codigo", breakdown[:service_code] ] if breakdown[:service_code].present?
+    rows << [ "Fecha desconsolidacion", breakdown[:fecha_desconsolidacion] ] if breakdown.key?(:fecha_desconsolidacion)
+    rows << [ "Fecha despacho", breakdown[:fecha_despacho] ] if breakdown.key?(:fecha_despacho)
+    rows << [ "Fecha fin de gracia", breakdown[:fecha_fin_gracia] ] if breakdown.key?(:fecha_fin_gracia)
+    rows << [ "Peso (input)", breakdown[:peso_input] ] if breakdown.key?(:peso_input)
+    rows << [ "Volumen (input)", breakdown[:volumen_input] ] if breakdown.key?(:volumen_input)
+    rows << [ "Unidades por peso", breakdown[:weight_units] ] if breakdown.key?(:weight_units)
+    rows << [ "Unidades por volumen", breakdown[:volume_units] ] if breakdown.key?(:volume_units)
+    rows << [ "Minimo unidades", breakdown[:minimum_units] ] if breakdown.key?(:minimum_units)
+    rows << [ "Unidades cobrables", breakdown[:billable_units] ] if breakdown.key?(:billable_units)
+    rows << [ "Dias cobrables", breakdown[:billable_days] ] if breakdown.key?(:billable_days)
+    rows << [ "Puerto destino", breakdown[:destination_port_code] ] if breakdown[:destination_port_code].present?
+    rows << [ "Precio unitario", breakdown[:unit_price] ] if breakdown.key?(:unit_price)
+    rows << [ "Multiplicador IMO", breakdown[:imo_multiplier] ] if breakdown.key?(:imo_multiplier)
+    rows << [ "Subtotal diario", breakdown[:daily_subtotal] ] if breakdown.key?(:daily_subtotal)
+    rows << [ "Formula", breakdown[:formula] ] if breakdown[:formula].present?
+    rows << [ "Total calculado", breakdown[:calculated_amount] ] if breakdown.key?(:calculated_amount)
+    rows << [ "Total persistido", breakdown[:persisted_amount] ] if breakdown.key?(:persisted_amount)
+    rows << [ "Diferencia", breakdown[:delta_vs_persisted] ] if breakdown.key?(:delta_vs_persisted)
+    rows
+  end
+
   def bl_house_line_status_badge_class(status)
     case status
     when "activo"

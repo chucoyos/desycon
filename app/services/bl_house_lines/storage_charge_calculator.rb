@@ -20,6 +20,7 @@ module BlHouseLines
       :billable_days,
       :unit_price,
       :total,
+      :breakdown,
       keyword_init: true
     )
 
@@ -48,8 +49,11 @@ module BlHouseLines
       volume_units = ceil_units(bl_house_line.volumen)
       billable_units = [ weight_units, volume_units, MINIMUM_UNITS ].max
       billable_days = calculate_billable_days
-      daily_subtotal = calculate_daily_subtotal(billable_days)
+      daily_subtotal_data = calculate_daily_subtotal_with_breakdown(billable_days)
+      daily_subtotal = daily_subtotal_data[:subtotal]
       price = unit_price.to_d
+      multiplier = imo_charge_multiplier
+      total = (billable_units * daily_subtotal * multiplier).round(2)
 
       Result.new(
         weight_units: weight_units,
@@ -57,7 +61,28 @@ module BlHouseLines
         billable_units: billable_units,
         billable_days: billable_days,
         unit_price: price,
-        total: (billable_units * daily_subtotal * imo_charge_multiplier).round(2)
+        total: total,
+        # TEMPORAL DEBUG: desglose para visualizar variables y formula en pruebas.
+        # Remover cuando se cierre la validacion operativa de calculos.
+        breakdown: {
+          fecha_desconsolidacion: desconsolidation_date.to_date,
+          fecha_despacho: dispatch_date.to_date,
+          fecha_fin_gracia: (desconsolidation_date.to_date + (GRACE_DAYS - 1)),
+          peso_input: bl_house_line.peso.to_d,
+          volumen_input: bl_house_line.volumen.to_d,
+          weight_units: weight_units,
+          volume_units: volume_units,
+          minimum_units: MINIMUM_UNITS,
+          billable_units: billable_units,
+          billable_days: billable_days,
+          destination_port_code: destination_port_code,
+          tier_breakdown: daily_subtotal_data[:tiers],
+          daily_subtotal: daily_subtotal,
+          unit_price: price,
+          imo_multiplier: multiplier,
+          formula: "unidades_cobrables * subtotal_diario * multiplicador_imo",
+          total: total
+        }
       )
     end
 
@@ -77,20 +102,29 @@ module BlHouseLines
       [ days, 0 ].max
     end
 
-    def calculate_daily_subtotal(billable_days)
+    def calculate_daily_subtotal_with_breakdown(billable_days)
       remaining = billable_days
-      return BigDecimal("0") if remaining <= 0
+      return { subtotal: BigDecimal("0"), tiers: [] } if remaining <= 0
 
       subtotal = BigDecimal("0")
+      tiers = []
       daily_rate_tiers.each do |tier|
         break if remaining <= 0
 
         days_in_tier = tier_days_for(remaining: remaining, tier: tier)
         remaining -= days_in_tier
-        subtotal += days_in_tier * tier[:rate]
+        tier_amount = days_in_tier * tier[:rate]
+        subtotal += tier_amount
+        tiers << {
+          from: tier[:from],
+          to: tier[:to],
+          rate: tier[:rate],
+          days: days_in_tier,
+          amount: tier_amount
+        }
       end
 
-      subtotal
+      { subtotal: subtotal, tiers: tiers }
     end
 
     def daily_rate_tiers

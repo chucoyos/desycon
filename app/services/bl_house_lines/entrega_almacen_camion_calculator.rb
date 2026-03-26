@@ -8,6 +8,7 @@ module BlHouseLines
       :billable_units,
       :unit_price,
       :total,
+      :breakdown,
       keyword_init: true
     )
 
@@ -27,13 +28,29 @@ module BlHouseLines
       volume_units = ceil_units(bl_house_line.volumen)
       billable_units = [ weight_units, volume_units, MINIMUM_UNITS ].max
       price = unit_price.to_d
+      multiplier = imo_charge_multiplier
+      total = (billable_units * price * multiplier).round(2)
 
       Result.new(
         weight_units: weight_units,
         volume_units: volume_units,
         billable_units: billable_units,
         unit_price: price,
-        total: (billable_units * price * imo_charge_multiplier).round(2)
+        total: total,
+        # TEMPORAL DEBUG: desglose para visualizar variables y formula en pruebas.
+        # Remover cuando se cierre la validacion operativa de calculos.
+        breakdown: {
+          peso_input: bl_house_line.peso.to_d,
+          volumen_input: bl_house_line.volumen.to_d,
+          weight_units: weight_units,
+          volume_units: volume_units,
+          minimum_units: MINIMUM_UNITS,
+          billable_units: billable_units,
+          unit_price: price,
+          imo_multiplier: multiplier,
+          formula: "unidades_cobrables * precio_unitario * multiplicador_imo",
+          total: total
+        }
       )
     end
 

@@ -24,6 +24,26 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
         expect(result.billable_units).to eq(12)
         expect(result.billable_days).to eq(4)
         expect(result.total).to eq(BigDecimal("6048"))
+        expect(result.breakdown).to include(
+          fecha_desconsolidacion: Date.new(2026, 3, 20),
+          fecha_despacho: Date.new(2026, 3, 30),
+          fecha_fin_gracia: Date.new(2026, 3, 26),
+          weight_units: 12,
+          volume_units: 10,
+          minimum_units: 9,
+          billable_units: 12,
+          billable_days: 4,
+          formula: "unidades_cobrables * subtotal_diario * multiplicador_imo",
+          total: BigDecimal("6048")
+        )
+        expect(result.breakdown[:tier_breakdown]).to be_an(Array)
+        expect(result.breakdown[:tier_breakdown].first).to include(
+          from: 1,
+          to: 15,
+          days: 4,
+          rate: BigDecimal("126"),
+          amount: BigDecimal("504")
+        )
       end
     end
 
