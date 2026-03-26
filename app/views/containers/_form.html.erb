@@ -1,4 +1,4 @@
-<%= form_with(model: container, class: "space-y-6", data: { turbo: false }) do |form| %>
+<%= form_with(model: container, class: "space-y-6", data: { turbo: false }, novalidate: true) do |form| %>
   
   <% if container.errors.any? %>
     <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 shadow-sm">
