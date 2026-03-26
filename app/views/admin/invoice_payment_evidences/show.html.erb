@@ -115,8 +115,12 @@
                   <% linked_serie = linked_invoice.provider_response.to_h["serie"].presence || linked_invoice.payload_snapshot.to_h["serie"].presence %>
                   <% linked_folio = linked_invoice.provider_response.to_h["folio"].presence || linked_invoice.provider_response.to_h["noComprobante"].presence || linked_invoice.provider_response.to_h["numeroComprobante"].presence || linked_invoice.facturador_comprobante_id&.to_s %>
                   <% linked_label = [linked_serie, linked_folio].compact.join(" ").presence || "Factura ##{linked_invoice.id}" %>
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-2 items-center rounded-md border border-indigo-100 bg-white px-3 py-2">
+                  <% linked_receiver_rfc = linked_invoice.receiver_entity&.fiscal_profile&.rfc.to_s.presence || "-" %>
+                  <% linked_payment_method = linked_invoice.payment_method_code %>
+                  <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-center rounded-md border border-indigo-100 bg-white px-3 py-2">
                     <p class="text-sm font-medium text-slate-800"><%= linked_label %></p>
+                    <p class="text-xs text-slate-600 font-mono"><%= linked_receiver_rfc %></p>
+                    <p class="text-xs text-slate-600 font-semibold"><%= linked_payment_method %></p>
                     <p class="text-xs text-slate-500">Saldo: <%= number_to_currency(linked_invoice.outstanding_amount) %></p>
                     <%= number_field_tag "register_payment[invoice_amounts][#{linked_invoice.id}]", linked_invoice.outstanding_amount.to_s("F"), step: "0.01", min: "0", class: "grouped-invoice-amount-input w-full px-3 py-2 border border-gray-300 rounded-md text-sm" %>
                   </div>

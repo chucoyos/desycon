@@ -21,6 +21,7 @@ module Admin
       authorize @evidence
 
       @evidence_invoices = @evidence.invoices_for_review
+      preload_evidence_invoices_associations!(@evidence_invoices)
       @invoice = selected_invoice_for_registration
       @invoice_payments = @invoice.present? ? @invoice.invoice_payments.recent_first : InvoicePayment.none
       @payment_method_options = FiscalProfile::FORMAS_PAGO.map { |code, label| [ "#{code} - #{label}", code ] }
@@ -178,6 +179,12 @@ module Admin
           notifiable: evidence
         )
       end
+    end
+
+    def preload_evidence_invoices_associations!(invoices)
+      return if invoices.blank?
+
+      ActiveRecord::Associations::Preloader.new(records: invoices, associations: { receiver_entity: :fiscal_profile }).call
     end
   end
 end
