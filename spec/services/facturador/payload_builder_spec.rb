@@ -419,7 +419,7 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
 
         docto = pago[:doctoRelacionado].first
         expect(docto[:idDocumento]).to eq('UUID-SOURCE-001')
-        expect(docto.key?(:serie)).to be(false)
+        expect(docto[:serie]).to eq('Sin Serie')
         expect(docto[:folio]).to eq('123')
         expect(docto[:monedaDR]).to eq('MXN')
         expect(docto[:equivalenciaDR]).to eq(1)
@@ -445,12 +445,31 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         expect(docto.key?(:tipoCambioActual)).to be(false)
       end
 
-      it 'omits serie when payment serie is not configured' do
+      it 'raises when payment serie is not configured' do
         allow(Facturador::Config).to receive(:payment_serie).and_return(nil)
+        allow(Facturador::Config).to receive(:serie).and_return(nil)
+
+        expect do
+          described_class.build(complement_invoice)
+        end.to raise_error(Facturador::ValidationError, /valid payment series/)
+      end
+
+      it 'falls back to global serie when payment serie is not configured' do
+        allow(Facturador::Config).to receive(:payment_serie).and_return(nil)
+        allow(Facturador::Config).to receive(:serie).and_return('REP')
 
         payload = described_class.build(complement_invoice)
 
-        expect(payload.key?(:serie)).to be(false)
+        expect(payload[:serie]).to eq('REP')
+      end
+
+      it 'raises when both payment serie and global serie are Sin Serie' do
+        allow(Facturador::Config).to receive(:payment_serie).and_return('Sin Serie')
+        allow(Facturador::Config).to receive(:serie).and_return('Sin Serie')
+
+        expect do
+          described_class.build(complement_invoice)
+        end.to raise_error(Facturador::ValidationError, /valid payment series/)
       end
 
       it 'preserves payment metadata across retries when snapshot already stores emitted payload' do

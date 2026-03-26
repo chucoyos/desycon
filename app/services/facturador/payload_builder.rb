@@ -97,7 +97,7 @@ module Facturador
         }
       }
 
-      payload[:serie] = Config.payment_serie if Config.payment_serie.present?
+      payload[:serie] = required_payment_serie
       payload
     end
 
@@ -182,7 +182,7 @@ module Facturador
         }
       }
 
-      payload[:serie] = Config.payment_serie if Config.payment_serie.present?
+      payload[:serie] = required_payment_serie
       payload
     end
 
@@ -641,7 +641,6 @@ module Facturador
     def sanitize_source_serie(value)
       serie = value.to_s.strip
       return nil if serie.blank?
-      return nil if serie.casecmp("sin serie").zero?
 
       serie
     end
@@ -764,6 +763,15 @@ module Facturador
         tax: tax,
         rate: rate
       }
+    end
+
+    def required_payment_serie
+      serie = Config.payment_serie.to_s.strip
+      serie = Config.serie.to_s.strip if serie.blank?
+
+      return serie if serie.present? && !serie.casecmp("sin serie").zero?
+
+      raise ValidationError, "A valid payment series is required to emit payment complements (set FACTURADOR_PAYMENT_SERIE or FACTURADOR_SERIE)"
     end
   end
 end

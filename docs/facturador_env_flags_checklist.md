@@ -24,6 +24,7 @@ Runbook relacionado:
 - `FACTURADOR_CLIENT_ID`
 - `FACTURADOR_CLIENT_SECRET`
 - `FACTURADOR_SERIE`
+- `FACTURADOR_PAYMENT_SERIE` (recomendada para REP; si falta usa `FACTURADOR_SERIE` siempre que no sea `Sin Serie`)
 - `FACTURADOR_EMAIL_SUBJECT`
 - `FACTURADOR_EMAIL_MESSAGE`
 
