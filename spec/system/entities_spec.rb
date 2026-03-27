@@ -186,8 +186,8 @@ RSpec.describe "Entities", type: :system do
 
       click_button "Crear Entidad"
 
-      created = Entity.find_by!(name: "Agencia Nueva")
       expect(page).to have_text("Entidad creada exitosamente")
+      created = Entity.find_by!(name: "Agencia Nueva")
       expect(created.role_kind).to eq("customs_agent")
       expect(created.delivery_email_recipients).to eq([ "nueva1@correo.com", "nueva2@correo.com" ])
     end
