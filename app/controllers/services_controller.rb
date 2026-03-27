@@ -26,7 +26,11 @@ class ServicesController < ApplicationController
     result = Facturador::IssueGroupedServicesService.call(serviceables: serviceables, actor: current_user)
 
     if result.success?
-      redirect_back fallback_location: services_path, notice: "Emisión agrupada encolada/ejecutada correctamente."
+      if result.invoice.present?
+        redirect_to invoice_path(result.invoice), notice: "Emisión agrupada encolada/ejecutada correctamente."
+      else
+        redirect_back fallback_location: services_path, notice: "Emisión agrupada encolada/ejecutada correctamente."
+      end
     else
       redirect_back fallback_location: services_path, alert: "No fue posible emitir CFDI agrupado: #{result.error_message}"
     end
@@ -49,6 +53,7 @@ class ServicesController < ApplicationController
         token: "ContainerService:#{service.id}",
         type: "ContainerService",
         service_id: service.id,
+        container_id: service.container_id,
         service_name: service.service_catalog&.name.presence || "-",
         status_label: service.facturado? ? "Facturado" : "Proforma",
         facturado: service.facturado?,
@@ -73,6 +78,7 @@ class ServicesController < ApplicationController
         token: "BlHouseLineService:#{service.id}",
         type: "BlHouseLineService",
         service_id: service.id,
+        bl_house_line_id: service.bl_house_line_id,
         service_name: service.service_catalog&.name.presence || "-",
         status_label: service.facturado? ? "Facturado" : "Proforma",
         facturado: service.facturado?,

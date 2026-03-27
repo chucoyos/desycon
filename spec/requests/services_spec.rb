@@ -75,7 +75,8 @@ RSpec.describe "Services", type: :request do
     it "issues mixed service types in one batch" do
       container_service = create(:container_service, factura: nil)
       bl_service = create(:bl_house_line_service, factura: nil)
-      service_result = instance_double("ServiceResult", success?: true, error_message: nil)
+      grouped_invoice = create(:invoice, invoiceable: nil)
+      service_result = Facturador::IssueGroupedServicesService::Result.new(invoice: grouped_invoice)
 
       expect(Facturador::IssueGroupedServicesService).to receive(:call) do |args|
         expect(args[:actor]).to eq(admin_user)
@@ -90,7 +91,7 @@ RSpec.describe "Services", type: :request do
         ]
       }
 
-      expect(response).to redirect_to(services_path)
+      expect(response).to redirect_to(invoice_path(grouped_invoice))
       expect(flash[:notice]).to include("Emisión agrupada")
     end
 

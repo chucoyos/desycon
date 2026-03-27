@@ -308,7 +308,7 @@ class InvoicesController < ApplicationController
     invoice = Facturador::ManualIssueService.call(invoiceable: invoiceable, actor: current_user)
 
     if invoice.present?
-      redirect_back fallback_location: containers_path, notice: "Emisión manual encolada/ejecutada correctamente."
+      redirect_to invoice_path(invoice), notice: "Emisión manual encolada/ejecutada correctamente."
     else
       redirect_back fallback_location: containers_path, alert: "No fue posible encolar la emisión manual. Revisa configuración y perfiles fiscales."
     end
@@ -327,7 +327,11 @@ class InvoicesController < ApplicationController
     result = Facturador::IssueGroupedServicesService.call(serviceables: serviceables, actor: current_user)
 
     if result.success?
-      redirect_back fallback_location: containers_path, notice: "Emisión agrupada encolada/ejecutada correctamente."
+      if result.invoice.present?
+        redirect_to invoice_path(result.invoice), notice: "Emisión agrupada encolada/ejecutada correctamente."
+      else
+        redirect_back fallback_location: containers_path, notice: "Emisión agrupada encolada/ejecutada correctamente."
+      end
     else
       redirect_back fallback_location: containers_path, alert: "No fue posible emitir CFDI agrupado: #{result.error_message}"
     end

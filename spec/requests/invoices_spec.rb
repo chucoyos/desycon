@@ -484,9 +484,10 @@ RSpec.describe 'Invoices', type: :request do
       container = create(:container, consolidator_entity: receiver)
       first_service = create(:container_service, container: container, billed_to_entity: receiver, factura: nil)
       second_service = create(:container_service, container: container, billed_to_entity: receiver, factura: nil)
+      grouped_invoice = create(:invoice, invoiceable: nil)
 
       allow(Facturador::IssueGroupedServicesService).to receive(:call)
-        .and_return(Facturador::IssueGroupedServicesService::Result.new(invoice: create(:invoice, invoiceable: nil)))
+        .and_return(Facturador::IssueGroupedServicesService::Result.new(invoice: grouped_invoice))
 
       post issue_manual_batch_invoices_path, params: {
         invoiceable_type: 'ContainerService',
@@ -497,7 +498,7 @@ RSpec.describe 'Invoices', type: :request do
         expect(args[:serviceables].map(&:id)).to match_array([ first_service.id, second_service.id ])
         expect(args[:actor]).to eq(admin_user)
       end
-      expect(response).to have_http_status(:found)
+      expect(response).to redirect_to(invoice_path(grouped_invoice))
     end
 
     it 'rejects request when no valid services are selected' do
@@ -509,6 +510,26 @@ RSpec.describe 'Invoices', type: :request do
       expect(response).to have_http_status(:found)
       follow_redirect!
       expect(response.body).to include('Selecciona al menos un servicio válido')
+    end
+  end
+
+  describe 'POST /invoices/issue_manual' do
+    before { sign_in admin_user, scope: :user }
+
+    it 'redirects to the newly created invoice when issuing one service' do
+      service = create(:container_service, factura: nil)
+      issued_invoice = create(:invoice, invoiceable: service)
+
+      allow(Facturador::ManualIssueService).to receive(:call).and_return(issued_invoice)
+
+      post issue_manual_invoices_path, params: {
+        invoiceable_type: 'ContainerService',
+        invoiceable_id: service.id
+      }
+
+      expect(Facturador::ManualIssueService).to have_received(:call).with(invoiceable: service, actor: admin_user)
+      expect(response).to redirect_to(invoice_path(issued_invoice))
+      expect(flash[:notice]).to include('Emisión manual encolada/ejecutada correctamente')
     end
   end
 
