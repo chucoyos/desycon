@@ -55,6 +55,12 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :services, only: [ :index ] do
+    collection do
+      post :issue_batch
+    end
+  end
+
   resources :revalidations, only: [ :show ]
 
   resources :packagings
