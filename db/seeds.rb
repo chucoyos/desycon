@@ -55,8 +55,13 @@ tramitador_role.permissions = permissions.select { |p| %w[containers.read bl_hou
 consolidator_role.permissions = permissions.select { |p| %w[containers.read bl_house_lines.read].include?(p.key) }
 puts "✓ Permisos asignados a roles"
 
-# Crear usuario admin inicial (solo en desarrollo)
-if Rails.env.development?
+# Datos demo deshabilitados por defecto para evitar sobreescrituras accidentales.
+# Para habilitarlos temporalmente: SEED_DEMO_DATA=true bin/rails db:seed
+seed_demo_data = ActiveModel::Type::Boolean.new.cast(ENV.fetch("SEED_DEMO_DATA", "false")) && !Rails.env.production?
+puts "Modo demo deshabilitado (solo catálogo real)" unless seed_demo_data
+
+# Crear usuario admin inicial (solo cuando se habilita modo demo)
+if seed_demo_data
   puts "Creando usuario admin de prueba..."
   admin = User.find_or_initialize_by(email: 'admin@desycon.com')
   admin.password = 'password123' if admin.new_record?
@@ -203,32 +208,188 @@ puts "✓ #{Port.count} puertos creados"
 puts "Creando líneas navieras..."
 
 shipping_lines_data = [
-  { name: "COSCO", iso_code: "COS" },
+  { name: "COSCO SHIPPING", iso_code: "COS" },
   { name: "LPA", iso_code: "LPA" },
   { name: "HAMBURG SUD", iso_code: "SUD" },
   { name: "CMA CGM", iso_code: "CMD" },
   { name: "ONE", iso_code: "ONE" },
-  { name: "PACIFIC INTERNATIONAL LINES", iso_code: "PIL" },
-  { name: "YANG MING LINE", iso_code: "YML" },
-  { name: "ZIM", iso_code: "ZIM" },
-  { name: "Wan Hai Lines", iso_code: "WHL" },
-  { name: "Regional Container Lines", iso_code: "RCO" },
+  { name: "HAPAG-LLOYD MEXICO", iso_code: "HLM" },
+  { name: "HYUNDAI DE MEXICO", iso_code: "HDM" },
+  { name: "MAERSK", iso_code: "MRK" },
+  { name: "EVERGREEN", iso_code: "EVG" },
   { name: "Mediterranean Shipping Company", iso_code: "MSO" },
+  { name: "ORIENT OVERSEAS CONTAINER LINE", iso_code: "OOC" },
+  { name: "WAN HAI LINES", iso_code: "WHL" },
+  { name: "PIL/PACIFIC INTERNATIONAL LINES", iso_code: "PIL" },
+  { name: "YANG MING MARINE TRANSPORT CORPORATION", iso_code: "YML" },
   { name: "Bal Container Line", iso_code: "BAL" },
+  { name: "ZIM INTEGRATED SHIPPING SERVICES LTD", iso_code: "ZIM" },
   { name: "TS Lines", iso_code: "TSL" },
-  { name: "Korea Marine Transport", iso_code: "KMO" }
+  { name: "SEA LEAD", iso_code: "SLD" },
+  { name: "SINOKOR MERCHANT MARINE", iso_code: "SKR" },
+  { name: "KOREA MARINE TRANSPORT", iso_code: "KMO" },
+  { name: "REGIONAL CONTAINER LINE", iso_code: "RCO" }
 ]
 
-shipping_lines_data.each do |line_data|
-  shipping_line = ShippingLine.find_or_initialize_by(name: line_data[:name])
+normalized_shipping_lines = shipping_lines_data.each_with_object({}) do |line_data, acc|
+  normalized_key = ActiveSupport::Inflector.transliterate(line_data[:name].to_s).upcase.gsub(/[^A-Z0-9]/, "")
+  acc[normalized_key] ||= line_data
+end
+
+normalized_shipping_lines.values.each do |line_data|
+  shipping_line = ShippingLine.find_by(iso_code: line_data[:iso_code]) ||
+                  ShippingLine.find_by("LOWER(name) = ?", line_data[:name].downcase) ||
+                  ShippingLine.new
+
+  shipping_line.name = line_data[:name]
   shipping_line.iso_code = line_data[:iso_code]
   shipping_line.save! if shipping_line.new_record? || shipping_line.changed?
 end
 
 puts "✓ #{ShippingLine.count} líneas navieras creadas"
 
-seed_demo_data = !Rails.env.production?
-puts "Modo producción: se omiten datos de ejemplo" unless seed_demo_data
+# Crear catálogo de buques
+puts "Creando buques..."
+
+vessel_names_raw = <<~VESSELS
+  TEAM DEV
+  AOTEA MAERSK
+  CAP ANDREAS
+  SM CHARLESTON
+  TSINGTAO EXPRESS
+  MSC ELISA
+  SOVEREIGN MAERSK
+  VANTAGE
+  CMA CGM TUTI CORIN
+  CZECH
+  COPIAPO
+  SEASPAN BRAVO
+  RDO CONCORD
+  VALOR
+  MOL BEYOND
+  MSC RUBY
+  CMA CGM MUNDRA
+  MOL BENEFACTOR
+  VALUE
+  MOL BENEFACTOR
+  MSC MARGRIT
+  SEASPAN BELIEF
+  HMM BLESSING
+  CMA CGM THAMES
+  KOTA CANTIK
+  CMA CGM ESTELLE
+  SEASPAN BELLWETHER
+  CAUTIN
+  CMA CGM JACQUES JOSEPH
+  MSC CAPELLA
+  XIN FU ZHOU
+  SEASPAN BEAUTY
+  MOL BEACON
+  CMA CGM OHIO
+  CROATIA
+  NAXOS
+  MSC RENEE
+  KOTA CEPAT
+  COCHRANE
+  COYHAIQUE
+  NINGBO
+  MSC PERLE
+  CMA CGM ARKANSAS
+  MSC KANOKO
+  CORCOVADO
+  WAN HAI 612
+  VALIANT
+  VALENCE
+  CMA CGM MUMBAI
+  CMA CGM GANGES
+  MSC NATASHA
+  CAUQUENES
+  SKAGEN MAERSK
+  NORDMARSH
+  CISNES
+  SAN FELIX
+  KOTA CAHAYA
+  MSC JEWEL
+  MOL BEACON
+  CAROLINE MAERSK
+  SOFIE MAERSK
+  A. P. MOLLER
+  YM UTILITY
+  NYK ISABEL
+  CAPE PIONEER
+  CHARLOTTE MAERSK
+  EVER SUPERB
+  SEALAND MICHIGAN
+  XIN YA ZHOU
+  HANSA GRANITE
+  APL ESPLANADE
+  CARSTEN MAERSK
+  MERETE MAERSK
+  SALLY MAERSK
+  ITAL UNIVERSO
+  CLIFFORD MAERSK
+  DALI
+  CMA CGM NIAGARA
+  LONG BEACH TRADER
+  SEASPAN BREEZE
+  CORNELIUS MAERSK
+  EVER LOTUS
+  SAN FRANCISCO BRIDGE
+  CSCL ASIA
+  SVENDBORG MAERSK
+  MAERSK STEPNICA
+  COSCO PRINCE RUPERT
+  SEASPAN BRIGHTNESS
+  CMA CGM CALCUTTA
+  NAVIGARE COLLECTOR
+  SUSAN MAERSK
+  CMA CGM ALASKA
+  XIN OU ZHOU
+  APL CHARLESTON
+  CMA CGM NEVADA
+  XIN SU ZHOU
+  MAERSK SALINA
+  EVER URANUS
+  MAERSK SALALAH
+  XIN FEI ZHOU
+VESSELS
+
+vessel_names = vessel_names_raw
+  .split("\n")
+  .map { |name| name.strip }
+  .reject(&:blank?)
+  .uniq
+
+vessel_names.each do |name|
+  vessel = Vessel.find_or_initialize_by(name: name)
+  vessel.save! if vessel.new_record? || vessel.changed?
+end
+
+puts "✓ #{Vessel.count} buques creados"
+
+# Crear catálogo de embalajes
+puts "Creando embalajes..."
+
+packagings_data = [
+  "CAJAS DE MADERA",
+  "SACOS",
+  "ROLLOS",
+  "PAQUETES",
+  "PALLETS",
+  "ATADOS",
+  "CARTONES",
+  "TAMBOS",
+  "CUÑETES",
+  "CAJAS"
+]
+
+packagings_data.each do |nombre|
+  packaging = Packaging.find_by("LOWER(nombre) = ?", nombre.downcase) || Packaging.new
+  packaging.nombre = nombre
+  packaging.save! if packaging.new_record? || packaging.changed?
+end
+
+puts "✓ #{Packaging.count} embalajes creados"
 
 upsert_entity = lambda do |attrs|
   entity = Entity.find_or_initialize_by(name: attrs[:name])
@@ -237,21 +398,128 @@ upsert_entity = lambda do |attrs|
   entity
 end
 
+# Crear catálogo de agentes aduanales (personas con patente)
+puts "Creando catálogo de agentes aduanales (personas con patente)..."
+
+customs_agents_with_patents_data = [
+  [ "PRODUCTION SYNERGIC", "0000" ],
+  [ "CASSO FLORES ROBERTO", "3712" ],
+  [ "VILLAVERDE RODOLFO", "3317" ],
+  [ "MERCADO OCAMPO SANTIAGO JORGE ENRIQUE", "3884" ],
+  [ "ZENDEJAS PORTUGAL CARLOS FELIPE", "1600" ],
+  [ "ALMEIDA VALLES CECILIA", "3697" ],
+  [ "CASSO CASSO CASSO", "3236" ],
+  [ "MORELOS PAVON JOSE MARIA", "0012" ],
+  [ "TONATZI AHIAT HUITZILOPOXTLI", "1001" ],
+  [ "ROMO ROMERO ANTONIO", "3365" ],
+  [ "PIZ ENRIQUEZ RAUL FRANCISCO", "1681" ],
+  [ "BARRIOS CASTAÑO VERONICA", "1487" ],
+  [ "ALVAREZ RAMIREZ SERGIO", "3931" ],
+  [ "VILLAFUERTE COELLO EDUARDO", "3788" ],
+  [ "CAREAGA MONCAYO LUIS JOAQUIN", "3900" ],
+  [ "DELGADILLO CASILLAS JUAN CARLOS", "3450" ],
+  [ "GOMEZ BARQUIN RAMON", "3622" ],
+  [ "VALDEZ GOMEZ ALFREDO", "3719" ],
+  [ "VIGIL CALZADA SILVIA", "3915" ],
+  [ "SALDAÑA ZOLEZZI BERTHA", "3149" ],
+  [ "DOMINGUEZ MURO JOSE MARTIN", "3296" ],
+  [ "GOMEZ BARQUIN ALEJANDRO", "1762" ],
+  [ "ORTEGON MARTINEZ MANUEL JUAN", "3957" ],
+  [ "VALVERDE MONTERO VERONICA ANA LUISA", "3374" ],
+  [ "HINOJOSA AGUERREVERE ENRIQUE MANUEL", "3200" ],
+  [ "ALCANTARA ACEVEDO MONICA LETICIA", "3794" ],
+  [ "AGUILLON PADILLA JOSE PEDRO", "1641" ],
+  [ "VIÑALS ORTIZ DE LA PEÑA LUIS FERNANDO", "3448" ],
+  [ "GUERRERO FLORES JOSE ANTONIO", "3481" ],
+  [ "VILLASEÑOR SANCHEZ ARTURO ELEAZAR", "3879" ],
+  [ "CARMONA MILLAN HECTOR RICARDO", "3737" ],
+  [ "GARZA LOPEZ VICTORIANO", "3451" ],
+  [ "HOYO GARCIA LUIS", "3862" ],
+  [ "ANDERE NOGUEIRA GERARDO", "3992" ],
+  [ "GOMEZ ABAD JOAQUIN", "3458" ],
+  [ "CERDA DE LA TORRE SONIA ERIKA", "6071" ],
+  [ "PALAZUELOS PEREZ ORONOZ ANDRES ENRIQUE", "3098" ],
+  [ "JARA BORDI MIGUEL ANGEL", "3878" ],
+  [ "ARREDONDO FLORES SIGFRIDO LUCIANO ALBERTO", "3387" ],
+  [ "HUERTA CASTRO RICARDO", "1691" ],
+  [ "CARDENAS GARZA MANUEL", "3320" ],
+  [ "DEL VALLE BETANZO FERNANDO", "1609" ],
+  [ "MEJIA MARTINEZ MARIA DE LA LUZ", "3487" ],
+  [ "MURIS SALINAS VICTOR HORACIO", "3475" ],
+  [ "WILLY KOLTER SUSAN LYNN", "3503" ],
+  [ "KUTZ GIRAULT ANDER", "1626" ],
+  [ "TENA BETANCOURT JORGE FELIX", "3545" ],
+  [ "HERRERA MIER JOSE HUGO", "3178" ],
+  [ "LEON ZAMORA IRENE ANGELINA", "3807" ],
+  [ "RAMOS RAMIREZ ENRIQUE", "3850" ],
+  [ "VILLANUEVA Y VAZQUEZ ROBERTO", "3154" ],
+  [ "VENEGAS CUBERO MARIO HERBE", "3772" ],
+  [ "SORIANO RIVERA ADOLFO", "3985" ],
+  [ "DIAZ CASTRO JONATHAN", "3259" ],
+  [ "PEREZ ORTIZ ALBERTO", "3575" ],
+  [ "DIAZ GARCIA JORGE", "3621" ],
+  [ "REYES DIAZ CARLOS MIGUEL", "1788" ],
+  [ "ENCISO HERNANDEZ MANUEL ALEXIS", "1805" ],
+  [ "GUTIERREZ ROBINSON FIDEL JOSE", "3581" ],
+  [ "FERNANDEZ ESPINOSA FORTINO", "3065" ],
+  [ "PRIDA BARRIO NELSON", "3052" ],
+  [ "OBREGON CARRANZA MAYO JESUS", "3586" ],
+  [ "MARABOTO ECHANOVE MANUEL ANTONIO", "1707" ],
+  [ "GAMAS LUNA VICTOR HUGO", "3711" ],
+  [ "MEJIA GONZALEZ JACOBO", "1786" ],
+  [ "PEREZ TEJADA FELIX JUAN MANUEL", "3743" ],
+  [ "VILLA GARCIA JORGE VICENTE", "3446" ],
+  [ "GALICIA ESTRELLA ERNESTO", "3638" ],
+  [ "ABUIN SALGADO CLAUDIA JUANA", "3927" ],
+  [ "RUANOVA ZARATE MARIO DAVID", "0491" ],
+  [ "RAMOS CASAS ROBERTO JOSE", "3037" ],
+  [ "ULLOA ESQUER JOSE EDMUNDO RAMON", "1639" ],
+  [ "ROJAS PALACIOS CLAUDIA JOSEFINA", "3623" ],
+  [ "PURON ACEVEDO PEDRO RAMON", "3752" ],
+  [ "GARZA MATA HECTOR FIDENCIO", "3540" ],
+  [ "MAYER MARTINEZ OSCAR ALBERTO", "3611" ],
+  [ "BARRENECHEA NARANJO FERNANDO IÑIGO", "1759" ],
+  [ "DIAZ GARCIA EDUARDO", "3009" ],
+  [ "CARVAJAL UDAVE ROSALINDA", "3953" ],
+  [ "DUEÑAS HERNANDEZ RAFAEL", "1785" ],
+  [ "ESQUER LUKEN FRANCISCO JAVIER", "3710" ],
+  [ "ALONSO PEREZ GUSTAVO", "1410" ],
+  [ "PACHECO MUÑOZ ARTURO", "1752" ],
+  [ "MARTINEZ RICO JORGE IVAN", "1782" ],
+  [ "ARONOVICH GANON MARIO", "1698" ],
+  [ "VILLANUEVA ROMERO JULIO CESAR", "3289" ],
+  [ "MARTIN DEL CAMPO ENRIQUE GUILLEMIN", "3832" ],
+  [ "RELLO SALVATIERRA CARLOS ALBERTO", "1791" ],
+  [ "VALDEZ GARATE JOSE RAYMUNDO", "1068" ],
+  [ "MEJIA ARREOLA FERNANDO", "3321" ],
+  [ "BARAJAS HILL JUAN DE JESUS", "3573" ],
+  [ "CAREAGA DIAZ JAVIER EDUARDO", "3163" ],
+  [ "MORENO HERNANDEZ ADID", "3990" ],
+  [ "GUERRERO LUGO RAUL MANUEL", "3963" ],
+  [ "DIAZ RAYA JORGE ANDRES", "1625" ],
+  [ "TORRES FRIAS CARLOS ALEJANDRO", "3010" ],
+  [ "ACIERNO VAZQUEZ LORENZO", "1669" ],
+  [ "RODRIGUEZ RUIZ MARTIN", "3708" ],
+  [ "ACIERNO VAZQUEZ RODRIGO", "1730" ],
+  [ "SITTON ZONANA EDUARDO", "3539" ]
+]
+
+customs_agents_with_patents_data.each do |name, patent_number|
+  entity = Entity.find_by(patent_number: patent_number) ||
+           Entity.find_by("LOWER(name) = ?", name.downcase) ||
+           Entity.new
+
+  entity.name = name
+  entity.role_kind = "customs_agent"
+  entity.patent_number = patent_number
+  entity.save! if entity.new_record? || entity.changed?
+end
+
+puts "✓ Agentes aduanales (personas con patente) cargados: #{customs_agents_with_patents_data.size}"
+
 # Crear entidades de ejemplo
 if seed_demo_data
   puts "Creando entidades de ejemplo..."
-
-  # Agentes aduanales de ejemplo
-  customs_agents_data = [
-    { name: "Agencia Aduanal García & Asociados", role_kind: "customs_agent" },
-    { name: "Despachos Aduanales Ramírez S.A.", role_kind: "customs_agent" },
-    { name: "Servicios Aduanales López", role_kind: "customs_agent" },
-    { name: "Agencia Aduanal Martínez", role_kind: "customs_agent" }
-  ]
-
-  customs_agents_data.each do |agent_data|
-    upsert_entity.call(agent_data)
-  end
 
   # Clientes de ejemplo
   clients_data = [
@@ -358,16 +626,17 @@ if seed_demo_data
   # Crear usuarios de ejemplo asociados a entidades
   puts "Creando usuarios de ejemplo..."
 
-  # Usuario para agencia aduanal
+  # Usuario demo para una agencia aduanal (usa una entidad real del catálogo de agentes con patente)
   customs_agency_role = Role.find_by(name: Role::CUSTOMS_BROKER)
-  customs_agent_entity = Entity.find_by(name: "Agencia Aduanal García & Asociados")
+  customs_agency_entity = Entity.find_by(name: "PRODUCTION SYNERGIC") ||
+                          Entity.where(role_kind: "customs_agent").order(:name).first
 
-  if customs_agency_role && customs_agent_entity
+  if customs_agency_role && customs_agency_entity
     customs_user = User.find_or_initialize_by(email: 'agente@garcia.com')
     customs_user.password = 'password123' if customs_user.new_record?
     customs_user.password_confirmation = 'password123' if customs_user.new_record?
     customs_user.role = customs_agency_role
-    customs_user.entity = customs_agent_entity
+    customs_user.entity = customs_agency_entity
     customs_user.save! if customs_user.changed? || customs_user.new_record?
     puts "✓ Usuario agente aduanal creado (agente@garcia.com / password123)"
   end
@@ -419,9 +688,9 @@ if seed_demo_data
     end
   end
 
-  packaging = Packaging.first || Packaging.create!(nombre: "Cajas")
+  packaging = Packaging.find_by("LOWER(nombre) = ?", "cajas") || Packaging.first
 
-  if customs_agent_entity && client_entity && container && packaging
+  if customs_agency_entity && client_entity && container && packaging
     bl_house_lines_data = [
       { blhouse: "ABC123456789", status: "activo", cantidad: 100, partida: 1 },
       { blhouse: "DEF987654321", status: "documentos_ok", cantidad: 200, partida: 2 },
@@ -432,7 +701,7 @@ if seed_demo_data
     bl_house_lines_data.each do |bl_data|
       bl = BlHouseLine.find_or_initialize_by(blhouse: bl_data[:blhouse])
       bl.assign_attributes(
-        customs_agent: customs_agent_entity,
+        customs_agent: customs_agency_entity,
         client: client_entity,
         container: container,
         packaging: packaging,
