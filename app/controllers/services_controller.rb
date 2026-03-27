@@ -5,6 +5,11 @@ class ServicesController < ApplicationController
   def index
     authorize Invoice, :issue_manual?
 
+    @selected_start_date = resolved_start_date
+    @selected_end_date = resolved_end_date
+    @filter_start_date = [ @selected_start_date, @selected_end_date ].min
+    @filter_end_date = [ @selected_start_date, @selected_end_date ].max
+
     @selected_container_number = params[:container_number].to_s.strip.first(11).presence
     @selected_blhouse = params[:blhouse].to_s.strip.presence
 
@@ -72,7 +77,19 @@ class ServicesController < ApplicationController
   end
 
   def bl_house_line_service_rows
-    bl_house_line_services_scope.map do |service|
+    services = bl_house_line_services_scope.to_a
+    service_ids = services.map(&:id)
+    container_numbers_by_service_id = if service_ids.empty?
+      {}
+    else
+      BlHouseLineService
+        .joins(bl_house_line: :container)
+        .where(id: service_ids)
+        .pluck("bl_house_line_services.id", "containers.number")
+        .to_h
+    end
+
+    services.map do |service|
       bl_house_line = service.bl_house_line
       client_name = bl_house_line&.client&.name
       billed_to_name = service.billed_to_entity&.name
@@ -87,7 +104,7 @@ class ServicesController < ApplicationController
         service_name: service.service_catalog&.name.presence || "-",
         status_label: service.facturado? ? "Facturado" : "Proforma",
         facturado: service.facturado?,
-        container_number: bl_house_line&.container&.number.presence || "-",
+        container_number: container_numbers_by_service_id[service.id].presence || "-",
         blhouse: bl_house_line&.blhouse.presence || "-",
         agency_name: bl_house_line&.customs_agent&.name.presence || "-",
         client_name: client_name.presence || billed_to_name.presence || "-",
@@ -109,6 +126,8 @@ class ServicesController < ApplicationController
       scope = scope.joins(:container).where("containers.number ILIKE ?", "%#{@selected_container_number}%")
     end
 
+    scope = scope.where(created_at: @filter_start_date.beginning_of_day..@filter_end_date.end_of_day)
+
     scope.distinct
   end
 
@@ -124,7 +143,33 @@ class ServicesController < ApplicationController
       scope = scope.joins(:bl_house_line).where("bl_house_lines.blhouse ILIKE ?", "%#{@selected_blhouse}%")
     end
 
+    scope = scope.where(created_at: @filter_start_date.beginning_of_day..@filter_end_date.end_of_day)
+
     scope.distinct
+  end
+
+  def resolved_start_date
+    parse_filter_date(params[:start_date]) || default_start_date
+  end
+
+  def resolved_end_date
+    parse_filter_date(params[:end_date]) || default_end_date
+  end
+
+  def parse_filter_date(value)
+    return nil if value.blank?
+
+    Date.parse(value)
+  rescue ArgumentError
+    nil
+  end
+
+  def default_start_date
+    1.month.ago.to_date
+  end
+
+  def default_end_date
+    Date.current
   end
 
   def agency_name_for_container_service(service)

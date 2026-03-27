@@ -26,7 +26,7 @@
     </div>
 
     <%= form_with url: services_path, method: :get, class: "w-full", data: { turbo: false } do |f| %>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">Contenedor</label>
           <%= f.text_field :container_number,
@@ -41,6 +41,20 @@
           <%= f.text_field :blhouse,
               value: @selected_blhouse,
               placeholder: "Buscar BL House",
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition-all" %>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Fecha inicio</label>
+          <%= f.date_field :start_date,
+              value: @selected_start_date,
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition-all" %>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Fecha fin</label>
+          <%= f.date_field :end_date,
+              value: @selected_end_date,
               class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition-all" %>
         </div>
 

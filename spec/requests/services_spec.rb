@@ -67,6 +67,40 @@ RSpec.describe "Services", type: :request do
       expect(response.body).to include("Servicio Partida Contenedor")
       expect(response.body).to include("BLH-CONT-001")
     end
+
+    it "uses one-month date range by default" do
+      recent_catalog = create(:service_catalog, name: "Srv Recent")
+      old_catalog = create(:service_catalog, name: "Srv Old")
+
+      recent_service = create(:container_service, service_catalog: recent_catalog, factura: nil)
+      old_service = create(:container_service, service_catalog: old_catalog, factura: nil)
+      old_service.update_column(:created_at, 2.months.ago)
+
+      get services_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Srv Recent")
+      expect(response.body).not_to include("Srv Old")
+      expect(response.body).to include("name=\"start_date\"")
+      expect(response.body).to include("name=\"end_date\"")
+
+      # Ensure we still have both records, proving exclusion comes from date filter.
+      expect(ContainerService.where(id: [ recent_service.id, old_service.id ]).count).to eq(2)
+    end
+
+    it "allows expanding date range to include older services" do
+      old_catalog = create(:service_catalog, name: "Srv Old Expanded")
+      old_service = create(:container_service, service_catalog: old_catalog, factura: nil)
+      old_service.update_column(:created_at, 2.months.ago)
+
+      get services_path, params: {
+        start_date: 3.months.ago.to_date.to_s,
+        end_date: Date.current.to_s
+      }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Srv Old Expanded")
+    end
   end
 
   describe "POST /services/issue_batch" do
