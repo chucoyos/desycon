@@ -212,22 +212,40 @@
 
       <div>
         <%= form.label :voyage_id, "Viaje *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
-        <% voyage_options = @voyages.map do |voyage|
-             [
-               "#{voyage.viaje} — #{voyage.destination_port&.display_name || 'Sin destino'}",
-               voyage.id,
-               { data: { destination_port: voyage.destination_port&.display_name } }
-             ]
-           end %>
-        <%= form.select :voyage_id,
-              options_for_select(voyage_options, container.voyage_id),
-            {},
-              class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200",
-              required: true,
-              data: {
-                voyages_url: voyages_path(format: :json),
-                vessel_field: "container_vessel_id"
-              } %>
+
+        <div
+          data-controller="catalog-autocomplete"
+          data-catalog-autocomplete-url-value="<%= voyages_search_containers_path %>"
+          data-catalog-autocomplete-min-chars-value="2"
+          data-catalog-autocomplete-debounce-value="300"
+          data-catalog-autocomplete-depends-on-field-value="container_vessel_id"
+          data-catalog-autocomplete-depends-on-param-value="vessel_id"
+          class="relative"
+        >
+          <%= form.hidden_field :voyage_id,
+                data: {
+                  catalog_autocomplete_target: "hiddenInput",
+                  destination_port: container.voyage&.destination_port&.display_name
+                } %>
+
+          <%= text_field_tag :voyage_search,
+                container.voyage.present? ? "#{container.voyage.viaje} -- #{container.voyage.destination_port&.display_name || 'Sin destino'}" : nil,
+                autocomplete: "off",
+                placeholder: "Escribe para buscar un viaje",
+                required: true,
+                class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 #{container.errors[:voyage].any? ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}",
+                data: {
+                  catalog_autocomplete_target: "input",
+                  action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+                } %>
+
+          <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+          <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+        </div>
+
+        <% if container.errors[:voyage].any? %>
+          <p class="mt-1 text-sm text-red-600"><%= container.errors[:voyage].first %></p>
+        <% end %>
       </div>
 
       <div>
@@ -457,11 +475,11 @@
       .toLowerCase()
       .trim();
 
-  const getDestinationPortName = (voyageSelect) => voyageSelect?.selectedOptions?.[0]?.dataset.destinationPort || '';
+  const getDestinationPortName = (voyageField) => voyageField?.dataset?.destinationPort || '';
 
   const buildMappedSelect = (selectId, mappingDataAttr, promptText) => {
     const select = document.getElementById(selectId);
-    const voyageSelect = document.getElementById('container_voyage_id');
+    const voyageField = document.getElementById('container_voyage_id');
     const tipoSelect = document.getElementById('container_tipo_maniobra');
 
     if (!select || select.dataset.initialized === 'true') return () => {};
@@ -477,7 +495,7 @@
 
     const renderOptions = () => {
       const tipo = tipoSelect?.value || 'importacion';
-      const destinationName = getDestinationPortName(voyageSelect);
+      const destinationName = getDestinationPortName(voyageField);
       const currentValue = select.value;
 
       const options = tipo === 'importacion'
@@ -508,7 +526,7 @@
       select.value = currentValue || '';
     };
 
-    voyageSelect?.addEventListener('change', renderOptions);
+    voyageField?.addEventListener('change', renderOptions);
     tipoSelect?.addEventListener('change', renderOptions);
 
     renderOptions();
@@ -516,59 +534,44 @@
     return renderOptions;
   };
 
-  const initVoyageLoading = () => {
-    const voyageSelect = document.getElementById('container_voyage_id');
-    if (!voyageSelect || voyageSelect.dataset.initialized === 'true') return;
+  const initVoyageAutocompleteSync = () => {
+    const vesselField = document.getElementById('container_vessel_id');
+    const voyageField = document.getElementById('container_voyage_id');
+    const voyageSearchInput = document.getElementById('voyage_search');
 
-    const vesselSelectId = voyageSelect.dataset.vesselField;
-    const vesselSelect = vesselSelectId ? document.getElementById(vesselSelectId) : null;
-    const voyagesUrl = voyageSelect.dataset.voyagesUrl;
+    if (!vesselField || !voyageField || !voyageSearchInput || voyageField.dataset.initialized === 'true') return;
 
-    voyageSelect.dataset.initialized = 'true';
+    voyageField.dataset.initialized = 'true';
 
-    const setVoyageOptions = (voyages) => {
-      const currentValue = voyageSelect.value;
-      voyageSelect.innerHTML = '';
-
-      voyages.forEach((voyage) => {
-        const opt = document.createElement('option');
-        opt.value = voyage.id;
-        const destinationName = voyage.destination_port_display || voyage.destination_port_name || voyage.destination_port || 'Sin destino';
-        opt.textContent = `${voyage.viaje} —> ${destinationName}`;
-        opt.dataset.destinationPort = destinationName;
-        voyageSelect.appendChild(opt);
-      });
-
-      if (voyages.some((voyage) => String(voyage.id) === currentValue)) {
-        voyageSelect.value = currentValue;
-      } else if (voyages.length > 0) {
-        voyageSelect.value = String(voyages[0].id);
+    const syncVoyageInputEnabledState = () => {
+      voyageSearchInput.disabled = !vesselField.value;
+      if (voyageSearchInput.disabled) {
+        voyageSearchInput.placeholder = 'Selecciona primero un buque';
       } else {
-        voyageSelect.value = '';
-      }
-
-      voyageSelect.dispatchEvent(new Event('change'));
-    };
-
-    const fetchVoyages = async (vesselId) => {
-      if (!voyagesUrl || !vesselId) {
-        setVoyageOptions([]);
-        return;
-      }
-
-      try {
-        const response = await fetch(`${voyagesUrl}?vessel_id=${vesselId}&all_for_vessel=1`);
-        if (!response.ok) throw new Error('Error al cargar viajes');
-        const data = await response.json();
-        setVoyageOptions(data || []);
-      } catch (error) {
-        console.error(error);
-        setVoyageOptions([]);
+        voyageSearchInput.placeholder = 'Escribe para buscar un viaje';
       }
     };
 
-    vesselSelect?.addEventListener('change', (event) => {
-      fetchVoyages(event.target.value);
+    const clearVoyageSelection = () => {
+      voyageField.value = '';
+      delete voyageField.dataset.destinationPort;
+      voyageSearchInput.value = '';
+      voyageField.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    vesselField.dataset.lastSelectedValue = vesselField.value;
+    syncVoyageInputEnabledState();
+
+    vesselField.addEventListener('change', () => {
+      const previousValue = vesselField.dataset.lastSelectedValue || '';
+      const currentValue = vesselField.value || '';
+      vesselField.dataset.lastSelectedValue = currentValue;
+
+      if (previousValue !== currentValue) {
+        clearVoyageSelection();
+      }
+
+      syncVoyageInputEnabledState();
     });
   };
 
@@ -595,7 +598,7 @@
       if (field) delete field.dataset.initialized;
     });
 
-    initVoyageLoading();
+    initVoyageAutocompleteSync();
     initRecintoAndAlmacenOptions();
   };
 

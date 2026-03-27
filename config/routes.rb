@@ -106,6 +106,7 @@ Rails.application.routes.draw do
       get :ports_search
       get :shipping_lines_search
       get :vessels_search
+      get :voyages_search
     end
 
     member do

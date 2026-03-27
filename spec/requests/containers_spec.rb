@@ -388,6 +388,47 @@ RSpec.describe "Containers", type: :request do
     end
   end
 
+  describe "GET /containers/voyages_search" do
+    before { sign_in user, scope: :user }
+
+    it "returns empty results when vessel is missing" do
+      get voyages_search_containers_url, params: { q: "VOY" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"]).to eq([])
+    end
+
+    it "returns voyages only for the selected vessel" do
+      selected_vessel = create(:vessel, name: "Buque Search")
+      other_vessel = create(:vessel, name: "Buque Otro")
+      destination = create(:port, :veracruz)
+
+      selected_voyage = create(:voyage, vessel: selected_vessel, destination_port: destination, viaje: "VOY-001")
+      create(:voyage, vessel: other_vessel, destination_port: destination, viaje: "VOY-002")
+
+      get voyages_search_containers_url,
+          params: { q: "VOY", vessel_id: selected_vessel.id },
+          as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      ids = payload.fetch("results").map { |row| row.fetch("id") }
+
+      expect(ids).to contain_exactly(selected_voyage.id)
+    end
+
+    it "requires create permissions" do
+      restricted_user = create(:user, :customs_broker)
+      sign_in restricted_user, scope: :user
+
+      vessel = create(:vessel, name: "Buque Sin Permiso")
+      get voyages_search_containers_url, params: { q: "VOY", vessel_id: vessel.id }, as: :json
+
+      expect(response).to have_http_status(:redirect)
+    end
+  end
+
   describe "GET /containers/ports_search" do
     before { sign_in user, scope: :user }
 

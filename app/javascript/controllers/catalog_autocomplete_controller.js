@@ -5,7 +5,9 @@ export default class extends Controller {
   static values = {
     url: String,
     minChars: { type: Number, default: 2 },
-    debounce: { type: Number, default: 300 }
+    debounce: { type: Number, default: 300 },
+    dependsOnField: String,
+    dependsOnParam: String
   }
 
   connect() {
@@ -14,6 +16,7 @@ export default class extends Controller {
     this.options = []
     this.activeIndex = -1
     this.selectedLabel = this.inputTarget.value.trim()
+    this.selectedOptionDataKeys = []
 
     this.hiddenInputTarget.disabled = false
 
@@ -34,6 +37,7 @@ export default class extends Controller {
       const hadValue = this.hiddenInputTarget.value !== ""
       this.hiddenInputTarget.value = ""
       this.selectedLabel = ""
+      this.clearSelectedOptionData()
       if (hadValue) {
         this.hiddenInputTarget.dispatchEvent(new Event("change", { bubbles: true }))
       }
@@ -147,6 +151,14 @@ export default class extends Controller {
       const url = new URL(this.urlValue, window.location.origin)
       url.searchParams.set("q", query)
 
+      if (this.hasDependsOnFieldValue && this.hasDependsOnParamValue) {
+        const dependencyField = document.getElementById(this.dependsOnFieldValue)
+        const dependencyValue = dependencyField?.value?.trim()
+        if (dependencyValue) {
+          url.searchParams.set(this.dependsOnParamValue, dependencyValue)
+        }
+      }
+
       const response = await fetch(url.toString(), {
         headers: { Accept: "application/json" },
         signal: this.abortController.signal
@@ -191,9 +203,38 @@ export default class extends Controller {
     this.hiddenInputTarget.value = option.id
     this.inputTarget.value = option.label
     this.selectedLabel = option.label
+    this.applySelectedOptionData(option)
     this.hiddenInputTarget.dispatchEvent(new Event("change", { bubbles: true }))
     this.setStatus("")
     this.renderOptions([], { suppressEmptyStatus: true })
+  }
+
+  applySelectedOptionData(option) {
+    this.clearSelectedOptionData()
+
+    const payload = option?.data
+    if (!payload || typeof payload !== "object") return
+
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value === null || value === undefined) return
+
+      const normalizedKey = this.normalizeDataKey(key)
+      this.hiddenInputTarget.dataset[normalizedKey] = String(value)
+      this.selectedOptionDataKeys.push(normalizedKey)
+    })
+  }
+
+  clearSelectedOptionData() {
+    this.selectedOptionDataKeys.forEach((key) => {
+      delete this.hiddenInputTarget.dataset[key]
+    })
+    this.selectedOptionDataKeys = []
+  }
+
+  normalizeDataKey(key) {
+    return String(key)
+      .replace(/[-_]+([a-zA-Z0-9])/g, (_, char) => char.toUpperCase())
+      .replace(/^[A-Z]/, (char) => char.toLowerCase())
   }
 
   renderOptions(options, { suppressEmptyStatus = false } = {}) {

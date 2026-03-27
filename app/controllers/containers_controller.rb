@@ -193,6 +193,44 @@ class ContainersController < ApplicationController
     render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
   end
 
+  def voyages_search
+    authorize Container, :create?
+
+    query = params[:q].to_s.strip
+    vessel_id = params[:vessel_id].presence
+    min_chars = 2
+    limit = 20
+
+    if vessel_id.blank? || query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    sanitized_query = ActiveRecord::Base.sanitize_sql_like(query)
+    cache_key = [ "containers", "voyages_search", vessel_id, query.downcase, limit ].join(":")
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      Voyage
+        .where(vessel_id: vessel_id)
+        .includes(:destination_port)
+        .where("voyages.viaje ILIKE ?", "%#{sanitized_query}%")
+        .order(:viaje)
+        .limit(limit)
+        .map do |voyage|
+          destination_name = voyage.destination_port&.display_name || "Sin destino"
+
+          {
+            id: voyage.id,
+            label: "#{voyage.viaje} -- #{destination_name}",
+            subtitle: destination_name,
+            data: {
+              destination_port: destination_name
+            }
+          }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
   def create
     @container = Container.new(container_params)
     authorize @container
@@ -472,6 +510,7 @@ class ContainersController < ApplicationController
     attrs[:consolidator_entity_id] = resolve_consolidator_entity_id(params[:consolidator_search]) if attrs[:consolidator_entity_id].blank?
     attrs[:shipping_line_id] = resolve_shipping_line_id(params[:shipping_line_search]) if attrs[:shipping_line_id].blank?
     attrs[:vessel_id] = resolve_vessel_id(params[:vessel_search]) if attrs[:vessel_id].blank?
+    attrs[:voyage_id] = resolve_voyage_id(params[:voyage_search], vessel_id: attrs[:vessel_id]) if attrs[:voyage_id].blank?
     attrs[:origin_port_id] = resolve_origin_port_id(params[:origin_port_search]) if attrs[:origin_port_id].blank?
   end
 
@@ -524,6 +563,21 @@ class ContainersController < ApplicationController
     return exact.id if exact.present?
 
     matched_ids = Port.search_by_name_or_code(query).limit(2).pluck(:id).uniq
+    matched_ids.one? ? matched_ids.first : nil
+  end
+
+  def resolve_voyage_id(raw_query, vessel_id:)
+    query = raw_query.to_s.strip
+    return nil if query.blank? || vessel_id.blank?
+
+    scope = Voyage.where(vessel_id: vessel_id)
+    voyage_code = query.split("--").first.to_s.strip
+
+    exact = scope.find_by("LOWER(viaje) = ?", voyage_code.downcase)
+    return exact.id if exact.present?
+
+    sanitized_query = ActiveRecord::Base.sanitize_sql_like(voyage_code)
+    matched_ids = scope.where("voyages.viaje ILIKE ?", "%#{sanitized_query}%").order(:viaje).limit(2).pluck(:id).uniq
     matched_ids.one? ? matched_ids.first : nil
   end
 
@@ -614,11 +668,7 @@ class ContainersController < ApplicationController
     end
     @shipping_lines = ShippingLine.alphabetical
     @vessels = Vessel.alphabetical
-    @voyages = if @container&.vessel_id
-      Voyage.where(vessel_id: @container.vessel_id).includes(:destination_port).order(:viaje)
-    else
-      Voyage.none
-    end
+    @voyages = Voyage.none
     @ports = Port.alphabetical
     @service_catalogs = ServiceCatalog.for_containers
     @vessels_json = Vessel.all.select(:id, :name).map { |v| { id: v.id, name: v.name } }.to_json
