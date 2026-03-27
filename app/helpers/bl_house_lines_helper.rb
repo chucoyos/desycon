@@ -1,6 +1,6 @@
 module BlHouseLinesHelper
   def temporary_service_breakdown_enabled?
-    Rails.env.development? || Rails.env.test?
+    current_user&.admin_or_executive?
   end
 
   def bl_service_calculation_breakdown(service)
