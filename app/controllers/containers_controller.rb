@@ -485,7 +485,8 @@ class ContainersController < ApplicationController
     exact = scope.find_by("LOWER(name) = ?", query.downcase)
     return exact.id if exact.present?
 
-    scope.search_by_name(query).limit(1).pluck(:id).first
+    matched_ids = scope.search_by_name(query).limit(2).pluck(:id).uniq
+    matched_ids.one? ? matched_ids.first : nil
   end
 
   def resolve_shipping_line_id(raw_query)
@@ -495,7 +496,8 @@ class ContainersController < ApplicationController
     exact = ShippingLine.find_by("LOWER(name) = ?", query.downcase)
     return exact.id if exact.present?
 
-    ShippingLine.search_by_name(query).limit(1).pluck(:id).first
+    matched_ids = ShippingLine.search_by_name(query).limit(2).pluck(:id).uniq
+    matched_ids.one? ? matched_ids.first : nil
   end
 
   def resolve_vessel_id(raw_query)
@@ -505,7 +507,8 @@ class ContainersController < ApplicationController
     exact = Vessel.find_by("LOWER(name) = ?", query.downcase)
     return exact.id if exact.present?
 
-    Vessel.search_by_name(query).limit(1).pluck(:id).first
+    matched_ids = Vessel.search_by_name(query).limit(2).pluck(:id).uniq
+    matched_ids.one? ? matched_ids.first : nil
   end
 
   def resolve_origin_port_id(raw_query)
@@ -520,7 +523,8 @@ class ContainersController < ApplicationController
     exact = Port.find_by("LOWER(name) = ? OR LOWER(code) = ?", query.downcase, query.downcase)
     return exact.id if exact.present?
 
-    Port.search_by_name_or_code(query).limit(1).pluck(:id).first
+    matched_ids = Port.search_by_name_or_code(query).limit(2).pluck(:id).uniq
+    matched_ids.one? ? matched_ids.first : nil
   end
 
   def handle_services_update_from_show

@@ -59,12 +59,12 @@ export default class extends Controller {
 
   onBlur() {
     setTimeout(() => {
-      this.resolveSelectionOnBlur()
+      this.resolveSelectionOnBlur({ showError: false })
         .finally(() => this.hideResults())
     }, 120)
   }
 
-  async resolveSelectionOnBlur() {
+  async resolveSelectionOnBlur({ showError = true } = {}) {
     const query = this.inputTarget.value.trim()
     if (!query || this.hiddenInputTarget.value) return
 
@@ -85,6 +85,11 @@ export default class extends Controller {
 
     if (this.options.length === 1) {
       this.selectOption(this.options[0])
+      return
+    }
+
+    if (showError) {
+      this.setStatus("Selecciona una opción de la lista.")
     }
   }
 
@@ -97,9 +102,8 @@ export default class extends Controller {
   }
 
   onKeydown(event) {
-    if (this.options.length === 0) return
-
     if (event.key === "ArrowDown") {
+      if (this.options.length === 0) return
       event.preventDefault()
       this.activeIndex = Math.min(this.activeIndex + 1, this.options.length - 1)
       this.highlightActiveOption()
@@ -107,15 +111,25 @@ export default class extends Controller {
     }
 
     if (event.key === "ArrowUp") {
+      if (this.options.length === 0) return
       event.preventDefault()
       this.activeIndex = Math.max(this.activeIndex - 1, 0)
       this.highlightActiveOption()
       return
     }
 
-    if (event.key === "Enter" && this.activeIndex >= 0) {
-      event.preventDefault()
-      this.selectOption(this.options[this.activeIndex])
+    if (event.key === "Enter") {
+      if (this.activeIndex >= 0 && this.options[this.activeIndex]) {
+        event.preventDefault()
+        this.selectOption(this.options[this.activeIndex])
+        return
+      }
+
+      if (!this.hiddenInputTarget.value && this.inputTarget.value.trim() !== "") {
+        event.preventDefault()
+        this.resolveSelectionOnBlur({ showError: true })
+      }
+
       return
     }
 
@@ -141,17 +155,20 @@ export default class extends Controller {
       if (!response.ok) {
         this.renderOptions([])
         this.setStatus("No fue posible cargar resultados.")
-        return
+        return []
       }
 
       const payload = await response.json()
       const results = Array.isArray(payload.results) ? payload.results : []
       this.renderOptions(results)
+      return results
     } catch (error) {
       if (error.name !== "AbortError") {
         this.renderOptions([])
         this.setStatus("No fue posible cargar resultados.")
       }
+
+      return []
     }
   }
 

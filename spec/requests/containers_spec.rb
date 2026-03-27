@@ -467,6 +467,45 @@ RSpec.describe "Containers", type: :request do
       expect(created.origin_port_id).to eq(origin_port.id)
       expect(response).to redirect_to(container_url(created))
     end
+
+    it "does not auto-assign shipping line when search label is ambiguous" do
+      consolidator = create(:entity, :consolidator, name: "Consolidador Ambiguo")
+      create(:shipping_line, name: "Linea Ambigua Uno")
+      create(:shipping_line, name: "Linea Ambigua Dos")
+      vessel = create(:vessel, name: "Buque Ambiguo")
+      destination_port = create(:port, :veracruz)
+      voyage = create(:voyage, vessel: vessel, destination_port: destination_port, viaje: "AMB-001")
+      origin_port = create(:port, name: "Puerto Ambiguo", code: "MXAMB")
+
+      expect {
+        post containers_url, params: {
+          container: {
+            number: "AMBG1234567",
+            status: "activo",
+            tipo_maniobra: "importacion",
+            type_size: "40HC",
+            consolidator_entity_id: "",
+            shipping_line_id: "",
+            vessel_id: "",
+            voyage_id: voyage.id,
+            origin_port_id: "",
+            bl_master: "BL-AMB-001",
+            recinto: "CICE",
+            almacen: "CICE",
+            archivo_nr: "NR-AMB-001",
+            sello: "SELLOAMB",
+            ejecutivo: "Usuario Ambiguo"
+          },
+          consolidator_search: consolidator.name,
+          shipping_line_search: "Linea Ambigua",
+          vessel_search: vessel.name,
+          origin_port_search: origin_port.display_name
+        }
+      }.not_to change(Container, :count)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Shipping line no puede estar en blanco")
+    end
   end
 
   describe "PATCH /containers/:id" do
