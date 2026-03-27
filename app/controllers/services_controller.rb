@@ -49,11 +49,14 @@ class ServicesController < ApplicationController
 
   def container_service_rows
     container_services_scope.map do |service|
+      latest_invoice_id = service.latest_invoice&.id
+
       {
         token: "ContainerService:#{service.id}",
         type: "ContainerService",
         service_id: service.id,
         container_id: service.container_id,
+        invoice_id: latest_invoice_id,
         service_name: service.service_catalog&.name.presence || "-",
         status_label: service.facturado? ? "Facturado" : "Proforma",
         facturado: service.facturado?,
@@ -73,12 +76,14 @@ class ServicesController < ApplicationController
       bl_house_line = service.bl_house_line
       client_name = bl_house_line&.client&.name
       billed_to_name = service.billed_to_entity&.name
+      latest_invoice_id = service.latest_invoice&.id
 
       {
         token: "BlHouseLineService:#{service.id}",
         type: "BlHouseLineService",
         service_id: service.id,
         bl_house_line_id: service.bl_house_line_id,
+        invoice_id: latest_invoice_id,
         service_name: service.service_catalog&.name.presence || "-",
         status_label: service.facturado? ? "Facturado" : "Proforma",
         facturado: service.facturado?,

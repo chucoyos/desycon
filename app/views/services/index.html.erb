@@ -145,7 +145,13 @@
                             form: { data: { turbo_confirm: "Se emitirá CFDI para este servicio. ¿Deseas continuar?" } },
                             class: "w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-700 hover:bg-indigo-50 hover:text-indigo-900 transition-colors" %>
                       <% else %>
-                        <div class="px-4 py-2.5 text-sm text-gray-400">Servicio ya facturado</div>
+                        <% if service[:invoice_id].present? %>
+                          <%= link_to invoice_path(service[:invoice_id]), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-700 hover:bg-indigo-50 hover:text-indigo-900 transition-colors", role: "menuitem" do %>
+                            Ver factura
+                          <% end %>
+                        <% else %>
+                          <div class="px-4 py-2.5 text-sm text-gray-400">Factura no disponible</div>
+                        <% end %>
                       <% end %>
                     </div>
                   </div>
