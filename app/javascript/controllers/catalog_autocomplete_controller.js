@@ -58,7 +58,42 @@ export default class extends Controller {
   }
 
   onBlur() {
-    setTimeout(() => this.hideResults(), 120)
+    setTimeout(() => {
+      this.resolveSelectionOnBlur()
+        .finally(() => this.hideResults())
+    }, 120)
+  }
+
+  async resolveSelectionOnBlur() {
+    const query = this.inputTarget.value.trim()
+    if (!query || this.hiddenInputTarget.value) return
+
+    // If we have no options loaded yet, run one final search before deciding.
+    if (this.options.length === 0 && query.length >= this.minCharsValue) {
+      await this.search(query)
+    }
+
+    if (this.options.length === 0) return
+
+    const normalizedQuery = this.normalizeText(query)
+    const exactMatch = this.options.find((option) => this.normalizeText(option.label) === normalizedQuery)
+
+    if (exactMatch) {
+      this.selectOption(exactMatch)
+      return
+    }
+
+    if (this.options.length === 1) {
+      this.selectOption(this.options[0])
+    }
+  }
+
+  normalizeText(text) {
+    return (text || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim()
   }
 
   onKeydown(event) {

@@ -427,7 +427,7 @@ class ContainersController < ApplicationController
   end
 
   def container_params
-    params.require(:container).permit(
+    permitted = params.require(:container).permit(
       :number,
       :status,
       :tipo_maniobra,
@@ -463,6 +463,64 @@ class ContainersController < ApplicationController
         :_destroy
       ]
     )
+
+    apply_autocomplete_fallbacks!(permitted)
+    permitted
+  end
+
+  def apply_autocomplete_fallbacks!(attrs)
+    attrs[:consolidator_entity_id] = resolve_consolidator_entity_id(params[:consolidator_search]) if attrs[:consolidator_entity_id].blank?
+    attrs[:shipping_line_id] = resolve_shipping_line_id(params[:shipping_line_search]) if attrs[:shipping_line_id].blank?
+    attrs[:vessel_id] = resolve_vessel_id(params[:vessel_search]) if attrs[:vessel_id].blank?
+    attrs[:origin_port_id] = resolve_origin_port_id(params[:origin_port_search]) if attrs[:origin_port_id].blank?
+  end
+
+  def resolve_consolidator_entity_id(raw_query)
+    query = raw_query.to_s.strip
+    return nil if query.blank?
+
+    scope = Entity.consolidators
+    scope = scope.where(id: current_user.entity_id) if current_user&.consolidator?
+
+    exact = scope.find_by("LOWER(name) = ?", query.downcase)
+    return exact.id if exact.present?
+
+    scope.search_by_name(query).limit(1).pluck(:id).first
+  end
+
+  def resolve_shipping_line_id(raw_query)
+    query = raw_query.to_s.strip
+    return nil if query.blank?
+
+    exact = ShippingLine.find_by("LOWER(name) = ?", query.downcase)
+    return exact.id if exact.present?
+
+    ShippingLine.search_by_name(query).limit(1).pluck(:id).first
+  end
+
+  def resolve_vessel_id(raw_query)
+    query = raw_query.to_s.strip
+    return nil if query.blank?
+
+    exact = Vessel.find_by("LOWER(name) = ?", query.downcase)
+    return exact.id if exact.present?
+
+    Vessel.search_by_name(query).limit(1).pluck(:id).first
+  end
+
+  def resolve_origin_port_id(raw_query)
+    query = raw_query.to_s.strip
+    return nil if query.blank?
+
+    if (code = query[/\(([^)]+)\)\s*\z/, 1]).present?
+      by_code = Port.find_by("LOWER(code) = ?", code.downcase)
+      return by_code.id if by_code.present?
+    end
+
+    exact = Port.find_by("LOWER(name) = ? OR LOWER(code) = ?", query.downcase, query.downcase)
+    return exact.id if exact.present?
+
+    Port.search_by_name_or_code(query).limit(1).pluck(:id).first
   end
 
   def handle_services_update_from_show

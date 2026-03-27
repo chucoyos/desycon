@@ -1,4 +1,4 @@
-<%= form_with(model: container, class: "space-y-6", data: { turbo: false }, novalidate: true) do |form| %>
+<%= form_with(model: container, id: "container-form", class: "space-y-6", data: { turbo: false }, novalidate: true) do |form| %>
   
   <% if container.errors.any? %>
     <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 shadow-sm">
@@ -578,12 +578,35 @@
   };
 
   const initContainerForm = () => {
+    const form = document.getElementById('container-form');
+    if (form) {
+      form.setAttribute('novalidate', 'novalidate');
+      form.noValidate = true;
+
+      const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.removeAttribute('disabled');
+      }
+    }
+
+    [ 'container_voyage_id', 'container_recinto', 'container_almacen' ].forEach((id) => {
+      const field = document.getElementById(id);
+      if (field) delete field.dataset.initialized;
+    });
+
     initVoyageLoading();
     initRecintoAndAlmacenOptions();
   };
 
   document.addEventListener('turbo:load', initContainerForm);
-  document.addEventListener('DOMContentLoaded', initContainerForm);
+  window.addEventListener('pageshow', initContainerForm);
+  document.addEventListener('turbo:before-cache', () => {
+    [ 'container_voyage_id', 'container_recinto', 'container_almacen', 'container-form' ].forEach((id) => {
+      const field = document.getElementById(id);
+      if (field) delete field.dataset.initialized;
+    });
+  });
 </script>
 
 <script>

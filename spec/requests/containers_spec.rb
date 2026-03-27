@@ -423,6 +423,52 @@ RSpec.describe "Containers", type: :request do
     end
   end
 
+  describe "POST /containers" do
+    before { sign_in user, scope: :user }
+
+    it "resolves association ids from autocomplete search labels when ids are blank" do
+      consolidator = create(:entity, :consolidator, name: "Consolidador Fallback")
+      shipping_line = create(:shipping_line, name: "Linea Fallback")
+      vessel = create(:vessel, name: "Buque Fallback")
+      destination_port = create(:port, :veracruz)
+      voyage = create(:voyage, vessel: vessel, destination_port: destination_port, viaje: "FB-001")
+      origin_port = create(:port, name: "Puerto Fallback", code: "MXFBK")
+
+      expect {
+        post containers_url, params: {
+          container: {
+            number: "FALL1234567",
+            status: "activo",
+            tipo_maniobra: "importacion",
+            type_size: "40HC",
+            consolidator_entity_id: "",
+            shipping_line_id: "",
+            vessel_id: "",
+            voyage_id: voyage.id,
+            origin_port_id: "",
+            bl_master: "BL-FB-001",
+            recinto: "CICE",
+            almacen: "CICE",
+            archivo_nr: "NR-FB-001",
+            sello: "SELLOFB",
+            ejecutivo: "Usuario Fallback"
+          },
+          consolidator_search: consolidator.name,
+          shipping_line_search: shipping_line.name,
+          vessel_search: vessel.name,
+          origin_port_search: origin_port.display_name
+        }
+      }.to change(Container, :count).by(1)
+
+      created = Container.order(:id).last
+      expect(created.consolidator_entity_id).to eq(consolidator.id)
+      expect(created.shipping_line_id).to eq(shipping_line.id)
+      expect(created.vessel_id).to eq(vessel.id)
+      expect(created.origin_port_id).to eq(origin_port.id)
+      expect(response).to redirect_to(container_url(created))
+    end
+  end
+
   describe "PATCH /containers/:id" do
     before { sign_in user, scope: :user }
 
