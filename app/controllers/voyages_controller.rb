@@ -7,6 +7,7 @@ class VoyagesController < ApplicationController
   def index
     voyages = policy_scope(Voyage)
     latest_only = ActiveModel::Type::Boolean.new.cast(params[:latest_only])
+    all_for_vessel = ActiveModel::Type::Boolean.new.cast(params[:all_for_vessel])
 
     voyages = voyages.where(vessel_id: params[:vessel_id]) if params[:vessel_id].present?
     voyages = voyages.where(voyage_type: params[:voyage_type]) if params[:voyage_type].present?
@@ -15,7 +16,7 @@ class VoyagesController < ApplicationController
       voyages = voyages.where("voyages.viaje ILIKE ?", "%#{params[:search].strip}%")
     end
 
-    unless latest_only
+    unless latest_only || all_for_vessel
       @selected_start_date = resolved_start_date
       @selected_end_date = resolved_end_date
 

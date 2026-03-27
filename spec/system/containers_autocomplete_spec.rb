@@ -38,12 +38,12 @@ RSpec.describe "Containers autocomplete", type: :system do
     expect(voyage_select.value).to eq(selected_voyage.id.to_s)
   end
 
-  it "autoloads the most recent voyage for the selected vessel" do
+  it "autoloads all voyages for the selected vessel" do
     selected_vessel = create(:vessel, name: "Buque Multi Viaje")
     selected_port = create(:port, name: "Puerto Reciente", code: "MXREC")
 
-    older_voyage = create(:voyage, vessel: selected_vessel, destination_port: selected_port, viaje: "VIEJO-001")
-    recent_voyage = create(:voyage, vessel: selected_vessel, destination_port: selected_port, viaje: "NUEVO-001")
+    first_voyage = create(:voyage, vessel: selected_vessel, destination_port: selected_port, viaje: "A-001")
+    second_voyage = create(:voyage, vessel: selected_vessel, destination_port: selected_port, viaje: "Z-001")
 
     visit new_container_path
 
@@ -53,12 +53,12 @@ RSpec.describe "Containers autocomplete", type: :system do
     expect(page).to have_css("button[data-index='0']", text: selected_vessel.name)
     vessel_input.send_keys(:enter)
 
-    expect(page).to have_css("#container_voyage_id option", text: "NUEVO-001")
-    expect(page).not_to have_css("#container_voyage_id option", text: "VIEJO-001")
+    expect(page).to have_css("#container_voyage_id option", text: "A-001")
+    expect(page).to have_css("#container_voyage_id option", text: "Z-001")
 
     voyage_select = find("#container_voyage_id", visible: :all)
-    expect(voyage_select.value).to eq(recent_voyage.id.to_s)
-    expect(voyage_select.value).not_to eq(older_voyage.id.to_s)
+    expect(voyage_select.value).to eq(first_voyage.id.to_s)
+    expect(voyage_select.value).not_to eq(second_voyage.id.to_s)
   end
 
   it "selects consolidator from autocomplete and sets consolidator id" do

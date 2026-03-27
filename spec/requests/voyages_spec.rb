@@ -31,5 +31,22 @@ RSpec.describe "Voyages", type: :request do
       expect(response.body).to include(old_voyage.viaje)
       expect(response.body).to include("Filtros activos:")
     end
+
+    it "returns all voyages for a selected vessel in JSON when all_for_vessel is enabled" do
+      vessel = create(:vessel, name: "Buque API")
+      destination_port = create(:port, :veracruz)
+
+      old_voyage = create(:voyage, vessel: vessel, destination_port: destination_port, viaje: "OLD-VYG")
+      old_voyage.update_column(:created_at, 45.days.ago)
+      recent_voyage = create(:voyage, vessel: vessel, destination_port: destination_port, viaje: "REC-VYG")
+
+      get voyages_path(format: :json), params: { vessel_id: vessel.id, all_for_vessel: 1 }
+
+      expect(response).to be_successful
+      payload = JSON.parse(response.body)
+      viaje_codes = payload.map { |row| row["viaje"] }
+
+      expect(viaje_codes).to include(old_voyage.viaje, recent_voyage.viaje)
+    end
   end
 end

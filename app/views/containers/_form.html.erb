@@ -557,7 +557,7 @@
       }
 
       try {
-        const response = await fetch(`${voyagesUrl}?vessel_id=${vesselId}&latest_only=1`);
+        const response = await fetch(`${voyagesUrl}?vessel_id=${vesselId}&all_for_vessel=1`);
         if (!response.ok) throw new Error('Error al cargar viajes');
         const data = await response.json();
         setVoyageOptions(data || []);
