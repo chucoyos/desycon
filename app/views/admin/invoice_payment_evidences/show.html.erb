@@ -196,7 +196,12 @@
       <div class="rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
         <div class="flex items-start justify-between gap-4 px-5 py-4 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-white">
           <div>
-            <h3 id="payment-linking-help-title" class="text-lg font-bold text-slate-900">Manual de vinculación de pagos</h3>
+            <h3 id="payment-linking-help-title" class="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-indigo-600">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+              </svg>
+              Manual de vinculación de pagos
+            </h3>
             <p class="text-sm text-slate-600 mt-1">Cómo registrar pagos correctamente y qué hacer cuando hay facturas mixtas PPD y PUE.</p>
           </div>
           <button type="button" data-action="click->modal#close" class="cursor-pointer inline-flex items-center justify-center h-9 w-9 rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100" aria-label="Cerrar ayuda">
@@ -208,26 +213,47 @@
 
         <div class="px-5 py-5 space-y-4 text-sm text-slate-700">
           <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
-            <p class="font-semibold text-emerald-900">Objetivo de esta sección</p>
+            <p class="font-semibold text-emerald-900 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-emerald-700">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m6 2.25a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Objetivo de esta sección
+            </p>
             <p class="mt-1">Vincular la evidencia con pagos reales para dejar trazabilidad y, cuando aplique, emitir complemento de pago (REP).</p>
           </div>
 
           <div class="rounded-lg border border-slate-200 bg-white px-4 py-3">
-            <p class="font-semibold text-slate-900">Caso 1: Registro individual</p>
+            <p class="font-semibold text-slate-900 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-slate-700">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75v10.5a2.25 2.25 0 01-2.25 2.25H9a2.25 2.25 0 01-2.25-2.25V6.75A2.25 2.25 0 019 4.5h6a2.25 2.25 0 012.25 2.25z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 8.25h4.5" />
+              </svg>
+              Caso 1: Registro individual
+            </p>
             <p class="mt-1">Úsalo cuando vas a registrar una sola factura. Captura el monto, fecha, forma de pago y datos de referencia.</p>
             <p class="mt-1"><span class="font-semibold">Si la factura es PPD:</span> se intentará emitir REP.</p>
             <p class="mt-1"><span class="font-semibold">Si la factura es PUE:</span> se registra el pago, pero no genera REP.</p>
           </div>
 
           <div class="rounded-lg border border-slate-200 bg-white px-4 py-3">
-            <p class="font-semibold text-slate-900">Caso 2: Registro agrupado (un solo REP)</p>
+            <p class="font-semibold text-slate-900 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-slate-700">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+              Caso 2: Registro agrupado (un solo REP)
+            </p>
             <p class="mt-1">Captura monto por factura en el bloque agrupado.</p>
             <p class="mt-1">Solo las facturas con monto mayor a 0 se toman en cuenta en ese envío.</p>
             <p class="mt-1">Para que salga un solo REP agrupado, las facturas consideradas deben ser PPD y compatibles entre sí.</p>
           </div>
 
           <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-            <p class="font-semibold text-amber-900">Caso 3: Comprobantes mixtos (PPD + PUE)</p>
+            <p class="font-semibold text-amber-900 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-amber-700">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m9-9H3" />
+              </svg>
+              Caso 3: Comprobantes mixtos (PPD + PUE)
+            </p>
             <p class="mt-1">Si envías montos mayores a 0 tanto en PPD como en PUE, no se generará REP agrupado único.</p>
             <p class="mt-1">Recomendación práctica:</p>
             <p class="mt-1">1) En esta operación captura monto mayor a 0 solo para facturas PPD y deja PUE en 0.</p>
@@ -236,7 +262,12 @@
           </div>
 
           <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3">
-            <p class="font-semibold text-rose-900">Errores comunes y solución rápida</p>
+            <p class="font-semibold text-rose-900 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-rose-700">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9.303 3.376l-7.5-12.99a1.5 1.5 0 00-2.598 0l-7.5 12.99A1.5 1.5 0 004.5 18.75h15a1.5 1.5 0 001.303-2.624z" />
+              </svg>
+              Errores comunes y solución rápida
+            </p>
             <p class="mt-1"><span class="font-semibold">Todos los montos en 0:</span> no se registra ningún pago. Debes capturar al menos una factura con monto mayor a 0.</p>
             <p class="mt-1"><span class="font-semibold">Saldo insuficiente o excedido:</span> verifica el saldo pendiente mostrado por factura antes de guardar.</p>
             <p class="mt-1"><span class="font-semibold">Duda entre PUE y PPD:</span> revisa la columna de método de pago en el bloque agrupado antes de enviar.</p>
