@@ -8,8 +8,7 @@ export default class extends Controller {
     "clientError",
     "progressFill",
     "stepBadgeOne",
-    "stepBadgeTwo",
-    "stepBadgeThree"
+    "stepBadgeTwo"
   ]
 
   connect() {
@@ -42,14 +41,11 @@ export default class extends Controller {
     this.stepTwoTarget.classList.toggle("hidden", isStepOne)
 
     if (this.hasProgressFillTarget) {
-      this.progressFillTarget.style.width = isStepOne ? "33%" : "66%"
+      this.progressFillTarget.style.width = isStepOne ? "50%" : "100%"
     }
 
     this.updateBadge(this.stepBadgeOneTarget, isStepOne)
     this.updateBadge(this.stepBadgeTwoTarget, !isStepOne)
-    if (this.hasStepBadgeThreeTarget) {
-      this.updateBadge(this.stepBadgeThreeTarget, false)
-    }
   }
 
   updateBadge(element, active) {
