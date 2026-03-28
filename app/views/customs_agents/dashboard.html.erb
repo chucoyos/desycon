@@ -474,8 +474,13 @@
         <div class="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3">
           <p class="font-semibold text-indigo-900">Paso 2: Completar y enviar</p>
           <p class="mt-1">Dentro del modal:</p>
-          <p class="mt-1">1) Confirma el cliente a facturar.</p>
-          <p class="mt-1">2) Sube los documentos requeridos y envía la solicitud.</p>
+          <p class="mt-1">
+            1) Confirma el cliente a facturar.
+            <span class="text-indigo-800">(Puedes administrar tus clientes </span>
+            <%= link_to "aquí", entities_path, class: "font-semibold text-indigo-700 underline hover:text-indigo-900" %>
+            <span class="text-indigo-800">).</span>
+          </p>
+          <p class="mt-1">2) Sube todos los documentos requeridos y envía la solicitud.</p>
         </div>
 
         <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
