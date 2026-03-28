@@ -1,14 +1,108 @@
 <% content_for :title, "Adjuntar comprobante de pago referenciado" %>
 
-<div class="min-h-screen bg-gray-100 w-full">
+<div class="min-h-screen bg-gray-100 w-full" data-controller="modal">
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="mb-6">
-      <h1 class="text-3xl font-bold text-gray-900">Adjuntar comprobante de pago referenciado</h1>
-      <p class="mt-2 text-sm text-gray-600">Este envio no registra ni confirma pago automaticamente. Un ejecutivo revisara y lo relacionara a un pago.</p>
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Adjuntar comprobante de pago referenciado</h1>
+        <p class="mt-2 text-sm text-gray-600">Este envio no registra ni confirma pago automaticamente. Un ejecutivo revisara y lo relacionara a un pago.</p>
+      </div>
+      <button
+        type="button"
+        data-action="click->modal#open"
+        data-modal-id="payment-evidence-quick-guide-modal"
+        class="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-md border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-sm font-semibold"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.852l.041-.02M21 12a9 9 0 11-18 0 9 9 0 0118 0zM12 8.25h.008v.008H12V8.25z" />
+        </svg>
+        Guía rápida
+      </button>
     </div>
 
     <div class="bg-white shadow rounded-lg p-6">
       <%= render "customs_agent_payment_evidences/form", modal: false %>
+    </div>
+  </div>
+
+  <div id="payment-evidence-quick-guide-modal" data-modal-target="modal" data-action="click->modal#closeOnBackdrop" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm px-4 py-6" role="dialog" aria-modal="true" aria-labelledby="payment-evidence-guide-title">
+    <div class="mx-auto max-w-3xl">
+      <div class="rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="flex items-start justify-between gap-4 px-5 py-4 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-white">
+          <div>
+            <h3 id="payment-evidence-guide-title" class="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-indigo-600">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5V7.5A2.25 2.25 0 015.25 5.25h13.5A2.25 2.25 0 0121 7.5v9a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 16.5z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8.25l8.25 5.25a1.5 1.5 0 001.5 0L21 8.25" />
+              </svg>
+              Guía rápida: Adjuntar comprobante
+            </h3>
+            <p class="text-sm text-slate-600 mt-1">Te explicamos qué llenar, qué se valida y qué pasa después de enviar.</p>
+          </div>
+          <button type="button" data-action="click->modal#close" class="cursor-pointer inline-flex items-center justify-center h-9 w-9 rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100" aria-label="Cerrar guía">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="px-5 py-5 space-y-4 text-sm text-slate-700">
+          <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+            <p class="font-semibold text-slate-900 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-slate-700">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75h9A2.25 2.25 0 0118.75 6v12A2.25 2.25 0 0116.5 20.25h-9A2.25 2.25 0 015.25 18V6A2.25 2.25 0 017.5 3.75z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 8.25h7.5m-7.5 3h7.5m-7.5 3h4.5" />
+              </svg>
+              Campos que debes llenar
+            </p>
+            <p class="mt-1"><span class="font-semibold">1) Factura:</span> selecciona la factura correcta de tu agencia.</p>
+            <p class="mt-1"><span class="font-semibold">2) Referencia (BL House):</span> es obligatoria y debe corresponder al comprobante.</p>
+            <p class="mt-1"><span class="font-semibold">3) Clave de rastreo:</span> es opcional, pero ayuda a identificar el pago.</p>
+            <p class="mt-1"><span class="font-semibold">4) Comprobante de pago:</span> adjunta el archivo del comprobante.</p>
+          </div>
+
+          <div class="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3">
+            <p class="font-semibold text-indigo-900 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-indigo-700">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Requisitos importantes
+            </p>
+            <p class="mt-1">La referencia BL House es obligatoria.</p>
+            <p class="mt-1">Debes adjuntar un comprobante de pago.</p>
+            <p class="mt-1">La factura debe ser válida para tu agencia; si no lo es, el sistema no permitirá enviarla.</p>
+          </div>
+
+          <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <p class="font-semibold text-emerald-900 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-emerald-700">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12l-7.5 7.5M3 12h18" />
+              </svg>
+              Qué pasa al enviar
+            </p>
+            <p class="mt-1">El comprobante se guarda con estatus <span class="font-semibold">pendiente de revisión</span>.</p>
+            <p class="mt-1">Un ejecutivo/admin recibe notificación para revisar y vincular el pago.</p>
+            <p class="mt-1">Este envío no confirma ni registra el pago automáticamente.</p>
+          </div>
+
+          <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3">
+            <p class="font-semibold text-rose-900 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-rose-700">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9.303 3.376l-7.5-12.99a1.5 1.5 0 00-2.598 0l-7.5 12.99A1.5 1.5 0 004.5 18.75h15a1.5 1.5 0 001.303-2.624z" />
+              </svg>
+              Si hay errores de validación
+            </p>
+            <p class="mt-1">El formulario no se envía y verás el mensaje con el motivo.</p>
+            <p class="mt-1">Revisa principalmente factura, referencia BL House y archivo adjunto, corrige y vuelve a enviar.</p>
+          </div>
+        </div>
+
+        <div class="px-5 py-4 border-t border-slate-200 bg-slate-50 flex justify-end">
+          <button type="button" data-action="click->modal#close" class="cursor-pointer inline-flex items-center px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">
+            Entendido
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
