@@ -12,16 +12,19 @@ class BlHouseLinesController < ApplicationController
       redirect_to customs_agents_dashboard_path and return
     end
 
-    # Index and expanded rows read related container, status history, and documents.
-    scope = policy_scope(BlHouseLine).includes(
-      :client,
-      { container: :consolidator_entity },
-      :bl_endosado_documento_attachment,
-      :liberacion_documento_attachment,
-      :encomienda_documento_attachment,
-      :pago_documento_attachment,
-      :bl_house_line_status_histories
-    )
+    # Tramitador does not render expanded document/status sections in index,
+    # so avoid loading heavy associations that are never consumed for that role.
+    scope = policy_scope(BlHouseLine).includes(:client)
+    unless current_user&.tramitador?
+      scope = scope.includes(
+        { container: :consolidator_entity },
+        :bl_endosado_documento_attachment,
+        :liberacion_documento_attachment,
+        :encomienda_documento_attachment,
+        :pago_documento_attachment,
+        :bl_house_line_status_histories
+      )
+    end
 
     @status_filter_options = customs_agent_user? ? customs_agent_statuses : BlHouseLine.statuses.keys
 

@@ -21,16 +21,7 @@ class CustomsAgentsController < ApplicationController
     # Listing scope: only BL House Lines assigned to this agent
     base_scope = BlHouseLine.where(customs_agent: current_user.entity)
                  .visible_to_customs_agent
-                             .includes(
-                               { container: :consolidator_entity },
-                               :client,
-                               :bl_house_line_status_histories,
-                               :bl_endosado_documento_attachment,
-                               :liberacion_documento_attachment,
-                               :encomienda_documento_attachment,
-                               :pago_documento_attachment
-                             )
-                             .order(created_at: :desc)
+                 .order(created_at: :desc)
 
     filtered_scope = base_scope
     @clients = revalidation_clients
@@ -75,6 +66,7 @@ class CustomsAgentsController < ApplicationController
     filtered_scope = filtered_scope.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
 
     @bl_house_lines = filtered_scope.page(params[:page]).per(params[:per] || 20)
+    preload_dashboard_listing_associations(@bl_house_lines)
 
     # Dashboard cards (use unfiltered scope) in a single aggregated query.
     metrics_scope = BlHouseLine.where(customs_agent: current_user.entity).visible_to_customs_agent
@@ -141,6 +133,23 @@ class CustomsAgentsController < ApplicationController
 
   def revalidation_lookup_scope
     BlHouseLine.visible_to_customs_agent.where(customs_agent: [ current_user.entity, nil ])
+  end
+
+  def preload_dashboard_listing_associations(records)
+    return if records.blank?
+
+    ActiveRecord::Associations::Preloader.new(
+      records: records,
+      associations: [
+        :client,
+        { container: :consolidator_entity },
+        :bl_house_line_status_histories,
+        :bl_endosado_documento_attachment,
+        :liberacion_documento_attachment,
+        :encomienda_documento_attachment,
+        :pago_documento_attachment
+      ]
+    ).call
   end
 
   def revalidation_params(bl_house_line = nil)
