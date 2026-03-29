@@ -367,20 +367,30 @@
                       <%= link_to invoice_reference, invoice_path(invoice), class: "ml-2 text-[11px] text-blue-700 hover:text-blue-900 underline underline-offset-2 font-mono" %>
 
                       <% if invoice.failed? && !invoice.last_error_code.to_s.start_with?("FACTURADOR_CANCEL_") %>
-                        <div class="mt-2 rounded-md border border-red-200 bg-red-50 p-2">
-                          <p class="text-[10px] uppercase tracking-wider text-red-700">Error de emisión</p>
-                          <p class="text-[11px] font-semibold text-red-800"><%= invoice.last_error_code.presence || '-' %></p>
-                          <p class="mt-0.5 text-[11px] text-red-700"><%= invoice.last_error_message.presence || '-' %></p>
-                          <% if invoice.provider_response.to_h["subestatus"].present? %>
-                            <p class="mt-1 text-[10px] text-red-700">Subestatus proveedor: <%= invoice.provider_response.to_h["subestatus"] %></p>
-                          <% end %>
-                        </div>
-                      <% elsif invoice.last_error_code.to_s.start_with?("FACTURADOR_CANCEL_") && invoice.last_error_message.present? %>
-                        <div class="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2">
-                          <p class="text-[10px] uppercase tracking-wider text-amber-700">Aviso de cancelación</p>
-                          <p class="text-[11px] font-semibold text-amber-900"><%= invoice.last_error_code %></p>
-                          <p class="mt-0.5 text-[11px] text-amber-800"><%= invoice.last_error_message %></p>
-                        </div>
+                        <details class="mt-2 rounded-md border border-red-200 bg-red-50 p-2" data-role="invoice-issue-error">
+                          <summary class="cursor-pointer list-none flex items-center justify-between gap-2 text-[10px] uppercase tracking-wider text-red-700">
+                            <span>Error de emisión</span>
+                            <span class="text-[9px] normal-case font-medium text-red-800">Mostrar detalle</span>
+                          </summary>
+                          <div class="mt-2 space-y-1 border-t border-red-200 pt-2">
+                            <p class="text-[11px] font-semibold text-red-800 break-all"><%= invoice.last_error_code.presence || '-' %></p>
+                            <p class="text-[11px] text-red-700 whitespace-pre-wrap break-all"><%= invoice.last_error_message.presence || '-' %></p>
+                            <% if invoice.provider_response.to_h["subestatus"].present? %>
+                              <p class="text-[10px] text-red-700">Subestatus proveedor: <%= invoice.provider_response.to_h["subestatus"] %></p>
+                            <% end %>
+                          </div>
+                        </details>
+                      <% elsif current_user&.admin_or_executive? && invoice.last_error_code.to_s.start_with?("FACTURADOR_CANCEL_") && invoice.last_error_message.present? %>
+                        <details class="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2" data-role="invoice-cancel-notice">
+                          <summary class="cursor-pointer list-none flex items-center justify-between gap-2 text-[10px] uppercase tracking-wider text-amber-700">
+                            <span>Aviso de cancelación</span>
+                            <span class="text-[9px] normal-case font-medium text-amber-800">Mostrar detalle</span>
+                          </summary>
+                          <div class="mt-2 space-y-1 border-t border-amber-200 pt-2">
+                            <p class="text-[11px] font-semibold text-amber-900 break-all"><%= invoice.last_error_code %></p>
+                            <p class="text-[11px] text-amber-800 whitespace-pre-wrap break-all"><%= invoice.last_error_message %></p>
+                          </div>
+                        </details>
                       <% end %>
                     </div>
                   <% end %>
