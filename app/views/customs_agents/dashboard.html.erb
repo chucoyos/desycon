@@ -24,8 +24,19 @@
     <% end %>
 
     <!-- Stats Cards -->
+    <% dashboard_base_filters = {
+      filter_blhouse: params[:filter_blhouse],
+      filter_container_number: params[:filter_container_number],
+      client_id: params[:client_id],
+      start_date: @selected_start_date,
+      end_date: @selected_end_date,
+      per: params[:per]
+    }.compact %>
+    <% dashboard_filter_url = ->(filter_key) { "#{customs_agents_dashboard_path(dashboard_base_filters.merge(dashboard_filter: filter_key))}#customs-listing" } %>
+
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-      <div class="bg-white overflow-hidden shadow rounded-lg">
+      <% active_all = @dashboard_filter.blank? || @dashboard_filter == "all" %>
+      <%= link_to dashboard_filter_url.call("all"), class: "bg-white overflow-hidden shadow rounded-lg border transition-colors #{active_all ? 'border-indigo-400 ring-2 ring-indigo-100' : 'border-transparent hover:border-indigo-200'}" do %>
         <div class="p-5">
           <div class="flex items-center">
             <div class="flex-shrink-0">
@@ -35,15 +46,16 @@
             </div>
             <div class="ml-5 w-0 flex-1">
               <dl>
-                <dt class="text-sm font-medium text-gray-500 truncate">Total Asignaciones</dt>
-                <dd class="text-lg font-medium text-gray-900"><%= @total_assignments %></dd>
+                <dt class="text-sm font-medium text-gray-500 truncate">Total Partidas</dt>
+                <dd class="text-lg font-medium text-gray-900"><%= @total_partidas %></dd>
               </dl>
             </div>
           </div>
         </div>
-      </div>
+      <% end %>
 
-      <div class="bg-white overflow-hidden shadow rounded-lg">
+      <% active_in_process = @dashboard_filter == "in_process" %>
+      <%= link_to dashboard_filter_url.call("in_process"), class: "bg-white overflow-hidden shadow rounded-lg border transition-colors #{active_in_process ? 'border-indigo-400 ring-2 ring-indigo-100' : 'border-transparent hover:border-indigo-200'}" do %>
         <div class="p-5">
           <div class="flex items-center">
             <div class="flex-shrink-0">
@@ -53,15 +65,16 @@
             </div>
             <div class="ml-5 w-0 flex-1">
               <dl>
-                <dt class="text-sm font-medium text-gray-500 truncate">Pendientes</dt>
-                <dd class="text-lg font-medium text-gray-900"><%= @pending_assignments %></dd>
+                <dt class="text-sm font-medium text-gray-500 truncate">En proceso revalidación</dt>
+                <dd class="text-lg font-medium text-gray-900"><%= @in_revalidation_process %></dd>
               </dl>
             </div>
           </div>
         </div>
-      </div>
+      <% end %>
 
-      <div class="bg-white overflow-hidden shadow rounded-lg">
+      <% active_revalidated = @dashboard_filter == "revalidated" %>
+      <%= link_to dashboard_filter_url.call("revalidated"), class: "bg-white overflow-hidden shadow rounded-lg border transition-colors #{active_revalidated ? 'border-indigo-400 ring-2 ring-indigo-100' : 'border-transparent hover:border-indigo-200'}" do %>
         <div class="p-5">
           <div class="flex items-center">
             <div class="flex-shrink-0">
@@ -71,31 +84,32 @@
             </div>
             <div class="ml-5 w-0 flex-1">
               <dl>
-                <dt class="text-sm font-medium text-gray-500 truncate">Completados</dt>
-                <dd class="text-lg font-medium text-gray-900"><%= @completed_assignments %></dd>
+                <dt class="text-sm font-medium text-gray-500 truncate">Revalidados</dt>
+                <dd class="text-lg font-medium text-gray-900"><%= @revalidated_total %></dd>
               </dl>
             </div>
           </div>
         </div>
-      </div>
+      <% end %>
 
-      <div class="bg-white overflow-hidden shadow rounded-lg">
+      <% active_dispatched = @dashboard_filter == "dispatched" %>
+      <%= link_to dashboard_filter_url.call("dispatched"), class: "bg-white overflow-hidden shadow rounded-lg border transition-colors #{active_dispatched ? 'border-indigo-400 ring-2 ring-indigo-100' : 'border-transparent hover:border-indigo-200'}" do %>
         <div class="p-5">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <div class="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
-                <span class="text-white text-sm font-medium">⚠️</span>
+              <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                <span class="text-white text-sm font-medium">🚚</span>
               </div>
             </div>
             <div class="ml-5 w-0 flex-1">
               <dl>
-                <dt class="text-sm font-medium text-gray-500 truncate">Con Problemas</dt>
-                <dd class="text-lg font-medium text-gray-900"><%= @problem_assignments %></dd>
+                <dt class="text-sm font-medium text-gray-500 truncate">Despachados</dt>
+                <dd class="text-lg font-medium text-gray-900"><%= @dispatched_total %></dd>
               </dl>
             </div>
           </div>
         </div>
-      </div>
+      <% end %>
     </div>
 
     <!-- Solicitar Revalidación (solo BL sin agente o propios) -->
@@ -190,6 +204,7 @@
           params[:filter_container_number].present? ||
           params[:client_id].present? ||
           params[:status].present? ||
+          params[:dashboard_filter].present? ||
           @selected_start_date.present? ||
           @selected_end_date.present? %>
 
@@ -224,6 +239,19 @@
                 <% if params[:status].present? %>
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                     Estatus: <%= bl_house_line_status_nombre(params[:status]) %>
+                  </span>
+                <% end %>
+
+                <% if params[:dashboard_filter].present? %>
+                  <% dashboard_filter_name = case params[:dashboard_filter]
+                    when "all" then "Total Partidas"
+                    when "in_process" then "En proceso revalidación"
+                    when "revalidated" then "Revalidados"
+                    when "dispatched" then "Despachados"
+                    else params[:dashboard_filter]
+                  end %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    Tarjeta: <%= dashboard_filter_name %>
                   </span>
                 <% end %>
 
@@ -267,7 +295,7 @@
     </div>
 
     <!-- Listado estilo Partidas -->
-    <div class="space-y-6">
+    <div id="customs-listing" class="space-y-6">
       <!-- Desktop table view -->
       <div class="hidden lg:block bg-white shadow-sm rounded-xl border border-gray-100">
         <table class="min-w-full divide-y divide-gray-200">

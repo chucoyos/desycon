@@ -34,6 +34,7 @@ class CustomsAgentsController < ApplicationController
 
     filtered_scope = base_scope
     @clients = revalidation_clients
+    @dashboard_filter = params[:dashboard_filter].presence
 
     if params[:filter_blhouse].present?
       filtered_scope = filtered_scope.where("bl_house_lines.blhouse ILIKE ?", "%#{params[:filter_blhouse]}%")
@@ -47,10 +48,21 @@ class CustomsAgentsController < ApplicationController
       filtered_scope = filtered_scope.where(client_id: params[:client_id])
     end
 
-    if params[:status].present?
-      allowed_statuses = BlHouseLine.statuses.keys
-      if allowed_statuses.include?(params[:status])
-        filtered_scope = filtered_scope.where(status: params[:status])
+    case @dashboard_filter
+    when "in_process"
+      filtered_scope = filtered_scope.where.not(status: [ :revalidado, :despachado ])
+    when "revalidated"
+      filtered_scope = filtered_scope.where(status: :revalidado)
+    when "dispatched"
+      filtered_scope = filtered_scope.where(status: :despachado)
+    when "all"
+      # no-op: keep all statuses
+    else
+      if params[:status].present?
+        allowed_statuses = BlHouseLine.statuses.keys
+        if allowed_statuses.include?(params[:status])
+          filtered_scope = filtered_scope.where(status: params[:status])
+        end
       end
     end
 
@@ -64,11 +76,16 @@ class CustomsAgentsController < ApplicationController
 
     @bl_house_lines = filtered_scope.page(params[:page]).per(params[:per] || 20)
 
-    # Stats (use unfiltered scope)
-    @total_assignments = base_scope.count
-    @pending_assignments = base_scope.where.not(status: [ :finalizado, :revalidado ]).count
-    @completed_assignments = base_scope.where(status: [ :finalizado, :revalidado ]).count
-    @problem_assignments = base_scope.where(status: [ :instrucciones_pendientes, :pendiente_pagos_locales ]).count
+    # Dashboard cards (use unfiltered scope) in a single aggregated query.
+    metrics_scope = BlHouseLine.where(customs_agent: current_user.entity).visible_to_customs_agent
+    totals = metrics_scope.pick(
+      Arel.sql("COUNT(*)"),
+      Arel.sql("COALESCE(SUM(CASE WHEN status IS NULL OR status NOT IN ('revalidado', 'despachado') THEN 1 ELSE 0 END), 0)"),
+      Arel.sql("COALESCE(SUM(CASE WHEN status = 'revalidado' THEN 1 ELSE 0 END), 0)"),
+      Arel.sql("COALESCE(SUM(CASE WHEN status = 'despachado' THEN 1 ELSE 0 END), 0)")
+    )
+
+    @total_partidas, @in_revalidation_process, @revalidated_total, @dispatched_total = totals.map(&:to_i)
   end
 
   def revalidation_modal
