@@ -17,7 +17,7 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
     end
 
     context "when weight is greater than volume" do
-      let(:peso) { 12 }
+      let(:peso) { 12_000 }
       let(:volumen) { 10 }
 
       it "charges by weight units" do
@@ -48,7 +48,7 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
     end
 
     context "when volume is greater than weight" do
-      let(:peso) { 6 }
+      let(:peso) { 6_000 }
       let(:volumen) { 10.2 }
 
       it "charges by volume units rounded up" do
@@ -57,7 +57,7 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
     end
 
     context "when both units are below minimum" do
-      let(:peso) { 3 }
+      let(:peso) { 3_000 }
       let(:volumen) { 6 }
 
       it "charges the minimum 9 units" do
@@ -66,7 +66,7 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
     end
 
     context "when values include decimals" do
-      let(:peso) { 1.1 }
+      let(:peso) { 1_100 }
       let(:volumen) { 2.2 }
 
       it "rounds up to the next whole unit" do
@@ -76,7 +76,7 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
     end
 
     context "when dispatch date is within grace period" do
-      let(:peso) { 12 }
+      let(:peso) { 12_000 }
       let(:volumen) { 10 }
       let(:dispatch_date) { Time.zone.local(2026, 3, 26, 10, 0, 0) }
 
@@ -87,7 +87,7 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
     end
 
     context "when required dates are missing" do
-      let(:peso) { 12 }
+      let(:peso) { 12_000 }
       let(:volumen) { 10 }
       let(:dispatch_date) { nil }
 
@@ -97,7 +97,7 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
     end
 
     context "when billable days are 15" do
-      let(:peso) { 12 }
+      let(:peso) { 12_000 }
       let(:volumen) { 10 }
       let(:dispatch_date) { Time.zone.local(2026, 4, 10, 10, 0, 0) }
 
@@ -108,7 +108,7 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
     end
 
     context "when billable days are 16" do
-      let(:peso) { 12 }
+      let(:peso) { 12_000 }
       let(:volumen) { 10 }
       let(:dispatch_date) { Time.zone.local(2026, 4, 11, 10, 0, 0) }
 
@@ -119,7 +119,7 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
     end
 
     context "when billable days are 45" do
-      let(:peso) { 12 }
+      let(:peso) { 12_000 }
       let(:volumen) { 10 }
       let(:dispatch_date) { Time.zone.local(2026, 5, 10, 10, 0, 0) }
 
@@ -130,7 +130,7 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
     end
 
     context "when billable days are 46" do
-      let(:peso) { 12 }
+      let(:peso) { 12_000 }
       let(:volumen) { 10 }
       let(:dispatch_date) { Time.zone.local(2026, 5, 11, 10, 0, 0) }
 
@@ -141,7 +141,7 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
     end
 
     context "when imo applies with clase and tipo different from 0" do
-      let(:peso) { 12 }
+      let(:peso) { 12_000 }
       let(:volumen) { 10 }
       let(:bl_house_line) { build(:bl_house_line, peso: peso, volumen: volumen, clase_imo: "1", tipo_imo: "2") }
 
@@ -152,7 +152,7 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
     end
 
     context "when only one imo field is different from 0" do
-      let(:peso) { 12 }
+      let(:peso) { 12_000 }
       let(:volumen) { 10 }
       let(:bl_house_line) { build(:bl_house_line, peso: peso, volumen: volumen, clase_imo: "1", tipo_imo: "0") }
 
@@ -162,7 +162,7 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
     end
 
     context "when destination port is Altamira" do
-      let(:peso) { 12 }
+      let(:peso) { 12_000 }
       let(:volumen) { 10 }
       let(:altamira_port) { build(:port, name: "Altamira", code: "MXATM", country_code: "MX") }
       let(:altamira_voyage) { build(:voyage, destination_port: altamira_port) }

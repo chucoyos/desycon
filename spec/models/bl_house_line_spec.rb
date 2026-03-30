@@ -295,7 +295,7 @@ RSpec.describe BlHouseLine, type: :model do
         :bl_house_line,
         container: container,
         status: "revalidado",
-        peso: 12,
+        peso: 12_000,
         volumen: 10,
         fecha_despacho: Time.zone.local(2026, 3, 30, 9, 0, 0)
       )
@@ -334,7 +334,7 @@ RSpec.describe BlHouseLine, type: :model do
         :bl_house_line,
         container: other_container,
         status: 'revalidado',
-        peso: 12,
+        peso: 12_000,
         volumen: 10,
         fecha_despacho: Time.zone.local(2026, 3, 30, 9, 0, 0)
       )
@@ -349,7 +349,7 @@ RSpec.describe BlHouseLine, type: :model do
       service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)
       expect(service.amount).to eq(BigDecimal("6048"))
 
-      bl_house_line.update!(peso: 14.2)
+      bl_house_line.update!(peso: 14_200)
 
       expect(service.reload.amount).to eq(BigDecimal("7560"))
     end
@@ -380,7 +380,7 @@ RSpec.describe BlHouseLine, type: :model do
       service.update!(factura: "A-001")
 
       expect {
-        bl_house_line.update!(peso: 20)
+        bl_house_line.update!(peso: 20_000)
       }.not_to change { service.reload.amount }
     end
   end
@@ -414,7 +414,7 @@ RSpec.describe BlHouseLine, type: :model do
         :bl_house_line,
         container: container,
         status: "revalidado",
-        peso: 13.2,
+        peso: 13_200,
         volumen: 8.1
       )
     end
@@ -451,7 +451,7 @@ RSpec.describe BlHouseLine, type: :model do
         :bl_house_line,
         container: other_container,
         status: 'revalidado',
-        peso: 13.2,
+        peso: 13_200,
         volumen: 8.1
       )
 
@@ -486,7 +486,7 @@ RSpec.describe BlHouseLine, type: :model do
       service.update!(factura: "A-002")
 
       expect {
-        bl_house_line.update!(peso: 20)
+        bl_house_line.update!(peso: 20_000)
       }.not_to change { service.reload.amount }
     end
   end
@@ -507,7 +507,7 @@ RSpec.describe BlHouseLine, type: :model do
       create(
         :bl_house_line,
         status: 'revalidado',
-        peso: 13.2,
+        peso: 13_200,
         volumen: 8.1
       )
     end
@@ -557,7 +557,7 @@ RSpec.describe BlHouseLine, type: :model do
       )
 
       expect {
-        bl_house_line.update!(peso: 20)
+        bl_house_line.update!(peso: 20_000)
       }.not_to change { service.reload.amount }
     end
   end
@@ -578,7 +578,7 @@ RSpec.describe BlHouseLine, type: :model do
       create(
         :bl_house_line,
         status: 'revalidado',
-        peso: 13.2,
+        peso: 13_200,
         volumen: 8.1
       )
     end
@@ -628,7 +628,7 @@ RSpec.describe BlHouseLine, type: :model do
       )
 
       expect {
-        bl_house_line.update!(peso: 20)
+        bl_house_line.update!(peso: 20_000)
       }.not_to change { service.reload.amount }
     end
   end

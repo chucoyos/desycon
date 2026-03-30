@@ -456,7 +456,7 @@ RSpec.describe "BlHouseLines", type: :request do
 
       it "calculates BL-ENTCAM amount from formula on show flow create" do
         sign_in user, scope: :user
-        bl_house_line = create(:bl_house_line, client: client, peso: 13.2, volumen: 8.1)
+        bl_house_line = create(:bl_house_line, client: client, peso: 13_200, volumen: 8.1)
         service_catalog = create(
           :service_catalog,
           applies_to: "bl_house_line",
@@ -493,7 +493,7 @@ RSpec.describe "BlHouseLines", type: :request do
           :bl_house_line,
           client: client,
           container: container,
-          peso: 12,
+          peso: 12_000,
           volumen: 10,
           fecha_despacho: Time.zone.local(2026, 3, 30, 9, 0, 0)
         )
@@ -528,7 +528,7 @@ RSpec.describe "BlHouseLines", type: :request do
 
       it "calculates BL-PREVIO amount from formula on show flow create" do
         sign_in user, scope: :user
-        bl_house_line = create(:bl_house_line, client: client, peso: 13.2, volumen: 8.1)
+        bl_house_line = create(:bl_house_line, client: client, peso: 13_200, volumen: 8.1)
         service_catalog = create(
           :service_catalog,
           applies_to: "bl_house_line",
@@ -560,7 +560,7 @@ RSpec.describe "BlHouseLines", type: :request do
 
       it "calculates BL-RECASU amount from formula on show flow create" do
         sign_in user, scope: :user
-        bl_house_line = create(:bl_house_line, client: client, peso: 13.2, volumen: 8.1)
+        bl_house_line = create(:bl_house_line, client: client, peso: 13_200, volumen: 8.1)
         service_catalog = create(
           :service_catalog,
           applies_to: "bl_house_line",
@@ -597,7 +597,7 @@ RSpec.describe "BlHouseLines", type: :request do
           :bl_house_line,
           client: client,
           container: container,
-          peso: 12,
+          peso: 12_000,
           volumen: 10,
           fecha_despacho: Time.zone.local(2026, 3, 26, 9, 0, 0)
         )
@@ -688,7 +688,7 @@ RSpec.describe "BlHouseLines", type: :request do
 
       it "recalculates BL-PREVIO amount from formula on show flow update" do
         sign_in user, scope: :user
-        bl_house_line = create(:bl_house_line, client: client, peso: 13.2, volumen: 8.1)
+        bl_house_line = create(:bl_house_line, client: client, peso: 13_200, volumen: 8.1)
         service_catalog = create(
           :service_catalog,
           applies_to: "bl_house_line",
@@ -705,7 +705,7 @@ RSpec.describe "BlHouseLines", type: :request do
           observaciones: "Antes"
         )
 
-        bl_house_line.update!(peso: 20.1)
+        bl_house_line.update!(peso: 20_100)
 
         patch bl_house_line_url(bl_house_line), params: {
           source: "show_services",
@@ -730,7 +730,7 @@ RSpec.describe "BlHouseLines", type: :request do
 
       it "recalculates BL-RECASU amount from formula on show flow update" do
         sign_in user, scope: :user
-        bl_house_line = create(:bl_house_line, client: client, peso: 13.2, volumen: 8.1)
+        bl_house_line = create(:bl_house_line, client: client, peso: 13_200, volumen: 8.1)
         service_catalog = create(
           :service_catalog,
           applies_to: "bl_house_line",
@@ -747,7 +747,7 @@ RSpec.describe "BlHouseLines", type: :request do
           observaciones: "Antes"
         )
 
-        bl_house_line.update!(peso: 20.1)
+        bl_house_line.update!(peso: 20_100)
 
         patch bl_house_line_url(bl_house_line), params: {
           source: "show_services",

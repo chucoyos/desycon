@@ -93,7 +93,7 @@ RSpec.describe BlHouseLineService, type: :model do
         amount: 126,
         currency: 'MXN'
       )
-      bl_house_line = create(:bl_house_line, peso: 13.2, volumen: 8.1)
+      bl_house_line = create(:bl_house_line, peso: 13_200, volumen: 8.1)
 
       service = create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, amount: 1)
 
@@ -112,7 +112,7 @@ RSpec.describe BlHouseLineService, type: :model do
       bl_house_line = create(
         :bl_house_line,
         container: container,
-        peso: 12,
+        peso: 12_000,
         volumen: 10,
         fecha_despacho: Time.zone.local(2026, 3, 30, 9, 0, 0)
       )
@@ -134,7 +134,7 @@ RSpec.describe BlHouseLineService, type: :model do
       bl_house_line = create(
         :bl_house_line,
         container: container,
-        peso: 12,
+        peso: 12_000,
         volumen: 10,
         fecha_despacho: Time.zone.local(2026, 3, 26, 9, 0, 0)
       )
@@ -153,7 +153,7 @@ RSpec.describe BlHouseLineService, type: :model do
         amount: 126,
         currency: 'MXN'
       )
-      bl_house_line = create(:bl_house_line, peso: 13.2, volumen: 8.1)
+      bl_house_line = create(:bl_house_line, peso: 13_200, volumen: 8.1)
 
       service = create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, amount: 1)
 
@@ -168,10 +168,10 @@ RSpec.describe BlHouseLineService, type: :model do
         amount: 126,
         currency: 'MXN'
       )
-      bl_house_line = create(:bl_house_line, peso: 13.2, volumen: 8.1)
+      bl_house_line = create(:bl_house_line, peso: 13_200, volumen: 8.1)
       service = create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, amount: 1)
 
-      bl_house_line.update!(peso: 20.1)
+      bl_house_line.update!(peso: 20_100)
       service.update!(amount: 999)
 
       expect(service.reload.amount).to eq(BigDecimal('2646'))
@@ -185,7 +185,7 @@ RSpec.describe BlHouseLineService, type: :model do
         amount: 126,
         currency: 'MXN'
       )
-      bl_house_line = create(:bl_house_line, peso: 13.2, volumen: 8.1)
+      bl_house_line = create(:bl_house_line, peso: 13_200, volumen: 8.1)
 
       service = create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, amount: 1)
 
@@ -200,10 +200,10 @@ RSpec.describe BlHouseLineService, type: :model do
         amount: 126,
         currency: 'MXN'
       )
-      bl_house_line = create(:bl_house_line, peso: 13.2, volumen: 8.1)
+      bl_house_line = create(:bl_house_line, peso: 13_200, volumen: 8.1)
       service = create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, amount: 1)
 
-      bl_house_line.update!(peso: 20.1)
+      bl_house_line.update!(peso: 20_100)
       service.update!(amount: 999)
 
       expect(service.reload.amount).to eq(BigDecimal('2646'))

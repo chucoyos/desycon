@@ -45,7 +45,9 @@ module BlHouseLines
     def call
       return nil if desconsolidation_date.blank? || dispatch_date.blank?
 
-      weight_units = ceil_units(bl_house_line.peso)
+      peso_kg = bl_house_line.peso.to_d
+      peso_ton = kilograms_to_tons(peso_kg)
+      weight_units = ceil_units(peso_ton)
       volume_units = ceil_units(bl_house_line.volumen)
       billable_units = [ weight_units, volume_units, MINIMUM_UNITS ].max
       billable_days = calculate_billable_days
@@ -68,7 +70,8 @@ module BlHouseLines
           fecha_desconsolidacion: desconsolidation_date.to_date,
           fecha_despacho: dispatch_date.to_date,
           fecha_fin_gracia: (desconsolidation_date.to_date + (GRACE_DAYS - 1)),
-          peso_input: bl_house_line.peso.to_d,
+          peso_kg_input: peso_kg,
+          peso_ton_input: peso_ton,
           volumen_input: bl_house_line.volumen.to_d,
           weight_units: weight_units,
           volume_units: volume_units,
@@ -92,6 +95,10 @@ module BlHouseLines
 
     def ceil_units(value)
       value.to_d.ceil
+    end
+
+    def kilograms_to_tons(value)
+      value.to_d / 1000
     end
 
     def calculate_billable_days

@@ -13,7 +13,7 @@ RSpec.describe BlHouseLines::EntregaAlmacenCamionCalculator do
     end
 
     context "when weight has decimals" do
-      let(:peso) { 13.2 }
+      let(:peso) { 13_200 }
       let(:volumen) { 8.1 }
 
       it "rounds weight up and uses it when greater" do
@@ -34,7 +34,7 @@ RSpec.describe BlHouseLines::EntregaAlmacenCamionCalculator do
     end
 
     context "when volume is greater than weight" do
-      let(:peso) { 6.4 }
+      let(:peso) { 6_400 }
       let(:volumen) { 10.4 }
 
       it "charges using rounded volume" do
@@ -44,7 +44,7 @@ RSpec.describe BlHouseLines::EntregaAlmacenCamionCalculator do
     end
 
     context "when both are below minimum units" do
-      let(:peso) { 3 }
+      let(:peso) { 3_000 }
       let(:volumen) { 6 }
 
       it "applies minimum of 12 units" do
@@ -54,7 +54,7 @@ RSpec.describe BlHouseLines::EntregaAlmacenCamionCalculator do
     end
 
     context "when imo applies with clase and tipo different from 0" do
-      let(:peso) { 13.2 }
+      let(:peso) { 13_200 }
       let(:volumen) { 8.1 }
       let(:bl_house_line) { build(:bl_house_line, peso: peso, volumen: volumen, clase_imo: "1", tipo_imo: "2") }
 
@@ -65,7 +65,7 @@ RSpec.describe BlHouseLines::EntregaAlmacenCamionCalculator do
     end
 
     context "when only one imo field is different from 0" do
-      let(:peso) { 13.2 }
+      let(:peso) { 13_200 }
       let(:volumen) { 8.1 }
       let(:bl_house_line) { build(:bl_house_line, peso: peso, volumen: volumen, clase_imo: "1", tipo_imo: "0") }
 
