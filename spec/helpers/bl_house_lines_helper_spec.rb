@@ -12,7 +12,7 @@ require 'rails_helper'
 # end
 RSpec.describe BlHouseLinesHelper, type: :helper do
   describe "#bl_service_breakdown_rows" do
-    it "shows ALMA unit price as referential and includes tariff metadata" do
+    it "hides unit price for ALMA and includes tariff metadata" do
       rows = helper.bl_service_breakdown_rows(
         {
           service_code: "BL-ALMA",
@@ -26,7 +26,7 @@ RSpec.describe BlHouseLinesHelper, type: :helper do
 
       expect(rows).to include([ "Tipo maniobra", "importacion" ])
       expect(rows).to include([ "Fuente de tarifa", "Tramos Altamira por puerto destino" ])
-      expect(rows).to include([ "Precio unitario catalogo (referencial)", BigDecimal("126") ])
+      expect(rows).not_to include([ "Precio unitario", BigDecimal("126") ])
       expect(rows).to include([ "Subtotal diario", BigDecimal("9250") ])
     end
 
@@ -39,7 +39,6 @@ RSpec.describe BlHouseLinesHelper, type: :helper do
       )
 
       expect(rows).to include([ "Precio unitario", BigDecimal("126") ])
-      expect(rows).not_to include([ "Precio unitario catalogo (referencial)", BigDecimal("126") ])
     end
   end
 
