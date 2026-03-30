@@ -70,6 +70,7 @@ module BlHouseLines
           fecha_desconsolidacion: desconsolidation_date.to_date,
           fecha_despacho: dispatch_date.to_date,
           fecha_fin_gracia: (desconsolidation_date.to_date + (GRACE_DAYS - 1)),
+          operation_type: bl_house_line&.container&.tipo_maniobra,
           peso_kg_input: peso_kg,
           peso_ton_input: peso_ton,
           volumen_input: bl_house_line.volumen.to_d,
@@ -79,6 +80,7 @@ module BlHouseLines
           billable_units: billable_units,
           billable_days: billable_days,
           destination_port_code: destination_port_code,
+          tariff_source: tariff_source,
           tier_breakdown: daily_subtotal_data[:tiers],
           daily_subtotal: daily_subtotal,
           unit_price: price,
@@ -147,6 +149,14 @@ module BlHouseLines
 
     def destination_port_code
       bl_house_line&.container&.destination_port&.code.to_s.upcase
+    end
+
+    def tariff_source
+      if bl_house_line&.container&.tipo_maniobra_importacion?
+        destination_port_code == "MXATM" ? "Tramos Altamira por puerto destino" : "Tramos Veracruz por puerto destino"
+      else
+        "Tramos Veracruz por maniobra no importacion"
+      end
     end
 
     def tier_days_for(remaining:, tier:)

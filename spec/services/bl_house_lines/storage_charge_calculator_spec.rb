@@ -172,6 +172,25 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
       it "uses Altamira daily rates while preserving the same formula" do
         expect(result.billable_days).to eq(4)
         expect(result.total).to eq(BigDecimal("2880"))
+        expect(result.breakdown[:operation_type]).to eq("importacion")
+        expect(result.breakdown[:tariff_source]).to eq("Tramos Altamira por puerto destino")
+      end
+    end
+
+    context "when destination port is Altamira but operation is not import" do
+      let(:peso) { 12_000 }
+      let(:volumen) { 10 }
+      let(:altamira_port) { build(:port, name: "Altamira", code: "MXATM", country_code: "MX") }
+      let(:altamira_voyage) { build(:voyage, destination_port: altamira_port) }
+      let(:export_container) { build(:container, voyage: altamira_voyage, tipo_maniobra: "exportacion") }
+      let(:bl_house_line) { build(:bl_house_line, peso: peso, volumen: volumen, container: export_container) }
+
+      it "falls back to Veracruz daily rates" do
+        expect(result.billable_days).to eq(4)
+        expect(result.total).to eq(BigDecimal("6048"))
+        expect(result.breakdown[:operation_type]).to eq("exportacion")
+        expect(result.breakdown[:tariff_source]).to eq("Tramos Veracruz por maniobra no importacion")
+        expect(result.breakdown[:tier_breakdown].first[:rate]).to eq(BigDecimal("126"))
       end
     end
   end

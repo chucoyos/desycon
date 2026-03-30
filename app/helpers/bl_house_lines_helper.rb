@@ -53,8 +53,17 @@ module BlHouseLinesHelper
     rows << [ "Minimo unidades", breakdown[:minimum_units] ] if breakdown.key?(:minimum_units)
     rows << [ "Unidades cobrables", breakdown[:billable_units] ] if breakdown.key?(:billable_units)
     rows << [ "Dias cobrables", breakdown[:billable_days] ] if breakdown.key?(:billable_days)
+    rows << [ "Tipo maniobra", breakdown[:operation_type] ] if breakdown[:operation_type].present?
     rows << [ "Puerto destino", breakdown[:destination_port_code] ] if breakdown[:destination_port_code].present?
-    rows << [ "Precio unitario", breakdown[:unit_price] ] if breakdown.key?(:unit_price)
+    rows << [ "Fuente de tarifa", breakdown[:tariff_source] ] if breakdown[:tariff_source].present?
+    if breakdown.key?(:unit_price)
+      unit_price_label = if breakdown[:service_code].to_s == "BL-ALMA"
+        "Precio unitario catalogo (referencial)"
+      else
+        "Precio unitario"
+      end
+      rows << [ unit_price_label, breakdown[:unit_price] ]
+    end
     rows << [ "Multiplicador IMO", breakdown[:imo_multiplier] ] if breakdown.key?(:imo_multiplier)
     rows << [ "Subtotal diario", breakdown[:daily_subtotal] ] if breakdown.key?(:daily_subtotal)
     rows << [ "Formula", breakdown[:formula] ] if breakdown[:formula].present?

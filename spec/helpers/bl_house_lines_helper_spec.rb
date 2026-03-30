@@ -11,6 +11,38 @@ require 'rails_helper'
 #   end
 # end
 RSpec.describe BlHouseLinesHelper, type: :helper do
+  describe "#bl_service_breakdown_rows" do
+    it "shows ALMA unit price as referential and includes tariff metadata" do
+      rows = helper.bl_service_breakdown_rows(
+        {
+          service_code: "BL-ALMA",
+          operation_type: "importacion",
+          destination_port_code: "MXATM",
+          tariff_source: "Tramos Altamira por puerto destino",
+          unit_price: BigDecimal("126"),
+          daily_subtotal: BigDecimal("9250")
+        }
+      )
+
+      expect(rows).to include([ "Tipo maniobra", "importacion" ])
+      expect(rows).to include([ "Fuente de tarifa", "Tramos Altamira por puerto destino" ])
+      expect(rows).to include([ "Precio unitario catalogo (referencial)", BigDecimal("126") ])
+      expect(rows).to include([ "Subtotal diario", BigDecimal("9250") ])
+    end
+
+    it "keeps generic unit price label for non-ALMA services" do
+      rows = helper.bl_service_breakdown_rows(
+        {
+          service_code: "BL-ENTCAM",
+          unit_price: BigDecimal("126")
+        }
+      )
+
+      expect(rows).to include([ "Precio unitario", BigDecimal("126") ])
+      expect(rows).not_to include([ "Precio unitario catalogo (referencial)", BigDecimal("126") ])
+    end
+  end
+
   describe "#bl_house_line_status_badge_class" do
     it "returns the badge class for known status" do
       expect(helper.bl_house_line_status_badge_class("activo")).to eq("bg-indigo-100 text-indigo-800")
