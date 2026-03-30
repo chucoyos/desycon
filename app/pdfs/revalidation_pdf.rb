@@ -14,9 +14,9 @@ class RevalidationPdf
 
       # Customs office info
       pdf.font_size 12
-      pdf.text "ADUANA DE MANZANILLO", align: :center, style: :bold
+      pdf.text "ADUANA DE #{destination_port_name_for_letter}", align: :center, style: :bold
       pdf.move_down 10
-      pdf.text "C. ADMINISTRADOR DE LA ADUANA MARITIMA DE MANZANILLO", align: :center
+      pdf.text "C. ADMINISTRADOR DE LA ADUANA MARITIMA DE #{destination_port_name_for_letter}", align: :center
       pdf.text "P R E S E N T E.", align: :center
       pdf.move_down 20
 
@@ -107,6 +107,10 @@ class RevalidationPdf
 
   def vessel_name
     @bl_house_line.container&.vessel&.name || "N/A"
+  end
+
+  def destination_port_name_for_letter
+    @bl_house_line.container&.destination_port&.name.to_s.upcase.presence || "N/A"
   end
 
   def voyage
