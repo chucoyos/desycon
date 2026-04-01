@@ -1,5 +1,8 @@
 module ContainerServices
   class CoordinationTariffResolver
+    EWE_RFC = "EWE1709045U0".freeze
+    NIPPON_RFC = "NEM901109BC2".freeze
+
     MANZANILLO_RULES = [
       { rfc: "PTM0701119T6", terminal: :all, warehouse: :all, amount: BigDecimal("3775") },
       { rfc: "NEM901109BC2", terminal: [ "CONTECON" ], warehouse: [ "HAZESA" ], amount: nil },
@@ -46,9 +49,9 @@ module ContainerServices
       when "MXZLO"
         resolve_manzanillo_rate
       when "MXVER"
-        VERACRUZ_RATES[consolidator_rfc]
+        VERACRUZ_RATES[effective_consolidator_rfc]
       when "MXATM"
-        ALTAMIRA_RATES[consolidator_rfc]
+        ALTAMIRA_RATES[effective_consolidator_rfc]
       else
         nil
       end
@@ -63,7 +66,7 @@ module ContainerServices
       warehouse = normalize_location(container.almacen)
 
       rule = MANZANILLO_RULES.find do |entry|
-        entry[:rfc] == consolidator_rfc &&
+        entry[:rfc] == effective_consolidator_rfc &&
           matches_dimension?(terminal, entry[:terminal]) &&
           matches_dimension?(warehouse, entry[:warehouse])
       end
@@ -81,8 +84,20 @@ module ContainerServices
       @consolidator_rfc ||= container&.consolidator_entity&.fiscal_profile&.rfc.to_s.upcase.strip.presence
     end
 
+    def effective_consolidator_rfc
+      if non_production_alias_enabled? && consolidator_rfc == EWE_RFC
+        NIPPON_RFC
+      else
+        consolidator_rfc
+      end
+    end
+
     def destination_port_code
       container&.destination_port&.code.to_s.upcase
+    end
+
+    def non_production_alias_enabled?
+      Rails.env.development? || Rails.env.staging?
     end
 
     def normalize_location(value)
