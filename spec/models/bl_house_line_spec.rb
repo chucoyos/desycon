@@ -277,6 +277,46 @@ RSpec.describe BlHouseLine, type: :model do
         currency: "MXN"
       )
     end
+    let!(:codie_veracruz_catalog) do
+      create(
+        :service_catalog,
+        name: "Control Documental Veracruz",
+        code: "BL-CODIE",
+        applies_to: "bl_house_line",
+        amount: 754.0,
+        currency: "MXN"
+      )
+    end
+    let!(:codie_altamira_catalog) do
+      create(
+        :service_catalog,
+        name: "Control Documental Altamira",
+        code: "BL-CODIE-ATM",
+        applies_to: "bl_house_line",
+        amount: 700.0,
+        currency: "MXN"
+      )
+    end
+    let!(:cocus_veracruz_catalog) do
+      create(
+        :service_catalog,
+        name: "Custodia Veracruz",
+        code: "BL-COCUS",
+        applies_to: "bl_house_line",
+        amount: 633.0,
+        currency: "MXN"
+      )
+    end
+    let!(:cocus_altamira_catalog) do
+      create(
+        :service_catalog,
+        name: "Custodia Altamira",
+        code: "BL-COCUS-ATM",
+        applies_to: "bl_house_line",
+        amount: 633.0,
+        currency: "MXN"
+      )
+    end
 
     let(:veracruz_port) { create(:port, :veracruz) }
     let(:veracruz_voyage) { create(:voyage, destination_port: veracruz_port) }
@@ -309,6 +349,11 @@ RSpec.describe BlHouseLine, type: :model do
       service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)
       expect(service.amount).to eq(BigDecimal("6048"))
       expect(service.creation_origin).to be_blank
+
+      codie_service = bl_house_line.bl_house_line_services.find_by(service_catalog: codie_veracruz_catalog)
+      cocus_service = bl_house_line.bl_house_line_services.find_by(service_catalog: cocus_veracruz_catalog)
+      expect(codie_service&.amount).to eq(BigDecimal("754"))
+      expect(cocus_service&.amount).to eq(BigDecimal("633"))
     end
 
     it 'does not create storage service within grace period' do
@@ -317,6 +362,39 @@ RSpec.describe BlHouseLine, type: :model do
       expect {
         bl_house_line.update!(status: "despachado")
       }.not_to change { bl_house_line.reload.bl_house_line_services.where(service_catalog: catalog).count }
+
+      codie_service = bl_house_line.bl_house_line_services.find_by(service_catalog: codie_veracruz_catalog)
+      cocus_service = bl_house_line.bl_house_line_services.find_by(service_catalog: cocus_veracruz_catalog)
+      expect(codie_service&.amount).to eq(BigDecimal("754"))
+      expect(cocus_service).to be_nil
+    end
+
+    it 'creates ATM variants of CODIE and COCUS on Altamira when grace period is exceeded' do
+      altamira_port = create(:port, name: 'Altamira', code: 'MXATM', country_code: 'MX')
+      altamira_voyage = create(:voyage, destination_port: altamira_port)
+      altamira_container = create(
+        :container,
+        voyage: altamira_voyage,
+        fecha_desconsolidacion: Date.new(2026, 3, 20),
+        tipo_maniobra: 'importacion',
+        recinto: 'ATP',
+        almacen: 'SERVICIOS CARRIER INTERPUERTOS'
+      )
+      altamira_line = create(
+        :bl_house_line,
+        container: altamira_container,
+        status: 'revalidado',
+        peso: 12_000,
+        volumen: 10,
+        fecha_despacho: Time.zone.local(2026, 3, 30, 9, 0, 0)
+      )
+
+      altamira_line.update!(status: 'despachado')
+
+      codie_atm_service = altamira_line.bl_house_line_services.find_by(service_catalog: codie_altamira_catalog)
+      cocus_atm_service = altamira_line.bl_house_line_services.find_by(service_catalog: cocus_altamira_catalog)
+      expect(codie_atm_service&.amount).to eq(BigDecimal("700"))
+      expect(cocus_atm_service&.amount).to eq(BigDecimal("633"))
     end
 
     it 'does not create storage service automatically for non-eligible destination ports' do

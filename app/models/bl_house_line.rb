@@ -64,8 +64,7 @@ class BlHouseLine < ApplicationRecord
   after_update :notify_revalidation_request, if: -> { !skip_revalidation_notification && saved_change_to_status? && validar_documentos? }
   after_update :notify_customs_agent_revalidation, if: -> { saved_change_to_status? && revalidado? }
   after_update :ensure_asignacion_electronica_service, if: -> { saved_change_to_status? && revalidado? }
-  after_update :ensure_storage_service_on_despachado, if: -> { saved_change_to_status? && despachado? && auto_partida_services_allowed_by_port? }
-  after_update :ensure_entcam_service_on_despachado, if: -> { saved_change_to_status? && despachado? && auto_partida_services_allowed_by_port? }
+  after_update :ensure_services_on_despachado, if: -> { saved_change_to_status? && despachado? && auto_partida_services_allowed_by_port? }
   after_update :recalculate_storage_service_if_needed, if: -> { storage_recalculation_triggered? && auto_partida_services_allowed_by_port? }
   after_update :recalculate_entcam_service_if_needed, if: -> { storage_recalculation_triggered? && auto_partida_services_allowed_by_port? }
   after_update :recalculate_previo_service_if_needed, if: :storage_recalculation_triggered?
@@ -154,31 +153,40 @@ class BlHouseLine < ApplicationRecord
 
   def ensure_storage_service_on_despachado
     catalog = storage_catalog
-    return unless catalog
+    return false unless catalog
 
     result = storage_charge_result(unit_price: catalog.amount)
     if result.blank?
       Rails.logger.warn("Storage service skipped for BL #{id}: missing dispatch or desconsolidation date")
-      return
+      return false
     end
 
     if result.billable_days <= 0
       Rails.logger.info("Storage service skipped for BL #{id}: within grace period")
-      return
+      return false
     end
 
     service = bl_house_line_services.find_or_initialize_by(service_catalog: catalog)
 
     if service.persisted? && service.facturado?
       Rails.logger.info("Storage service unchanged for BL #{id}: already invoiced")
-      return
+      return true
     end
 
     service.billed_to_entity_id ||= client_id
     service.amount = result.total
     service.save! if service.new_record? || service.changed?
+    true
   rescue StandardError => e
     Rails.logger.error("Failed to create/update storage service for BL #{id}: #{e.message}")
+    false
+  end
+
+  def ensure_services_on_despachado
+    storage_generated = ensure_storage_service_on_despachado
+    ensure_entcam_service_on_despachado
+    ensure_codie_service_on_despachado
+    ensure_cocus_service_on_despachado if storage_generated
   end
 
   def recalculate_storage_service_if_needed
@@ -227,6 +235,46 @@ class BlHouseLine < ApplicationRecord
     service.save! if service.new_record? || service.changed?
   rescue StandardError => e
     Rails.logger.error("Failed to create/update ENTCAM service for BL #{id}: #{e.message}")
+  end
+
+  def ensure_codie_service_on_despachado
+    catalog = codie_catalog
+    unless catalog
+      Rails.logger.warn("CODIE service skipped for BL #{id}: missing destination catalog")
+      return
+    end
+
+    service = bl_house_line_services.find_or_initialize_by(service_catalog: catalog)
+    if service.persisted? && service.facturado?
+      Rails.logger.info("CODIE service unchanged for BL #{id}: already invoiced")
+      return
+    end
+
+    service.billed_to_entity_id ||= client_id
+    service.amount = catalog.amount
+    service.save! if service.new_record? || service.changed?
+  rescue StandardError => e
+    Rails.logger.error("Failed to create/update CODIE service for BL #{id}: #{e.message}")
+  end
+
+  def ensure_cocus_service_on_despachado
+    catalog = cocus_catalog
+    unless catalog
+      Rails.logger.warn("COCUS service skipped for BL #{id}: missing destination catalog")
+      return
+    end
+
+    service = bl_house_line_services.find_or_initialize_by(service_catalog: catalog)
+    if service.persisted? && service.facturado?
+      Rails.logger.info("COCUS service unchanged for BL #{id}: already invoiced")
+      return
+    end
+
+    service.billed_to_entity_id ||= client_id
+    service.amount = catalog.amount
+    service.save! if service.new_record? || service.changed?
+  rescue StandardError => e
+    Rails.logger.error("Failed to create/update COCUS service for BL #{id}: #{e.message}")
   end
 
   def recalculate_entcam_service_if_needed
@@ -318,6 +366,16 @@ class BlHouseLine < ApplicationRecord
 
   def entcam_catalog
     ServiceCatalog.active.find_by(code: "BL-ENTCAM", applies_to: "bl_house_line")
+  end
+
+  def codie_catalog
+    code = destination_port_code == "MXATM" ? "BL-CODIE-ATM" : "BL-CODIE"
+    ServiceCatalog.active.find_by(code: code, applies_to: "bl_house_line")
+  end
+
+  def cocus_catalog
+    code = destination_port_code == "MXATM" ? "BL-COCUS-ATM" : "BL-COCUS"
+    ServiceCatalog.active.find_by(code: code, applies_to: "bl_house_line")
   end
 
   def previo_catalog
