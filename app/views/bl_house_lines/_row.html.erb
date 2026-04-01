@@ -13,14 +13,14 @@
 %>
 <tbody <%= tag.attributes(tbody_attributes) %>>
   <tr <%= tag.attributes(row_attributes) %>>
-    <td class="px-6 py-4 whitespace-nowrap">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-sm flex-shrink-0">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <td class="px-4 py-3 whitespace-nowrap">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-sm flex-shrink-0">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
           </svg>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5">
           <span class="text-sm font-semibold text-gray-900"><%= bl_house_line.blhouse %></span>
           <% unless tramitador_user %>
             <svg data-expandable-row-target="chevron" class="w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -30,21 +30,21 @@
         </div>
       </div>
     </td>
-    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600"><%= bl_house_line.partida %></td>
-    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 max-w-xs truncate"><%= bl_house_line.contiene %></td>
-    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600"><%= bl_house_line.cantidad %></td>
-    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600"><%= number_with_precision(bl_house_line.peso, precision: 2) if bl_house_line.peso %></td>
-    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600"><%= number_with_precision(bl_house_line.volumen, precision: 2) if bl_house_line.volumen %></td>
-    <td class="px-6 py-4 whitespace-nowrap">
+    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600"><%= bl_house_line.partida %></td>
+    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600 max-w-[11rem] truncate"><%= bl_house_line.contiene %></td>
+    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600"><%= bl_house_line.cantidad %></td>
+    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600"><%= number_with_precision(bl_house_line.peso, precision: 2) if bl_house_line.peso %></td>
+    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600"><%= number_with_precision(bl_house_line.volumen, precision: 2) if bl_house_line.volumen %></td>
+    <td class="px-4 py-3 whitespace-nowrap">
       <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= bl_house_line_status_badge_class(bl_house_line.status) %>">
         <%= bl_house_line_status_icon(bl_house_line.status) %>
         <%= bl_house_line_status_nombre(bl_house_line.status) %>
       </span>
     </td>
-    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+    <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
       <div class="relative inline-block text-left" data-controller="dropdown">
-        <button type="button" class="cursor-pointer inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" id="dropdownMenuButton-<%= bl_house_line.id %>" aria-expanded="false" aria-haspopup="true" onclick="document.getElementById('dropdown-menu-<%= bl_house_line.id %>').classList.toggle('hidden')">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+        <button type="button" class="cursor-pointer inline-flex items-center justify-center w-9 h-9 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" id="dropdownMenuButton-<%= bl_house_line.id %>" aria-expanded="false" aria-haspopup="true" onclick="document.getElementById('dropdown-menu-<%= bl_house_line.id %>').classList.toggle('hidden')">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
             <circle cx="6" cy="12" r="1.5" />
             <circle cx="12" cy="12" r="1.5" />
             <circle cx="18" cy="12" r="1.5" />
