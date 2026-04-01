@@ -8,10 +8,21 @@ RSpec.describe "Containers autocomplete", type: :system do
     login_as(user, scope: :user)
   end
 
+  def autocomplete_results_for(field_name)
+    field = find_field(field_name)
+    field.find(:xpath, "ancestor::div[@data-controller='catalog-autocomplete'][1]")
+  end
+
+  def expect_autocomplete_option(field_name:, label:, index: 0)
+    within(autocomplete_results_for(field_name)) do
+      expect(page).to have_css("button[data-index='#{index}']", text: label)
+    end
+  end
+
   def select_from_autocomplete(field_name:, query:, expected_label:)
     field = find_field(field_name)
     field.fill_in(with: query)
-    expect(page).to have_css("button[data-index='0']", text: expected_label)
+    expect_autocomplete_option(field_name: field_name, label: expected_label)
     field.send_keys(:enter)
   end
 
@@ -53,8 +64,8 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     voyage_input = find_field("voyage_search")
     voyage_input.fill_in(with: "001")
-    expect(page).to have_css("button[data-index='0']", text: "A-001")
-    expect(page).to have_css("button[data-index='1']", text: "Z-001")
+    expect_autocomplete_option(field_name: "voyage_search", label: "A-001")
+    expect_autocomplete_option(field_name: "voyage_search", label: "Z-001", index: 1)
     voyage_input.send_keys(:enter)
 
     hidden_voyage = find("#container_voyage_id", visible: :all)
@@ -71,7 +82,7 @@ RSpec.describe "Containers autocomplete", type: :system do
     consolidator_input = find_field("consolidator_search")
     consolidator_input.fill_in(with: "Consolidador Al")
 
-    expect(page).to have_css("button[data-index='0']", text: selected_consolidator.name)
+    expect_autocomplete_option(field_name: "consolidator_search", label: selected_consolidator.name)
     consolidator_input.send_keys(:enter)
 
     expect(page).to have_field("consolidator_search", with: selected_consolidator.name)
@@ -87,7 +98,7 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     consolidator_input = find_field("consolidator_search")
     consolidator_input.fill_in(with: "Consolidador Serv")
-    expect(page).to have_css("button[data-index='0']", text: selected_consolidator.name)
+    expect_autocomplete_option(field_name: "consolidator_search", label: selected_consolidator.name)
     consolidator_input.send_keys(:enter)
 
     click_button "Agregar Servicio"
@@ -107,7 +118,7 @@ RSpec.describe "Containers autocomplete", type: :system do
     origin_port_input = find_field("origin_port_search")
     origin_port_input.fill_in(with: "Origen Alp")
 
-    expect(page).to have_css("button[data-index='0']", text: selected_port.display_name)
+    expect_autocomplete_option(field_name: "origin_port_search", label: selected_port.display_name)
     origin_port_input.send_keys(:enter)
 
     expect(page).to have_field("origin_port_search", with: selected_port.display_name)
@@ -137,17 +148,17 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     consolidator_input = find_field("consolidator_search")
     consolidator_input.fill_in(with: "Consolidador Crea")
-    expect(page).to have_css("button[data-index='0']", text: consolidator.name)
+    expect_autocomplete_option(field_name: "consolidator_search", label: consolidator.name)
     consolidator_input.send_keys(:enter)
 
     shipping_input = find_field("shipping_line_search")
     shipping_input.fill_in(with: "Linea Crea")
-    expect(page).to have_css("button[data-index='0']", text: shipping_line.name)
+    expect_autocomplete_option(field_name: "shipping_line_search", label: shipping_line.name)
     shipping_input.send_keys(:enter)
 
     vessel_input = find_field("vessel_search")
     vessel_input.fill_in(with: "Buque Crea")
-    expect(page).to have_css("button[data-index='0']", text: vessel.name)
+    expect_autocomplete_option(field_name: "vessel_search", label: vessel.name)
     vessel_input.send_keys(:enter)
 
     select_from_autocomplete(field_name: "voyage_search", query: "CREA", expected_label: "CREA-001")
@@ -155,7 +166,7 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     origin_port_input = find_field("origin_port_search")
     origin_port_input.fill_in(with: "Origen Crea")
-    expect(page).to have_css("button[data-index='0']", text: origin_port.display_name)
+    expect_autocomplete_option(field_name: "origin_port_search", label: origin_port.display_name)
     origin_port_input.send_keys(:enter)
 
     select "CONTECON", from: "container_recinto"
@@ -202,17 +213,17 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     consolidator_input = find_field("consolidator_search")
     consolidator_input.fill_in(with: "Consolidador Sec")
-    expect(page).to have_css("button[data-index='0']", text: consolidator.name)
+    expect_autocomplete_option(field_name: "consolidator_search", label: consolidator.name)
     consolidator_input.send_keys(:enter)
 
     shipping_input = find_field("shipping_line_search")
     shipping_input.fill_in(with: "Linea Sec")
-    expect(page).to have_css("button[data-index='0']", text: shipping_line.name)
+    expect_autocomplete_option(field_name: "shipping_line_search", label: shipping_line.name)
     shipping_input.send_keys(:enter)
 
     vessel_input = find_field("vessel_search")
     vessel_input.fill_in(with: "Veracruz Sec")
-    expect(page).to have_css("button[data-index='0']", text: vessel_veracruz.name)
+    expect_autocomplete_option(field_name: "vessel_search", label: vessel_veracruz.name)
     vessel_input.send_keys(:enter)
 
     select_from_autocomplete(field_name: "voyage_search", query: "VER", expected_label: "VER-S01")
@@ -220,7 +231,7 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     origin_port_input = find_field("origin_port_search")
     origin_port_input.fill_in(with: "Origen Sec")
-    expect(page).to have_css("button[data-index='0']", text: origin_port.display_name)
+    expect_autocomplete_option(field_name: "origin_port_search", label: origin_port.display_name)
     origin_port_input.send_keys(:enter)
 
     select "CICE", from: "container_recinto"
@@ -240,17 +251,17 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     consolidator_input = find_field("consolidator_search")
     consolidator_input.fill_in(with: "Consolidador Sec")
-    expect(page).to have_css("button[data-index='0']", text: consolidator.name)
+    expect_autocomplete_option(field_name: "consolidator_search", label: consolidator.name)
     consolidator_input.send_keys(:enter)
 
     shipping_input = find_field("shipping_line_search")
     shipping_input.fill_in(with: "Linea Sec")
-    expect(page).to have_css("button[data-index='0']", text: shipping_line.name)
+    expect_autocomplete_option(field_name: "shipping_line_search", label: shipping_line.name)
     shipping_input.send_keys(:enter)
 
     vessel_input = find_field("vessel_search")
     vessel_input.fill_in(with: "Manzanillo Sec")
-    expect(page).to have_css("button[data-index='0']", text: vessel_manzanillo.name)
+    expect_autocomplete_option(field_name: "vessel_search", label: vessel_manzanillo.name)
     vessel_input.send_keys(:enter)
 
     select_from_autocomplete(field_name: "voyage_search", query: "MZO", expected_label: "MZO-S01")
@@ -258,7 +269,7 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     origin_port_input = find_field("origin_port_search")
     origin_port_input.fill_in(with: "Origen Sec")
-    expect(page).to have_css("button[data-index='0']", text: origin_port.display_name)
+    expect_autocomplete_option(field_name: "origin_port_search", label: origin_port.display_name)
     origin_port_input.send_keys(:enter)
 
     select "CONTECON", from: "container_recinto"
@@ -301,17 +312,17 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     consolidator_input = find_field("consolidator_search")
     consolidator_input.fill_in(with: "Consolidador Sec")
-    expect(page).to have_css("button[data-index='0']", text: consolidator.name)
+    expect_autocomplete_option(field_name: "consolidator_search", label: consolidator.name)
     consolidator_input.send_keys(:enter)
 
     shipping_input = find_field("shipping_line_search")
     shipping_input.fill_in(with: "Linea Sec")
-    expect(page).to have_css("button[data-index='0']", text: shipping_line.name)
+    expect_autocomplete_option(field_name: "shipping_line_search", label: shipping_line.name)
     shipping_input.send_keys(:enter)
 
     vessel_input = find_field("vessel_search")
     vessel_input.fill_in(with: "Manzanillo Sec")
-    expect(page).to have_css("button[data-index='0']", text: vessel_manzanillo.name)
+    expect_autocomplete_option(field_name: "vessel_search", label: vessel_manzanillo.name)
     vessel_input.send_keys(:enter)
 
     select_from_autocomplete(field_name: "voyage_search", query: "MZO", expected_label: "MZO-S01")
@@ -319,7 +330,7 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     origin_port_input = find_field("origin_port_search")
     origin_port_input.fill_in(with: "Origen Sec")
-    expect(page).to have_css("button[data-index='0']", text: origin_port.display_name)
+    expect_autocomplete_option(field_name: "origin_port_search", label: origin_port.display_name)
     origin_port_input.send_keys(:enter)
 
     select "CONTECON", from: "container_recinto"
@@ -338,17 +349,17 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     consolidator_input = find_field("consolidator_search")
     consolidator_input.fill_in(with: "Consolidador Sec")
-    expect(page).to have_css("button[data-index='0']", text: consolidator.name)
+    expect_autocomplete_option(field_name: "consolidator_search", label: consolidator.name)
     consolidator_input.send_keys(:enter)
 
     shipping_input = find_field("shipping_line_search")
     shipping_input.fill_in(with: "Linea Sec")
-    expect(page).to have_css("button[data-index='0']", text: shipping_line.name)
+    expect_autocomplete_option(field_name: "shipping_line_search", label: shipping_line.name)
     shipping_input.send_keys(:enter)
 
     vessel_input = find_field("vessel_search")
     vessel_input.fill_in(with: "Veracruz Sec")
-    expect(page).to have_css("button[data-index='0']", text: vessel_veracruz.name)
+    expect_autocomplete_option(field_name: "vessel_search", label: vessel_veracruz.name)
     vessel_input.send_keys(:enter)
 
     select_from_autocomplete(field_name: "voyage_search", query: "VER", expected_label: "VER-S01")
@@ -356,7 +367,7 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     origin_port_input = find_field("origin_port_search")
     origin_port_input.fill_in(with: "Origen Sec")
-    expect(page).to have_css("button[data-index='0']", text: origin_port.display_name)
+    expect_autocomplete_option(field_name: "origin_port_search", label: origin_port.display_name)
     origin_port_input.send_keys(:enter)
 
     select "CICE", from: "container_recinto"
@@ -392,15 +403,15 @@ RSpec.describe "Containers autocomplete", type: :system do
     fill_in "container_ejecutivo", with: "Usuario Blur"
 
     fill_in "consolidator_search", with: consolidator.name
-    expect(page).to have_css("button[data-index='0']", text: consolidator.name)
+    expect_autocomplete_option(field_name: "consolidator_search", label: consolidator.name)
     find_field("shipping_line_search").click
 
     fill_in "shipping_line_search", with: shipping_line.name
-    expect(page).to have_css("button[data-index='0']", text: shipping_line.name)
+    expect_autocomplete_option(field_name: "shipping_line_search", label: shipping_line.name)
     find_field("vessel_search").click
 
     fill_in "vessel_search", with: vessel.name
-    expect(page).to have_css("button[data-index='0']", text: vessel.name)
+    expect_autocomplete_option(field_name: "vessel_search", label: vessel.name)
     find_field("origin_port_search").click
 
     select_from_autocomplete(field_name: "voyage_search", query: "BLR", expected_label: "BLR-001")
@@ -408,7 +419,7 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     origin_port_input = find_field("origin_port_search")
     origin_port_input.fill_in(with: "Blur Exact")
-    expect(page).to have_css("button[data-index='0']", text: origin_port.display_name)
+    expect_autocomplete_option(field_name: "origin_port_search", label: origin_port.display_name)
     origin_port_input.send_keys(:enter)
 
     expect(find("#container_consolidator_entity_id", visible: :all).value).to eq(consolidator.id.to_s)
