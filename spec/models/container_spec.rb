@@ -344,6 +344,39 @@ RSpec.describe Container, type: :model do
       expect(service&.amount).to eq(BigDecimal('6500'))
     end
 
+    it 'creates CONT-COOR in Manzanillo for LCL with CONTECON and eligible warehouse' do
+      manzanillo = create(:port, :manzanillo)
+      container = build_container_for_tariff(
+        rfc: 'LIF221027CK7',
+        destination_port: manzanillo,
+        recinto: 'CONTECON',
+        almacen: 'HAZESA'
+      )
+
+      container.update!(status: 'desconsolidado', fecha_desconsolidacion: Date.current)
+      expect(ContainerServices::CoordinationTariffResolver.call(container: container)).to eq(BigDecimal('4800'))
+      container.send(:ensure_coordination_service_on_desconsolidado)
+
+      service = cont_coor_services_for(container.reload).order(:id).last
+      expect(service&.amount).to eq(BigDecimal('4800'))
+    end
+
+    it 'does not create CONT-COOR in Manzanillo for LCL when matrix rate is $-' do
+      manzanillo = create(:port, :manzanillo)
+      container = build_container_for_tariff(
+        rfc: 'LIF221027CK7',
+        destination_port: manzanillo,
+        recinto: 'SSA',
+        almacen: 'SSA'
+      )
+
+      container.update!(status: 'desconsolidado', fecha_desconsolidacion: Date.current)
+
+      expect {
+        container.send(:ensure_coordination_service_on_desconsolidado)
+      }.not_to change { cont_coor_services_for(container.reload).count }
+    end
+
     it 'does not create CONT-COOR in Manzanillo when matrix rate is $-' do
       manzanillo = create(:port, :manzanillo)
       container = build_container_for_tariff(
