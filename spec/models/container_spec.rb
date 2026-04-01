@@ -255,6 +255,146 @@ RSpec.describe Container, type: :model do
     end
   end
 
+  describe 'CONT-COOR tariff matrix on desconsolidado' do
+    let!(:coordination_catalog) do
+      create(
+        :service_catalog,
+        name: 'Coordinación de contenedor a almacén',
+        code: 'CONT-COOR',
+        applies_to: 'container',
+        amount: 3500.0,
+        currency: 'MXN'
+      )
+    end
+
+    def cont_coor_services_for(container)
+      container.container_services.joins(:service_catalog).where(service_catalogs: { code: 'CONT-COOR' })
+    end
+
+    def build_container_for_tariff(rfc:, destination_port:, recinto:, almacen:)
+      consolidator = create(:entity, :consolidator)
+      create(:fiscal_profile, profileable: consolidator, rfc: rfc)
+      consolidator.reload
+      voyage = create(:voyage, destination_port: destination_port)
+
+      container = create(
+        :container,
+        consolidator_entity: consolidator,
+        voyage: voyage,
+        tipo_maniobra: 'importacion',
+        status: 'bl_revalidado',
+        recinto: recinto,
+        almacen: almacen,
+        fecha_desconsolidacion: nil
+      )
+
+      container.bl_master_documento.attach(io: StringIO.new('bl'), filename: 'bl.pdf', content_type: 'application/pdf')
+      container.tarja_documento.attach(io: StringIO.new('tarja'), filename: 'tarja.pdf', content_type: 'application/pdf')
+      container
+    end
+
+    it 'creates CONT-COOR with Veracruz tariff for Pluscargo' do
+      veracruz = create(:port, :veracruz)
+      container = build_container_for_tariff(
+        rfc: 'PTM0701119T6',
+        destination_port: veracruz,
+        recinto: 'ICAVE',
+        almacen: 'CICE'
+      )
+
+      container.update!(status: 'desconsolidado', fecha_desconsolidacion: Date.current)
+
+      container.send(:ensure_coordination_service_on_desconsolidado)
+
+      service = cont_coor_services_for(container.reload).order(:id).last
+      expect(service.amount).to eq(BigDecimal('3800'))
+    end
+
+    it 'does not create CONT-COOR for consolidator without tariff rule' do
+      veracruz = create(:port, :veracruz)
+      container = build_container_for_tariff(
+        rfc: 'LIF221027CK7',
+        destination_port: veracruz,
+        recinto: 'ICAVE',
+        almacen: 'CICE'
+      )
+
+      container.update!(status: 'desconsolidado', fecha_desconsolidacion: Date.current)
+
+      expect {
+        container.send(:ensure_coordination_service_on_desconsolidado)
+      }.not_to change { cont_coor_services_for(container.reload).count }
+    end
+
+    it 'creates CONT-COOR in Manzanillo for Master Forwarding with matching matrix' do
+      manzanillo = create(:port, :manzanillo)
+      container = build_container_for_tariff(
+        rfc: 'MFO250717B72',
+        destination_port: manzanillo,
+        recinto: 'CONTECON',
+        almacen: 'HAZESA'
+      )
+      expect(container.destination_port&.code).to eq('MXZLO')
+
+      container.update!(status: 'desconsolidado', fecha_desconsolidacion: Date.current)
+      expect(ContainerServices::CoordinationTariffResolver.call(container: container)).to eq(BigDecimal('6500'))
+      container.send(:ensure_coordination_service_on_desconsolidado)
+
+      service = cont_coor_services_for(container.reload).order(:id).last
+      expect(service&.amount).to eq(BigDecimal('6500'))
+    end
+
+    it 'does not create CONT-COOR in Manzanillo when matrix rate is $-' do
+      manzanillo = create(:port, :manzanillo)
+      container = build_container_for_tariff(
+        rfc: 'NEM901109BC2',
+        destination_port: manzanillo,
+        recinto: 'CONTECON',
+        almacen: 'HAZESA'
+      )
+
+      container.update!(status: 'desconsolidado', fecha_desconsolidacion: Date.current)
+
+      expect {
+        container.send(:ensure_coordination_service_on_desconsolidado)
+      }.not_to change { cont_coor_services_for(container.reload).count }
+    end
+
+    it 'treats SSAM rule as SSA for matching in Manzanillo' do
+      manzanillo = create(:port, :manzanillo)
+      container = build_container_for_tariff(
+        rfc: 'NEM901109BC2',
+        destination_port: manzanillo,
+        recinto: 'SSA',
+        almacen: 'SSA'
+      )
+
+      container.update!(status: 'desconsolidado', fecha_desconsolidacion: Date.current)
+
+      expect {
+        container.send(:ensure_coordination_service_on_desconsolidado)
+      }.not_to change { cont_coor_services_for(container.reload).count }
+    end
+
+    it 'creates CONT-COOR with Altamira tariff for Pluscargo' do
+      altamira = create(:port, name: 'Altamira', code: 'MXATM', country_code: 'MX')
+      container = build_container_for_tariff(
+        rfc: 'PTM0701119T6',
+        destination_port: altamira,
+        recinto: 'ATP',
+        almacen: 'SERVICIOS CARRIER INTERPUERTOS'
+      )
+      expect(container.destination_port&.code).to eq('MXATM')
+
+      container.update!(status: 'desconsolidado', fecha_desconsolidacion: Date.current)
+      expect(ContainerServices::CoordinationTariffResolver.call(container: container)).to eq(BigDecimal('3800'))
+      container.send(:ensure_coordination_service_on_desconsolidado)
+
+      service = cont_coor_services_for(container.reload).order(:id).last
+      expect(service&.amount).to eq(BigDecimal('3800'))
+    end
+  end
+
   describe 'scopes' do
     before do
       @container1 = create(:container, status: 'activo', tipo_maniobra: 'importacion')

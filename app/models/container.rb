@@ -410,7 +410,7 @@ class Container < ApplicationRecord
   end
 
   def status_changed_to_desconsolidado?
-    saved_change_to_status? && status_desconsolidado?
+    previous_changes.key?("status") && status_desconsolidado?
   end
 
   def propagate_bl_house_lines_on_desconsolidado
@@ -431,8 +431,17 @@ class Container < ApplicationRecord
     return unless service
     return if container_services.exists?(service_catalog_id: service.id)
 
+    resolved_amount = ContainerServices::CoordinationTariffResolver.call(container: self)
+    if resolved_amount.blank?
+      Rails.logger.info(
+        "CONT-COOR not created for Container ##{id}: no tariff for consolidator/port/recinto/almacen"
+      )
+      return
+    end
+
     created_service = container_services.build(
       service_catalog: service,
+      amount: resolved_amount,
       creation_origin: ContainerService::AUTO_ISSUE_ORIGIN_STATUS_TRANSITION
     )
     created_service.save!
