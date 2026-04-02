@@ -39,8 +39,22 @@ end %>
 
   <%# Guard: nothing to render for single page or missing collection %>
   <% if total_pages && total_pages > 1 %>
-    <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center">
-      <ul class="inline-flex items-center -space-x-px">
+    <% window_size = 2 %>
+    <% pages = [1, total_pages, current_page] %>
+    <% (current_page - window_size).upto(current_page + window_size) do |p| %>
+      <% pages << p if p.between?(1, total_pages) %>
+    <% end %>
+    <% pages = pages.uniq.sort %>
+    <% display_pages = [] %>
+    <% previous_page_number = nil %>
+    <% pages.each do |p| %>
+      <% display_pages << :gap if previous_page_number && (p - previous_page_number) > 1 %>
+      <% display_pages << p %>
+      <% previous_page_number = p %>
+    <% end %>
+
+    <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center max-w-full overflow-x-auto">
+      <ul class="inline-flex items-center -space-x-px whitespace-nowrap">
       <%# Prev button %>
       <% if prev_page %>
         <li>
@@ -54,9 +68,13 @@ end %>
         </li>
       <% end %>
 
-      <%# Page numbers: simple full range (acceptable for modest page counts) %>
-      <% 1.upto(total_pages) do |p| %>
-        <% if p == current_page %>
+      <%# Page numbers: compact range with ellipses for large page counts %>
+      <% display_pages.each do |p| %>
+        <% if p == :gap %>
+          <li>
+            <span class="px-2 py-1 border border-gray-200 bg-white text-gray-500">...</span>
+          </li>
+        <% elsif p == current_page %>
           <li>
             <span class="px-3 py-1 border-t border-b border-gray-200 bg-blue-600 text-white"><%= p %></span>
           </li>
