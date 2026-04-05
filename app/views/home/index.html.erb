@@ -1,86 +1,37 @@
 <% content_for :title, "Bienvenido a Global DYC" %>
 
-<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 sm:px-6 lg:px-8 py-12">
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-slate-100 px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
   <div class="max-w-6xl w-full">
-    <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+    <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200/70">
       <div class="grid grid-cols-1 lg:grid-cols-2">
         <!-- Hero Section - Lado Izquierdo -->
-        <div class="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-8 sm:p-12 lg:p-16 flex flex-col justify-center relative overflow-hidden">
-          <!-- Decorative elements -->
-          <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full opacity-20 -mr-32 -mt-32"></div>
-          <div class="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500 rounded-full opacity-20 -ml-24 -mb-24"></div>
-          
-          <div class="text-white relative z-10">
-            <div class="mb-8">
-              <div class="inline-flex items-center gap-3 mb-6">
-                <div class="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                  <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                  </svg>
-                </div>
-                <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
-                  Global DYC
-                </h1>
-              </div>
-              <div class="h-1.5 w-24 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full shadow-lg"></div>
+        <div class="relative min-h-[320px] sm:min-h-[420px] lg:min-h-[680px] p-8 sm:p-10 lg:p-12 flex flex-col justify-center overflow-hidden">
+          <%= image_tag "login.jpeg", alt: "Operación logística portuaria", class: "absolute inset-0 h-full w-full object-cover object-center" %>
+          <div class="absolute inset-0 bg-gradient-to-tr from-slate-950/85 via-blue-950/65 to-blue-700/35"></div>
+          <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.25),transparent_45%)]"></div>
+
+          <div class="relative z-10 text-white">
+            <div class="mb-5 inline-flex items-center gap-3 rounded-full border border-white/25 bg-white/10 px-4 py-2 backdrop-blur-sm">
+              <span class="inline-block h-2.5 w-2.5 rounded-full bg-emerald-300"></span>
+              <span class="text-xs sm:text-sm font-semibold tracking-wide uppercase">Global DYC</span>
             </div>
-            
-            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 leading-tight">
-              Sistema de Gestión de Carga LCL
+
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight max-w-lg">
+              Sistema de Gestion de Carga LCL
             </h2>
-            
-            <p class="text-lg sm:text-xl text-blue-100 mb-10 leading-relaxed max-w-md">
-              Plataforma integral para la administración de revalidaciones y asignación electrónica de mercancía.
+
+            <p class="mt-4 text-sm sm:text-base text-blue-100/95 max-w-lg leading-relaxed">
+              Plataforma integral para la administracion de revalidaciones y asignacion electronica de mercancia.
             </p>
-            
-            <div class="space-y-5">
-              <div class="flex items-start gap-4 group">
-                <div class="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0 group-hover:bg-white/20 transition-all duration-200">
-                  <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 class="text-white font-semibold mb-1">Gestión Eficiente</h3>
-                  <p class="text-blue-100 text-sm">Control completo de contenedores y partidas</p>
-                </div>
-              </div>
-              
-              <div class="flex items-start gap-4 group">
-                <div class="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0 group-hover:bg-white/20 transition-all duration-200">
-                  <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 class="text-white font-semibold mb-1">Proceso Digital</h3>
-                  <p class="text-blue-100 text-sm">Revalidación completamente digitalizada</p>
-                </div>
-              </div>
-              
-              <div class="flex items-start gap-4 group">
-                <div class="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0 group-hover:bg-white/20 transition-all duration-200">
-                  <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 class="text-white font-semibold mb-1">Portal Aduanal</h3>
-                  <p class="text-blue-100 text-sm">Acceso para agentes aduanales certificados</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
         <!-- Formulario de Login - Lado Derecho -->
-        <div class="p-8 sm:p-12 lg:p-16 flex flex-col justify-center bg-gradient-to-br from-white to-gray-50">
+        <div class="p-8 sm:p-10 lg:p-14 flex flex-col justify-center bg-gradient-to-br from-white to-slate-50/70">
           <div class="w-full max-w-md mx-auto">
-            <div class="mb-10">
-              <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 shadow-lg mb-4">
-                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                </svg>
+            <div class="mb-9">
+              <div class="inline-flex items-center justify-center rounded-2xl bg-white border border-slate-200 shadow-lg p-2 mb-4">
+                <%= image_tag "logoDyC.jpeg", alt: "Logo Global DYC", class: "h-16 w-16 sm:h-20 sm:w-20 rounded-xl object-contain" %>
               </div>
               <h3 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Iniciar Sesión</h3>
               <p class="text-gray-600 text-lg">Accede a tu cuenta para continuar</p>
@@ -121,7 +72,7 @@
               </div>
 
               <div>
-                <%= f.submit "Iniciar Sesión", class: "w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 cursor-pointer transform hover:scale-[1.02]" %>
+                <%= f.submit "Iniciar Sesión", class: "w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-base font-semibold text-white bg-gradient-to-r from-slate-800 to-blue-800 hover:from-slate-900 hover:to-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 cursor-pointer transform hover:scale-[1.02]" %>
               </div>
             <% end %>
 
