@@ -12,7 +12,7 @@ class PhotoPolicy < ApplicationPolicy
   end
 
   def download?
-    user&.admin_or_executive? || user&.tramitador?
+    user&.admin_or_executive? || user&.tramitador? || user&.consolidator?
   end
 
   class Scope < Scope

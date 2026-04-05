@@ -11,6 +11,7 @@ RSpec.describe PhotoPolicy, type: :policy do
     it { is_expected.to permit_action(:index) }
     it { is_expected.to permit_action(:create) }
     it { is_expected.to permit_action(:destroy) }
+    it { is_expected.to permit_action(:download) }
   end
 
   context "for executive users" do
@@ -19,6 +20,7 @@ RSpec.describe PhotoPolicy, type: :policy do
     it { is_expected.to permit_action(:index) }
     it { is_expected.to permit_action(:create) }
     it { is_expected.to permit_action(:destroy) }
+    it { is_expected.to permit_action(:download) }
   end
 
   context "for customs broker users" do
@@ -27,6 +29,7 @@ RSpec.describe PhotoPolicy, type: :policy do
     it { is_expected.not_to permit_action(:index) }
     it { is_expected.not_to permit_action(:create) }
     it { is_expected.not_to permit_action(:destroy) }
+    it { is_expected.not_to permit_action(:download) }
   end
 
   context "for tramitador users" do
@@ -35,6 +38,7 @@ RSpec.describe PhotoPolicy, type: :policy do
     it { is_expected.not_to permit_action(:index) }
     it { is_expected.to permit_action(:create) }
     it { is_expected.to permit_action(:destroy) }
+    it { is_expected.to permit_action(:download) }
   end
 
   context "for consolidator users" do
@@ -43,6 +47,7 @@ RSpec.describe PhotoPolicy, type: :policy do
     it { is_expected.not_to permit_action(:index) }
     it { is_expected.not_to permit_action(:create) }
     it { is_expected.not_to permit_action(:destroy) }
+    it { is_expected.to permit_action(:download) }
   end
 
   context "for unauthenticated users" do
@@ -51,5 +56,6 @@ RSpec.describe PhotoPolicy, type: :policy do
     it { is_expected.not_to permit_action(:index) }
     it { is_expected.not_to permit_action(:create) }
     it { is_expected.not_to permit_action(:destroy) }
+    it { is_expected.not_to permit_action(:download) }
   end
 end

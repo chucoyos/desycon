@@ -55,6 +55,7 @@ class PhotosController < ApplicationController
   private
 
   def download_section_for_attachable(attachable)
+    authorize attachable, :show?
     authorize Photo, :download?
 
     section = params[:section].to_s
@@ -78,6 +79,7 @@ class PhotosController < ApplicationController
   end
 
   def download_all_for_attachable(attachable)
+    authorize attachable, :show?
     authorize Photo, :download?
 
     photos = attachable.photos.recent.includes(image_attachment: :blob)

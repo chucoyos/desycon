@@ -197,6 +197,31 @@ RSpec.describe "Photos", type: :request do
       expect(response.headers["Content-Disposition"]).to include("attachment")
       expect(response.headers["Content-Disposition"]).to include("todas_las_secciones")
     end
+
+    it "allows consolidator users to download photos from their own container" do
+      consolidator_user = create(:user, :consolidator)
+      login_as consolidator_user
+
+      owned_container = create(:container, consolidator_entity: consolidator_user.entity)
+      create(:photo, attachable: owned_container, section: "apertura")
+
+      get photos_download_all_container_path(owned_container)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/zip")
+    end
+
+    it "prevents consolidator users from downloading photos from other consolidators' containers" do
+      consolidator_user = create(:user, :consolidator)
+      login_as consolidator_user
+
+      other_container = create(:container)
+      create(:photo, attachable: other_container, section: "apertura")
+
+      get photos_download_all_container_path(other_container)
+
+      expect(response).to have_http_status(:found)
+    end
   end
 
   describe "GET /bl_house_lines/:id/photos_download_all" do
@@ -214,6 +239,32 @@ RSpec.describe "Photos", type: :request do
       expect(response.media_type).to eq("application/zip")
       expect(response.headers["Content-Disposition"]).to include("attachment")
       expect(response.headers["Content-Disposition"]).to include("todas_las_secciones")
+    end
+
+    it "allows consolidator users to download photos from their own partida" do
+      consolidator_user = create(:user, :consolidator)
+      login_as consolidator_user
+
+      owned_container = create(:container, consolidator_entity: consolidator_user.entity)
+      owned_bl_house_line = create(:bl_house_line, container: owned_container)
+      create(:photo, :etiquetado, attachable: owned_bl_house_line)
+
+      get photos_download_all_bl_house_line_path(owned_bl_house_line)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/zip")
+    end
+
+    it "prevents consolidator users from downloading photos from other consolidators' partidas" do
+      consolidator_user = create(:user, :consolidator)
+      login_as consolidator_user
+
+      other_bl_house_line = create(:bl_house_line)
+      create(:photo, :etiquetado, attachable: other_bl_house_line)
+
+      get photos_download_all_bl_house_line_path(other_bl_house_line)
+
+      expect(response).to have_http_status(:found)
     end
   end
 
