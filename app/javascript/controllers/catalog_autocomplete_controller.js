@@ -13,6 +13,7 @@ export default class extends Controller {
   connect() {
     this.abortController = null
     this.debounceTimer = null
+    this.blurTimer = null
     this.options = []
     this.activeIndex = -1
     this.selectedLabel = this.inputTarget.value.trim()
@@ -27,6 +28,7 @@ export default class extends Controller {
   disconnect() {
     this.cancelPendingRequest()
     this.clearDebounce()
+    this.clearBlurTimer()
     document.removeEventListener("click", this.documentClickHandler)
   }
 
@@ -62,7 +64,10 @@ export default class extends Controller {
   }
 
   onBlur() {
-    setTimeout(() => {
+    this.clearBlurTimer()
+    this.blurTimer = setTimeout(() => {
+      if (!this.element.isConnected) return
+
       this.resolveSelectionOnBlur({ showError: false })
         .finally(() => this.hideResults())
     }, 120)
@@ -238,6 +243,10 @@ export default class extends Controller {
   }
 
   renderOptions(options, { suppressEmptyStatus = false } = {}) {
+    if (!this.element.isConnected || !this.hasResultsTarget || !this.hasInputTarget) {
+      return
+    }
+
     this.options = options
     this.activeIndex = -1
 
@@ -286,11 +295,19 @@ export default class extends Controller {
   }
 
   highlightActiveOption() {
+    if (!this.element.isConnected || !this.hasResultsTarget) return
+
     const buttons = this.resultsTarget.querySelectorAll("button[data-index]")
     buttons.forEach((button, index) => {
       if (index === this.activeIndex) {
         button.classList.add("bg-blue-50")
-        button.scrollIntoView({ block: "nearest" })
+        if (button.isConnected) {
+          try {
+            button.scrollIntoView({ block: "nearest" })
+          } catch (_error) {
+            // Ignore transient detached-node errors during Turbo navigation.
+          }
+        }
       } else {
         button.classList.remove("bg-blue-50")
       }
@@ -298,14 +315,17 @@ export default class extends Controller {
   }
 
   showResults() {
+    if (!this.element.isConnected || !this.hasResultsTarget) return
     this.resultsTarget.classList.remove("hidden")
   }
 
   hideResults() {
+    if (!this.hasResultsTarget) return
     this.resultsTarget.classList.add("hidden")
   }
 
   setStatus(message) {
+    if (!this.hasStatusTarget) return
     this.statusTarget.textContent = message
   }
 
@@ -320,6 +340,13 @@ export default class extends Controller {
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer)
       this.debounceTimer = null
+    }
+  }
+
+  clearBlurTimer() {
+    if (this.blurTimer) {
+      clearTimeout(this.blurTimer)
+      this.blurTimer = null
     }
   }
 }
