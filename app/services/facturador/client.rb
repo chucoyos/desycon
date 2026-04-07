@@ -85,7 +85,9 @@ module Facturador
       }
       query[:uuid] = uuid if uuid.present?
 
-      get_json_with_query(Config.business_base_url, path, query)
+      with_business_api_fallback(path) do |base_url, attempt_path|
+        get_json_with_query(base_url, attempt_path, query)
+      end
     end
 
     def cancelar_comprobante(emisor_id:, uuid:, motivo:, folio_sustitucion: nil)
@@ -96,27 +98,39 @@ module Facturador
       body = { motivo: motivo }
       body[:folioSustitucion] = folio_sustitucion if folio_sustitucion.present?
 
-      delete_json(Config.business_base_url, path, body, query: query)
+      with_business_api_fallback(path) do |base_url, attempt_path|
+        delete_json(base_url, attempt_path, body, query: query)
+      end
     end
 
     def descargar_xml(emisor_id:, uuid:)
       path = format(DESCARGA_COMPROBANTE_PATH, emisor_id: emisor_id, uuid: uuid)
-      get_raw(Config.business_base_url, path, query: { tipoContenido: "xml" })
+      with_business_api_fallback(path) do |base_url, attempt_path|
+        get_raw(base_url, attempt_path, query: { tipoContenido: "xml" })
+      end
     end
 
     def generar_pdf(emisor_id:, uuid:)
       path = format(PDF_GENERATE_PATH, emisor_id: emisor_id, uuid: uuid)
-      post_json(Config.business_base_url, path, {})
+      with_business_api_fallback(path) do |base_url, attempt_path|
+        post_json(base_url, attempt_path, {})
+      end
     end
 
     def obtener_pdf_url(emisor_id:, uuid:)
       path = format(PDF_URL_PATH, emisor_id: emisor_id, uuid: uuid)
-      normalize_pdf_url(get_raw(Config.business_base_url, path))
+      raw_url = with_business_api_fallback(path) do |base_url, attempt_path|
+        get_raw(base_url, attempt_path)
+      end
+
+      normalize_pdf_url(raw_url)
     end
 
     def enviar_correo_cfdi(emisor_id:, payload:)
       path = format(ENVIO_CORREO_PATH, emisor_id: emisor_id)
-      post_json(Config.business_base_url, path, payload)
+      with_business_api_fallback(path) do |base_url, attempt_path|
+        post_json(base_url, attempt_path, payload)
+      end
     end
 
     private
@@ -285,7 +299,35 @@ module Facturador
 
     def retryable_emit_path_error?(error)
       message = error.message.to_s
-      message.start_with?("404:", "405:")
+      message.start_with?("404:", "405:", "406:")
+    end
+
+    def with_business_api_fallback(path)
+      attempts = [ [ Config.business_base_url, path ] ]
+      if (fallback_base = api_business_base_url_fallback).present?
+        attempts << [ fallback_base, api_v1_path_from_business_path(path) ]
+      end
+      attempts.uniq!
+
+      last_error = nil
+
+      attempts.each_with_index do |(base_url, attempt_path), index|
+        begin
+          return yield(base_url, attempt_path)
+        rescue RequestError => e
+          last_error = e
+          raise unless retryable_emit_path_error?(e)
+          raise if index == attempts.length - 1
+
+          Rails.logger.warn("Facturador business fallback: retrying with base=#{base_url} path=#{attempt_path}")
+        end
+      end
+
+      raise(last_error || RequestError.new("Facturador business request failed without attempts"))
+    end
+
+    def api_v1_path_from_business_path(path)
+      path.to_s.sub(%r{\A/(BusinessEmision|businessEmision)}i, "")
     end
 
     def api_business_base_url_fallback
