@@ -5,12 +5,12 @@ module Facturador
   class Client
     TOKEN_PATH = "/connect/token".freeze
     USER_INFO_PATH = "/connect/userinfo".freeze
-    COMPROBANTES_PATH = "/businessEmision/api/v1/emisores/%<emisor_id>s/comprobantes".freeze
+    COMPROBANTES_PATH = "/BusinessEmision/api/v1/emisores/%<emisor_id>s/comprobantes".freeze
     COMPROBANTES_LIST_PATH = "/BusinessEmision/api/v1/emisores/%<emisor_id>s/comprobantes".freeze
     COMPROBANTE_BY_UUID_PATH = "/BusinessEmision/api/v1/emisores/%<emisor_id>s/comprobantes/%<uuid>s".freeze
-    DESCARGA_COMPROBANTE_PATH = "/businessEmision/api/v1/emisores/%<emisor_id>s/descargacomprobantes/%<uuid>s".freeze
-    PDF_GENERATE_PATH = "/businessEmision/api/v1/emisores/%<emisor_id>s/pdfs/%<uuid>s".freeze
-    PDF_URL_PATH = "/businessEmision/api/v1/emisores/%<emisor_id>s/comprobantes/%<uuid>s/pdf".freeze
+    DESCARGA_COMPROBANTE_PATH = "/BusinessEmision/api/v1/emisores/%<emisor_id>s/descargacomprobantes/%<uuid>s".freeze
+    PDF_GENERATE_PATH = "/BusinessEmision/api/v1/emisores/%<emisor_id>s/pdfs/%<uuid>s".freeze
+    PDF_URL_PATH = "/BusinessEmision/api/v1/emisores/%<emisor_id>s/comprobantes/%<uuid>s/pdf".freeze
     ENVIO_CORREO_PATH = "/BusinessEmision/api/v1/emisores/%<emisor_id>s/enviocorreo".freeze
 
     def initialize(access_token: nil)
