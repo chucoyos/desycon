@@ -1,5 +1,6 @@
 require "net/http"
 require "json"
+require "rexml/document"
 
 module Facturador
   class Client
@@ -106,7 +107,9 @@ module Facturador
     def descargar_xml(emisor_id:, uuid:)
       path = format(DESCARGA_COMPROBANTE_PATH, emisor_id: emisor_id, uuid: uuid)
       with_business_api_fallback(path) do |base_url, attempt_path|
-        get_raw(base_url, attempt_path, query: { tipoContenido: "xml" })
+        xml_body = get_raw(base_url, attempt_path, query: { tipoContenido: "xml" })
+        validate_xml_body!(xml_body)
+        xml_body
       end
     end
 
@@ -119,11 +122,14 @@ module Facturador
 
     def obtener_pdf_url(emisor_id:, uuid:)
       path = format(PDF_URL_PATH, emisor_id: emisor_id, uuid: uuid)
-      raw_url = with_business_api_fallback(path) do |base_url, attempt_path|
-        get_raw(base_url, attempt_path)
-      end
+      with_business_api_fallback(path) do |base_url, attempt_path|
+        raw_url = get_raw(base_url, attempt_path)
+        pdf_url = normalize_pdf_url(raw_url)
+        pdf_url = extract_pdf_url_from_json(raw_url) if pdf_url.blank? || !http_url?(pdf_url)
+        raise RequestError, "PDF URL is invalid" unless http_url?(pdf_url)
 
-      normalize_pdf_url(raw_url)
+        pdf_url
+      end
     end
 
     def enviar_correo_cfdi(emisor_id:, payload:)
@@ -299,7 +305,9 @@ module Facturador
 
     def retryable_emit_path_error?(error)
       message = error.message.to_s
-      message.start_with?("404:", "405:", "406:")
+      message.start_with?("404:", "405:", "406:") ||
+        message.include?("XML response is invalid") ||
+        message.include?("PDF URL is invalid")
     end
 
     def with_business_api_fallback(path)
@@ -328,6 +336,55 @@ module Facturador
 
     def api_v1_path_from_business_path(path)
       path.to_s.sub(%r{\A/(BusinessEmision|businessEmision)}i, "")
+    end
+
+    def validate_xml_body!(xml_body)
+      body = xml_body.to_s.strip
+      raise RequestError, "XML response is empty" if body.blank?
+      raise RequestError, "XML response is invalid" if body.downcase.start_with?("<!doctype", "<html")
+
+      document = REXML::Document.new(body)
+      raise RequestError, "XML response is invalid" if document.root.nil?
+    rescue REXML::ParseException
+      raise RequestError, "XML response is invalid"
+    end
+
+    def extract_pdf_url_from_json(raw_url)
+      body = raw_url.to_s.strip
+      return nil unless body.start_with?("{", "[")
+
+      parsed = JSON.parse(body)
+      candidate = find_url_value(parsed)
+      candidate.to_s.strip.presence
+    rescue JSON::ParserError
+      nil
+    end
+
+    def find_url_value(value)
+      case value
+      when Hash
+        keys = %w[url pdfUrl pdfURL fileUrl archivoUrl link enlace]
+        keys.each do |key|
+          candidate = value[key] || value[key.to_sym]
+          return candidate if candidate.present?
+        end
+
+        value.each_value do |nested|
+          candidate = find_url_value(nested)
+          return candidate if candidate.present?
+        end
+      when Array
+        value.each do |nested|
+          candidate = find_url_value(nested)
+          return candidate if candidate.present?
+        end
+      end
+
+      nil
+    end
+
+    def http_url?(value)
+      value.to_s.start_with?("http://", "https://")
     end
 
     def api_business_base_url_fallback
