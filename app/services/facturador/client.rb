@@ -7,6 +7,7 @@ module Facturador
     USER_INFO_PATH = "/connect/userinfo".freeze
     COMPROBANTES_PATH = "/BusinessEmision/api/v1/emisores/%<emisor_id>s/comprobantes".freeze
     COMPROBANTES_PATH_LEGACY = "/businessEmision/api/v1/emisores/%<emisor_id>s/comprobantes".freeze
+    COMPROBANTES_PATH_API_V1 = "/api/v1/emisores/%<emisor_id>s/comprobantes".freeze
     COMPROBANTES_LIST_PATH = "/BusinessEmision/api/v1/emisores/%<emisor_id>s/comprobantes".freeze
     COMPROBANTE_BY_UUID_PATH = "/BusinessEmision/api/v1/emisores/%<emisor_id>s/comprobantes/%<uuid>s".freeze
     DESCARGA_COMPROBANTE_PATH = "/BusinessEmision/api/v1/emisores/%<emisor_id>s/descargacomprobantes/%<uuid>s".freeze
@@ -49,14 +50,27 @@ module Facturador
     end
 
     def emitir_comprobante(emisor_id:, payload:, emitir: true)
-      path = format(COMPROBANTES_PATH, emisor_id: emisor_id)
-      post_json(Config.business_base_url, path, payload, query: { emitir: emitir })
-    rescue RequestError => e
-      raise unless retryable_emit_path_error?(e)
+      attempts = [
+        [ Config.business_base_url, format(COMPROBANTES_PATH, emisor_id: emisor_id) ],
+        [ Config.business_base_url, format(COMPROBANTES_PATH_LEGACY, emisor_id: emisor_id) ],
+        [ api_business_base_url_fallback, format(COMPROBANTES_PATH_API_V1, emisor_id: emisor_id) ]
+      ].select { |base_url, _path| base_url.present? }.uniq
 
-      legacy_path = format(COMPROBANTES_PATH_LEGACY, emisor_id: emisor_id)
-      Rails.logger.warn("Facturador emitir fallback path: retrying with legacy casing")
-      post_json(Config.business_base_url, legacy_path, payload, query: { emitir: emitir })
+      last_error = nil
+
+      attempts.each_with_index do |(base_url, path), index|
+        begin
+          return post_json(base_url, path, payload, query: { emitir: emitir })
+        rescue RequestError => e
+          last_error = e
+          raise unless retryable_emit_path_error?(e)
+          raise if index == attempts.length - 1
+
+          Rails.logger.warn("Facturador emitir fallback: retrying with base=#{base_url} path=#{path}")
+        end
+      end
+
+      raise(last_error || RequestError.new("Facturador emitir failed without attempts"))
     end
 
     def buscar_comprobantes(emisor_id:, finicial:, ffinal:, uuid: nil, skip: 0, take: 10)
@@ -271,7 +285,20 @@ module Facturador
 
     def retryable_emit_path_error?(error)
       message = error.message.to_s
-      message.start_with?("404:", "405:") && message.include?("/BusinessEmision/api/v1/emisores/")
+      message.start_with?("404:", "405:")
+    end
+
+    def api_business_base_url_fallback
+      current = Config.business_base_url.to_s
+      return nil if current.blank?
+
+      uri = URI.parse(current)
+      return nil unless uri.host.to_s.casecmp("emision.facturador.com").zero?
+
+      uri.host = "emision-api.facturador.com"
+      uri.to_s
+    rescue URI::InvalidURIError
+      nil
     end
 
     def response_request_id(response)
