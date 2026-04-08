@@ -204,7 +204,7 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
         expect(payment.reload.status).to eq('complement_queued')
       end
 
-      it 'keeps linked payment queued on transient generic 500 from api/v1 emit endpoint' do
+      it 'marks linked payment as failed on generic 500 from api/v1 emit endpoint' do
         allow(Facturador::PayloadBuilder).to receive(:build).with(invoice).and_return({ sample: 'payload' })
         allow(client_double).to receive(:emitir_comprobante).and_raise(
           Facturador::RequestError,
@@ -213,9 +213,9 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
 
         expect {
           described_class.call(invoice_id: invoice.id)
-        }.to raise_error(Facturador::TransientIssueError, /An error has occurred/)
+        }.to raise_error(Facturador::RequestError, /An error has occurred/)
 
-        expect(payment.reload.status).to eq('complement_queued')
+        expect(payment.reload.status).to eq('failed')
       end
     end
   end
