@@ -33,6 +33,7 @@ module Facturador
     def call
       raise RequestError, "Invoice is not eligible for payment registration" unless invoice.issued? || invoice.status == "cancel_pending"
       raise RequestError, invoice.payment_registration_ineligibility_reason if invoice.payment_registration_ineligibility_reason.present?
+      complement_eligible_before_payment = invoice.payment_complement_eligible?
 
       payment = invoice.invoice_payments.create!(
         amount: amount,
@@ -47,7 +48,7 @@ module Facturador
 
       payment.receipt_file.attach(receipt_file) if receipt_file.present?
 
-      if issue_payment_complement? && invoice.payment_complement_eligible?
+      if issue_payment_complement? && complement_eligible_before_payment
         invoice.invoice_events.create!(
           event_type: "payment_registered",
           created_by: actor,

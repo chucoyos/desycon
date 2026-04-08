@@ -64,5 +64,24 @@ RSpec.describe Facturador::RegisterInvoicePaymentService, type: :service do
 
       expect(Facturador::IssuePaymentComplementService).not_to have_received(:call)
     end
+
+    it 'triggers complement service when payment covers full outstanding balance' do
+      invoice.update!(payload_snapshot: { metodoPago: 'PPD' })
+
+      payment = described_class.call(
+        invoice: invoice,
+        amount: invoice.total,
+        paid_at: Time.current,
+        payment_method: '03',
+        reference: 'FULL-001',
+        notes: 'full payment',
+        actor: nil
+      )
+
+      expect(payment).to be_persisted
+      expect(payment.amount.to_d).to eq(invoice.total.to_d)
+      expect(Facturador::IssuePaymentComplementService).to have_received(:call).with(payment: payment, actor: nil)
+      expect(invoice.invoice_events.where(event_type: 'payment_registered')).to be_present
+    end
   end
 end
