@@ -106,7 +106,26 @@ module Facturador
       header_filename = extract_filename_from_content_disposition(downloaded_pdf)
       return header_filename if header_filename.present?
 
-      pdf_filename_from_url(pdf_url)
+      url_filename = pdf_filename_from_url(pdf_url)
+      return url_filename unless uuid_pdf_filename?(url_filename)
+
+      xml_derived_filename = pdf_filename_from_xml_attachment
+      xml_derived_filename.presence || url_filename
+    end
+
+    def pdf_filename_from_xml_attachment
+      return nil unless invoice.xml_file.attached?
+
+      xml_filename = invoice.xml_file.filename.to_s
+      basename = File.basename(xml_filename, ".*")
+      return nil if basename.blank?
+      return nil if basename.casecmp(invoice.sat_uuid.to_s).zero?
+
+      "#{basename}.pdf"
+    end
+
+    def uuid_pdf_filename?(filename)
+      filename.to_s.casecmp("#{invoice.sat_uuid}.pdf").zero?
     end
 
     def extract_filename_from_content_disposition(downloaded_pdf)
