@@ -98,6 +98,20 @@ RSpec.describe Facturador::SyncInvoiceDocumentsService, type: :service do
       expect(invoice.pdf_file).to be_attached
     end
 
+    it 'allows syncing documents for cancel_pending invoices' do
+      invoice.update!(status: 'cancel_pending')
+      allow(client_double).to receive(:descargar_xml).and_return('<cfdi>pending</cfdi>')
+      allow(client_double).to receive(:generar_pdf).and_return({ 'ok' => true })
+      allow(client_double).to receive(:obtener_pdf_url).and_return('https://example.com/pending.pdf')
+      allow(URI).to receive(:open).and_return(StringIO.new('%PDF-1.4 pending'))
+
+      described_class.call(invoice: invoice)
+
+      invoice.reload
+      expect(invoice.xml_file).to be_attached
+      expect(invoice.pdf_file).to be_attached
+    end
+
     it 'allows forced sync when manual actions are disabled' do
       allow(Facturador::Config).to receive(:manual_actions_enabled?).and_return(false)
       allow(client_double).to receive(:descargar_xml).and_return('<cfdi>forced</cfdi>')
