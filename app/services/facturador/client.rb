@@ -51,10 +51,12 @@ module Facturador
     end
 
     def emitir_comprobante(emisor_id:, payload:, emitir: true)
+      api_v1_path = format(COMPROBANTES_PATH_API_V1, emisor_id: emisor_id)
       attempts = [
         [ Config.business_base_url, format(COMPROBANTES_PATH, emisor_id: emisor_id) ],
+        [ Config.business_base_url, api_v1_path ],
         [ Config.business_base_url, format(COMPROBANTES_PATH_LEGACY, emisor_id: emisor_id) ],
-        [ api_business_base_url_fallback, format(COMPROBANTES_PATH_API_V1, emisor_id: emisor_id) ]
+        [ api_business_base_url_fallback, api_v1_path ]
       ].select { |base_url, _path| base_url.present? }.uniq
 
       last_error = nil
