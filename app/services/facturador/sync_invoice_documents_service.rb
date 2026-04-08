@@ -73,12 +73,14 @@ module Facturador
       pdf_url = client.obtener_pdf_url(emisor_id: emisor_id, uuid: invoice.sat_uuid)
       raise RequestError, "PDF URL is invalid" unless pdf_url.start_with?("http://", "https://")
 
-      pdf_bytes = URI.open(pdf_url, read_timeout: 30).read
+      downloaded_pdf = URI.open(pdf_url, read_timeout: 30)
+      pdf_bytes = downloaded_pdf.read
       raise RequestError, "PDF content is empty" if pdf_bytes.blank?
+      pdf_filename = pdf_filename_from_response(pdf_url, downloaded_pdf)
 
       invoice.pdf_file.attach(
         io: StringIO.new(pdf_bytes),
-        filename: pdf_filename_from_url(pdf_url),
+        filename: pdf_filename,
         content_type: "application/pdf"
       )
 
@@ -98,6 +100,29 @@ module Facturador
       "#{invoice.sat_uuid}.pdf"
     rescue URI::InvalidURIError
       "#{invoice.sat_uuid}.pdf"
+    end
+
+    def pdf_filename_from_response(pdf_url, downloaded_pdf)
+      header_filename = extract_filename_from_content_disposition(downloaded_pdf)
+      return header_filename if header_filename.present?
+
+      pdf_filename_from_url(pdf_url)
+    end
+
+    def extract_filename_from_content_disposition(downloaded_pdf)
+      return nil unless downloaded_pdf.respond_to?(:meta)
+
+      disposition = downloaded_pdf.meta["content-disposition"].to_s
+      return nil if disposition.blank?
+
+      match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i)
+      raw = match&.captures&.compact&.first.to_s
+      return nil if raw.blank?
+
+      filename = URI.decode_www_form_component(raw).strip
+      filename if filename.downcase.end_with?(".pdf")
+    rescue StandardError
+      nil
     end
 
     def xml_filename_from_content(xml_body)

@@ -54,6 +54,23 @@ RSpec.describe Facturador::SyncInvoiceDocumentsService, type: :service do
       expect(invoice.pdf_file.filename.to_s).to eq('UUID-XYZ.pdf')
     end
 
+    it 'uses filename from content disposition when available' do
+      allow(client_double).to receive(:descargar_xml).and_return('<cfdi>ok</cfdi>')
+      allow(client_double).to receive(:generar_pdf).and_return({ 'ok' => true })
+      allow(client_double).to receive(:obtener_pdf_url).and_return('https://example.com/download?uuid=UUID-XYZ')
+
+      io = double('downloaded_pdf',
+                  read: '%PDF-1.4 file',
+                  meta: { 'content-disposition' => 'attachment; filename="PTM0701119T6_GMZO_1_20260407.pdf"' })
+      allow(URI).to receive(:open).and_return(io)
+
+      described_class.call(invoice: invoice)
+
+      invoice.reload
+      expect(invoice.pdf_file).to be_attached
+      expect(invoice.pdf_file.filename.to_s).to eq('PTM0701119T6_GMZO_1_20260407.pdf')
+    end
+
     it 'allows syncing documents for cancelled invoices' do
       invoice.update!(status: 'cancelled')
       allow(client_double).to receive(:descargar_xml).and_return('<cfdi>cancelled</cfdi>')
