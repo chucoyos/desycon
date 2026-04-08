@@ -406,6 +406,7 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
 
         complemento = payload.dig(:complemento, :complementoPago20)
         expect(complemento).to be_present
+        expect(payload[:pagos20]).to eq(complemento)
         expect(complemento[:version]).to eq('2.0')
         expect(complemento.dig(:totales, :montoTotalPagos)).to eq(300.0)
 
@@ -548,6 +549,7 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
 
         complemento = payload.dig(:complemento, :complementoPago20)
         expect(complemento).to be_present
+        expect(payload[:pagos20]).to eq(complemento)
         expect(complemento.dig(:totales, :montoTotalPagos)).to eq(500.0)
 
         pago = complemento[:pago].first

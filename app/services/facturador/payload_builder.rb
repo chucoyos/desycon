@@ -60,6 +60,14 @@ module Facturador
       source = source_invoice
       taxes = payment_related_taxes(source: source, payment_data: payment_data)
 
+      complemento_pago20 = {
+        version: "2.0",
+        totales: payment_complement_totals(payment_data: payment_data, taxes: taxes),
+        pago: [
+          payment_entry(source: source, payment_data: payment_data, taxes: taxes)
+        ]
+      }
+
       payload = {
         emisor: emisor_payload,
         receptor: receptor_payload(for_payment: true),
@@ -86,14 +94,9 @@ module Facturador
         lugarExpedicion: emisor_address.codigo_postal,
         descripcionFacturador: descripcion_facturador,
         metadataInterna: internal_metadata_snapshot,
+        pagos20: complemento_pago20,
         complemento: {
-          complementoPago20: {
-            version: "2.0",
-            totales: payment_complement_totals(payment_data: payment_data, taxes: taxes),
-            pago: [
-              payment_entry(source: source, payment_data: payment_data, taxes: taxes)
-            ]
-          }
+          complementoPago20: complemento_pago20
         }
       }
 
@@ -147,6 +150,12 @@ module Facturador
         }
       end
 
+      complemento_pago20 = {
+        version: "2.0",
+        totales: payment_complement_totals(payment_data: { amount: total_amount }, taxes: taxes),
+        pago: [ entry ]
+      }
+
       payload = {
         emisor: emisor_payload,
         receptor: receptor_payload(for_payment: true),
@@ -173,12 +182,9 @@ module Facturador
         lugarExpedicion: emisor_address.codigo_postal,
         descripcionFacturador: descripcion_facturador,
         metadataInterna: internal_metadata_snapshot,
+        pagos20: complemento_pago20,
         complemento: {
-          complementoPago20: {
-            version: "2.0",
-            totales: payment_complement_totals(payment_data: { amount: total_amount }, taxes: taxes),
-            pago: [ entry ]
-          }
+          complementoPago20: complemento_pago20
         }
       }
 
