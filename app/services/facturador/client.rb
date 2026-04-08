@@ -1,6 +1,6 @@
 require "net/http"
 require "json"
-require "rexml/document"
+require "nokogiri"
 
 module Facturador
   class Client
@@ -343,9 +343,9 @@ module Facturador
       raise RequestError, "XML response is empty" if body.blank?
       raise RequestError, "XML response is invalid" if body.downcase.start_with?("<!doctype", "<html")
 
-      document = REXML::Document.new(body)
+      document = Nokogiri::XML(body) { |config| config.strict.nonet }
       raise RequestError, "XML response is invalid" if document.root.nil?
-    rescue REXML::ParseException
+    rescue Nokogiri::XML::SyntaxError
       raise RequestError, "XML response is invalid"
     end
 
