@@ -311,10 +311,15 @@ module Facturador
     end
 
     def with_business_api_fallback(path)
+      api_v1_path = api_v1_path_from_business_path(path)
       attempts = [ [ Config.business_base_url, path ] ]
+      attempts << [ Config.business_base_url, api_v1_path ] if api_v1_path != path
+
       if (fallback_base = api_business_base_url_fallback).present?
-        attempts << [ fallback_base, api_v1_path_from_business_path(path) ]
+        attempts << [ fallback_base, path ]
+        attempts << [ fallback_base, api_v1_path ] if api_v1_path != path
       end
+
       attempts.uniq!
 
       last_error = nil
