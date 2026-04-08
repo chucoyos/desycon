@@ -2,7 +2,7 @@ module Facturador
   class IssueInvoiceJob < ApplicationJob
     queue_as :default
 
-    TRANSIENT_RETRY_WAIT = [ 5.minutes, 15.minutes, 30.minutes, 60.minutes ].freeze
+    TRANSIENT_RETRY_WAIT = [ 5.minutes, 15.minutes, 30.minutes ].freeze
 
     discard_on Facturador::RequestError
     discard_on Facturador::ValidationError

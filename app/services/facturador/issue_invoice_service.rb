@@ -40,7 +40,7 @@ module Facturador
     rescue Error => e
       raise if e.is_a?(TransientIssueError)
 
-      is_transient_transport = transient_transport_retryable?(e)
+      is_transient_transport = transient_transport_retryable?(e) || transient_rep_pending_retryable?(e)
 
       error_code = ErrorCodeResolver.call(context: :issue, message: e.message, exception: e)
       invoice.mark_failed!(error_code: error_code, error_message: e.message)
@@ -139,6 +139,16 @@ module Facturador
 
       message = error.message.to_s
       message.match?(/Temporary failure in name resolution|getaddrinfo\(3\)|Failed to open TCP connection|execution expired|timed out|timeout/i)
+    end
+
+    def transient_rep_pending_retryable?(error)
+      return false unless invoice.kind == "pago"
+      return false unless error.is_a?(RequestError)
+
+      message = error.message.to_s
+      message.include?("500: An error has occurred.") &&
+        message.include?("POST /api/v1/emisores/") &&
+        message.include?("query=emitir=true")
     end
 
     def sync_payment_complement_status!(status)

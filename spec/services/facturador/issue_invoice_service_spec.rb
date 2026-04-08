@@ -203,6 +203,20 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
 
         expect(payment.reload.status).to eq('complement_queued')
       end
+
+      it 'keeps linked payment queued on transient generic 500 from api/v1 emit endpoint' do
+        allow(Facturador::PayloadBuilder).to receive(:build).with(invoice).and_return({ sample: 'payload' })
+        allow(client_double).to receive(:emitir_comprobante).and_raise(
+          Facturador::RequestError,
+          '500: An error has occurred. (POST /api/v1/emisores/273059/comprobantes, host=emision-api.facturador.com, query=emitir=true)'
+        )
+
+        expect {
+          described_class.call(invoice_id: invoice.id)
+        }.to raise_error(Facturador::TransientIssueError, /An error has occurred/)
+
+        expect(payment.reload.status).to eq('complement_queued')
+      end
     end
   end
 end
