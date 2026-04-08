@@ -1,5 +1,6 @@
 require "open-uri"
 require "stringio"
+require "nokogiri"
 
 module Facturador
   class SyncInvoiceDocumentsService
@@ -48,7 +49,7 @@ module Facturador
 
       invoice.xml_file.attach(
         io: StringIO.new(xml_body),
-        filename: "#{invoice.sat_uuid}.xml",
+        filename: xml_filename_from_content(xml_body),
         content_type: "application/xml"
       )
 
@@ -77,7 +78,7 @@ module Facturador
 
       invoice.pdf_file.attach(
         io: StringIO.new(pdf_bytes),
-        filename: "#{invoice.sat_uuid}.pdf",
+        filename: pdf_filename_from_url(pdf_url),
         content_type: "application/pdf"
       )
 
@@ -87,6 +88,42 @@ module Facturador
         request_payload: { uuid: invoice.sat_uuid, url: pdf_url },
         response_payload: { bytes: pdf_bytes.bytesize }
       )
+    end
+
+    def pdf_filename_from_url(pdf_url)
+      uri = URI.parse(pdf_url)
+      basename = File.basename(uri.path.to_s)
+      return basename if basename.present? && basename != "/" && basename.downcase.end_with?(".pdf")
+
+      "#{invoice.sat_uuid}.pdf"
+    rescue URI::InvalidURIError
+      "#{invoice.sat_uuid}.pdf"
+    end
+
+    def xml_filename_from_content(xml_body)
+      document = Nokogiri::XML(xml_body.to_s) { |config| config.nonet }
+      comprobante = document.at_xpath("//*[local-name()='Comprobante']")
+      emisor = document.at_xpath("//*[local-name()='Emisor']")
+
+      rfc = normalized_filename_token(emisor&.[]("Rfc") || emisor&.[]("RFC"))
+      serie = normalized_filename_token(comprobante&.[]("Serie") || comprobante&.[]("serie"))
+      folio = normalized_filename_token(comprobante&.[]("Folio") || comprobante&.[]("folio"))
+      fecha_raw = comprobante&.[]("Fecha") || comprobante&.[]("fecha")
+      fecha = normalized_filename_token(fecha_raw.to_s.split("T").first&.delete("-"))
+
+      parts = [ rfc, serie, folio, fecha ].compact
+      return "#{parts.join('_')}.xml" if parts.any?
+
+      "#{invoice.sat_uuid}.xml"
+    rescue StandardError
+      "#{invoice.sat_uuid}.xml"
+    end
+
+    def normalized_filename_token(value)
+      token = value.to_s.strip
+      return nil if token.blank?
+
+      token.gsub(/[^0-9A-Za-z_-]/, "")
     end
   end
 end

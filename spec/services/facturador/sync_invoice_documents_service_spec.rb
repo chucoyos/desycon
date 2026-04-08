@@ -22,7 +22,7 @@ RSpec.describe Facturador::SyncInvoiceDocumentsService, type: :service do
     end
 
     it 'stores xml and pdf attachments and creates events' do
-      allow(client_double).to receive(:descargar_xml).and_return('<cfdi>ok</cfdi>')
+      allow(client_double).to receive(:descargar_xml).and_return('<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" Serie="GMZO" Folio="1" Fecha="2026-04-07T10:11:12"><cfdi:Emisor Rfc="PTM0701119T6"/></cfdi:Comprobante>')
       allow(client_double).to receive(:generar_pdf).and_return({ 'ok' => true })
       allow(client_double).to receive(:obtener_pdf_url).and_return('https://example.com/test.pdf')
       allow(URI).to receive(:open).and_return(StringIO.new('%PDF-1.4 file'))
@@ -32,9 +32,26 @@ RSpec.describe Facturador::SyncInvoiceDocumentsService, type: :service do
       invoice.reload
       expect(invoice.xml_file).to be_attached
       expect(invoice.pdf_file).to be_attached
+      expect(invoice.xml_file.filename.to_s).to eq('PTM0701119T6_GMZO_1_20260407.xml')
+      expect(invoice.pdf_file.filename.to_s).to eq('test.pdf')
 
       event_types = invoice.invoice_events.order(:created_at).pluck(:event_type)
       expect(event_types).to include('xml_requested', 'xml_stored', 'pdf_requested', 'pdf_stored')
+    end
+
+    it 'falls back to uuid filename when pdf url has no pdf basename' do
+      allow(client_double).to receive(:descargar_xml).and_return('<cfdi>ok</cfdi>')
+      allow(client_double).to receive(:generar_pdf).and_return({ 'ok' => true })
+      allow(client_double).to receive(:obtener_pdf_url).and_return('https://example.com/download?uuid=UUID-XYZ')
+      allow(URI).to receive(:open).and_return(StringIO.new('%PDF-1.4 file'))
+
+      described_class.call(invoice: invoice)
+
+      invoice.reload
+      expect(invoice.xml_file).to be_attached
+      expect(invoice.xml_file.filename.to_s).to eq('UUID-XYZ.xml')
+      expect(invoice.pdf_file).to be_attached
+      expect(invoice.pdf_file.filename.to_s).to eq('UUID-XYZ.pdf')
     end
 
     it 'allows syncing documents for cancelled invoices' do
