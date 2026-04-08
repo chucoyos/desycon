@@ -385,7 +385,7 @@ class InvoicesController < ApplicationController
   def sync_documents
     authorize @invoice, :sync_documents?
 
-    if @invoice.issued?
+    if @invoice.status.in?([ "issued", "cancel_pending" ])
       Facturador::ReconcileInvoicesService.call_for_invoice(invoice: @invoice, actor: current_user)
       @invoice.reload
     end

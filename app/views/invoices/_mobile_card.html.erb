@@ -8,7 +8,10 @@ end %>
 <% serie = invoice.provider_response.to_h["serie"].presence || invoice.payload_snapshot.to_h["serie"].presence %>
 <% folio = invoice.provider_response.to_h["folio"].presence ||
            invoice.provider_response.to_h["noComprobante"].presence ||
+           invoice.payload_snapshot.to_h["folio"].presence ||
+           invoice.payload_snapshot.to_h["noComprobante"].presence ||
            invoice.provider_response.to_h["numeroComprobante"].presence ||
+           invoice.payload_snapshot.to_h["numeroComprobante"].presence ||
            invoice.facturador_comprobante_id&.to_s %>
 <% status_for_display = invoice.effective_status %>
 <% issue_status_badge_class = case status_for_display

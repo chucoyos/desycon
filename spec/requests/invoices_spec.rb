@@ -921,6 +921,17 @@ RSpec.describe 'Invoices', type: :request do
       expect(response).to redirect_to(containers_path)
       expect(flash[:notice]).to include('XML/PDF sincronizados (factura cancelada).')
     end
+
+    it 'reconciles cancel_pending invoice explicitly before syncing documents' do
+      invoice.update!(status: 'cancel_pending')
+      sign_in admin_user, scope: :user
+      expect(Facturador::ReconcileInvoicesService).to receive(:call_for_invoice).with(invoice: invoice, actor: admin_user)
+      expect(Facturador::SyncInvoiceDocumentsService).to receive(:call).with(invoice: invoice, actor: admin_user)
+
+      post sync_documents_invoice_path(invoice)
+
+      expect(response).to redirect_to(containers_path)
+    end
   end
 
   describe 'POST /invoices/:id/sync_files' do
