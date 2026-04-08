@@ -140,6 +140,8 @@ module Facturador
         return
       end
 
+      return if invoice.status == "cancel_pending"
+
       return unless provider_invoice["uuid"].present?
 
       comprobante_id = normalized_comprobante_id(provider_invoice, invoice)

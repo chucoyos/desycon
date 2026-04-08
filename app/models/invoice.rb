@@ -78,7 +78,7 @@ class Invoice < ApplicationRecord
   end
 
   def effective_status
-    return "issued" if sat_uuid.present? && status != "cancelled" && status.in?(%w[failed cancel_pending])
+    return "issued" if sat_uuid.present? && status == "failed"
 
     status
   end
@@ -202,7 +202,7 @@ class Invoice < ApplicationRecord
       sat_uuid: uuid,
       facturador_comprobante_id: comprobante_id,
       issued_at: issued_at,
-      provider_response: provider_response,
+      provider_response: merged_provider_response(provider_response),
       last_error_code: nil,
       last_error_message: nil
     )
@@ -212,7 +212,7 @@ class Invoice < ApplicationRecord
     update!(
       status: "cancelled",
       cancelled_at: cancelled_at,
-      provider_response: provider_response,
+      provider_response: merged_provider_response(provider_response),
       last_error_code: nil,
       last_error_message: nil
     )
@@ -223,7 +223,7 @@ class Invoice < ApplicationRecord
       status: "cancel_pending",
       cancellation_motive: motive,
       replacement_uuid: replacement_uuid,
-      provider_response: provider_response,
+      provider_response: merged_provider_response(provider_response),
       last_error_code: nil,
       last_error_message: nil
     )
@@ -234,7 +234,7 @@ class Invoice < ApplicationRecord
       status: "issued",
       last_error_code: error_code,
       last_error_message: error_message,
-      provider_response: provider_response
+      provider_response: merged_provider_response(provider_response)
     )
   end
 
@@ -276,5 +276,18 @@ class Invoice < ApplicationRecord
     return if customs_agent.role_customs_agent?
 
     errors.add(:customs_agent, "debe ser una agencia aduanal")
+  end
+
+  def merged_provider_response(new_response)
+    existing = provider_response.to_h.deep_stringify_keys
+    incoming = new_response.to_h.deep_stringify_keys
+    return existing if incoming.blank?
+
+    # Cancellation responses can omit folio/serie; keep the issued values for UI continuity.
+    %w[serie folio noComprobante numeroComprobante idComprobante uuid].each do |key|
+      incoming[key] = existing[key] if incoming[key].blank? && existing[key].present?
+    end
+
+    existing.merge(incoming)
   end
 end

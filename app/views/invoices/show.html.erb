@@ -22,7 +22,7 @@
 <% can_send_email = policy(@invoice).send_email? %>
 <% can_retry_issue = policy(@invoice).retry_issue? %>
 <% can_manage_payments = policy(@invoice).register_payment? %>
-<% can_sync_files_now = @invoice.sat_uuid.present? && @invoice.status.in?(["issued", "cancelled"]) %>
+<% can_sync_files_now = @invoice.sat_uuid.present? && @invoice.status.in?(["issued", "cancel_pending", "cancelled"]) %>
 <% files_already_synced = @invoice.xml_file.attached? && @invoice.pdf_file.attached? %>
 
 <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8" data-controller="modal">
@@ -667,7 +667,7 @@
 
         <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 space-y-2">
           <p class="font-semibold">Esta acción solicitará la cancelación del CFDI en PAC/SAT.</p>
-          <p>Si el PAC no confirma de inmediato, la factura seguirá visible como <span class="font-semibold">emitida</span> hasta que conciliación confirme el estado final.</p>
+          <p>Si el PAC no confirma de inmediato, la factura quedará en <span class="font-semibold">pendiente de cancelación</span> hasta que conciliación confirme el estado final.</p>
           <p>Motivo aplicado en esta fase: <span class="font-semibold">02 - Sin relación</span>.</p>
         </div>
 

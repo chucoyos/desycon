@@ -73,7 +73,7 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('reconcile_synced')
     end
 
-    it 'keeps existing comprobante id when provider sends idComprobante as 0' do
+    it 'keeps cancel_pending when provider does not confirm cancellation status yet' do
       invoice = create(:invoice, status: 'cancel_pending', sat_uuid: 'UUID-EMITIDO-001', facturador_comprobante_id: nil)
       allow(client_double).to receive(:buscar_comprobantes).and_return(
         {
@@ -94,7 +94,7 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
       expect { described_class.call(limit: 10) }.not_to raise_error
 
       invoice.reload
-      expect(invoice.status).to eq('issued')
+      expect(invoice.status).to eq('cancel_pending')
       expect(invoice.facturador_comprobante_id).to be_nil
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('reconcile_synced')
     end

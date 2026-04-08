@@ -50,6 +50,25 @@ RSpec.describe Facturador::CancelInvoiceService, type: :service do
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('cancel_requested')
     end
 
+    it 'preserves serie and folio when cancellation response omits those fields' do
+      invoice.update!(provider_response: { 'serie' => 'GMZO', 'folio' => '2', 'idComprobante' => '97295429' })
+      allow(client_double).to receive(:cancelar_comprobante).and_return(
+        {
+          'esValido' => true,
+          'descripcion' => 'Emitido (Espera Cancelación)',
+          'subEstatusId' => 4,
+          'uuid' => 'UUID-CANCEL-001'
+        }
+      )
+
+      described_class.call(invoice: invoice, motive: '02', replacement_uuid: nil, actor: actor)
+
+      provider_response = invoice.reload.provider_response.to_h
+      expect(provider_response['serie']).to eq('GMZO')
+      expect(provider_response['folio']).to eq('2')
+      expect(provider_response['uuid']).to eq('UUID-CANCEL-001')
+    end
+
     it 'keeps invoice issued and records failed cancel attempt when PAC rejects cancellation' do
       allow(client_double).to receive(:cancelar_comprobante).and_return(
         {
