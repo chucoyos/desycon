@@ -102,39 +102,46 @@
       </div>
 
       <div class="md:col-span-6 lg:col-span-4">
-        <label class="block text-xs font-medium text-gray-600 mb-1">Línea Naviera</label>
-        <% selected_shipping_line = @shipping_lines.find { |line| line.id.to_s == params[:shipping_line_id].to_s } %>
-        <div
-          data-controller="catalog-autocomplete"
-          data-catalog-autocomplete-url-value="<%= shipping_lines_search_containers_path %>"
-          data-catalog-autocomplete-min-chars-value="2"
-          data-catalog-autocomplete-debounce-value="300"
-          class="relative"
-        >
-          <%= hidden_field_tag :shipping_line_id,
-                params[:shipping_line_id],
-                data: { catalog_autocomplete_target: "hiddenInput" } %>
-
-          <%= text_field_tag :shipping_line_search,
-                selected_shipping_line&.name,
-                autocomplete: "off",
-                placeholder: "Todas las líneas",
-                class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all",
-                data: {
-                  catalog_autocomplete_target: "input",
-                  action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
-                } %>
-
-          <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
-          <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
-        </div>
-
-        <noscript>
-          <%= f.select :shipping_line_id,
-            options_for_select([["Todas las líneas", ""]] + @shipping_lines.map { |line| [[line.iso_code, line.name].compact.reject(&:blank?).join(" - "), line.id] }, params[:shipping_line_id]),
-            {},
+        <% if current_user&.consolidator? %>
+          <label class="block text-xs font-medium text-gray-600 mb-1">ETA</label>
+          <%= f.date_field :eta,
+            value: @selected_eta,
             class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all" %>
-        </noscript>
+        <% else %>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Línea Naviera</label>
+          <% selected_shipping_line = @shipping_lines.find { |line| line.id.to_s == params[:shipping_line_id].to_s } %>
+          <div
+            data-controller="catalog-autocomplete"
+            data-catalog-autocomplete-url-value="<%= shipping_lines_search_containers_path %>"
+            data-catalog-autocomplete-min-chars-value="2"
+            data-catalog-autocomplete-debounce-value="300"
+            class="relative"
+          >
+            <%= hidden_field_tag :shipping_line_id,
+                  params[:shipping_line_id],
+                  data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+            <%= text_field_tag :shipping_line_search,
+                  selected_shipping_line&.name,
+                  autocomplete: "off",
+                  placeholder: "Todas las líneas",
+                  class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all",
+                  data: {
+                    catalog_autocomplete_target: "input",
+                    action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+                  } %>
+
+            <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+            <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+          </div>
+
+          <noscript>
+            <%= f.select :shipping_line_id,
+              options_for_select([["Todas las líneas", ""]] + @shipping_lines.map { |line| [[line.iso_code, line.name].compact.reject(&:blank?).join(" - "), line.id] }, params[:shipping_line_id]),
+              {},
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all" %>
+          </noscript>
+        <% end %>
       </div>
 
       <div class="md:col-span-12 lg:col-span-4">
@@ -156,7 +163,7 @@
         params[:reference].present? ||
         @selected_consolidator_id.present? ||
         params[:bl_master].present? ||
-        params[:shipping_line_id].present? ||
+        (current_user&.consolidator? ? @selected_eta.present? : params[:shipping_line_id].present?) ||
         @selected_start_date.present? ||
         @selected_end_date.present? %>
 
@@ -200,7 +207,11 @@
                 </span>
               <% end %>
 
-              <% if params[:shipping_line_id].present? %>
+              <% if current_user&.consolidator? && @selected_eta.present? %>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  ETA: <%= l(@selected_eta, format: :short) %>
+                </span>
+              <% elsif params[:shipping_line_id].present? %>
                 <% selected_shipping_line = @shipping_lines.find { |line| line.id.to_s == params[:shipping_line_id].to_s } %>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                   Línea: <%= selected_shipping_line&.iso_code || selected_shipping_line&.name || params[:shipping_line_id] %>

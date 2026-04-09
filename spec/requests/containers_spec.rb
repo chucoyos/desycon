@@ -245,6 +245,45 @@ RSpec.describe "Containers", type: :request do
       expect(response.body).to include('name="consolidator_id"')
       expect(response.body).to include('disabled="disabled"')
     end
+
+    it "filters by ETA for consolidator users" do
+      consolidator = create(:user, :consolidator)
+      own_entity = consolidator.entity
+      sign_in consolidator, scope: :user
+
+      selected_voyage = create(:voyage, eta: Time.zone.parse("2026-04-09 10:30:00"))
+      other_voyage = create(:voyage, eta: Time.zone.parse("2026-04-11 10:30:00"))
+
+      selected_container = create(:container, number: "ETAA1234501", consolidator_entity: own_entity, voyage: selected_voyage)
+      other_container = create(:container, number: "ETAB1234502", consolidator_entity: own_entity, voyage: other_voyage)
+
+      get containers_url, params: { eta: "2026-04-09" }
+
+      expect(response).to be_successful
+      expect(response.body).to include(selected_container.number)
+      expect(response.body).not_to include(other_container.number)
+      expect(response.body).to include("ETA")
+      expect(response.body).not_to include("Línea Naviera")
+      expect(response.body).to include("ETA:")
+    end
+  end
+
+  describe "GET /containers shipping line filter for non-consolidator" do
+    it "keeps filtering by shipping line for admin users" do
+      sign_in user, scope: :user
+      selected_line = create(:shipping_line, iso_code: "ADM")
+      other_line = create(:shipping_line, iso_code: "OTH")
+
+      selected_container = create(:container, number: "ADMN1234501", shipping_line: selected_line)
+      other_container = create(:container, number: "ADMN1234502", shipping_line: other_line)
+
+      get containers_url, params: { shipping_line_id: selected_line.id }
+
+      expect(response).to be_successful
+      expect(response.body).to include(selected_container.number)
+      expect(response.body).not_to include(other_container.number)
+      expect(response.body).to include("Línea Naviera")
+    end
   end
 
   describe "GET /containers/shipping_lines_search" do
