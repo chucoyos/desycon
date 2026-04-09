@@ -25,6 +25,7 @@
 <% can_send_email = policy(@invoice).send_email? %>
 <% can_retry_issue = policy(@invoice).retry_issue? %>
 <% can_manage_payments = policy(@invoice).register_payment? %>
+<% can_destroy_invoice = policy(@invoice).destroy? %>
 <% can_sync_files_now = @invoice.sat_uuid.present? && @invoice.status.in?(["issued", "cancel_pending", "cancelled"]) %>
 <% files_already_synced = @invoice.xml_file.attached? && @invoice.pdf_file.attached? %>
 
@@ -101,6 +102,20 @@
 
           <% if @invoice.pdf_file.attached? %>
             <%= link_to "Descargar PDF", rails_blob_path(@invoice.pdf_file, disposition: "attachment"), class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
+          <% end %>
+
+          <% if can_destroy_invoice %>
+            <% delete_confirm_message = if @invoice.kind == "pago"
+              "Se eliminará este REP NO timbrado y se desvinculará de sus pagos relacionados para permitir su regeneración.\n\nEsta acción no cancela CFDI timbrados y no se puede deshacer.\n\n¿Deseas continuar?"
+            else
+              "Se eliminará esta factura NO timbrada junto con sus pagos relacionados.\n\nEsta acción no cancela CFDI timbrados y no se puede deshacer.\n\n¿Deseas continuar?"
+            end %>
+            <%= button_to invoice_path(@invoice),
+                method: :delete,
+                form: { data: { turbo_confirm: delete_confirm_message } },
+                class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100" do %>
+              <span><%= @invoice.kind == "pago" ? "Eliminar REP no timbrado" : "Eliminar factura no timbrada" %></span>
+            <% end %>
           <% end %>
         </div>
       </div>
@@ -500,6 +515,7 @@
                     <td class="px-3 py-2 text-gray-700"><%= payment.status_label %></td>
                     <td class="px-3 py-2 text-gray-700">
                       <% if payment.complement_invoice.present? %>
+                        <% rep_can_be_deleted = policy(payment.complement_invoice).destroy? %>
                         <div class="flex flex-col gap-1">
                           <%= link_to(payment.complement_invoice.sat_uuid.presence || "Factura ##{payment.complement_invoice.id}", invoice_path(payment.complement_invoice), class: "text-indigo-700 hover:text-indigo-900 text-xs font-mono") %>
                           <div class="flex items-center gap-1">
@@ -508,6 +524,14 @@
                             <% end %>
                             <% if payment.complement_invoice.pdf_file.attached? %>
                               <%= link_to "PDF", rails_blob_path(payment.complement_invoice.pdf_file, disposition: "attachment"), class: "cursor-pointer inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
+                            <% end %>
+                            <% if rep_can_be_deleted %>
+                              <%= button_to invoice_path(payment.complement_invoice, return_to: invoice_path(@invoice, anchor: "payments-section")),
+                                  method: :delete,
+                                  form: { data: { turbo_confirm: "Se eliminará el REP no timbrado vinculado a este pago y el pago quedará listo para volver a emitir complemento.\n\nEsta acción no se puede deshacer.\n\n¿Deseas continuar?" } },
+                                  class: "cursor-pointer inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100" do %>
+                                <span>Eliminar REP no timbrado</span>
+                              <% end %>
                             <% end %>
                           </div>
                         </div>

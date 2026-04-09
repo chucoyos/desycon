@@ -43,6 +43,10 @@ class InvoicePolicy < ApplicationPolicy
     issue_manual?
   end
 
+  def destroy?
+    issue_manual? && record.deletable_non_stamped?
+  end
+
   def attach_payment_evidence?
     return false unless customs_related_invoice? || consolidator_related_invoice?
     return false unless record.status.in?(%w[issued cancel_pending])

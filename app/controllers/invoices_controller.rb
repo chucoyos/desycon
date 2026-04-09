@@ -1,6 +1,6 @@
 class InvoicesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_invoice, only: %i[show retry_issue cancel sync_documents sync_files register_payment send_email]
+  before_action :set_invoice, only: %i[show retry_issue cancel sync_documents sync_files register_payment send_email destroy]
   before_action :load_manual_invoice_options, only: %i[new create]
   after_action :verify_authorized
 
@@ -451,6 +451,29 @@ class InvoicesController < ApplicationController
     redirect_back fallback_location: invoice_path(@invoice), alert: message
   end
 
+  def destroy
+    authorize @invoice, :destroy?
+
+    own_payments_count = @invoice.invoice_payments.count
+    linked_rep_payments_count = @invoice.kind == "pago" ? @invoice.payment_complements.count : 0
+
+    if @invoice.kind == "pago"
+      @invoice.payment_complements.update_all(complement_invoice_id: nil, status: "registered", updated_at: Time.current)
+    end
+
+    @invoice.destroy!
+
+    notice = "Factura no timbrada eliminada correctamente"
+    notice += " (#{own_payments_count} pago(s) relacionado(s) eliminado(s))" if own_payments_count.positive?
+    if linked_rep_payments_count.positive?
+      notice += " y #{linked_rep_payments_count} pago(s) quedaron listos para regenerar REP"
+    end
+
+    redirect_to destroy_return_location, notice: "#{notice}."
+  rescue ActiveRecord::RecordNotDestroyed => e
+    redirect_back fallback_location: invoices_path, alert: "No fue posible eliminar la factura: #{e.message}"
+  end
+
   private
 
   def set_invoice
@@ -616,5 +639,12 @@ class InvoicesController < ApplicationController
 
   def email_feature_disabled_message?(message)
     message.match?(/email sending via pac is disabled/i)
+  end
+
+  def destroy_return_location
+    return_to = params[:return_to].to_s
+    return invoices_path unless return_to.start_with?("/")
+
+    return_to
   end
 end

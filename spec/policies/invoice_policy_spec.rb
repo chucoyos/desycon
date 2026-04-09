@@ -17,6 +17,14 @@ RSpec.describe InvoicePolicy, type: :policy do
       expect(policy.register_payment?).to eq(true)
       expect(policy.send_email?).to eq(true)
     end
+
+    it 'allows destroy only for non-stamped invoices' do
+      non_stamped_invoice = build(:invoice, sat_uuid: nil)
+      stamped_invoice = build(:invoice, sat_uuid: 'UUID-123')
+
+      expect(described_class.new(user, non_stamped_invoice).destroy?).to eq(true)
+      expect(described_class.new(user, stamped_invoice).destroy?).to eq(false)
+    end
   end
 
   context 'when customs broker user' do
@@ -37,6 +45,7 @@ RSpec.describe InvoicePolicy, type: :policy do
       expect(policy.sync_documents?).to eq(false)
       expect(policy.register_payment?).to eq(false)
       expect(policy.send_email?).to eq(false)
+      expect(policy.destroy?).to eq(false)
     end
 
     it 'limits scope to related invoices only' do
@@ -67,6 +76,7 @@ RSpec.describe InvoicePolicy, type: :policy do
       expect(described_class.new(user, own_invoice).cancel?).to eq(false)
       expect(described_class.new(user, own_invoice).register_payment?).to eq(false)
       expect(described_class.new(user, own_invoice).send_email?).to eq(false)
+      expect(described_class.new(user, own_invoice).destroy?).to eq(false)
 
       expect(described_class.new(user, other_invoice).show?).to eq(false)
       expect(described_class.new(user, other_invoice).sync_documents?).to eq(false)

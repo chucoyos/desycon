@@ -77,6 +77,14 @@ class Invoice < ApplicationRecord
     status == "failed"
   end
 
+  def stamped?
+    sat_uuid.present?
+  end
+
+  def deletable_non_stamped?
+    !stamped?
+  end
+
   def effective_status
     return "issued" if sat_uuid.present? && status == "failed"
 

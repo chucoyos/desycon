@@ -34,7 +34,7 @@ Rails.application.routes.draw do
 
   resources :photos, only: [ :destroy ]
 
-  resources :invoices, only: [ :index, :show, :new, :create ] do
+  resources :invoices, only: [ :index, :show, :new, :create, :destroy ] do
     collection do
       get :consolidators_search
       get :customs_agents_search

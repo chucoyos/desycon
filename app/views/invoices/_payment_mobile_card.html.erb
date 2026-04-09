@@ -25,6 +25,7 @@ end %>
   <div class="mt-3 rounded-xl border border-slate-200 p-3">
     <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Complemento</p>
     <% if payment.complement_invoice.present? %>
+      <% rep_can_be_deleted = policy(payment.complement_invoice).destroy? %>
       <div class="mt-2 flex flex-col gap-1.5">
         <%= link_to(payment.complement_invoice.sat_uuid.presence || "Factura ##{payment.complement_invoice.id}", invoice_path(payment.complement_invoice), class: "text-xs font-mono font-semibold text-indigo-700 hover:text-indigo-900") %>
         <div class="flex items-center gap-1.5">
@@ -33,6 +34,14 @@ end %>
           <% end %>
           <% if payment.complement_invoice.pdf_file.attached? %>
             <%= link_to "PDF", rails_blob_path(payment.complement_invoice.pdf_file, disposition: "attachment"), class: "inline-flex items-center rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-700 hover:bg-slate-100" %>
+          <% end %>
+          <% if rep_can_be_deleted %>
+            <%= button_to invoice_path(payment.complement_invoice, return_to: invoice_path(invoice, anchor: "payments-section")),
+                method: :delete,
+                form: { data: { turbo_confirm: "Se eliminará el REP no timbrado vinculado a este pago y el pago quedará listo para volver a emitir complemento.\n\nEsta acción no se puede deshacer.\n\n¿Deseas continuar?" } },
+                class: "inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[10px] font-semibold text-rose-700 hover:bg-rose-100" do %>
+              <span>Eliminar REP no timbrado</span>
+            <% end %>
           <% end %>
         </div>
       </div>

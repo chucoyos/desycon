@@ -1092,4 +1092,63 @@ RSpec.describe 'Invoices', type: :request do
       expect(flash[:alert]).to be_present
     end
   end
+
+  describe 'DELETE /invoices/:id' do
+    it 'allows admin to delete non-stamped invoice and its own related payments' do
+      sign_in admin_user, scope: :user
+      invoice = create(:invoice, status: 'failed', sat_uuid: nil)
+      create(:invoice_payment, invoice: invoice, status: 'registered')
+
+      expect {
+        delete invoice_path(invoice)
+      }.to change(Invoice, :count).by(-1)
+        .and change(InvoicePayment, :count).by(-1)
+
+      expect(response).to redirect_to(invoices_path)
+      expect(flash[:notice]).to include('Factura no timbrada eliminada correctamente')
+    end
+
+    it 'does not allow admin to delete stamped invoice' do
+      sign_in admin_user, scope: :user
+      invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-ISSUED-DELETE-001')
+
+      expect {
+        delete invoice_path(invoice)
+      }.not_to change(Invoice, :count)
+
+      expect(response).to redirect_to(containers_path)
+      expect(flash[:alert]).to be_present
+    end
+
+    it 'allows deleting non-stamped REP and resets linked payments for regeneration' do
+      sign_in admin_user, scope: :user
+      source_invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-SOURCE-REP-001')
+      rep_invoice = create(:invoice, kind: 'pago', status: 'failed', sat_uuid: nil)
+      payment = create(:invoice_payment, invoice: source_invoice, complement_invoice: rep_invoice, status: 'complement_queued')
+
+      expect {
+        delete invoice_path(rep_invoice)
+      }.to change(Invoice, :count).by(-1)
+
+      payment.reload
+      expect(payment.complement_invoice_id).to be_nil
+      expect(payment.status).to eq('registered')
+      expect(response).to redirect_to(invoices_path)
+      expect(flash[:notice]).to include('listos para regenerar REP')
+    end
+
+    it 'denies customs broker users' do
+      agency = create(:entity, :customs_agent)
+      broker_user = create(:user, :customs_broker, entity: agency)
+      sign_in broker_user, scope: :user
+      invoice = create(:invoice, status: 'failed', sat_uuid: nil, receiver_entity: create(:entity, :client, customs_agent: agency))
+
+      expect {
+        delete invoice_path(invoice)
+      }.not_to change(Invoice, :count)
+
+      expect(response).to redirect_to(customs_agents_dashboard_path)
+      expect(flash[:alert]).to be_present
+    end
+  end
 end
