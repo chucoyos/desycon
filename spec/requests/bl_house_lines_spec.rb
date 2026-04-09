@@ -242,6 +242,52 @@ RSpec.describe "BlHouseLines", type: :request do
       expect(response.body).not_to include(other_bl.blhouse)
       expect(response.body).not_to include(new_bl_house_line_path)
     end
+
+    it "shows reference and master BL filters instead of client and agency" do
+      consolidator = create(:user, :consolidator)
+      sign_in consolidator, scope: :user
+
+      get bl_house_lines_url
+
+      expect(response).to be_successful
+      expect(response.body).to include('name="reference"')
+      expect(response.body).to include('name="master_bl"')
+      expect(response.body).not_to include('name="client_id"')
+      expect(response.body).not_to include('name="customs_agent_id"')
+    end
+
+    it "filters own bl house lines by reference and master BL" do
+      consolidator = create(:user, :consolidator)
+      sign_in consolidator, scope: :user
+
+      matching_container = create(:container, consolidator_entity: consolidator.entity, archivo_nr: "REF-MATCH-001", bl_master: "MASTER-MATCH-001")
+      non_matching_container = create(:container, consolidator_entity: consolidator.entity, archivo_nr: "REF-OTHER-999", bl_master: "MASTER-OTHER-999")
+
+      matching_line = create(:bl_house_line, container: matching_container, blhouse: "BLH-REF-OK")
+      other_line = create(:bl_house_line, container: non_matching_container, blhouse: "BLH-REF-NO")
+
+      get bl_house_lines_url, params: { reference: "MATCH", master_bl: "MASTER-MATCH" }
+
+      expect(response).to be_successful
+      expect(response.body).to include(matching_line.blhouse)
+      expect(response.body).not_to include(other_line.blhouse)
+      expect(response.body).to include("Referencia: MATCH")
+      expect(response.body).to include("Master BL: MASTER-MATCH")
+    end
+  end
+
+  describe "GET /bl_house_lines filters for executive" do
+    it "keeps client and agency filters for non-consolidator users" do
+      sign_in user, scope: :user
+
+      get bl_house_lines_url
+
+      expect(response).to be_successful
+      expect(response.body).to include('name="client_id"')
+      expect(response.body).to include('name="customs_agent_id"')
+      expect(response.body).not_to include('name="reference"')
+      expect(response.body).not_to include('name="master_bl"')
+    end
   end
 
   describe "GET /bl_house_lines/clients_search" do

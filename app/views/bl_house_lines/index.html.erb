@@ -47,79 +47,91 @@
           <%= f.text_field :container_number, value: params[:container_number], placeholder: "Número de contenedor...", class: "block w-full h-12 px-4 border border-gray-200 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-shadow truncate" %>
         </div>
 
-        <div class="relative w-full sm:w-auto">
-          <%= f.label :client_id, "Cliente", class: "sr-only" %>
-          <% selected_client = @clients.find { |client| client.id.to_s == params[:client_id].to_s } if params[:client_id].present? %>
-
-          <div
-            data-controller="catalog-autocomplete"
-            data-catalog-autocomplete-url-value="<%= clients_search_bl_house_lines_path %>"
-            data-catalog-autocomplete-min-chars-value="2"
-            data-catalog-autocomplete-debounce-value="300"
-            class="relative"
-          >
-            <%= hidden_field_tag :client_id,
-                  params[:client_id],
-                  data: { catalog_autocomplete_target: "hiddenInput" } %>
-
-            <%= text_field_tag :client_search,
-                  selected_client&.name,
-                  autocomplete: "off",
-                  placeholder: "Todos los clientes",
-                  class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm",
-                  data: {
-                    catalog_autocomplete_target: "input",
-                    action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
-                  } %>
-
-            <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
-            <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+        <% if current_user&.consolidator? %>
+          <div class="min-w-0">
+            <%= f.label :reference, "Referencia", class: "sr-only" %>
+            <%= f.text_field :reference, value: params[:reference], placeholder: "Referencia...", class: "block w-full h-12 px-4 border border-gray-200 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-shadow truncate" %>
           </div>
 
-          <noscript>
-            <%= f.select :client_id,
-              options_from_collection_for_select(@clients || Entity.clients.order(:name), :id, :name, params[:client_id]),
-              { include_blank: "Todos los clientes" },
-              class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
-          </noscript>
-        </div>
+          <div class="min-w-0">
+            <%= f.label :master_bl, "Master BL", class: "sr-only" %>
+            <%= f.text_field :master_bl, value: params[:master_bl], placeholder: "Master BL...", class: "block w-full h-12 px-4 border border-gray-200 rounded-md bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-shadow truncate" %>
+          </div>
+        <% else %>
+          <div class="relative w-full sm:w-auto">
+            <%= f.label :client_id, "Cliente", class: "sr-only" %>
+            <% selected_client = @clients.find { |client| client.id.to_s == params[:client_id].to_s } if params[:client_id].present? %>
 
-        <div class="relative w-full sm:w-auto">
-          <%= f.label :customs_agent_id, "Agencia Aduanal", class: "sr-only" %>
-          <% selected_customs_agent = @customs_agents.find { |agent| agent.id.to_s == params[:customs_agent_id].to_s } if params[:customs_agent_id].present? %>
+            <div
+              data-controller="catalog-autocomplete"
+              data-catalog-autocomplete-url-value="<%= clients_search_bl_house_lines_path %>"
+              data-catalog-autocomplete-min-chars-value="2"
+              data-catalog-autocomplete-debounce-value="300"
+              class="relative"
+            >
+              <%= hidden_field_tag :client_id,
+                    params[:client_id],
+                    data: { catalog_autocomplete_target: "hiddenInput" } %>
 
-          <div
-            data-controller="catalog-autocomplete"
-            data-catalog-autocomplete-url-value="<%= customs_agents_search_bl_house_lines_path %>"
-            data-catalog-autocomplete-min-chars-value="2"
-            data-catalog-autocomplete-debounce-value="300"
-            class="relative"
-          >
-            <%= hidden_field_tag :customs_agent_id,
-                  params[:customs_agent_id],
-                  data: { catalog_autocomplete_target: "hiddenInput" } %>
+              <%= text_field_tag :client_search,
+                    selected_client&.name,
+                    autocomplete: "off",
+                    placeholder: "Todos los clientes",
+                    class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm",
+                    data: {
+                      catalog_autocomplete_target: "input",
+                      action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+                    } %>
 
-            <%= text_field_tag :customs_agent_search,
-                  selected_customs_agent&.display_name,
-                  autocomplete: "off",
-                  placeholder: "Todas las agencias",
-                  class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm",
-                  data: {
-                    catalog_autocomplete_target: "input",
-                    action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
-                  } %>
+              <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+              <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+            </div>
 
-            <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
-            <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+            <noscript>
+              <%= f.select :client_id,
+                options_from_collection_for_select(@clients || Entity.clients.order(:name), :id, :name, params[:client_id]),
+                { include_blank: "Todos los clientes" },
+                class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+            </noscript>
           </div>
 
-          <noscript>
-            <%= f.select :customs_agent_id,
-              options_from_collection_for_select(@customs_agents || Entity.customs_agents.order(:name), :id, :display_name, params[:customs_agent_id]),
-              { include_blank: "Todas las agencias" },
-              class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
-          </noscript>
-        </div>
+          <div class="relative w-full sm:w-auto">
+            <%= f.label :customs_agent_id, "Agencia Aduanal", class: "sr-only" %>
+            <% selected_customs_agent = @customs_agents.find { |agent| agent.id.to_s == params[:customs_agent_id].to_s } if params[:customs_agent_id].present? %>
+
+            <div
+              data-controller="catalog-autocomplete"
+              data-catalog-autocomplete-url-value="<%= customs_agents_search_bl_house_lines_path %>"
+              data-catalog-autocomplete-min-chars-value="2"
+              data-catalog-autocomplete-debounce-value="300"
+              class="relative"
+            >
+              <%= hidden_field_tag :customs_agent_id,
+                    params[:customs_agent_id],
+                    data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+              <%= text_field_tag :customs_agent_search,
+                    selected_customs_agent&.display_name,
+                    autocomplete: "off",
+                    placeholder: "Todas las agencias",
+                    class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm",
+                    data: {
+                      catalog_autocomplete_target: "input",
+                      action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+                    } %>
+
+              <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+              <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+            </div>
+
+            <noscript>
+              <%= f.select :customs_agent_id,
+                options_from_collection_for_select(@customs_agents || Entity.customs_agents.order(:name), :id, :display_name, params[:customs_agent_id]),
+                { include_blank: "Todas las agencias" },
+                class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+            </noscript>
+          </div>
+        <% end %>
 
         <div class="relative w-full sm:w-auto">
           <%= f.label :status, "Estatus", class: "sr-only" %>
@@ -155,10 +167,15 @@
         <%= link_to "Limpiar", bl_house_lines_path, class: "px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors" %>
       </div>
 
+      <% role_specific_filters_present = if current_user&.consolidator?
+          params[:reference].present? || params[:master_bl].present?
+        else
+          params[:client_id].present? || params[:customs_agent_id].present?
+        end %>
+
       <% active_filters_present = params[:blhouse].present? ||
         params[:container_number].present? ||
-        params[:client_id].present? ||
-        params[:customs_agent_id].present? ||
+        role_specific_filters_present ||
         @selected_start_date.present? ||
         @selected_end_date.present? ||
         @selected_status_filter.present? ||
@@ -185,18 +202,32 @@
                 </span>
               <% end %>
 
-              <% if params[:client_id].present? %>
-                <% client_name = @clients.find { |c| c.id == params[:client_id].to_i }&.name || "ID #{params[:client_id]}" %>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
-                  Cliente: <%= client_name %>
-                </span>
-              <% end %>
+              <% if current_user&.consolidator? %>
+                <% if params[:reference].present? %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                    Referencia: <%= params[:reference] %>
+                  </span>
+                <% end %>
 
-              <% if params[:customs_agent_id].present? %>
-                <% agent_name = @customs_agents.find { |a| a.id == params[:customs_agent_id].to_i }&.display_name || "ID #{params[:customs_agent_id]}" %>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Agencia: <%= agent_name %>
-                </span>
+                <% if params[:master_bl].present? %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Master BL: <%= params[:master_bl] %>
+                  </span>
+                <% end %>
+              <% else %>
+                <% if params[:client_id].present? %>
+                  <% client_name = @clients.find { |c| c.id == params[:client_id].to_i }&.name || "ID #{params[:client_id]}" %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                    Cliente: <%= client_name %>
+                  </span>
+                <% end %>
+
+                <% if params[:customs_agent_id].present? %>
+                  <% agent_name = @customs_agents.find { |a| a.id == params[:customs_agent_id].to_i }&.display_name || "ID #{params[:customs_agent_id]}" %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Agencia: <%= agent_name %>
+                  </span>
+                <% end %>
               <% end %>
 
               <% if @selected_status_filter.present? %>

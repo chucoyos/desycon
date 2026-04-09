@@ -37,12 +37,20 @@ class BlHouseLinesController < ApplicationController
       scope = scope.joins(:container).where("containers.number ILIKE ?", "%#{params[:container_number]}%")
     end
 
-    if params[:client_id].present?
-      scope = scope.where(client_id: params[:client_id])
-    end
+    if current_user&.consolidator?
+      if params[:reference].present? || params[:master_bl].present?
+        scope = scope.joins(:container)
+        scope = scope.where("containers.archivo_nr ILIKE ?", "%#{params[:reference]}%") if params[:reference].present?
+        scope = scope.where("containers.bl_master ILIKE ?", "%#{params[:master_bl]}%") if params[:master_bl].present?
+      end
+    else
+      if params[:client_id].present?
+        scope = scope.where(client_id: params[:client_id])
+      end
 
-    if params[:customs_agent_id].present?
-      scope = scope.where(customs_agent_id: params[:customs_agent_id])
+      if params[:customs_agent_id].present?
+        scope = scope.where(customs_agent_id: params[:customs_agent_id])
+      end
     end
 
     @selected_start_date = resolved_start_date
