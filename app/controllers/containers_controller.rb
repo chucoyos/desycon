@@ -21,9 +21,12 @@ class ContainersController < ApplicationController
   before_action :set_container_for_show, only: %i[show destroy_all_bl_house_lines]
 
   def index
-    @containers = policy_scope(Container)
-                    .with_associations
-                    .recent
+    base_scope = policy_scope(Container).recent
+    @containers = if current_user&.consolidator?
+      base_scope.includes(:vessel, :voyage)
+    else
+      base_scope.includes(:shipping_line, :vessel, :voyage)
+    end
     @consolidators = Entity.consolidators.order(:name)
     @shipping_lines = ShippingLine.alphabetical
 

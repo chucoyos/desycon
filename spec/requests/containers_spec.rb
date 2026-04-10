@@ -265,6 +265,7 @@ RSpec.describe "Containers", type: :request do
       expect(response.body).to include("ETA")
       expect(response.body).not_to include("Línea Naviera")
       expect(response.body).to include("ETA:")
+      expect(response.body).not_to include("Sin línea")
     end
   end
 
@@ -283,6 +284,7 @@ RSpec.describe "Containers", type: :request do
       expect(response.body).to include(selected_container.number)
       expect(response.body).not_to include(other_container.number)
       expect(response.body).to include("Línea Naviera")
+      expect(response.body).to include("Línea")
     end
   end
 
