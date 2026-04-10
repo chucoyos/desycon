@@ -212,6 +212,30 @@ RSpec.describe "Containers", type: :request do
 
       expect(response).to redirect_to(containers_path)
     end
+
+    it "allows admin to download import template for partidas" do
+      sign_in user, scope: :user
+      container = create(:container)
+
+      get download_bl_house_lines_template_container_path(container)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.content_type).to include("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+      workbook = Roo::Spreadsheet.open(StringIO.new(response.body), extension: :xlsx)
+      expect(workbook.row(1)).to eq(%w[blhouse cantidad embalaje contiene marcas peso volumen clase_imo tipo_imo])
+    end
+
+    it "denies consolidator from downloading import template" do
+      consolidator = create(:user, :consolidator)
+      sign_in consolidator, scope: :user
+      own_container = create(:container, consolidator_entity: consolidator.entity)
+
+      get download_bl_house_lines_template_container_path(own_container)
+
+      expect(response).to redirect_to(containers_path)
+      expect(flash[:alert]).to be_present
+    end
   end
 
   describe "GET /containers for consolidator" do

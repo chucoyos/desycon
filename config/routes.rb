@@ -119,6 +119,7 @@ Rails.application.routes.draw do
     member do
       delete :destroy_all_bl_house_lines
       post :import_bl_house_lines, to: "bl_house_lines#import_from_container"
+      get :download_bl_house_lines_template, to: "bl_house_lines#download_template_for_container"
       get :lifecycle_bl_master_modal
       patch :lifecycle_bl_master_update
       get :lifecycle_descarga_modal

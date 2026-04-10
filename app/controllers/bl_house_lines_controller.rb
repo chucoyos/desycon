@@ -1,6 +1,9 @@
+require "caxlsx"
+
 class BlHouseLinesController < ApplicationController
   IMPORT_ROW_LIMIT = 500
   IMPORT_SIZE_LIMIT = 2.megabytes
+  IMPORT_TEMPLATE_HEADERS = %w[blhouse cantidad embalaje contiene marcas peso volumen clase_imo tipo_imo].freeze
 
   before_action :authenticate_user!
   before_action :set_bl_house_line, only: %i[show edit update destroy revalidation_approval approve_revalidation documents reassign perform_reassign reassign_brokers dispatch_date update_dispatch_date]
@@ -239,6 +242,22 @@ class BlHouseLinesController < ApplicationController
     redirect_to container_path(@container), alert: e.message
   ensure
     clear_current_user_after_import
+  end
+
+  # GET /containers/:id/download_bl_house_lines_template
+  def download_template_for_container
+    @container = Container.find(params[:id])
+    authorize BlHouseLine, :import_from_container?
+
+    package = Axlsx::Package.new
+    package.workbook.add_worksheet(name: "Partidas") do |sheet|
+      sheet.add_row IMPORT_TEMPLATE_HEADERS
+    end
+    xlsx_data = package.to_stream.read
+
+    send_data xlsx_data,
+      filename: "formato_importacion_partidas.xlsx",
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
   end
 
   # DELETE /bl_house_lines/1

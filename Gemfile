@@ -62,6 +62,7 @@ gem "kaminari", "~> 1.2"
 
 # Importación de archivos XLSX/CSV
 gem "roo", "~> 2.10"
+gem "caxlsx", "~> 4.1"
 gem "csv"
 
 group :development, :test do
