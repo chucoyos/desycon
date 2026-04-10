@@ -159,6 +159,14 @@ RSpec.describe Container, type: :model do
     it 'defines status enum with correct values' do
       expect(Container.statuses).to eq({
         'activo' => 'activo',
+        'en_espera_del_bl_fletado' => 'en_espera_del_bl_fletado',
+        'en_proceso_de_pagos_locales' => 'en_proceso_de_pagos_locales',
+        'en_espera_del_ok_para_revalidar' => 'en_espera_del_ok_para_revalidar',
+        'en_proceso_de_revalidacion_ante_la_ln' => 'en_proceso_de_revalidacion_ante_la_ln',
+        'mbl_revalidado_en_espera_del_atraque_de_buque' => 'mbl_revalidado_en_espera_del_atraque_de_buque',
+        'buque_en_operaciones_en_espera_de_descarga' => 'buque_en_operaciones_en_espera_de_descarga',
+        'en_proceso_de_transferencia_documental' => 'en_proceso_de_transferencia_documental',
+        'detenido_por_aduana' => 'detenido_por_aduana',
         'bl_revalidado' => 'bl_revalidado',
         'fecha_tentativa_desconsolidacion' => 'fecha_tentativa_desconsolidacion',
         'en_proceso_desconsolidacion' => 'en_proceso_desconsolidacion',
