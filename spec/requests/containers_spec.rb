@@ -221,6 +221,8 @@ RSpec.describe "Containers", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.content_type).to include("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+      expected_filename = "formato_importacion_partidas_#{container.number}_#{Time.zone.today.strftime('%Y%m%d')}.xlsx"
+      expect(response.headers["Content-Disposition"]).to include(expected_filename)
 
       workbook = Roo::Spreadsheet.open(StringIO.new(response.body), extension: :xlsx)
       expect(workbook.row(1)).to eq(%w[blhouse cantidad embalaje contiene marcas peso volumen clase_imo tipo_imo])

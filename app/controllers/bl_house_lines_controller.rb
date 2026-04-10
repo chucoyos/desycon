@@ -254,9 +254,11 @@ class BlHouseLinesController < ApplicationController
       sheet.add_row IMPORT_TEMPLATE_HEADERS
     end
     xlsx_data = package.to_stream.read
+    date_suffix = Time.zone.today.strftime("%Y%m%d")
+    template_filename = "formato_importacion_partidas_#{@container.number}_#{date_suffix}.xlsx"
 
     send_data xlsx_data,
-      filename: "formato_importacion_partidas.xlsx",
+      filename: template_filename,
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
   end
 
