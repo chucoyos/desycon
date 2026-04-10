@@ -32,6 +32,8 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :tutorials, only: [ :index ]
+
   resources :photos, only: [ :destroy ]
 
   resources :invoices, only: [ :index, :show, :new, :create, :destroy ] do

@@ -1,0 +1,59 @@
+<section class="min-h-screen bg-gradient-to-b from-slate-50 via-emerald-50/50 to-cyan-50/40 py-10">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+    <div class="relative overflow-hidden rounded-3xl border border-emerald-100 bg-white/90 p-6 shadow-xl shadow-emerald-100/70 sm:p-8">
+      <div class="pointer-events-none absolute -top-20 -right-20 h-56 w-56 rounded-full bg-emerald-200/40 blur-3xl"></div>
+      <div class="pointer-events-none absolute -bottom-20 -left-12 h-56 w-56 rounded-full bg-cyan-200/40 blur-3xl"></div>
+
+      <div class="relative">
+        <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
+          Centro de aprendizaje
+        </span>
+        <h1 class="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">Video Tutoriales</h1>
+        <p class="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
+          Accede a estos videos para resolver dudas comunes y acelerar el uso diario de la plataforma.
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+      <% @videos.each do |video| %>
+        <article class="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg shadow-slate-200/70 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+          <div class="relative aspect-video bg-slate-100">
+            <iframe
+              src="https://www.youtube-nocookie.com/embed/<%= video[:video_id] %>"
+              title="<%= video[:title] %>"
+              class="h-full w-full"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen>
+            </iframe>
+          </div>
+
+          <div class="p-5 sm:p-6">
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="text-lg font-bold text-slate-900"><%= video[:title] %></h2>
+              <span class="shrink-0 rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-semibold text-cyan-700"><%= video[:duration] %></span>
+            </div>
+            <p class="mt-2 text-sm leading-relaxed text-slate-600"><%= video[:description] %></p>
+
+            <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+              <a
+                href="https://youtu.be/<%= video[:video_id] %>"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors duration-200 hover:bg-emerald-700">
+                Ver en YouTube
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14 3h7m0 0v7m0-7-9 9" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 5h4m-4 0v14a1 1 0 001 1h14m-1-5v4a1 1 0 01-1 1h-4" />
+                </svg>
+              </a>
+              <span class="text-xs font-medium text-slate-500">Contenido oficial</span>
+            </div>
+          </div>
+        </article>
+      <% end %>
+    </div>
+  </div>
+</section>

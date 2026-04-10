@@ -103,7 +103,8 @@ class ApplicationController < ActionController::Base
   def restricted_access_whitelisted_route?
     allowed_routes = {
       "customs_agent_payment_evidences" => %w[new create],
-      "invoices" => %w[index show]
+      "invoices" => %w[index show],
+      "tutorials" => %w[index]
     }
 
     actions = allowed_routes[controller_path]
