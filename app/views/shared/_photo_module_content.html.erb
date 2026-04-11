@@ -29,6 +29,8 @@
   <% if policy(Photo).create? %>
     <%= form_with url: upload_path, method: :post, multipart: true, class: "space-y-3" do |f| %>
       <%= f.hidden_field :section, value: section, name: "photo[section]" %>
+      <%= hidden_field_tag :title, title %>
+      <%= hidden_field_tag :subtitle, subtitle %>
 
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-700">Cargar fotografías</label>
@@ -117,7 +119,7 @@
         <%= button_to "Eliminar #{total_photos} foto(s) de esta sección",
               bulk_delete_path,
               method: :delete,
-              params: { photo: { section: section } },
+            params: { photo: { section: section }, title: title, subtitle: subtitle },
               form: { data: { turbo_confirm: "¿Eliminar todas las fotografías de #{title}? Esta acción no se puede deshacer." } },
               class: "w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100" %>
       <% end %>

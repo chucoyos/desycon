@@ -73,16 +73,12 @@ class PhotosController < ApplicationController
     allowed_sections = Photo.allowed_sections_for(attachable)
     return head :bad_request unless allowed_sections.include?(section)
 
-    frame_id = ActionView::RecordIdentifier.dom_id(attachable, "photo_module_#{section}")
-
-    render partial: "shared/photo_module_frame",
-      locals: {
-        frame_id: frame_id,
-        attachable: attachable,
-        section: section,
-        title: params[:title].to_s,
-        subtitle: params[:subtitle].to_s
-      }
+    render_section_frame(
+      attachable: attachable,
+      section: section,
+      title: params[:title].to_s,
+      subtitle: params[:subtitle].to_s
+    )
   end
 
   def download_section_for_attachable(attachable)
@@ -134,12 +130,24 @@ class PhotosController < ApplicationController
 
     permitted = photo_params
     images = Array(permitted[:images]).reject(&:blank?)
+    section = permitted[:section].to_s
+    title = params[:title].to_s
+    subtitle = params[:subtitle].to_s
 
     if images.empty?
+      if turbo_frame_request?
+        return render_section_frame(
+          attachable: attachable,
+          section: section,
+          title: title,
+          subtitle: subtitle,
+          status: :unprocessable_entity
+        )
+      end
+
       return redirect_back fallback_location: polymorphic_path(attachable), alert: "Selecciona al menos una fotografía."
     end
 
-    section = permitted[:section]
     saved_count = 0
     last_error = nil
 
@@ -156,6 +164,16 @@ class PhotosController < ApplicationController
           raise ActiveRecord::Rollback
         end
       end
+    end
+
+    if turbo_frame_request?
+      return render_section_frame(
+        attachable: attachable,
+        section: section,
+        title: title,
+        subtitle: subtitle,
+        status: last_error.present? ? :unprocessable_entity : :ok
+      )
     end
 
     if last_error.present?
@@ -187,6 +205,15 @@ class PhotosController < ApplicationController
     end
 
     photos.destroy_all
+
+    if turbo_frame_request?
+      return render_section_frame(
+        attachable: attachable,
+        section: section,
+        title: params[:title].to_s,
+        subtitle: params[:subtitle].to_s
+      )
+    end
 
     redirect_back fallback_location: polymorphic_path(attachable), notice: "#{deleted_count} fotografía(s) eliminada(s) de la sección."
   end
@@ -275,5 +302,19 @@ class PhotosController < ApplicationController
     else
       ".bin"
     end
+  end
+
+  def render_section_frame(attachable:, section:, title:, subtitle:, status: :ok)
+    frame_id = ActionView::RecordIdentifier.dom_id(attachable, "photo_module_#{section}")
+
+    render partial: "shared/photo_module_frame",
+      status: status,
+      locals: {
+        frame_id: frame_id,
+        attachable: attachable,
+        section: section,
+        title: title,
+        subtitle: subtitle
+      }
   end
 end

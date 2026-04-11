@@ -825,11 +825,6 @@
           <h2 class="text-lg font-bold text-gray-900">Fotografías de partida</h2>
         </div>
 
-        <% if @bl_house_line.photos.count.positive? && policy(Photo).download? %>
-              <%= link_to "Descargar todas las fotos (#{@bl_house_line.photos.count})",
-                photos_download_all_bl_house_line_path(@bl_house_line),
-                class: "w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100" %>
-        <% end %>
       </div>
 
       <%= render "shared/photo_module", attachable: @bl_house_line, section: "etiquetado", title: "Etiquetado", subtitle: "Regularmente 10-20" %>
