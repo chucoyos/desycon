@@ -60,10 +60,9 @@ class PhotosController < ApplicationController
     authorize attachable, :show?
     authorize Photo, :download?
 
-    section = params[:section].to_s
-    allowed_sections = Photo.allowed_sections_for(attachable)
+    section = sanitized_download_section_for(attachable)
 
-    unless allowed_sections.include?(section)
+    if section.blank?
       return redirect_back fallback_location: polymorphic_path(attachable), alert: "Sección inválida para descargar fotografías."
     end
 
@@ -74,10 +73,10 @@ class PhotosController < ApplicationController
       return redirect_back fallback_location: polymorphic_path(attachable), alert: "No hay fotografías para descargar en esta sección."
     end
 
-    zip_path = build_photos_zip_file(attachable: attachable, section: section, photos: photos)
+            zip_path = build_photos_zip_file(attachable: attachable, photos: photos)
 
     send_file zip_path,
-          filename: zip_filename_for(attachable: attachable, section: section),
+              filename: zip_filename_for(attachable: attachable, section: section),
           type: "application/zip",
           disposition: "attachment"
   end
@@ -163,7 +162,7 @@ class PhotosController < ApplicationController
     redirect_back fallback_location: polymorphic_path(attachable), notice: "#{deleted_count} fotografía(s) eliminada(s) de la sección."
   end
 
-  def build_photos_zip_file(attachable:, photos:, section: nil)
+  def build_photos_zip_file(attachable:, photos:)
     require "zip"
     require "fileutils"
 
@@ -176,12 +175,8 @@ class PhotosController < ApplicationController
       photos.each_with_index do |photo, index|
         blob = photo.image.blob
         extension = File.extname(blob.filename.to_s).presence || content_type_extension_for(blob.content_type)
-        photo_section = section.presence || photo.section.to_s
-        entry_name = if section.present?
-          format("%03d_%s%s", index + 1, section, extension)
-        else
-          format("%s/%03d_%s%s", photo_section, index + 1, photo_section, extension)
-        end
+        photo_section = photo.section.to_s
+        entry_name = format("%s/%03d_%s%s", photo_section, index + 1, photo_section, extension)
 
         zip.get_output_stream(entry_name) do |entry|
           blob.open do |source|
@@ -204,6 +199,23 @@ class PhotosController < ApplicationController
     rescue StandardError
       nil
     end
+  end
+
+  def sanitized_download_section_for(attachable)
+    raw_section = params[:section].to_s
+    literal_section = case raw_section
+    when "apertura" then "apertura"
+    when "desconsolidacion" then "desconsolidacion"
+    when "vacio" then "vacio"
+    when "etiquetado" then "etiquetado"
+    else
+      nil
+    end
+
+    allowed_sections = Photo.allowed_sections_for(attachable)
+    return nil unless literal_section && allowed_sections.include?(literal_section)
+
+    literal_section
   end
 
   def zip_filename_for(attachable:, section:)
