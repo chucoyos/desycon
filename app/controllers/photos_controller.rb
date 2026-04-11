@@ -14,6 +14,16 @@ class PhotosController < ApplicationController
     create_for_attachable(attachable)
   end
 
+  def section_frame_for_container
+    attachable = Container.find(params[:id])
+    section_frame_for_attachable(attachable)
+  end
+
+  def section_frame_for_bl_house_line
+    attachable = BlHouseLine.find(params[:id])
+    section_frame_for_attachable(attachable)
+  end
+
   def destroy_section_for_container
     attachable = Container.find(params[:id])
     destroy_section_for_attachable(attachable)
@@ -55,6 +65,25 @@ class PhotosController < ApplicationController
   end
 
   private
+
+  def section_frame_for_attachable(attachable)
+    authorize attachable, :show?
+
+    section = params[:section].to_s
+    allowed_sections = Photo.allowed_sections_for(attachable)
+    return head :bad_request unless allowed_sections.include?(section)
+
+    frame_id = ActionView::RecordIdentifier.dom_id(attachable, "photo_module_#{section}")
+
+    render partial: "shared/photo_module_frame",
+      locals: {
+        frame_id: frame_id,
+        attachable: attachable,
+        section: section,
+        title: params[:title].to_s,
+        subtitle: params[:subtitle].to_s
+      }
+  end
 
   def download_section_for_attachable(attachable)
     authorize attachable, :show?

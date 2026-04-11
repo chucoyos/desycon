@@ -1,13 +1,19 @@
 <%
-  photos = attachable.photos.for_section(section).recent.includes(:image_attachment).limit(8)
+  frame_id = dom_id(attachable, "photo_module_#{section}")
   total_photos = attachable.photos.for_section(section).count
-  upload_path = attachable.is_a?(Container) ? photos_container_path(attachable) : photos_bl_house_line_path(attachable)
-  bulk_delete_path = attachable.is_a?(Container) ? photos_section_container_path(attachable) : photos_section_bl_house_line_path(attachable)
-  download_path = attachable.is_a?(Container) ? photos_download_container_path(attachable, section: section) : photos_download_bl_house_line_path(attachable, section: section)
+  frame_src = if attachable.is_a?(Container)
+    photos_section_frame_container_path(attachable, section: section, title: title, subtitle: subtitle)
+  else
+    photos_section_frame_bl_house_line_path(attachable, section: section, title: title, subtitle: subtitle)
+  end
 %>
 
 <section class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-  <details class="group">
+  <details
+    class="group"
+    data-controller="deferred-frame-loader"
+    data-action="toggle->deferred-frame-loader#load"
+    data-deferred-frame-loader-src-value="<%= frame_src %>">
     <summary class="list-none cursor-pointer touch-manipulation px-4 py-3.5 sm:px-5 sm:py-4 bg-gray-50/70">
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
@@ -26,84 +32,10 @@
       </div>
     </summary>
 
-    <div class="px-4 py-4 sm:px-5 sm:py-5 space-y-4 border-t border-gray-100 bg-white">
-      <% if policy(Photo).create? %>
-        <%= form_with url: upload_path, method: :post, multipart: true, class: "space-y-3" do |f| %>
-          <%= f.hidden_field :section, value: section, name: "photo[section]" %>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">Cargar fotografías</label>
-            <%= f.file_field :images,
-                  name: "photo[images][]",
-                  multiple: true,
-                  direct_upload: true,
-                  accept: "image/*",
-                  class: "block w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-blue-700" %>
-          </div>
-
-          <p class="text-xs text-gray-500">Recomendado en móvil: lotes de 5-10 imágenes para una carga más fluida.</p>
-
-          <div>
-            <%= f.submit "Subir fotografías", class: "w-full sm:w-auto inline-flex justify-center items-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300" %>
-          </div>
-        <% end %>
-      <% end %>
-
-      <div class="min-w-0">
-        <% if photos.any? %>
-          <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            <% photos.each do |photo| %>
-              <article class="relative rounded-xl border border-gray-200 overflow-hidden bg-gray-50 shadow-sm">
-                <%= link_to rails_blob_path(photo.image, disposition: "inline"), target: "_blank", class: "block" do %>
-                  <% if photo.image.variable? %>
-                    <%= image_tag photo.image.variant(resize_to_limit: [ 420, 420 ]), class: "aspect-square w-full object-cover", loading: "lazy" %>
-                  <% else %>
-                    <%= image_tag photo.image, class: "aspect-square w-full object-cover", loading: "lazy" %>
-                  <% end %>
-                <% end %>
-
-                <% if policy(photo).destroy? %>
-                  <div class="absolute top-1.5 right-1.5">
-                    <%= button_to photo_path(photo), method: :delete,
-                          form: { data: { turbo_confirm: "¿Eliminar esta fotografía?" } },
-                          class: "rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-medium text-red-700 shadow-sm ring-1 ring-gray-200" do %>
-                      Eliminar
-                    <% end %>
-                  </div>
-                <% end %>
-              </article>
-            <% end %>
-          </div>
-
-          <% if total_photos > photos.size %>
-            <p class="mt-3 text-xs text-gray-500">Mostrando <%= photos.size %> de <%= total_photos %> fotos recientes.</p>
-          <% end %>
-        <% else %>
-          <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center">
-            <p class="text-sm font-medium text-gray-700">Sin fotografías en esta sección</p>
-            <p class="mt-1 text-xs text-gray-500">Usa el selector superior para cargar imágenes.</p>
-          </div>
-        <% end %>
+    <turbo-frame id="<%= frame_id %>" data-deferred-frame-loader-target="frame">
+      <div class="px-4 py-4 sm:px-5 sm:py-5 border-t border-gray-100 bg-white">
+        <p class="text-sm text-gray-500">Despliega esta sección para cargar las fotografías.</p>
       </div>
-
-      <% if total_photos.positive? %>
-        <div class="pt-1 sm:pt-2 flex flex-col sm:flex-row sm:justify-end gap-2">
-          <% if policy(Photo).download? %>
-            <%= link_to "Descargar #{total_photos} foto(s)",
-                  download_path,
-                  class: "w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100" %>
-          <% end %>
-
-          <% if policy(Photo).destroy? %>
-            <%= button_to "Eliminar #{total_photos} foto(s) de esta sección",
-                  bulk_delete_path,
-                  method: :delete,
-                  params: { photo: { section: section } },
-                  form: { data: { turbo_confirm: "¿Eliminar todas las fotografías de #{title}? Esta acción no se puede deshacer." } },
-                  class: "w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100" %>
-          <% end %>
-        </div>
-      <% end %>
-    </div>
+    </turbo-frame>
   </details>
 </section>
