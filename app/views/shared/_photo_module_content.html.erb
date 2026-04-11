@@ -156,7 +156,7 @@
               method: :delete,
             params: { photo: { section: section }, title: title, subtitle: subtitle },
               form: { data: { turbo_confirm: "¿Eliminar todas las fotografías de #{title}? Esta acción no se puede deshacer." } },
-              class: "w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100" %>
+              class: "w-full sm:w-auto inline-flex cursor-pointer items-center justify-center rounded-full border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100" %>
       <% end %>
     </div>
   <% end %>

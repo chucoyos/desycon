@@ -6,6 +6,8 @@ export default class extends Controller {
   connect() {
     this.uploadProgressById = new Map()
     this.directUploadsStarted = 0
+    this.expectedFiles = 0
+    this.displayedProgress = 0
     this.originalSubmitText = this.hasSubmitTarget ? this.submitTarget.value : "Subir fotografías"
   }
 
@@ -16,8 +18,14 @@ export default class extends Controller {
       return
     }
 
+    this.expectedFiles = fileCount
+    this.displayedProgress = 0
+    this.uploadProgressById.clear()
+    this.directUploadsStarted = 0
+
     this.disableSubmit("Subiendo fotografías...")
     this.showStatus("Iniciando carga...")
+    this.updateProgressBar(0)
   }
 
   onSubmitEnd(event) {
@@ -32,23 +40,28 @@ export default class extends Controller {
   onDirectUploadStart(event) {
     this.directUploadsStarted += 1
     this.uploadProgressById.set(event.detail.id, 0)
-    const total = this.totalFiles()
+    const total = this.expectedFiles || this.totalFiles()
     this.showStatus(`Subiendo ${this.directUploadsStarted} de ${total}...`)
   }
 
   onDirectUploadProgress(event) {
-    this.uploadProgressById.set(event.detail.id, event.detail.progress)
+    const previous = this.uploadProgressById.get(event.detail.id) || 0
+    const next = Math.max(previous, event.detail.progress)
+    this.uploadProgressById.set(event.detail.id, next)
+
     const progress = this.averageProgress()
-    this.updateProgressBar(progress)
-    this.showStatus(`Subiendo fotografías... ${progress}%`)
+    this.displayedProgress = Math.max(this.displayedProgress, progress)
+    this.updateProgressBar(this.displayedProgress)
+    this.showStatus(`Subiendo fotografías... ${this.displayedProgress}%`)
   }
 
   onDirectUploadEnd(event) {
     this.uploadProgressById.set(event.detail.id, 100)
     const progress = this.averageProgress()
-    this.updateProgressBar(progress)
+    this.displayedProgress = Math.max(this.displayedProgress, progress)
+    this.updateProgressBar(this.displayedProgress)
 
-    if (progress >= 100) {
+    if (this.displayedProgress >= 100) {
       this.showStatus("Finalizando y guardando fotografías...")
     }
   }
@@ -67,7 +80,9 @@ export default class extends Controller {
   }
 
   averageProgress() {
-    if (this.uploadProgressById.size === 0) {
+    const denominator = this.expectedFiles || this.uploadProgressById.size
+
+    if (denominator === 0) {
       return 0
     }
 
@@ -76,7 +91,7 @@ export default class extends Controller {
       total += value
     })
 
-    return Math.round(total / this.uploadProgressById.size)
+    return Math.round(total / denominator)
   }
 
   disableSubmit(text) {
