@@ -1,4 +1,6 @@
 class PhotosController < ApplicationController
+  PHOTO_EXPORT_RETENTION = 2.hours
+
   before_action :authenticate_user!
   after_action :verify_authorized
 
@@ -72,10 +74,12 @@ class PhotosController < ApplicationController
       return redirect_back fallback_location: polymorphic_path(attachable), alert: "No hay fotografías para descargar en esta sección."
     end
 
-    send_data build_photos_zip(attachable: attachable, section: section, photos: photos),
-              filename: zip_filename_for(attachable: attachable, section: section),
-              type: "application/zip",
-              disposition: "attachment"
+    zip_path = build_photos_zip_file(attachable: attachable, section: section, photos: photos)
+
+    send_file zip_path,
+          filename: zip_filename_for(attachable: attachable, section: section),
+          type: "application/zip",
+          disposition: "attachment"
   end
 
   def download_all_for_attachable(attachable)
@@ -89,10 +93,12 @@ class PhotosController < ApplicationController
       return redirect_back fallback_location: polymorphic_path(attachable), alert: "No hay fotografías para descargar."
     end
 
-    send_data build_photos_zip(attachable: attachable, photos: photos),
-              filename: zip_filename_for(attachable: attachable, section: "todas_las_secciones"),
-              type: "application/zip",
-              disposition: "attachment"
+    zip_path = build_photos_zip_file(attachable: attachable, photos: photos)
+
+    send_file zip_path,
+          filename: zip_filename_for(attachable: attachable, section: "todas_las_secciones"),
+          type: "application/zip",
+          disposition: "attachment"
   end
 
   def create_for_attachable(attachable)
@@ -116,6 +122,7 @@ class PhotosController < ApplicationController
 
         if photo.save
           saved_count += 1
+          Photos::PreprocessVariantJob.perform_later(photo.id)
         else
           last_error = photo.errors.full_messages.to_sentence
           raise ActiveRecord::Rollback
@@ -156,10 +163,16 @@ class PhotosController < ApplicationController
     redirect_back fallback_location: polymorphic_path(attachable), notice: "#{deleted_count} fotografía(s) eliminada(s) de la sección."
   end
 
-  def build_photos_zip(attachable:, photos:, section: nil)
+  def build_photos_zip_file(attachable:, photos:, section: nil)
     require "zip"
+    require "fileutils"
 
-    Zip::OutputStream.write_buffer do |zip|
+    cleanup_old_photo_exports!
+    export_dir = Rails.root.join("tmp", "photo_exports")
+    FileUtils.mkdir_p(export_dir)
+    zip_path = export_dir.join("#{attachable.class.name.underscore}_#{attachable.id}_#{SecureRandom.hex(8)}.zip")
+
+    Zip::File.open(zip_path, create: true) do |zip|
       photos.each_with_index do |photo, index|
         blob = photo.image.blob
         extension = File.extname(blob.filename.to_s).presence || content_type_extension_for(blob.content_type)
@@ -170,10 +183,27 @@ class PhotosController < ApplicationController
           format("%s/%03d_%s%s", photo_section, index + 1, photo_section, extension)
         end
 
-        zip.put_next_entry(entry_name)
-        zip.write(blob.download)
+        zip.get_output_stream(entry_name) do |entry|
+          blob.open do |source|
+            IO.copy_stream(source, entry)
+          end
+        end
       end
-    end.string
+    end
+
+    zip_path.to_s
+  end
+
+  def cleanup_old_photo_exports!
+    export_dir = Rails.root.join("tmp", "photo_exports")
+    return unless Dir.exist?(export_dir)
+
+    cutoff_time = Time.current - PHOTO_EXPORT_RETENTION
+    Dir.glob(export_dir.join("*.zip")).each do |file_path|
+      File.delete(file_path) if File.mtime(file_path) < cutoff_time
+    rescue StandardError
+      nil
+    end
   end
 
   def zip_filename_for(attachable:, section:)

@@ -1,0 +1,18 @@
+default: &default
+  workers:
+    - queues: active_storage
+      threads: 1
+      processes: <%= ENV.fetch("ACTIVE_STORAGE_JOB_CONCURRENCY", 1) %>
+      polling_interval: <%= ENV.fetch("ACTIVE_STORAGE_JOB_POLLING_INTERVAL", 0.5) %>
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default
+
+staging:
+  <<: *default

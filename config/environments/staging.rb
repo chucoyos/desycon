@@ -23,6 +23,9 @@ Rails.application.configure do
 
   # Allow switching storage backend via env (e.g. amazon for S3).
   config.active_storage.service = ENV.fetch("ACTIVE_STORAGE_SERVICE", "local").to_sym
+  config.active_storage.queues.analysis = :active_storage
+  config.active_storage.queues.purge = :active_storage
+  config.active_storage.queues.mirror = :active_storage
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   # config.assume_ssl = true

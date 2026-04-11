@@ -1,0 +1,35 @@
+default: &default
+  dispatchers:
+    - polling_interval: 1
+      batch_size: 500
+  workers:
+    - queues: default,mailers
+      threads: 3
+      processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>
+      polling_interval: 0.1
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  dispatchers:
+    - polling_interval: <%= ENV.fetch("JOB_DISPATCHER_POLLING_INTERVAL", "1") %>
+      batch_size: <%= ENV.fetch("JOB_DISPATCHER_BATCH_SIZE", "100") %>
+  workers:
+    - queues: <%= ENV.fetch("JOB_QUEUES", "default,mailers,active_storage") %>
+      threads: <%= ENV.fetch("JOB_THREADS", "1") %>
+      processes: <%= ENV.fetch("JOB_CONCURRENCY", "1") %>
+      polling_interval: <%= ENV.fetch("JOB_POLLING_INTERVAL", "0.5") %>
+
+staging:
+  dispatchers:
+    - polling_interval: <%= ENV.fetch("JOB_DISPATCHER_POLLING_INTERVAL", "1") %>
+      batch_size: <%= ENV.fetch("JOB_DISPATCHER_BATCH_SIZE", "100") %>
+  workers:
+    - queues: <%= ENV.fetch("JOB_QUEUES", "default,mailers,active_storage") %>
+      threads: <%= ENV.fetch("JOB_THREADS", "1") %>
+      processes: <%= ENV.fetch("JOB_CONCURRENCY", "1") %>
+      polling_interval: <%= ENV.fetch("JOB_POLLING_INTERVAL", "0.5") %>
