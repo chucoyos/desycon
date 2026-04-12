@@ -1,6 +1,4 @@
 class PhotosController < ApplicationController
-  PHOTO_EXPORT_RETENTION = 2.hours
-
   before_action :authenticate_user!
   after_action :verify_authorized
 
@@ -88,41 +86,64 @@ class PhotosController < ApplicationController
     section = sanitized_download_section_for(attachable)
 
     if section.blank?
+      if request.format.json?
+        return render json: { status: "invalid", message: "Sección inválida para descargar fotografías." }, status: :unprocessable_entity
+      end
+
       return redirect_back fallback_location: polymorphic_path(attachable), alert: "Sección inválida para descargar fotografías."
     end
 
-    photos = attachable.photos.for_section(section).recent.includes(image_attachment: :blob)
-    photos = photos.select { |photo| photo.image.attached? }
+    download_request = latest_download_request_for(attachable: attachable, section: section)
 
-    if photos.empty?
-      return redirect_back fallback_location: polymorphic_path(attachable), alert: "No hay fotografías para descargar en esta sección."
+    if download_request&.completed? && download_request.archive.attached? && !download_request.expired?
+      return respond_download_ready(download_request)
     end
 
-            zip_path = build_photos_zip_file(attachable: attachable, photos: photos)
+    if download_request&.pending? || download_request&.processing?
+      if request.format.json?
+        return render json: { status: download_request.status, message: "La descarga se está preparando." }, status: :ok
+      end
 
-    send_file zip_path,
-              filename: zip_filename_for(attachable: attachable, section: section),
-          type: "application/zip",
-          disposition: "attachment"
+      return redirect_back fallback_location: polymorphic_path(attachable), notice: "La descarga se está preparando."
+    end
+
+    download_request = enqueue_download_request!(attachable: attachable, section: section)
+    Photos::BuildArchiveJob.perform_later(download_request.id)
+
+    if request.format.json?
+      return render json: { status: download_request.status, message: "Estamos preparando tu archivo ZIP." }, status: :accepted
+    end
+
+    redirect_back fallback_location: polymorphic_path(attachable), notice: "Estamos preparando tu archivo ZIP."
   end
 
   def download_all_for_attachable(attachable)
     authorize attachable, :show?
     authorize Photo, :download?
 
-    photos = attachable.photos.recent.includes(image_attachment: :blob)
-    photos = photos.select { |photo| photo.image.attached? }
+    section = PhotoArchiveRequest::SECTION_ALL
+    download_request = latest_download_request_for(attachable: attachable, section: section)
 
-    if photos.empty?
-      return redirect_back fallback_location: polymorphic_path(attachable), alert: "No hay fotografías para descargar."
+    if download_request&.completed? && download_request.archive.attached? && !download_request.expired?
+      return respond_download_ready(download_request)
     end
 
-    zip_path = build_photos_zip_file(attachable: attachable, photos: photos)
+    if download_request&.pending? || download_request&.processing?
+      if request.format.json?
+        return render json: { status: download_request.status, message: "La descarga se está preparando." }, status: :ok
+      end
 
-    send_file zip_path,
-          filename: zip_filename_for(attachable: attachable, section: "todas_las_secciones"),
-          type: "application/zip",
-          disposition: "attachment"
+      return redirect_back fallback_location: polymorphic_path(attachable), notice: "La descarga se está preparando."
+    end
+
+    download_request = enqueue_download_request!(attachable: attachable, section: section)
+    Photos::BuildArchiveJob.perform_later(download_request.id)
+
+    if request.format.json?
+      return render json: { status: download_request.status, message: "Estamos preparando tu archivo ZIP." }, status: :accepted
+    end
+
+    redirect_back fallback_location: polymorphic_path(attachable), notice: "Estamos preparando tu archivo ZIP."
   end
 
   def create_for_attachable(attachable)
@@ -205,6 +226,7 @@ class PhotosController < ApplicationController
     end
 
     photos.destroy_all
+    purge_archive_requests_for!(attachable: attachable, section: section)
 
     if turbo_frame_request?
       return render_section_frame(
@@ -218,42 +240,42 @@ class PhotosController < ApplicationController
     redirect_back fallback_location: polymorphic_path(attachable), notice: "#{deleted_count} fotografía(s) eliminada(s) de la sección."
   end
 
-  def build_photos_zip_file(attachable:, photos:)
-    require "zip"
-    require "fileutils"
-
-    cleanup_old_photo_exports!
-    export_dir = Rails.root.join("tmp", "photo_exports")
-    FileUtils.mkdir_p(export_dir)
-    zip_path = export_dir.join("#{attachable.class.name.underscore}_#{attachable.id}_#{SecureRandom.hex(8)}.zip")
-
-    Zip::File.open(zip_path, create: true) do |zip|
-      photos.each_with_index do |photo, index|
-        blob = photo.image.blob
-        extension = File.extname(blob.filename.to_s).presence || content_type_extension_for(blob.content_type)
-        photo_section = photo.section.to_s
-        entry_name = format("%s/%03d_%s%s", photo_section, index + 1, photo_section, extension)
-
-        zip.get_output_stream(entry_name) do |entry|
-          blob.open do |source|
-            IO.copy_stream(source, entry)
-          end
-        end
-      end
-    end
-
-    zip_path.to_s
+  def latest_download_request_for(attachable:, section:)
+    PhotoArchiveRequest
+      .where(attachable: attachable, requested_by: current_user, section: section)
+      .recent_first
+      .first
   end
 
-  def cleanup_old_photo_exports!
-    export_dir = Rails.root.join("tmp", "photo_exports")
-    return unless Dir.exist?(export_dir)
+  def enqueue_download_request!(attachable:, section:)
+    PhotoArchiveRequest.create!(
+      attachable: attachable,
+      requested_by: current_user,
+      section: section,
+      status: :pending
+    )
+  end
 
-    cutoff_time = Time.current - PHOTO_EXPORT_RETENTION
-    Dir.glob(export_dir.join("*.zip")).each do |file_path|
-      File.delete(file_path) if File.mtime(file_path) < cutoff_time
-    rescue StandardError
-      nil
+  def purge_archive_requests_for!(attachable:, section:)
+    requests = PhotoArchiveRequest.where(attachable: attachable, section: section)
+
+    requests.find_each do |download_request|
+      download_request.archive.purge_later if download_request.archive.attached?
+      download_request.destroy!
+    end
+  end
+
+  def respond_download_ready(download_request)
+    download_url = rails_blob_path(download_request.archive, disposition: "attachment")
+
+    if request.format.json?
+      render json: {
+        status: download_request.status,
+        message: "ZIP listo para descargar.",
+        download_url: download_url
+      }, status: :ok
+    else
+      redirect_to download_url
     end
   end
 
@@ -272,36 +294,6 @@ class PhotosController < ApplicationController
     return nil unless literal_section && allowed_sections.include?(literal_section)
 
     literal_section
-  end
-
-  def zip_filename_for(attachable:, section:)
-    attachable_key = case attachable
-    when Container
-      "contenedor_#{attachable.number}"
-    when BlHouseLine
-      "partida_#{attachable.partida}"
-    else
-      "fotos"
-    end
-
-    "#{attachable_key}_#{section}.zip".parameterize(separator: "_")
-  end
-
-  def content_type_extension_for(content_type)
-    case content_type
-    when "image/jpeg", "image/jpg"
-      ".jpg"
-    when "image/png"
-      ".png"
-    when "image/webp"
-      ".webp"
-    when "image/heic"
-      ".heic"
-    when "image/heif"
-      ".heif"
-    else
-      ".bin"
-    end
   end
 
   def render_section_frame(attachable:, section:, title:, subtitle:, status: :ok)

@@ -1,6 +1,9 @@
 require "rails_helper"
+require "nokogiri"
 
 RSpec.describe "Photos", type: :request do
+  include ActiveJob::TestHelper
+
   describe "POST /containers/:id/photos" do
     let(:container) { create(:container) }
 
@@ -142,7 +145,7 @@ RSpec.describe "Photos", type: :request do
   describe "GET /containers/:id/photos_download" do
     let(:container) { create(:container) }
 
-    it "downloads a zip with photos from the selected section" do
+    it "enqueues async zip generation for the selected section" do
       admin = create(:user, :admin)
       login_as admin
 
@@ -150,55 +153,63 @@ RSpec.describe "Photos", type: :request do
       create(:photo, attachable: container, section: "apertura")
       create(:photo, attachable: container, section: "vacio")
 
-      get photos_download_container_path(container, section: "apertura")
+      expect {
+        get photos_download_container_path(container, section: "apertura")
+      }.to change(PhotoArchiveRequest, :count).by(1)
 
-      expect(response).to have_http_status(:ok)
-      expect(response.media_type).to eq("application/zip")
-      expect(response.headers["Content-Disposition"]).to include("attachment")
-      expect(response.headers["Content-Disposition"]).to include("contenedor")
-      expect(response.headers["Content-Disposition"]).to include("apertura")
+      expect(response).to have_http_status(:found)
+      expect(response).to redirect_to(container_path(container))
+
+      request_record = PhotoArchiveRequest.order(:created_at).last
+      expect(request_record.section).to eq("apertura")
+      expect(request_record.status).to eq("pending")
+      expect(enqueued_jobs.map { |job| job[:job] }).to include(Photos::BuildArchiveJob)
     end
   end
 
   describe "GET /bl_house_lines/:id/photos_download" do
     let(:bl_house_line) { create(:bl_house_line) }
 
-    it "downloads a zip with etiquetado photos" do
+    it "enqueues async zip generation for etiquetado photos" do
       executive = create(:user, :executive)
       login_as executive
 
       create(:photo, :etiquetado, attachable: bl_house_line)
       create(:photo, :etiquetado, attachable: bl_house_line)
 
-      get photos_download_bl_house_line_path(bl_house_line, section: "etiquetado")
+      expect {
+        get photos_download_bl_house_line_path(bl_house_line, section: "etiquetado")
+      }.to change(PhotoArchiveRequest, :count).by(1)
 
-      expect(response).to have_http_status(:ok)
-      expect(response.media_type).to eq("application/zip")
-      expect(response.headers["Content-Disposition"]).to include("attachment")
-      expect(response.headers["Content-Disposition"]).to include("partida")
-      expect(response.headers["Content-Disposition"]).to include("etiquetado")
+      expect(response).to have_http_status(:found)
+      expect(response).to redirect_to(bl_house_line_path(bl_house_line))
+
+      request_record = PhotoArchiveRequest.order(:created_at).last
+      expect(request_record.section).to eq("etiquetado")
+      expect(request_record.status).to eq("pending")
     end
   end
 
   describe "GET /containers/:id/photos_download_all" do
     let(:container) { create(:container) }
 
-    it "downloads a zip with photos from all sections" do
+    it "enqueues async zip generation for all sections" do
       admin = create(:user, :admin)
       login_as admin
 
       create(:photo, attachable: container, section: "apertura")
       create(:photo, attachable: container, section: "vacio")
 
-      get photos_download_all_container_path(container)
+      expect {
+        get photos_download_all_container_path(container)
+      }.to change(PhotoArchiveRequest, :count).by(1)
 
-      expect(response).to have_http_status(:ok)
-      expect(response.media_type).to eq("application/zip")
-      expect(response.headers["Content-Disposition"]).to include("attachment")
-      expect(response.headers["Content-Disposition"]).to include("todas_las_secciones")
+      expect(response).to have_http_status(:found)
+      expect(response).to redirect_to(container_path(container))
+      expect(PhotoArchiveRequest.order(:created_at).last.section).to eq(PhotoArchiveRequest::SECTION_ALL)
     end
 
-    it "allows consolidator users to download photos from their own container" do
+    it "allows consolidator users to enqueue from their own container" do
       consolidator_user = create(:user, :consolidator)
       login_as consolidator_user
 
@@ -207,8 +218,7 @@ RSpec.describe "Photos", type: :request do
 
       get photos_download_all_container_path(owned_container)
 
-      expect(response).to have_http_status(:ok)
-      expect(response.media_type).to eq("application/zip")
+      expect(response).to have_http_status(:found)
     end
 
     it "prevents consolidator users from downloading photos from other consolidators' containers" do
@@ -227,21 +237,22 @@ RSpec.describe "Photos", type: :request do
   describe "GET /bl_house_lines/:id/photos_download_all" do
     let(:bl_house_line) { create(:bl_house_line) }
 
-    it "downloads a zip with all partida photos" do
+    it "enqueues async zip generation for all partida photos" do
       executive = create(:user, :executive)
       login_as executive
 
       create(:photo, :etiquetado, attachable: bl_house_line)
 
-      get photos_download_all_bl_house_line_path(bl_house_line)
+      expect {
+        get photos_download_all_bl_house_line_path(bl_house_line)
+      }.to change(PhotoArchiveRequest, :count).by(1)
 
-      expect(response).to have_http_status(:ok)
-      expect(response.media_type).to eq("application/zip")
-      expect(response.headers["Content-Disposition"]).to include("attachment")
-      expect(response.headers["Content-Disposition"]).to include("todas_las_secciones")
+      expect(response).to have_http_status(:found)
+      expect(response).to redirect_to(bl_house_line_path(bl_house_line))
+      expect(PhotoArchiveRequest.order(:created_at).last.section).to eq(PhotoArchiveRequest::SECTION_ALL)
     end
 
-    it "allows consolidator users to download photos from their own partida" do
+    it "allows consolidator users to enqueue from their own partida" do
       consolidator_user = create(:user, :consolidator)
       login_as consolidator_user
 
@@ -251,8 +262,7 @@ RSpec.describe "Photos", type: :request do
 
       get photos_download_all_bl_house_line_path(owned_bl_house_line)
 
-      expect(response).to have_http_status(:ok)
-      expect(response.media_type).to eq("application/zip")
+      expect(response).to have_http_status(:found)
     end
 
     it "prevents consolidator users from downloading photos from other consolidators' partidas" do
@@ -265,6 +275,57 @@ RSpec.describe "Photos", type: :request do
       get photos_download_all_bl_house_line_path(other_bl_house_line)
 
       expect(response).to have_http_status(:found)
+    end
+  end
+
+  describe "GET /containers/:id/photos_section_frame" do
+    let(:container) { create(:container) }
+
+    it "shows ready zip button from latest valid completed request even if a newer request failed" do
+      admin = create(:user, :admin)
+      login_as admin
+
+      create(:photo, attachable: container, section: "apertura")
+
+      completed_request = create(
+        :photo_archive_request,
+        :completed,
+        attachable: container,
+        requested_by: admin,
+        section: "apertura",
+        created_at: 2.hours.ago,
+        expires_at: 1.day.from_now
+      )
+
+      completed_request.archive.attach(
+        io: StringIO.new("zip-bytes"),
+        filename: "ready.zip",
+        content_type: "application/zip"
+      )
+
+      create(
+        :photo_archive_request,
+        :failed,
+        attachable: container,
+        requested_by: admin,
+        section: "apertura",
+        created_at: 1.hour.ago
+      )
+
+      get photos_section_frame_container_path(container, section: "apertura", title: "Apertura", subtitle: "Fotos")
+
+      expect(response).to have_http_status(:ok)
+
+      html = Nokogiri::HTML(response.body)
+      ready_link = html.css("a").find { |a| a.text.include?("Descargar ZIP listo") }
+      request_link = html.css("a").find { |a| a.text.include?("Descargar 1 foto(s)") }
+
+      expect(ready_link).to be_present
+      expect(ready_link["hidden"]).to be_nil
+      expect(ready_link["href"]).not_to eq("#")
+
+      expect(request_link).to be_present
+      expect(request_link["hidden"]).to eq("hidden")
     end
   end
 

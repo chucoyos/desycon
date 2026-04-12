@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_24_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_12_093000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -462,6 +462,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_24_150000) do
     t.index ["key"], name: "index_permissions_on_key", unique: true
   end
 
+  create_table "photo_archive_requests", force: :cascade do |t|
+    t.bigint "attachable_id", null: false
+    t.string "attachable_type", null: false
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.datetime "expires_at"
+    t.datetime "generated_at"
+    t.integer "photos_count"
+    t.bigint "requested_by_id", null: false
+    t.string "section", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["attachable_type", "attachable_id", "section", "requested_by_id"], name: "idx_photo_archive_requests_lookup"
+    t.index ["attachable_type", "attachable_id"], name: "index_photo_archive_requests_on_attachable"
+    t.index ["requested_by_id"], name: "index_photo_archive_requests_on_requested_by_id"
+    t.index ["status"], name: "index_photo_archive_requests_on_status"
+  end
+
   create_table "photos", force: :cascade do |t|
     t.bigint "attachable_id", null: false
     t.string "attachable_type", null: false
@@ -615,6 +633,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_24_150000) do
   add_foreign_key "invoices", "entities", column: "receiver_entity_id"
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "notifications", "users", column: "recipient_id"
+  add_foreign_key "photo_archive_requests", "users", column: "requested_by_id"
   add_foreign_key "photos", "users", column: "uploaded_by_id"
   add_foreign_key "role_permissions", "permissions"
   add_foreign_key "role_permissions", "roles"
