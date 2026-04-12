@@ -15,22 +15,23 @@ class Photos::BuildArchiveJob < ApplicationJob
     photos = photos_for_request(request: request, attachable: attachable)
     return request.mark_failed!("No hay fotografias para generar el ZIP") if photos.empty?
 
-    zip_path = build_zip_file(attachable: attachable, photos: photos, section: request.section)
+    zip_file = build_zip_file(photos: photos)
 
-    File.open(zip_path, "rb") do |file|
-      request.archive.attach(
-        io: file,
-        filename: zip_filename_for(attachable: attachable, section: request.section),
-        content_type: "application/zip"
-      )
-    end
+    request.archive.attach(
+      io: zip_file,
+      filename: zip_filename_for(attachable: attachable, section: request.section),
+      content_type: "application/zip"
+    )
 
     request.mark_completed!(photos_count: photos.size)
   rescue StandardError => e
     request&.mark_failed!(e.message)
     Rails.logger.error("[Photos::BuildArchiveJob] request_id=#{photo_archive_request_id} error=#{e.class}: #{e.message}")
   ensure
-    File.delete(zip_path) if defined?(zip_path) && zip_path.present? && File.exist?(zip_path)
+    if defined?(zip_file) && zip_file
+      zip_file.close
+      zip_file.unlink
+    end
   end
 
   private
@@ -42,16 +43,18 @@ class Photos::BuildArchiveJob < ApplicationJob
     scope.select { |photo| photo.image.attached? }
   end
 
-  def build_zip_file(attachable:, photos:, section:)
+  def build_zip_file(photos:)
     require "zip"
     require "fileutils"
+    require "tempfile"
 
     export_dir = Rails.root.join("tmp", "photo_exports")
     FileUtils.mkdir_p(export_dir)
 
-    zip_path = export_dir.join("#{attachable.class.name.underscore}_#{attachable.id}_#{section}_#{SecureRandom.hex(8)}.zip")
+    zip_file = Tempfile.new([ "photo_archive_", ".zip" ], export_dir)
+    zip_file.binmode
 
-    Zip::File.open(zip_path, create: true) do |zip|
+    Zip::File.open(zip_file.path, create: true) do |zip|
       photos.each_with_index do |photo, index|
         blob = photo.image.blob
         extension = File.extname(blob.filename.to_s).presence || content_type_extension_for(blob.content_type)
@@ -66,7 +69,8 @@ class Photos::BuildArchiveJob < ApplicationJob
       end
     end
 
-    zip_path.to_s
+    zip_file.rewind
+    zip_file
   end
 
   def zip_filename_for(attachable:, section:)
