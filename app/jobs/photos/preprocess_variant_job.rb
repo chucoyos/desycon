@@ -1,6 +1,6 @@
 class Photos::PreprocessVariantJob < ApplicationJob
   queue_as :active_storage
-  GALLERY_VARIANT_TRANSFORMATIONS = { resize_to_limit: [ 420, 420 ], format: :jpeg }.freeze
+  GALLERY_VARIANT_TRANSFORMATIONS = { resize_to_limit: [ 320, 320 ], format: :jpeg }.freeze
 
   discard_on ActiveJob::DeserializationError
 
