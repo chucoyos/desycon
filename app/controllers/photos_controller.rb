@@ -99,12 +99,14 @@ class PhotosController < ApplicationController
       return respond_download_ready(download_request)
     end
 
-    if download_request&.pending? || download_request&.processing?
-      if request.format.json?
-        return render json: { status: download_request.status, message: "La descarga se está preparando." }, status: :ok
+    if download_request&.in_progress?
+      if download_request.stale_in_progress?
+        download_request.mark_failed!("La solicitud anterior no termino a tiempo. Se iniciara una nueva generacion.")
+      elsif request.format.json?
+        return render json: { status: download_request.status, message: "La descarga se esta preparando." }, status: :ok
+      else
+        return redirect_back fallback_location: polymorphic_path(attachable), notice: "La descarga se esta preparando."
       end
-
-      return redirect_back fallback_location: polymorphic_path(attachable), notice: "La descarga se está preparando."
     end
 
     download_request = enqueue_download_request!(attachable: attachable, section: section)
@@ -128,12 +130,14 @@ class PhotosController < ApplicationController
       return respond_download_ready(download_request)
     end
 
-    if download_request&.pending? || download_request&.processing?
-      if request.format.json?
-        return render json: { status: download_request.status, message: "La descarga se está preparando." }, status: :ok
+    if download_request&.in_progress?
+      if download_request.stale_in_progress?
+        download_request.mark_failed!("La solicitud anterior no termino a tiempo. Se iniciara una nueva generacion.")
+      elsif request.format.json?
+        return render json: { status: download_request.status, message: "La descarga se esta preparando." }, status: :ok
+      else
+        return redirect_back fallback_location: polymorphic_path(attachable), notice: "La descarga se esta preparando."
       end
-
-      return redirect_back fallback_location: polymorphic_path(attachable), notice: "La descarga se está preparando."
     end
 
     download_request = enqueue_download_request!(attachable: attachable, section: section)

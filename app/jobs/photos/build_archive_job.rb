@@ -1,5 +1,6 @@
 class Photos::BuildArchiveJob < ApplicationJob
-  queue_as :default
+  # Reuse the Active Storage worker pool so staging works even when default queue workers are not scaled.
+  queue_as :active_storage
 
   discard_on ActiveJob::DeserializationError
 

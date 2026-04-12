@@ -28,6 +28,8 @@
     .recent_first
     .detect { |download_request| download_request.archive.attached? }
   zip_ready = latest_ready_download_request.present?
+  zip_in_progress = latest_download_request&.in_progress? && !latest_download_request.stale_in_progress?
+  zip_stale = latest_download_request&.in_progress? && latest_download_request.stale_in_progress?
 
   previous_page_params = { section: section, title: title, subtitle: subtitle, page_param_key => current_page - 1 }
   next_page_params = { section: section, title: title, subtitle: subtitle, page_param_key => current_page + 1 }
@@ -148,7 +150,7 @@
                 action: "click->photo-download#start",
                 photo_download_target: "link"
               },
-            hidden: zip_ready,
+            hidden: zip_ready || zip_in_progress,
             class: "w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100" %>
 
         <%= link_to "Descargar ZIP listo",
@@ -157,8 +159,10 @@
             hidden: !zip_ready,
             class: "w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100" %>
 
-        <% if !zip_ready && (latest_download_request&.pending? || latest_download_request&.processing?) %>
+        <% if !zip_ready && zip_in_progress %>
           <p class="text-xs text-blue-700">Estamos preparando tu ZIP en segundo plano.</p>
+        <% elsif !zip_ready && zip_stale %>
+          <p class="text-xs text-amber-700">La preparacion anterior no termino. Puedes intentar de nuevo.</p>
         <% elsif !zip_ready && latest_download_request&.failed? %>
           <p class="text-xs text-red-700">No pudimos generar el ZIP: <%= latest_download_request.error_message.presence || "intenta nuevamente" %>.</p>
         <% end %>

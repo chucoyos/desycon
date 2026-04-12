@@ -1,6 +1,7 @@
 class PhotoArchiveRequest < ApplicationRecord
   SECTION_ALL = "todas_las_secciones".freeze
   ARCHIVE_TTL = 2.months
+  PROCESSING_TIMEOUT = 15.minutes
 
   belongs_to :attachable, polymorphic: true
   belongs_to :requested_by, class_name: "User"
@@ -19,6 +20,17 @@ class PhotoArchiveRequest < ApplicationRecord
 
   scope :recent_first, -> { order(created_at: :desc) }
   scope :expired, -> { where("expires_at <= ?", Time.current) }
+
+  def in_progress?
+    pending? || processing?
+  end
+
+  def stale_in_progress?(timeout: PROCESSING_TIMEOUT)
+    return false unless in_progress?
+
+    reference_time = updated_at || created_at
+    reference_time < timeout.ago
+  end
 
   def expired?
     expires_at.present? && expires_at <= Time.current
