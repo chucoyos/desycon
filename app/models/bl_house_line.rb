@@ -123,6 +123,13 @@ class BlHouseLine < ApplicationRecord
     required.presence || DOCUMENT_FIELDS
   end
 
+  def revalidated_at
+    bl_house_line_status_histories
+      .where(status: self.class.statuses[:revalidado])
+      .order(changed_at: :desc)
+      .pick(:changed_at)
+  end
+
   def notify_customs_agent_revalidation
     return unless customs_agent_id.present?
 

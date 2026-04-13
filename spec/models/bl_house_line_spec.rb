@@ -218,6 +218,35 @@ RSpec.describe BlHouseLine, type: :model do
     end
   end
 
+  describe '#revalidated_at' do
+    it 'returns nil when there is no revalidated status history' do
+      bl_house_line = create(:bl_house_line, status: 'activo')
+
+      expect(bl_house_line.revalidated_at).to be_nil
+    end
+
+    it 'returns the latest changed_at for revalidated status' do
+      bl_house_line = create(:bl_house_line, status: 'activo')
+      older_revalidated_at = Time.zone.local(2026, 4, 10, 9, 0, 0)
+      latest_revalidated_at = Time.zone.local(2026, 4, 11, 11, 30, 0)
+
+      create(:bl_house_line_status_history,
+             bl_house_line: bl_house_line,
+             status: 'revalidado',
+             changed_at: older_revalidated_at)
+      create(:bl_house_line_status_history,
+             bl_house_line: bl_house_line,
+             status: 'documentos_ok',
+             changed_at: Time.zone.local(2026, 4, 10, 13, 0, 0))
+      create(:bl_house_line_status_history,
+             bl_house_line: bl_house_line,
+             status: 'revalidado',
+             changed_at: latest_revalidated_at)
+
+      expect(bl_house_line.revalidated_at).to eq(latest_revalidated_at)
+    end
+  end
+
   describe 'imo normalization and multiplier' do
     it 'normalizes blank imo fields to 0 before validation' do
       bl_house_line = create(:bl_house_line, clase_imo: '  ', tipo_imo: '')
