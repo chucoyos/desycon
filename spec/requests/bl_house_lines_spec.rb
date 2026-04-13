@@ -277,14 +277,14 @@ RSpec.describe "BlHouseLines", type: :request do
   end
 
   describe "GET /bl_house_lines filters for executive" do
-    it "keeps client and agency filters for non-consolidator users" do
+    it "keeps client and destination port filters for non-consolidator users" do
       sign_in user, scope: :user
 
       get bl_house_lines_url
 
       expect(response).to be_successful
       expect(response.body).to include('name="client_id"')
-      expect(response.body).to include('name="customs_agent_id"')
+      expect(response.body).to include('name="destination_port_id"')
       expect(response.body).not_to include('name="reference"')
       expect(response.body).not_to include('name="master_bl"')
     end

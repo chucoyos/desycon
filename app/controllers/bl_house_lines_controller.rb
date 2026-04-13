@@ -51,8 +51,8 @@ class BlHouseLinesController < ApplicationController
         scope = scope.where(client_id: params[:client_id])
       end
 
-      if params[:customs_agent_id].present?
-        scope = scope.where(customs_agent_id: params[:customs_agent_id])
+      if params[:destination_port_id].present?
+        scope = scope.joins(container: :voyage).where(voyages: { destination_port_id: params[:destination_port_id] })
       end
     end
 
@@ -83,7 +83,7 @@ class BlHouseLinesController < ApplicationController
 
     # Data for filters
     load_clients
-    @customs_agents = available_customs_agents
+    @destination_ports = destination_port_filter_options
   end
 
   def clients_search
@@ -554,10 +554,14 @@ class BlHouseLinesController < ApplicationController
     params[:blhouse].blank? &&
       params[:container_number].blank? &&
       params[:client_id].blank? &&
-      params[:customs_agent_id].blank? &&
+      params[:destination_port_id].blank? &&
       params[:start_date].blank? &&
       params[:end_date].blank? &&
       params[:hidden].blank?
+  end
+
+  def destination_port_filter_options
+    Port.where(code: %w[MXATM MXLZC MXZLO MXVER]).order(:name)
   end
 
   def resolved_start_date
