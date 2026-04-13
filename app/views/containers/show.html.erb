@@ -96,24 +96,8 @@
             <dd class="text-base font-medium text-gray-900"><%= @container.type_size.presence || '-' %></dd>
           </div>
           <div class="bg-gray-50/50 rounded-lg p-4">
-            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Buque</dt>
-            <dd class="text-base font-medium text-gray-900"><%= @container.nombre_buque %></dd>
-          </div>
-          <div class="bg-gray-50/50 rounded-lg p-4">
             <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">BL Master</dt>
             <dd class="text-base font-medium text-gray-900 font-mono"><%= @container.bl_master || '-' %></dd>
-          </div>
-          <div class="bg-gray-50/50 rounded-lg p-4">
-            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Puerto de Origen</dt>
-            <dd class="text-base font-medium text-gray-900"><%= @container.origin_port&.display_name || '-' %></dd>
-          </div>
-          <div class="bg-gray-50/50 rounded-lg p-4">
-            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Puerto de Destino</dt>
-            <dd class="text-base font-medium text-gray-900"><%= @container.destination_port&.display_name || '-' %></dd>
-          </div>
-          <div class="bg-gray-50/50 rounded-lg p-4">
-            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Viaje</dt>
-            <dd class="text-base font-medium text-gray-900 font-mono"><%= @container.viaje || '-' %></dd>
           </div>
           <div class="bg-gray-50/50 rounded-lg p-4">
             <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Recinto</dt>
@@ -154,6 +138,53 @@
           <div class="bg-gray-50/50 rounded-lg p-4">
             <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Fecha y Hora de Revalidación BL Master</dt>
             <dd class="text-base font-medium text-gray-900"><%= @container.fecha_revalidacion_bl_master ? l(@container.fecha_revalidacion_bl_master, format: :long) : '-' %></dd>
+          </div>
+        </dl>
+      </section>
+
+      <!-- Datos del Viaje -->
+      <section class="bg-white shadow-sm rounded-xl p-5 sm:p-6 border border-gray-100">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-600 shadow-sm">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/>
+            </svg>
+          </div>
+          <h2 class="text-xl font-bold text-gray-900">Datos del Viaje</h2>
+        </div>
+
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+          <div class="bg-gray-50/50 rounded-lg p-4">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Buque</dt>
+            <dd class="text-base font-medium text-gray-900"><%= @container.nombre_buque %></dd>
+          </div>
+          <div class="bg-gray-50/50 rounded-lg p-4">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Viaje</dt>
+            <dd class="text-base font-medium text-gray-900 font-mono"><%= @container.viaje || '-' %></dd>
+          </div>
+          <div class="bg-gray-50/50 rounded-lg p-4">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Puerto Origen</dt>
+            <dd class="text-base font-medium text-gray-900"><%= @container.origin_port&.display_name || '-' %></dd>
+          </div>
+          <div class="bg-gray-50/50 rounded-lg p-4">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Puerto Destino</dt>
+            <dd class="text-base font-medium text-gray-900"><%= @container.destination_port&.display_name || '-' %></dd>
+          </div>
+          <div class="bg-gray-50/50 rounded-lg p-4">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">ETA</dt>
+            <dd class="text-base font-medium text-gray-900"><%= @container.voyage&.eta ? l(@container.voyage.eta, format: :long) : '-' %></dd>
+          </div>
+          <div class="bg-gray-50/50 rounded-lg p-4">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">ATA</dt>
+            <dd class="text-base font-medium text-gray-900"><%= @container.voyage&.ata ? l(@container.voyage.ata, format: :long) : '-' %></dd>
+          </div>
+          <div class="bg-gray-50/50 rounded-lg p-4">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Inicio de Operación</dt>
+            <dd class="text-base font-medium text-gray-900"><%= @container.voyage&.inicio_operacion ? l(@container.voyage.inicio_operacion, format: :long) : '-' %></dd>
+          </div>
+          <div class="bg-gray-50/50 rounded-lg p-4">
+            <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Fin de Operación</dt>
+            <dd class="text-base font-medium text-gray-900"><%= @container.voyage&.fin_operacion ? l(@container.voyage.fin_operacion, format: :long) : '-' %></dd>
           </div>
         </dl>
       </section>
