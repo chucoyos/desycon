@@ -266,9 +266,10 @@
                 <span class="text-sm font-mono font-semibold text-gray-900"><%= container.number %></span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border <%= status_badge_class(container.status) %>">
-                  <%= status_icon(container.status) %>
-                  <%= status_nombre(container.status) %>
+                <% status_label = status_nombre(container.status) %>
+                <span class="inline-flex max-w-[210px] items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border <%= status_badge_class(container.status) %>" title="<%= status_label %>">
+                  <span class="flex-shrink-0"><%= status_icon(container.status) %></span>
+                  <span class="truncate"><%= status_label %></span>
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
@@ -287,7 +288,7 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 <% if current_user&.consolidator? %>
                   <% eta_value = container.voyage&.eta %>
-                  <%= eta_value.present? ? l(eta_value, format: :short) : "-" %>
+                  <%= eta_value.present? ? eta_value.strftime("%d/%m/%y %H:%M") : "-" %>
                 <% else %>
                   <%= container.shipping_line&.iso_code || "Sin línea" %>
                 <% end %>
@@ -367,9 +368,10 @@
             <div class="flex-1">
               <h3 class="text-lg font-mono font-bold text-gray-900"><%= container.number %></h3>
               <div class="flex flex-wrap gap-2 mt-2">
-                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border <%= status_badge_class(container.status) %>">
-                  <%= status_icon(container.status) %>
-                  <%= status_nombre(container.status) %>
+                <% status_label = status_nombre(container.status) %>
+                <span class="inline-flex max-w-[230px] items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border <%= status_badge_class(container.status) %>" title="<%= status_label %>">
+                  <span class="flex-shrink-0"><%= status_icon(container.status) %></span>
+                  <span class="truncate"><%= status_label %></span>
                 </span>
               </div>
             </div>
