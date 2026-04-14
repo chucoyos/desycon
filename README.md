@@ -73,6 +73,39 @@ bundle exec rspec spec/policies/
 # Con cobertura
 bundle exec rspec --format documentation
 ```
+
+## Medicion de rendimiento de carga de fotos
+
+Se incluye un script para medir tiempos del pipeline de fotos (request web, preprocesado de variantes y generacion de ZIP) usando logs de Heroku.
+
+Archivo:
+
+- script/measure_photo_pipeline.sh
+
+Uso:
+
+1. Activar logs de medicion temporalmente en la app objetivo:
+
+   heroku config:set PHOTO_TIMING_LOGS=true -a desycon-staging
+
+2. Ejecutar medicion (staging):
+
+   script/measure_photo_pipeline.sh desycon-staging 12000
+
+3. Ejecutar medicion (produccion):
+
+   script/measure_photo_pipeline.sh desycon 12000
+
+4. Desactivar logs de medicion al terminar:
+
+   heroku config:unset PHOTO_TIMING_LOGS -a desycon-staging
+   heroku config:unset PHOTO_TIMING_LOGS -a desycon
+
+Notas:
+
+- El script reporta eventos, errores, min/p50/p95/p99/avg/max por etapa.
+- Incluye diagnostico automatico de cuello de botella con recomendaciones accionables.
+- Con PHOTO_TIMING_LOGS apagado, no se emiten logs de medicion.
  
 ## Deployment
 
