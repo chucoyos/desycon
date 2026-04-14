@@ -5,6 +5,8 @@ class Photos::BuildArchiveJob < ApplicationJob
   discard_on ActiveJob::DeserializationError
 
   def perform(photo_archive_request_id)
+    started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
     request = PhotoArchiveRequest.find_by(id: photo_archive_request_id)
     return unless request
 
@@ -25,9 +27,22 @@ class Photos::BuildArchiveJob < ApplicationJob
     )
 
     request.mark_completed!(photos_count: photos.size)
+    log_archive_timing(
+      request: request,
+      status: "ok",
+      photos_count: photos.size,
+      started_at: started_at
+    )
   rescue StandardError => e
     request&.mark_failed!(e.message)
-    Rails.logger.error("[Photos::BuildArchiveJob] request_id=#{photo_archive_request_id} error=#{e.class}: #{e.message}")
+    log_archive_timing(
+      request: request,
+      status: "error",
+      photos_count: 0,
+      started_at: started_at,
+      error: "#{e.class}: #{e.message}",
+      fallback_request_id: photo_archive_request_id
+    )
   ensure
     if defined?(zip_file) && zip_file
       zip_file.close
@@ -102,5 +117,21 @@ class Photos::BuildArchiveJob < ApplicationJob
     else
       ".bin"
     end
+  end
+
+  def log_archive_timing(request:, status:, photos_count:, started_at:, error: nil, fallback_request_id: nil)
+    return unless photo_timing_logs_enabled?
+
+    duration_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000).round
+
+    Rails.logger.info(
+      "[Photos::BuildArchiveJob] status=#{status} request_id=#{request&.id || fallback_request_id} " \
+      "attachable_type=#{request&.attachable_type} attachable_id=#{request&.attachable_id} " \
+      "section=#{request&.section} photos_count=#{photos_count} duration_ms=#{duration_ms} error=#{error}"
+    )
+  end
+
+  def photo_timing_logs_enabled?
+    ActiveModel::Type::Boolean.new.cast(ENV["PHOTO_TIMING_LOGS"])
   end
 end

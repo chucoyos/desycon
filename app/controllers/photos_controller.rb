@@ -153,6 +153,8 @@ class PhotosController < ApplicationController
   def create_for_attachable(attachable)
     authorize Photo, :create?
 
+    started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
     permitted = photo_params
     images = Array(permitted[:images]).reject(&:blank?)
     section = permitted[:section].to_s
@@ -160,6 +162,15 @@ class PhotosController < ApplicationController
     subtitle = params[:subtitle].to_s
 
     if images.empty?
+      log_photo_upload_timing(
+        attachable: attachable,
+        section: section,
+        images_count: 0,
+        saved_count: 0,
+        started_at: started_at,
+        status: "empty"
+      )
+
       if turbo_frame_request?
         return render_section_frame(
           attachable: attachable,
@@ -190,6 +201,16 @@ class PhotosController < ApplicationController
         end
       end
     end
+
+    log_photo_upload_timing(
+      attachable: attachable,
+      section: section,
+      images_count: images.size,
+      saved_count: saved_count,
+      started_at: started_at,
+      status: last_error.present? ? "error" : "ok",
+      error: last_error
+    )
 
     if turbo_frame_request?
       return render_section_frame(
@@ -312,5 +333,22 @@ class PhotosController < ApplicationController
         title: title,
         subtitle: subtitle
       }
+  end
+
+  def log_photo_upload_timing(attachable:, section:, images_count:, saved_count:, started_at:, status:, error: nil)
+    return unless photo_timing_logs_enabled?
+
+    duration_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at) * 1000).round
+
+    Rails.logger.info(
+      "[Photos::Upload] request_id=#{request.request_id} status=#{status} " \
+      "attachable_type=#{attachable.class.name} attachable_id=#{attachable.id} section=#{section} " \
+      "images_count=#{images_count} saved_count=#{saved_count} duration_ms=#{duration_ms} " \
+      "user_id=#{current_user&.id} error=#{error}"
+    )
+  end
+
+  def photo_timing_logs_enabled?
+    ActiveModel::Type::Boolean.new.cast(ENV["PHOTO_TIMING_LOGS"])
   end
 end
