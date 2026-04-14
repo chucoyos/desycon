@@ -500,6 +500,8 @@ class ContainersController < ApplicationController
       :ejecutivo,
       :bl_master_documento,
       :tarja_documento,
+      :eir_documento,
+      :corte_demoras_documento,
       container_services_attributes: [
         :id,
         :service_catalog_id,

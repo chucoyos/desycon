@@ -29,6 +29,8 @@ class Container < ApplicationRecord
   # Active Storage para documentos
   has_one_attached :bl_master_documento
   has_one_attached :tarja_documento
+  has_one_attached :eir_documento
+  has_one_attached :corte_demoras_documento
 
   attr_accessor :tarja_documento_attached_via_setter, :bl_master_documento_attached_via_setter
 

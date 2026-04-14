@@ -425,6 +425,40 @@
           </p>
         <% end %>
       </div>
+
+      <div>
+        <%= form.label :eir_documento, "EIR (PDF)", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <div class="relative">
+          <%= form.file_field :eir_documento, accept: "application/pdf", class: "cursor-pointer w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" %>
+        </div>
+        <% if container.persisted? && container.eir_documento.attached? %>
+          <p class="mt-2 text-sm text-gray-600 flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="truncate" title="<%= container.eir_documento.filename %>">
+              Archivo actual: <%= container.eir_documento.filename %>
+            </span>
+          </p>
+        <% end %>
+      </div>
+
+      <div>
+        <%= form.label :corte_demoras_documento, "Corte de Demoras (PDF)", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+        <div class="relative">
+          <%= form.file_field :corte_demoras_documento, accept: "application/pdf", class: "cursor-pointer w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100" %>
+        </div>
+        <% if container.persisted? && container.corte_demoras_documento.attached? %>
+          <p class="mt-2 text-sm text-gray-600 flex items-center gap-2">
+            <svg class="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="truncate" title="<%= container.corte_demoras_documento.filename %>">
+              Archivo actual: <%= container.corte_demoras_documento.filename %>
+            </span>
+          </p>
+        <% end %>
+      </div>
     </div>
   </div>
 
