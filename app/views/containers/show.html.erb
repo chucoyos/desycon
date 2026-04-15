@@ -192,6 +192,7 @@
       <!-- Partidas -->
 
       <section id="partidas" class="bg-white shadow-sm rounded-xl p-5 sm:p-6 border border-gray-100">
+        <% ordered_bl_house_lines = @container.bl_house_lines.order(:partida, :id) %>
         <!-- Encabezado: icono, título, contador y botones en una sola fila -->
         <div class="flex flex-col gap-2 mb-5">
           <div class="flex flex-wrap items-center justify-between gap-4">
@@ -203,7 +204,7 @@
               </div>
               <h2 class="text-xl font-bold text-gray-900 whitespace-nowrap">Partidas</h2>
               <span class="ml-2 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                <%= @container.bl_house_lines.count %> <%= @container.bl_house_lines.count == 1 ? 'partida' : 'partidas' %>
+                <%= ordered_bl_house_lines.count %> <%= ordered_bl_house_lines.count == 1 ? 'partida' : 'partidas' %>
               </span>
             </div>
             <div class="flex flex-wrap items-center gap-2">
@@ -216,7 +217,7 @@
                 <% end %>
               <% end %>
               <% if policy(@container).destroy_all_bl_house_lines? %>
-                <% can_bulk_delete = @container.bl_house_lines.any? && !@bl_house_lines_docs_present %>
+                <% can_bulk_delete = ordered_bl_house_lines.any? && !@bl_house_lines_docs_present %>
                 <%= button_to destroy_all_bl_house_lines_container_path(@container), method: :delete,
                       form: { data: { turbo_confirm: "¿Eliminar todas las partidas? Solo es posible si ninguna tiene documentos adjuntos." } },
                       class: "inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border #{can_bulk_delete ? 'border-red-200 text-red-700 bg-red-50 hover:bg-red-100 cursor-pointer' : 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'} transition-all duration-200",
@@ -279,9 +280,9 @@
           <% end %>
         </div>
 
-        <% if @container.bl_house_lines.any? %>
+        <% if ordered_bl_house_lines.any? %>
           <div class="space-y-3">
-            <% @container.bl_house_lines.each do |bl_house_line| %>
+            <% ordered_bl_house_lines.each do |bl_house_line| %>
               <div class="border border-gray-200 rounded-lg p-4 hover:border-green-300 hover:bg-green-50/30 transition-all duration-200">
                 <div class="flex justify-between items-start mb-2">
                   <div class="flex-1">
