@@ -47,6 +47,17 @@ class NotificationsController < ApplicationController
     end
   end
 
+  def destroy_all
+    removed_count = current_user.notifications.count
+    current_user.notifications.destroy_all
+
+    redirect_to notifications_path, notice: if removed_count.positive?
+      "Se descartaron #{removed_count} notificaciones."
+                                            else
+      "No hay notificaciones para descartar."
+                                            end
+  end
+
   private
 
   def preload_notification_relations(notifications)

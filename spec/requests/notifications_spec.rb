@@ -77,6 +77,36 @@ RSpec.describe "Notifications", type: :request do
 
       expect(response.media_type).to eq Mime[:turbo_stream]
     end
+
+    it "deletes all notifications for current user" do
+      Notification.create!(recipient: user, actor: user, notifiable: create_bl_house_line, action: "test one")
+      Notification.create!(recipient: user, actor: user, notifiable: create_bl_house_line, action: "test two")
+
+      expect {
+        delete destroy_all_notifications_path
+      }.to change { user.notifications.count }.from(2).to(0)
+
+      expect(response).to redirect_to(notifications_path)
+      expect(flash[:notice]).to include("Se descartaron")
+    end
+
+    it "does not delete notifications from other users" do
+      other_user = User.create!(
+        email: "other_user@example.com",
+        password: "password123",
+        password_confirmation: "password123",
+        role: role
+      )
+      Notification.create!(recipient: user, actor: user, notifiable: create_bl_house_line, action: "mine")
+      Notification.create!(recipient: other_user, actor: user, notifiable: create_bl_house_line, action: "other")
+
+      expect {
+        delete destroy_all_notifications_path
+      }.to change { user.notifications.count }.from(1).to(0)
+       .and change { other_user.notifications.count }.by(0)
+
+      expect(response).to redirect_to(notifications_path)
+    end
   end
 
   private
