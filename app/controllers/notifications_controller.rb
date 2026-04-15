@@ -13,16 +13,18 @@ class NotificationsController < ApplicationController
     apply_filters
 
     @notifications = @notifications.recent.page(params[:page]).per(per)
+    preload_notification_relations(@notifications)
   end
 
   def mark_as_read
     @notification = current_user.notifications.includes(:notifiable, actor: :entity).find(params[:id])
+    preload_notification_relations([ @notification ])
     @notification.mark_as_read!
 
     respond_to do |format|
       format.turbo_stream {
         render turbo_stream: [
-          turbo_stream.replace(@notification, partial: "notifications/notification", locals: { notification: @notification }),
+          turbo_stream.replace(@notification, partial: "notifications/notification", locals: { notification: @notification, viewer: current_user }),
           turbo_stream.replace("notifications_count", partial: "notifications/count", locals: { unread_count: current_user.notifications.unread.count })
         ]
       }
@@ -46,6 +48,25 @@ class NotificationsController < ApplicationController
   end
 
   private
+
+  def preload_notification_relations(notifications)
+    records = Array(notifications)
+    return if records.empty?
+
+    evidences = records.filter_map do |notification|
+      notification.notifiable if notification.notifiable_type == "InvoicePaymentEvidence"
+    end
+    return if evidences.empty?
+
+    ActiveRecord::Associations::Preloader.new(records: evidences, associations: :invoices).call
+
+    evidences_without_links = evidences.select do |evidence|
+      evidence.association(:invoices).loaded? && evidence.invoices.empty? && evidence.invoice_id.present?
+    end
+    return if evidences_without_links.empty?
+
+    ActiveRecord::Associations::Preloader.new(records: evidences_without_links, associations: :invoice).call
+  end
 
   def apply_filters
     # Filtro de búsqueda por texto

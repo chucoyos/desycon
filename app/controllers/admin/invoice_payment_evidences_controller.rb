@@ -184,7 +184,16 @@ module Admin
     def preload_evidence_invoices_associations!(invoices)
       return if invoices.blank?
 
-      ActiveRecord::Associations::Preloader.new(records: invoices, associations: { receiver_entity: :fiscal_profile }).call
+      ActiveRecord::Associations::Preloader.new(records: invoices, associations: :receiver_entity).call
+
+      # RFC from receiver_entity.fiscal_profile is rendered only in grouped PPD mode.
+      grouped_ppd_mode = invoices.many? && invoices.all? { |invoice| invoice.payment_method_code == FiscalProfile::METODO_PAGO_PPD }
+      return unless grouped_ppd_mode
+
+      receiver_entities = invoices.map(&:receiver_entity).compact
+      return if receiver_entities.empty?
+
+      ActiveRecord::Associations::Preloader.new(records: receiver_entities, associations: :fiscal_profile).call
     end
   end
 end

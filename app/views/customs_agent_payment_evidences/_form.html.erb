@@ -1,4 +1,8 @@
-<%= form_with url: customs_agents_payment_evidences_path, method: :post, class: "space-y-5", html: { multipart: true } do |form| %>
+<%= form_with url: customs_agents_payment_evidences_path,
+  method: :post,
+  class: "space-y-5",
+  data: { turbo_confirm: "¿Confirmas el envío del comprobante de pago?" },
+  html: { multipart: true } do |form| %>
   <% if @payment_evidence&.errors&.any? %>
     <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
       <p class="text-sm font-semibold text-red-700">No se pudo enviar el comprobante</p>
@@ -78,6 +82,7 @@
       <%= link_to "Ver facturas", invoices_path, class: "cursor-pointer inline-flex items-center justify-center h-10 px-4 rounded-full text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors" %>
     <% end %>
 
-    <%= form.submit "Enviar comprobante", class: "cursor-pointer inline-flex items-center justify-center h-10 px-5 rounded-full text-sm font-semibold bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" %>
+    <%= form.submit "Enviar comprobante",
+      class: "cursor-pointer inline-flex items-center justify-center h-10 px-5 rounded-full text-sm font-semibold bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" %>
   </div>
 <% end %>

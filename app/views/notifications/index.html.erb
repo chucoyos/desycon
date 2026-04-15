@@ -189,7 +189,7 @@
     <div class="mb-8 overflow-hidden rounded-2xl bg-white shadow-xl shadow-slate-200/50 border border-slate-100">
       <% if @notifications.any? %>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-5" id="notifications_list">
-          <%= render partial: "notifications/notification", collection: @notifications %>
+          <%= render partial: "notifications/notification", collection: @notifications, locals: { viewer: current_user } %>
         </div>
       <% else %>
         <div class="p-10 text-center text-slate-600">

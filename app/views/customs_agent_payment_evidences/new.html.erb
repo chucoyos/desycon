@@ -20,6 +20,18 @@
       </button>
     </div>
 
+    <% if flash[:notice].present? %>
+      <div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+        <p class="text-sm font-semibold text-emerald-800"><%= flash[:notice] %></p>
+      </div>
+    <% end %>
+
+    <% if flash[:alert].present? %>
+      <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+        <p class="text-sm font-semibold text-red-700"><%= flash[:alert] %></p>
+      </div>
+    <% end %>
+
     <div class="bg-white shadow rounded-lg p-6">
       <%= render "customs_agent_payment_evidences/form", modal: false %>
     </div>

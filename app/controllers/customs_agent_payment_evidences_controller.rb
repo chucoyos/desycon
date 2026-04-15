@@ -41,7 +41,7 @@ class CustomsAgentPaymentEvidencesController < ApplicationController
         return render partial: "customs_agent_payment_evidences/success"
       end
 
-      redirect_to new_customs_agents_payment_evidence_path, notice: "Comprobante enviado para revision del ejecutivo."
+      redirect_to new_customs_agents_payment_evidence_path, notice: "Tu comprobante de pago ha sido enviado y sera revisado para su validacion."
     else
       if turbo_frame_request?
         @agency_invoices_for_payment_evidence = eligible_invoices.preload(:receiver_entity, :invoice_payments).limit(100)

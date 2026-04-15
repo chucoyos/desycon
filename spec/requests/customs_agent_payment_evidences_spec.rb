@@ -43,7 +43,7 @@ RSpec.describe "CustomsAgentPaymentEvidences", type: :request do
       .and change(InvoicePayment, :count).by(0)
 
     expect(response).to redirect_to(new_customs_agents_payment_evidence_path)
-    expect(flash[:notice]).to include("Comprobante enviado")
+    expect(flash[:notice]).to include("ha sido enviado")
 
     evidence = InvoicePaymentEvidence.order(:id).last
     expect(evidence.invoice_id).to eq(invoice.id)
