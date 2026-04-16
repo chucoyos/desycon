@@ -156,11 +156,19 @@ class Invoice < ApplicationRecord
     return false unless Facturador::Config.enabled?
     return false if issued?
 
-    mark_queued!
+    payload = Facturador::PayloadBuilder.build(self)
+
+    update!(
+      status: "queued",
+      payload_snapshot: payload,
+      last_error_code: nil,
+      last_error_message: nil
+    )
+
     invoice_events.create!(
       event_type: "issue_requested",
       created_by: actor,
-      request_payload: payload_snapshot,
+      request_payload: payload,
       response_payload: {}
     )
     Facturador::IssueInvoiceJob.perform_later(id)
