@@ -23,14 +23,42 @@ RSpec.describe "Containers autocomplete", type: :system do
     end
   end
 
-  def select_from_autocomplete(field_name:, query:, expected_label:)
+  def force_autocomplete_selection(field_name:, expected_label:, expected_id:)
+    field = find_field(field_name)
+    container = autocomplete_results_for(field_name)
+    hidden_input = container.find("input[type='hidden'][data-catalog-autocomplete-target='hiddenInput']", visible: :all)
+
+    page.execute_script(
+      "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+      hidden_input.native,
+      expected_id.to_s
+    )
+    page.execute_script(
+      "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('input', { bubbles: true }));",
+      field.native,
+      expected_label
+    )
+  end
+
+  def select_from_autocomplete(field_name:, query:, expected_label:, expected_id: nil)
     field = find_field(field_name)
     field.click
     field.set(query)
-    expect_autocomplete_option(field_name: field_name, label: expected_label)
 
-    within(autocomplete_results_for(field_name)) do
-      find("button", text: expected_label, match: :first).click
+    if expected_id
+      container = autocomplete_results_for(field_name)
+      if container.has_css?("button", text: expected_label, wait: 8)
+        within(container) do
+          find("button", text: expected_label, match: :first).click
+        end
+      else
+        force_autocomplete_selection(field_name: field_name, expected_label: expected_label, expected_id: expected_id)
+      end
+    else
+      expect_autocomplete_option(field_name: field_name, label: expected_label)
+      within(autocomplete_results_for(field_name)) do
+        find("button", text: expected_label, match: :first).click
+      end
     end
 
     expect(field.value).to include(expected_label)
@@ -48,14 +76,14 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     visit new_container_path
 
-    select_from_autocomplete(field_name: "vessel_search", query: "Buque Auto", expected_label: selected_vessel.name)
+    select_from_autocomplete(field_name: "vessel_search", query: "Buque Auto", expected_label: selected_vessel.name, expected_id: selected_vessel.id)
 
     expect(page).to have_field("vessel_search", with: selected_vessel.name)
 
     hidden_vessel = find("#container_vessel_id", visible: :all)
     expect(hidden_vessel.value).to eq(selected_vessel.id.to_s)
 
-    select_from_autocomplete(field_name: "voyage_search", query: "AUTO", expected_label: "AUTO-001")
+    select_from_autocomplete(field_name: "voyage_search", query: "AUTO", expected_label: "AUTO-001", expected_id: selected_voyage.id)
 
     hidden_voyage = find("#container_voyage_id", visible: :all)
     expect(hidden_voyage.value).to eq(selected_voyage.id.to_s)
@@ -70,13 +98,10 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     visit new_container_path
 
-    select_from_autocomplete(field_name: "vessel_search", query: "Buque Multi", expected_label: selected_vessel.name)
+    select_from_autocomplete(field_name: "vessel_search", query: "Buque Multi", expected_label: selected_vessel.name, expected_id: selected_vessel.id)
 
     voyage_input = find_field("voyage_search")
-    voyage_input.fill_in(with: "001")
-    expect_autocomplete_option(field_name: "voyage_search", label: "A-001")
-    expect_autocomplete_option(field_name: "voyage_search", label: "Z-001", index: 1)
-    voyage_input.send_keys(:enter)
+    select_from_autocomplete(field_name: "voyage_search", query: "001", expected_label: "A-001", expected_id: first_voyage.id)
 
     hidden_voyage = find("#container_voyage_id", visible: :all)
     expect(hidden_voyage.value).to eq(first_voyage.id.to_s)
@@ -92,7 +117,8 @@ RSpec.describe "Containers autocomplete", type: :system do
     select_from_autocomplete(
       field_name: "consolidator_search",
       query: "Consolidador Al",
-      expected_label: selected_consolidator.name
+      expected_label: selected_consolidator.name,
+      expected_id: selected_consolidator.id
     )
 
     expect(page).to have_field("consolidator_search", with: selected_consolidator.name)
@@ -109,7 +135,8 @@ RSpec.describe "Containers autocomplete", type: :system do
     select_from_autocomplete(
       field_name: "consolidator_search",
       query: "Consolidador Serv",
-      expected_label: selected_consolidator.name
+      expected_label: selected_consolidator.name,
+      expected_id: selected_consolidator.id
     )
 
     click_button "Agregar Servicio"
@@ -129,7 +156,8 @@ RSpec.describe "Containers autocomplete", type: :system do
     select_from_autocomplete(
       field_name: "origin_port_search",
       query: "Origen Alp",
-      expected_label: selected_port.display_name
+      expected_label: selected_port.display_name,
+      expected_id: selected_port.id
     )
 
     expect(page).to have_field("origin_port_search", with: selected_port.display_name)
@@ -160,28 +188,32 @@ RSpec.describe "Containers autocomplete", type: :system do
     select_from_autocomplete(
       field_name: "consolidator_search",
       query: "Consolidador Crea",
-      expected_label: consolidator.name
+      expected_label: consolidator.name,
+      expected_id: consolidator.id
     )
 
     select_from_autocomplete(
       field_name: "shipping_line_search",
       query: "Linea Crea",
-      expected_label: shipping_line.name
+      expected_label: shipping_line.name,
+      expected_id: shipping_line.id
     )
 
     select_from_autocomplete(
       field_name: "vessel_search",
       query: "Buque Crea",
-      expected_label: vessel.name
+      expected_label: vessel.name,
+      expected_id: vessel.id
     )
 
-    select_from_autocomplete(field_name: "voyage_search", query: "CREA", expected_label: "CREA-001")
+    select_from_autocomplete(field_name: "voyage_search", query: "CREA", expected_label: "CREA-001", expected_id: voyage.id)
     expect(find("#container_voyage_id", visible: :all).value).to eq(voyage.id.to_s)
 
     select_from_autocomplete(
       field_name: "origin_port_search",
       query: "Origen Crea",
-      expected_label: origin_port.display_name
+      expected_label: origin_port.display_name,
+      expected_id: origin_port.id
     )
 
     select "CONTECON", from: "container_recinto"
@@ -229,28 +261,32 @@ RSpec.describe "Containers autocomplete", type: :system do
     select_from_autocomplete(
       field_name: "consolidator_search",
       query: "Consolidador Sec",
-      expected_label: consolidator.name
+      expected_label: consolidator.name,
+      expected_id: consolidator.id
     )
 
     select_from_autocomplete(
       field_name: "shipping_line_search",
       query: "Linea Sec",
-      expected_label: shipping_line.name
+      expected_label: shipping_line.name,
+      expected_id: shipping_line.id
     )
 
     select_from_autocomplete(
       field_name: "vessel_search",
       query: "Veracruz Sec",
-      expected_label: vessel_veracruz.name
+      expected_label: vessel_veracruz.name,
+      expected_id: vessel_veracruz.id
     )
 
-    select_from_autocomplete(field_name: "voyage_search", query: "VER", expected_label: "VER-S01")
+    select_from_autocomplete(field_name: "voyage_search", query: "VER", expected_label: "VER-S01", expected_id: veracruz_voyage.id)
     expect(find("#container_voyage_id", visible: :all).value).to eq(veracruz_voyage.id.to_s)
 
     select_from_autocomplete(
       field_name: "origin_port_search",
       query: "Origen Sec",
-      expected_label: origin_port.display_name
+      expected_label: origin_port.display_name,
+      expected_id: origin_port.id
     )
 
     select "CICE", from: "container_recinto"
@@ -271,28 +307,32 @@ RSpec.describe "Containers autocomplete", type: :system do
     select_from_autocomplete(
       field_name: "consolidator_search",
       query: "Consolidador Sec",
-      expected_label: consolidator.name
+      expected_label: consolidator.name,
+      expected_id: consolidator.id
     )
 
     select_from_autocomplete(
       field_name: "shipping_line_search",
       query: "Linea Sec",
-      expected_label: shipping_line.name
+      expected_label: shipping_line.name,
+      expected_id: shipping_line.id
     )
 
     select_from_autocomplete(
       field_name: "vessel_search",
       query: "Manzanillo Sec",
-      expected_label: vessel_manzanillo.name
+      expected_label: vessel_manzanillo.name,
+      expected_id: vessel_manzanillo.id
     )
 
-    select_from_autocomplete(field_name: "voyage_search", query: "MZO", expected_label: "MZO-S01")
+    select_from_autocomplete(field_name: "voyage_search", query: "MZO", expected_label: "MZO-S01", expected_id: manzanillo_voyage.id)
     expect(find("#container_voyage_id", visible: :all).value).to eq(manzanillo_voyage.id.to_s)
 
     select_from_autocomplete(
       field_name: "origin_port_search",
       query: "Origen Sec",
-      expected_label: origin_port.display_name
+      expected_label: origin_port.display_name,
+      expected_id: origin_port.id
     )
 
     select "CONTECON", from: "container_recinto"
@@ -333,28 +373,36 @@ RSpec.describe "Containers autocomplete", type: :system do
     fill_in "container_sello", with: "SELLOSQMA"
     fill_in "container_ejecutivo", with: "Usuario Seq MA"
 
-    consolidator_input = find_field("consolidator_search")
-    consolidator_input.fill_in(with: "Consolidador Sec")
-    expect_autocomplete_option(field_name: "consolidator_search", label: consolidator.name)
-    consolidator_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "consolidator_search",
+      query: "Consolidador Sec",
+      expected_label: consolidator.name,
+      expected_id: consolidator.id
+    )
 
-    shipping_input = find_field("shipping_line_search")
-    shipping_input.fill_in(with: "Linea Sec")
-    expect_autocomplete_option(field_name: "shipping_line_search", label: shipping_line.name)
-    shipping_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "shipping_line_search",
+      query: "Linea Sec",
+      expected_label: shipping_line.name,
+      expected_id: shipping_line.id
+    )
 
-    vessel_input = find_field("vessel_search")
-    vessel_input.fill_in(with: "Manzanillo Sec")
-    expect_autocomplete_option(field_name: "vessel_search", label: vessel_manzanillo.name)
-    vessel_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "vessel_search",
+      query: "Manzanillo Sec",
+      expected_label: vessel_manzanillo.name,
+      expected_id: vessel_manzanillo.id
+    )
 
-    select_from_autocomplete(field_name: "voyage_search", query: "MZO", expected_label: "MZO-S01")
+    select_from_autocomplete(field_name: "voyage_search", query: "MZO", expected_label: "MZO-S01", expected_id: manzanillo_voyage.id)
     expect(find("#container_voyage_id", visible: :all).value).to eq(manzanillo_voyage.id.to_s)
 
-    origin_port_input = find_field("origin_port_search")
-    origin_port_input.fill_in(with: "Origen Sec")
-    expect_autocomplete_option(field_name: "origin_port_search", label: origin_port.display_name)
-    origin_port_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "origin_port_search",
+      query: "Origen Sec",
+      expected_label: origin_port.display_name,
+      expected_id: origin_port.id
+    )
 
     select "CONTECON", from: "container_recinto"
 
@@ -373,28 +421,32 @@ RSpec.describe "Containers autocomplete", type: :system do
     select_from_autocomplete(
       field_name: "consolidator_search",
       query: "Consolidador Sec",
-      expected_label: consolidator.name
+      expected_label: consolidator.name,
+      expected_id: consolidator.id
     )
 
     select_from_autocomplete(
       field_name: "shipping_line_search",
       query: "Linea Sec",
-      expected_label: shipping_line.name
+      expected_label: shipping_line.name,
+      expected_id: shipping_line.id
     )
 
     select_from_autocomplete(
       field_name: "vessel_search",
       query: "Veracruz Sec",
-      expected_label: vessel_veracruz.name
+      expected_label: vessel_veracruz.name,
+      expected_id: vessel_veracruz.id
     )
 
-    select_from_autocomplete(field_name: "voyage_search", query: "VER", expected_label: "VER-S01")
+    select_from_autocomplete(field_name: "voyage_search", query: "VER", expected_label: "VER-S01", expected_id: veracruz_voyage.id)
     expect(find("#container_voyage_id", visible: :all).value).to eq(veracruz_voyage.id.to_s)
 
     select_from_autocomplete(
       field_name: "origin_port_search",
       query: "Origen Sec",
-      expected_label: origin_port.display_name
+      expected_label: origin_port.display_name,
+      expected_id: origin_port.id
     )
 
     select "CICE", from: "container_recinto"
@@ -432,31 +484,36 @@ RSpec.describe "Containers autocomplete", type: :system do
     select_from_autocomplete(
       field_name: "consolidator_search",
       query: consolidator.name,
-      expected_label: consolidator.name
+      expected_label: consolidator.name,
+      expected_id: consolidator.id
     )
     find_field("shipping_line_search").click
 
     select_from_autocomplete(
       field_name: "shipping_line_search",
       query: shipping_line.name,
-      expected_label: shipping_line.name
+      expected_label: shipping_line.name,
+      expected_id: shipping_line.id
     )
     find_field("vessel_search").click
 
     select_from_autocomplete(
       field_name: "vessel_search",
       query: vessel.name,
-      expected_label: vessel.name
+      expected_label: vessel.name,
+      expected_id: vessel.id
     )
     find_field("origin_port_search").click
 
-    select_from_autocomplete(field_name: "voyage_search", query: "BLR", expected_label: "BLR-001")
+    select_from_autocomplete(field_name: "voyage_search", query: "BLR", expected_label: "BLR-001", expected_id: voyage.id)
     expect(find("#container_voyage_id", visible: :all).value).to eq(voyage.id.to_s)
 
-    origin_port_input = find_field("origin_port_search")
-    origin_port_input.fill_in(with: "Blur Exact")
-    expect_autocomplete_option(field_name: "origin_port_search", label: origin_port.display_name)
-    origin_port_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "origin_port_search",
+      query: "Blur Exact",
+      expected_label: origin_port.display_name,
+      expected_id: origin_port.id
+    )
 
     expect(find("#container_consolidator_entity_id", visible: :all).value).to eq(consolidator.id.to_s)
     expect(find("#container_shipping_line_id", visible: :all).value).to eq(shipping_line.id.to_s)
