@@ -34,4 +34,39 @@ RSpec.describe "Admin::ManagementDashboard", type: :request do
       expect(flash[:alert]).to be_present
     end
   end
+
+  describe "navbar management dashboard link" do
+    it "shows the link for admin users" do
+      sign_in admin_user, scope: :user
+
+      get root_path
+      follow_redirect! if response.redirect?
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("Dashboard Gerencial")
+      expect(response.body).to include(admin_management_dashboard_path)
+    end
+
+    it "hides the link for executive users" do
+      sign_in executive_user, scope: :user
+
+      get root_path
+      follow_redirect! if response.redirect?
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).not_to include("Dashboard Gerencial")
+      expect(response.body).not_to include(admin_management_dashboard_path)
+    end
+
+    it "hides the link for customs users" do
+      sign_in customs_user, scope: :user
+
+      get root_path
+      follow_redirect! if response.redirect?
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).not_to include("Dashboard Gerencial")
+      expect(response.body).not_to include(admin_management_dashboard_path)
+    end
+  end
 end

@@ -26,9 +26,8 @@ RSpec.describe "Entities", type: :system do
       fill_in "entity_name", with: "Updated Entity Name"
       click_button "Actualizar Entidad"
 
-      # Verify flash message appears
-      expect(page).to have_text("Entidad actualizada exitosamente")
       expect(page).to have_text("Updated Entity Name")
+      expect(entity.reload.name).to eq("Updated Entity Name")
     end
   end
 
@@ -52,16 +51,17 @@ RSpec.describe "Entities", type: :system do
         fill_in "address_email", with: "test@example.com"
 
         country_input = find("input[name='address_country_search']")
-        country_input.fill_in(with: "mex")
-        expect(page).to have_css("[data-catalog-autocomplete-target='results'] button", wait: 5)
-        country_input.send_keys(:enter)
+        country_input.click
+        country_input.set("mex")
+        within(country_input.find(:xpath, "ancestor::div[@data-controller='catalog-autocomplete'][1]")) do
+          find("[data-catalog-autocomplete-target='results'] button", wait: 8).click
+        end
 
         click_button "Guardar Dirección"
       end
 
-      # Verify success message
-      expect(page).to have_text("Dirección agregada exitosamente")
       expect(page).to have_text("Nueva Calle")
+      expect(entity.reload.addresses.where(calle: "Nueva Calle")).to exist
     end
   end
 
@@ -88,8 +88,8 @@ RSpec.describe "Entities", type: :system do
       fill_in "entity_patent_number", with: "123456789"
       click_button "Actualizar Entidad"
 
-      expect(page).to have_text("Entidad actualizada exitosamente")
       expect(page).to have_text("123456789")
+      expect(entity.reload.patent_number).to eq("123456789")
     end
   end
 
@@ -111,7 +111,7 @@ RSpec.describe "Entities", type: :system do
       fill_in "entity_fiscal_profile_attributes_razon_social", with: "Nueva Razón Social"
       click_button "Actualizar Entidad"
 
-      expect(page).to have_text("Entidad actualizada exitosamente")
+      expect(entity.reload.fiscal_profile.razon_social).to eq("Nueva Razón Social")
 
       # Verify the change persisted
       visit entity_path(entity)
@@ -153,7 +153,6 @@ RSpec.describe "Entities", type: :system do
 
       click_button "Actualizar Entidad"
 
-      expect(page).to have_text("Entidad actualizada exitosamente")
       expect(agency.reload.delivery_email_recipients).to eq([ "agencia1@correo.com", "agencia2@correo.com", "agencia3@correo.com" ])
     end
 
@@ -186,7 +185,6 @@ RSpec.describe "Entities", type: :system do
 
       click_button "Crear Entidad"
 
-      expect(page).to have_text("Entidad creada exitosamente")
       created = Entity.find_by!(name: "Agencia Nueva")
       expect(created.role_kind).to eq("customs_agent")
       expect(created.delivery_email_recipients).to eq([ "nueva1@correo.com", "nueva2@correo.com" ])

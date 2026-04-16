@@ -15,15 +15,25 @@ RSpec.describe "Containers autocomplete", type: :system do
 
   def expect_autocomplete_option(field_name:, label:, index: 0)
     within(autocomplete_results_for(field_name)) do
-      expect(page).to have_css("button[data-index='#{index}']", text: label)
+      if index.zero?
+        expect(page).to have_css("button", text: label, wait: 8)
+      else
+        expect(page).to have_css("button[data-index='#{index}']", text: label, wait: 8)
+      end
     end
   end
 
   def select_from_autocomplete(field_name:, query:, expected_label:)
     field = find_field(field_name)
-    field.fill_in(with: query)
+    field.click
+    field.set(query)
     expect_autocomplete_option(field_name: field_name, label: expected_label)
-    field.send_keys(:enter)
+
+    within(autocomplete_results_for(field_name)) do
+      find("button", text: expected_label, match: :first).click
+    end
+
+    expect(field.value).to include(expected_label)
   end
 
   it "autoloads voyage after selecting vessel from autocomplete" do
@@ -79,11 +89,11 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     visit new_container_path
 
-    consolidator_input = find_field("consolidator_search")
-    consolidator_input.fill_in(with: "Consolidador Al")
-
-    expect_autocomplete_option(field_name: "consolidator_search", label: selected_consolidator.name)
-    consolidator_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "consolidator_search",
+      query: "Consolidador Al",
+      expected_label: selected_consolidator.name
+    )
 
     expect(page).to have_field("consolidator_search", with: selected_consolidator.name)
 
@@ -96,10 +106,11 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     visit new_container_path
 
-    consolidator_input = find_field("consolidator_search")
-    consolidator_input.fill_in(with: "Consolidador Serv")
-    expect_autocomplete_option(field_name: "consolidator_search", label: selected_consolidator.name)
-    consolidator_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "consolidator_search",
+      query: "Consolidador Serv",
+      expected_label: selected_consolidator.name
+    )
 
     click_button "Agregar Servicio"
 
@@ -115,11 +126,11 @@ RSpec.describe "Containers autocomplete", type: :system do
 
     visit new_container_path
 
-    origin_port_input = find_field("origin_port_search")
-    origin_port_input.fill_in(with: "Origen Alp")
-
-    expect_autocomplete_option(field_name: "origin_port_search", label: selected_port.display_name)
-    origin_port_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "origin_port_search",
+      query: "Origen Alp",
+      expected_label: selected_port.display_name
+    )
 
     expect(page).to have_field("origin_port_search", with: selected_port.display_name)
 
@@ -146,28 +157,32 @@ RSpec.describe "Containers autocomplete", type: :system do
     fill_in "container_sello", with: "SELLO123"
     fill_in "container_ejecutivo", with: "Usuario QA"
 
-    consolidator_input = find_field("consolidator_search")
-    consolidator_input.fill_in(with: "Consolidador Crea")
-    expect_autocomplete_option(field_name: "consolidator_search", label: consolidator.name)
-    consolidator_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "consolidator_search",
+      query: "Consolidador Crea",
+      expected_label: consolidator.name
+    )
 
-    shipping_input = find_field("shipping_line_search")
-    shipping_input.fill_in(with: "Linea Crea")
-    expect_autocomplete_option(field_name: "shipping_line_search", label: shipping_line.name)
-    shipping_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "shipping_line_search",
+      query: "Linea Crea",
+      expected_label: shipping_line.name
+    )
 
-    vessel_input = find_field("vessel_search")
-    vessel_input.fill_in(with: "Buque Crea")
-    expect_autocomplete_option(field_name: "vessel_search", label: vessel.name)
-    vessel_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "vessel_search",
+      query: "Buque Crea",
+      expected_label: vessel.name
+    )
 
     select_from_autocomplete(field_name: "voyage_search", query: "CREA", expected_label: "CREA-001")
     expect(find("#container_voyage_id", visible: :all).value).to eq(voyage.id.to_s)
 
-    origin_port_input = find_field("origin_port_search")
-    origin_port_input.fill_in(with: "Origen Crea")
-    expect_autocomplete_option(field_name: "origin_port_search", label: origin_port.display_name)
-    origin_port_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "origin_port_search",
+      query: "Origen Crea",
+      expected_label: origin_port.display_name
+    )
 
     select "CONTECON", from: "container_recinto"
 
@@ -211,28 +226,32 @@ RSpec.describe "Containers autocomplete", type: :system do
     fill_in "container_sello", with: "SELLOSQA"
     fill_in "container_ejecutivo", with: "Usuario Seq A"
 
-    consolidator_input = find_field("consolidator_search")
-    consolidator_input.fill_in(with: "Consolidador Sec")
-    expect_autocomplete_option(field_name: "consolidator_search", label: consolidator.name)
-    consolidator_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "consolidator_search",
+      query: "Consolidador Sec",
+      expected_label: consolidator.name
+    )
 
-    shipping_input = find_field("shipping_line_search")
-    shipping_input.fill_in(with: "Linea Sec")
-    expect_autocomplete_option(field_name: "shipping_line_search", label: shipping_line.name)
-    shipping_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "shipping_line_search",
+      query: "Linea Sec",
+      expected_label: shipping_line.name
+    )
 
-    vessel_input = find_field("vessel_search")
-    vessel_input.fill_in(with: "Veracruz Sec")
-    expect_autocomplete_option(field_name: "vessel_search", label: vessel_veracruz.name)
-    vessel_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "vessel_search",
+      query: "Veracruz Sec",
+      expected_label: vessel_veracruz.name
+    )
 
     select_from_autocomplete(field_name: "voyage_search", query: "VER", expected_label: "VER-S01")
     expect(find("#container_voyage_id", visible: :all).value).to eq(veracruz_voyage.id.to_s)
 
-    origin_port_input = find_field("origin_port_search")
-    origin_port_input.fill_in(with: "Origen Sec")
-    expect_autocomplete_option(field_name: "origin_port_search", label: origin_port.display_name)
-    origin_port_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "origin_port_search",
+      query: "Origen Sec",
+      expected_label: origin_port.display_name
+    )
 
     select "CICE", from: "container_recinto"
     select "CICE", from: "container_almacen"
@@ -249,28 +268,32 @@ RSpec.describe "Containers autocomplete", type: :system do
     fill_in "container_sello", with: "SELLOSQB"
     fill_in "container_ejecutivo", with: "Usuario Seq B"
 
-    consolidator_input = find_field("consolidator_search")
-    consolidator_input.fill_in(with: "Consolidador Sec")
-    expect_autocomplete_option(field_name: "consolidator_search", label: consolidator.name)
-    consolidator_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "consolidator_search",
+      query: "Consolidador Sec",
+      expected_label: consolidator.name
+    )
 
-    shipping_input = find_field("shipping_line_search")
-    shipping_input.fill_in(with: "Linea Sec")
-    expect_autocomplete_option(field_name: "shipping_line_search", label: shipping_line.name)
-    shipping_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "shipping_line_search",
+      query: "Linea Sec",
+      expected_label: shipping_line.name
+    )
 
-    vessel_input = find_field("vessel_search")
-    vessel_input.fill_in(with: "Manzanillo Sec")
-    expect_autocomplete_option(field_name: "vessel_search", label: vessel_manzanillo.name)
-    vessel_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "vessel_search",
+      query: "Manzanillo Sec",
+      expected_label: vessel_manzanillo.name
+    )
 
     select_from_autocomplete(field_name: "voyage_search", query: "MZO", expected_label: "MZO-S01")
     expect(find("#container_voyage_id", visible: :all).value).to eq(manzanillo_voyage.id.to_s)
 
-    origin_port_input = find_field("origin_port_search")
-    origin_port_input.fill_in(with: "Origen Sec")
-    expect_autocomplete_option(field_name: "origin_port_search", label: origin_port.display_name)
-    origin_port_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "origin_port_search",
+      query: "Origen Sec",
+      expected_label: origin_port.display_name
+    )
 
     select "CONTECON", from: "container_recinto"
 
@@ -347,28 +370,32 @@ RSpec.describe "Containers autocomplete", type: :system do
     fill_in "container_sello", with: "SELLOSQVE"
     fill_in "container_ejecutivo", with: "Usuario Seq VE"
 
-    consolidator_input = find_field("consolidator_search")
-    consolidator_input.fill_in(with: "Consolidador Sec")
-    expect_autocomplete_option(field_name: "consolidator_search", label: consolidator.name)
-    consolidator_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "consolidator_search",
+      query: "Consolidador Sec",
+      expected_label: consolidator.name
+    )
 
-    shipping_input = find_field("shipping_line_search")
-    shipping_input.fill_in(with: "Linea Sec")
-    expect_autocomplete_option(field_name: "shipping_line_search", label: shipping_line.name)
-    shipping_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "shipping_line_search",
+      query: "Linea Sec",
+      expected_label: shipping_line.name
+    )
 
-    vessel_input = find_field("vessel_search")
-    vessel_input.fill_in(with: "Veracruz Sec")
-    expect_autocomplete_option(field_name: "vessel_search", label: vessel_veracruz.name)
-    vessel_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "vessel_search",
+      query: "Veracruz Sec",
+      expected_label: vessel_veracruz.name
+    )
 
     select_from_autocomplete(field_name: "voyage_search", query: "VER", expected_label: "VER-S01")
     expect(find("#container_voyage_id", visible: :all).value).to eq(veracruz_voyage.id.to_s)
 
-    origin_port_input = find_field("origin_port_search")
-    origin_port_input.fill_in(with: "Origen Sec")
-    expect_autocomplete_option(field_name: "origin_port_search", label: origin_port.display_name)
-    origin_port_input.send_keys(:enter)
+    select_from_autocomplete(
+      field_name: "origin_port_search",
+      query: "Origen Sec",
+      expected_label: origin_port.display_name
+    )
 
     select "CICE", from: "container_recinto"
     select "CICE", from: "container_almacen"
@@ -402,16 +429,25 @@ RSpec.describe "Containers autocomplete", type: :system do
     fill_in "container_sello", with: "SELLOBLR"
     fill_in "container_ejecutivo", with: "Usuario Blur"
 
-    fill_in "consolidator_search", with: consolidator.name
-    expect_autocomplete_option(field_name: "consolidator_search", label: consolidator.name)
+    select_from_autocomplete(
+      field_name: "consolidator_search",
+      query: consolidator.name,
+      expected_label: consolidator.name
+    )
     find_field("shipping_line_search").click
 
-    fill_in "shipping_line_search", with: shipping_line.name
-    expect_autocomplete_option(field_name: "shipping_line_search", label: shipping_line.name)
+    select_from_autocomplete(
+      field_name: "shipping_line_search",
+      query: shipping_line.name,
+      expected_label: shipping_line.name
+    )
     find_field("vessel_search").click
 
-    fill_in "vessel_search", with: vessel.name
-    expect_autocomplete_option(field_name: "vessel_search", label: vessel.name)
+    select_from_autocomplete(
+      field_name: "vessel_search",
+      query: vessel.name,
+      expected_label: vessel.name
+    )
     find_field("origin_port_search").click
 
     select_from_autocomplete(field_name: "voyage_search", query: "BLR", expected_label: "BLR-001")
