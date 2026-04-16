@@ -400,42 +400,39 @@
     const catalogosSubmenu = document.getElementById('mobile-catalogos-submenu');
     const catalogosChevron = document.getElementById('catalogos-chevron');
 
-    if (menuButton && mobileMenu) {
-      // Remove existing listener to avoid duplicates
-      menuButton.replaceWith(menuButton.cloneNode(true));
-      const newMenuButton = document.getElementById('mobile-menu-button');
-      
-      newMenuButton.addEventListener('click', function(e) {
+    if (menuButton && mobileMenu && !menuButton.dataset.menuBound) {
+      menuButton.dataset.menuBound = 'true';
+
+      menuButton.addEventListener('click', function(e) {
         e.preventDefault();
         const isHidden = mobileMenu.classList.contains('hidden');
-        
+
         if (isHidden) {
           mobileMenu.classList.remove('hidden');
-          menuOpenIcon.classList.add('hidden');
-          menuCloseIcon.classList.remove('hidden');
+          menuOpenIcon?.classList.add('hidden');
+          menuCloseIcon?.classList.remove('hidden');
         } else {
           mobileMenu.classList.add('hidden');
-          menuOpenIcon.classList.remove('hidden');
-          menuCloseIcon.classList.add('hidden');
+          menuOpenIcon?.classList.remove('hidden');
+          menuCloseIcon?.classList.add('hidden');
         }
       });
     }
 
     // Catalogos submenu toggle
-    if (catalogosButton && catalogosSubmenu) {
-      catalogosButton.replaceWith(catalogosButton.cloneNode(true));
-      const newCatalogosButton = document.getElementById('mobile-catalogos-button');
-      
-      newCatalogosButton.addEventListener('click', function(e) {
+    if (catalogosButton && catalogosSubmenu && !catalogosButton.dataset.catalogosBound) {
+      catalogosButton.dataset.catalogosBound = 'true';
+
+      catalogosButton.addEventListener('click', function(e) {
         e.preventDefault();
         const isHidden = catalogosSubmenu.classList.contains('hidden');
-        
+
         if (isHidden) {
           catalogosSubmenu.classList.remove('hidden');
-          catalogosChevron.style.transform = 'rotate(180deg)';
+          catalogosChevron?.style.setProperty('transform', 'rotate(180deg)');
         } else {
           catalogosSubmenu.classList.add('hidden');
-          catalogosChevron.style.transform = 'rotate(0deg)';
+          catalogosChevron?.style.setProperty('transform', 'rotate(0deg)');
         }
       });
     }
