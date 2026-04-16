@@ -11,6 +11,10 @@
     { name: "Por cobrar", data: month_labels.zip(por_cobrar_series).to_h }
   ]
 
+  revenue_by_port_chart_data = @revenue_metrics.fetch(:emitted_by_destination_port, {}).map do |port_name, values|
+    { name: port_name, data: month_labels.zip(values).to_h }
+  end
+
   containers_chart_data = [
     { name: "Creados", data: month_labels.zip(@operations_metrics.dig(:containers, :created)).to_h },
     { name: "Desconsolidados", data: month_labels.zip(@operations_metrics.dig(:containers, :unconsolidated)).to_h }
@@ -102,6 +106,39 @@
           }
         }
       } %>
+  </section>
+
+  <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+    <h2 class="text-lg font-bold text-slate-900">Ingresos Mensuales por Puerto (Serie CFDI)</h2>
+    <p class="text-sm text-slate-600 mb-4">Clasificacion mensual de ingresos facturados por puerto segun la serie del CFDI (barras apiladas).</p>
+    <% if revenue_by_port_chart_data.any? %>
+      <%= column_chart revenue_by_port_chart_data,
+        height: "320px",
+        legend: "top",
+        thousands: ",",
+        prefix: "$",
+        colors: ["#0ea5e9", "#f97316", "#eab308", "#22c55e", "#64748b"],
+        library: {
+          plotOptions: {
+            column: {
+              stacking: "normal",
+              pointWidth: 32,
+              pointPadding: 0.08,
+              groupPadding: 0.18
+            }
+          },
+          plugins: {
+            legend: {
+              labels: {
+                boxWidth: 12,
+                boxHeight: 12
+              }
+            }
+          }
+        } %>
+    <% else %>
+      <p class="text-sm text-slate-500">No hay ingresos clasificados por puerto para el periodo seleccionado.</p>
+    <% end %>
   </section>
 
   <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
