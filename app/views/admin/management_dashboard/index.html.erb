@@ -2,9 +2,13 @@
 
 <%
   month_labels = @revenue_metrics[:month_labels]
+  facturado_series = @revenue_metrics[:emitted]
+  cobrado_series = @revenue_metrics[:collected]
+  por_cobrar_series = facturado_series.zip(cobrado_series).map { |facturado, cobrado| [(facturado - cobrado), 0.to_d].max }
+
   revenue_chart_data = [
-    { name: "Emitido", data: month_labels.zip(@revenue_metrics[:emitted]).to_h },
-    { name: "Cobrado", data: month_labels.zip(@revenue_metrics[:collected]).to_h }
+    { name: "Cobrado", data: month_labels.zip(cobrado_series).to_h },
+    { name: "Por cobrar", data: month_labels.zip(por_cobrar_series).to_h }
   ]
 
   containers_chart_data = [
@@ -74,16 +78,22 @@
 
   <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
     <h2 class="text-lg font-bold text-slate-900">Ingresos Mensuales (YTD)</h2>
-    <p class="text-sm text-slate-600 mb-4">Emitido vs cobrado por mes.</p>
-    <%= line_chart revenue_chart_data,
+    <p class="text-sm text-slate-600 mb-4">Cobrado y por cobrar por mes. El total apilado representa lo facturado.</p>
+    <%= column_chart revenue_chart_data,
       height: "320px",
       legend: "top",
       thousands: ",",
       prefix: "$",
-      curve: false,
-      discrete: true,
-      colors: ["#10b981", "#3b82f6"],
+      colors: ["#2563eb", "#dc2626"],
       library: {
+        plotOptions: {
+          column: {
+            stacking: "normal",
+            pointWidth: 32,
+            pointPadding: 0.08,
+            groupPadding: 0.18
+          }
+        },
         plugins: {
           legend: {
             labels: {

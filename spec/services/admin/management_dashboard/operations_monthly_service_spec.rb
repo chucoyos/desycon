@@ -47,19 +47,19 @@ RSpec.describe Admin::ManagementDashboard::OperationsMonthlyService do
 
       result = described_class.call(year: 2026)
 
-      expect(result[:month_numbers]).to eq([ 1, 2, 3, 4 ])
-      expect(result.dig(:containers, :created)).to eq([ 2, 0, 0, 0 ])
-      expect(result.dig(:containers, :closed)).to eq([ 0, 1, 0, 0 ])
-      expect(result.dig(:containers, :unconsolidated)).to eq([ 0, 1, 0, 0 ])
+      expect(result[:month_numbers]).to eq((1..12).to_a)
+      expect(result.dig(:containers, :created)).to eq([ 2, 0, 0, 0 ] + Array.new(8, 0))
+      expect(result.dig(:containers, :closed)).to eq([ 0, 1, 0, 0 ] + Array.new(8, 0))
+      expect(result.dig(:containers, :unconsolidated)).to eq([ 0, 1, 0, 0 ] + Array.new(8, 0))
 
-      expect(result.dig(:bl_house_lines, :created)).to eq([ 0, 0, 1, 0 ])
-      expect(result.dig(:bl_house_lines, :revalidated)).to eq([ 0, 0, 0, 1 ])
-      expect(result.dig(:bl_house_lines, :dispatched)).to eq([ 0, 0, 0, 1 ])
+      expect(result.dig(:bl_house_lines, :created)).to eq([ 0, 0, 1, 0 ] + Array.new(8, 0))
+      expect(result.dig(:bl_house_lines, :revalidated)).to eq([ 0, 0, 0, 1 ] + Array.new(8, 0))
+      expect(result.dig(:bl_house_lines, :dispatched)).to eq([ 0, 0, 0, 1 ] + Array.new(8, 0))
 
-      expect(result.dig(:destination_port_importation, "Manzanillo")).to eq([ 1, 0, 0, 0 ])
-      expect(result.dig(:destination_port_importation, "Veracruz")).to eq([ 0, 0, 0, 0 ])
-      expect(result.dig(:destination_port_importation, "Lazaro Cardenas")).to eq([ 0, 0, 0, 0 ])
-      expect(result.dig(:destination_port_importation, "Altamira")).to eq([ 0, 0, 0, 0 ])
+      expect(result.dig(:destination_port_importation, "Manzanillo")).to eq([ 1, 0, 0, 0 ] + Array.new(8, 0))
+      expect(result.dig(:destination_port_importation, "Veracruz")).to eq(Array.new(12, 0))
+      expect(result.dig(:destination_port_importation, "Lazaro Cardenas")).to eq(Array.new(12, 0))
+      expect(result.dig(:destination_port_importation, "Altamira")).to eq(Array.new(12, 0))
 
       expect(export_container.tipo_maniobra).to eq("exportacion")
     end

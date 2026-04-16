@@ -40,8 +40,7 @@ module Admin
       end
 
       def max_month
-        today = Time.zone.today
-        year == today.year ? today.month : 12
+        12
       end
 
       def range_start

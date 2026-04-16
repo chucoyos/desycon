@@ -29,10 +29,10 @@ RSpec.describe Admin::ManagementDashboard::RevenueMonthlyService do
 
       result = described_class.call(year: 2026)
 
-      expect(result[:month_numbers]).to eq([ 1, 2, 3, 4 ])
-      expect(result[:month_labels]).to eq(%w[Ene Feb Mar Abr])
-      expect(result[:emitted]).to eq([ 1000.to_d, 0.to_d, 0.to_d, 0.to_d ])
-      expect(result[:collected]).to eq([ 0.to_d, 300.to_d, 0.to_d, 200.to_d ])
+      expect(result[:month_numbers]).to eq((1..12).to_a)
+      expect(result[:month_labels]).to eq(%w[Ene Feb Mar Abr May Jun Jul Ago Sep Oct Nov Dic])
+      expect(result[:emitted]).to eq([ 1000.to_d, 0.to_d, 0.to_d, 0.to_d ] + Array.new(8, 0.to_d))
+      expect(result[:collected]).to eq([ 0.to_d, 300.to_d, 0.to_d, 200.to_d ] + Array.new(8, 0.to_d))
       expect(result.dig(:totals, :emitted)).to eq(1000.to_d)
       expect(result.dig(:totals, :collected)).to eq(500.to_d)
     end
