@@ -57,7 +57,19 @@ class PhotosController < ApplicationController
     authorize @photo
 
     attachable = @photo.attachable
+    section = @photo.section
     @photo.destroy
+
+    if turbo_frame_request?
+      metadata = default_photo_section_metadata(attachable: attachable, section: section)
+
+      return render_section_frame(
+        attachable: attachable,
+        section: section,
+        title: params[:title].to_s.presence || metadata[:title],
+        subtitle: params[:subtitle].to_s.presence || metadata[:subtitle]
+      )
+    end
 
     redirect_back fallback_location: polymorphic_path(attachable), notice: "Fotografía eliminada correctamente."
   end
@@ -333,6 +345,23 @@ class PhotosController < ApplicationController
         title: title,
         subtitle: subtitle
       }
+  end
+
+  def default_photo_section_metadata(attachable:, section:)
+    case attachable
+    when Container
+      {
+        "apertura" => { title: "Apertura", subtitle: "Regularmente 5, hasta 15" },
+        "desconsolidacion" => { title: "Desconsolidación", subtitle: "Regularmente 30-40" },
+        "vacio" => { title: "Vacío", subtitle: "Regularmente 20-30" }
+      }.fetch(section.to_s, { title: section.to_s.humanize, subtitle: "" })
+    when BlHouseLine
+      {
+        "etiquetado" => { title: "Etiquetado", subtitle: "Regularmente 10-20" }
+      }.fetch(section.to_s, { title: section.to_s.humanize, subtitle: "" })
+    else
+      { title: section.to_s.humanize, subtitle: "" }
+    end
   end
 
   def log_photo_upload_timing(attachable:, section:, images_count:, saved_count:, started_at:, status:, error: nil)
