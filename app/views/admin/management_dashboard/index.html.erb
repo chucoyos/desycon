@@ -13,7 +13,6 @@
 
   containers_chart_data = [
     { name: "Creados", data: month_labels.zip(@operations_metrics.dig(:containers, :created)).to_h },
-    { name: "Cerrados", data: month_labels.zip(@operations_metrics.dig(:containers, :closed)).to_h },
     { name: "Desconsolidados", data: month_labels.zip(@operations_metrics.dig(:containers, :unconsolidated)).to_h }
   ]
 
@@ -63,16 +62,16 @@
       <p class="mt-2 text-2xl font-bold text-slate-900"><%= @operations_metrics.dig(:totals, :containers_created) %></p>
     </div>
     <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Contenedores Cerrados YTD</p>
-      <p class="mt-2 text-2xl font-bold text-slate-900"><%= @operations_metrics.dig(:totals, :containers_closed) %></p>
-    </div>
-    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
       <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Contenedores Desconsolidados YTD</p>
       <p class="mt-2 text-2xl font-bold text-slate-900"><%= @operations_metrics.dig(:totals, :containers_unconsolidated) %></p>
     </div>
     <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Partidas Creadas / Revalidadas / Despachadas YTD</p>
-      <p class="mt-2 text-lg font-bold text-slate-900"><%= @operations_metrics.dig(:totals, :bl_created) %> / <%= @operations_metrics.dig(:totals, :bl_revalidated) %> / <%= @operations_metrics.dig(:totals, :bl_dispatched) %></p>
+      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Partidas Creadas YTD</p>
+      <p class="mt-2 text-2xl font-bold text-slate-900"><%= @operations_metrics.dig(:totals, :bl_created) %></p>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Partidas Revalidadas / Despachadas YTD</p>
+      <p class="mt-2 text-lg font-bold text-slate-900"><%= @operations_metrics.dig(:totals, :bl_revalidated) %> / <%= @operations_metrics.dig(:totals, :bl_dispatched) %></p>
     </div>
   </section>
 
@@ -108,13 +107,13 @@
   <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
     <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
       <h2 class="text-lg font-bold text-slate-900">Operación de Contenedores (YTD)</h2>
-      <p class="text-sm text-slate-600 mb-4">Creados, cerrados y desconsolidados por mes.</p>
+      <p class="text-sm text-slate-600 mb-4">Creados y desconsolidados por mes.</p>
       <%= line_chart containers_chart_data,
         height: "320px",
         legend: "top",
         curve: false,
         discrete: true,
-        colors: ["#334155", "#4f46e5", "#0ea5e9"],
+        colors: ["#334155", "#0ea5e9"],
         library: {
           plugins: {
             legend: {
