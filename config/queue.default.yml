@@ -19,7 +19,7 @@ production:
     - polling_interval: <%= ENV.fetch("JOB_DISPATCHER_POLLING_INTERVAL", "1") %>
       batch_size: <%= ENV.fetch("JOB_DISPATCHER_BATCH_SIZE", "100") %>
   workers:
-    - queues: <%= ENV.fetch("JOB_QUEUES", "default,mailers,active_storage") %>
+    - queues: <%= ENV.fetch("JOB_QUEUES", "default,mailers,active_storage").split(/[\s,]+/) %>
       threads: <%= ENV.fetch("JOB_THREADS", "1") %>
       processes: <%= ENV.fetch("JOB_CONCURRENCY", "1") %>
       polling_interval: <%= ENV.fetch("JOB_POLLING_INTERVAL", "0.5") %>
@@ -29,7 +29,7 @@ staging:
     - polling_interval: <%= ENV.fetch("JOB_DISPATCHER_POLLING_INTERVAL", "1") %>
       batch_size: <%= ENV.fetch("JOB_DISPATCHER_BATCH_SIZE", "100") %>
   workers:
-    - queues: <%= ENV.fetch("JOB_QUEUES", "default,mailers,active_storage") %>
+    - queues: <%= ENV.fetch("JOB_QUEUES", "default,mailers,active_storage").split(/[\s,]+/) %>
       threads: <%= ENV.fetch("JOB_THREADS", "1") %>
       processes: <%= ENV.fetch("JOB_CONCURRENCY", "1") %>
       polling_interval: <%= ENV.fetch("JOB_POLLING_INTERVAL", "0.5") %>
