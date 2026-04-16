@@ -1,20 +1,27 @@
 <% content_for :title, "Dashboard de Inteligencia Operativa y Financiera" %>
 
 <%
-  max_revenue = [@revenue_metrics.dig(:emitted)&.max.to_d, @revenue_metrics.dig(:collected)&.max.to_d, 1.to_d].max
-  max_containers = [
-    @operations_metrics.dig(:containers, :created)&.max.to_i,
-    @operations_metrics.dig(:containers, :closed)&.max.to_i,
-    @operations_metrics.dig(:containers, :unconsolidated)&.max.to_i,
-    1
-  ].max
-  max_bl = [
-    @operations_metrics.dig(:bl_house_lines, :created)&.max.to_i,
-    @operations_metrics.dig(:bl_house_lines, :revalidated)&.max.to_i,
-    @operations_metrics.dig(:bl_house_lines, :dispatched)&.max.to_i,
-    1
-  ].max
-  max_ports = [@operations_metrics[:destination_port_importation].values.map(&:max).max.to_i, 1].max
+  month_labels = @revenue_metrics[:month_labels]
+  revenue_chart_data = [
+    { name: "Emitido", data: month_labels.zip(@revenue_metrics[:emitted]).to_h },
+    { name: "Cobrado", data: month_labels.zip(@revenue_metrics[:collected]).to_h }
+  ]
+
+  containers_chart_data = [
+    { name: "Creados", data: month_labels.zip(@operations_metrics.dig(:containers, :created)).to_h },
+    { name: "Cerrados", data: month_labels.zip(@operations_metrics.dig(:containers, :closed)).to_h },
+    { name: "Desconsolidados", data: month_labels.zip(@operations_metrics.dig(:containers, :unconsolidated)).to_h }
+  ]
+
+  bl_lines_chart_data = [
+    { name: "Creadas", data: month_labels.zip(@operations_metrics.dig(:bl_house_lines, :created)).to_h },
+    { name: "Revalidadas", data: month_labels.zip(@operations_metrics.dig(:bl_house_lines, :revalidated)).to_h },
+    { name: "Despachadas", data: month_labels.zip(@operations_metrics.dig(:bl_house_lines, :dispatched)).to_h }
+  ]
+
+  destination_ports_chart_data = @operations_metrics[:destination_port_importation].map do |port_name, values|
+    { name: port_name, data: month_labels.zip(values).to_h }
+  end
 %>
 
 <div class="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -68,95 +75,88 @@
   <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
     <h2 class="text-lg font-bold text-slate-900">Ingresos Mensuales (YTD)</h2>
     <p class="text-sm text-slate-600 mb-4">Emitido vs cobrado por mes.</p>
-
-    <div class="space-y-3">
-      <% @revenue_metrics[:month_labels].each_with_index do |label, idx| %>
-        <% emitted = @revenue_metrics[:emitted][idx].to_d %>
-        <% collected = @revenue_metrics[:collected][idx].to_d %>
-        <% emitted_pct = ((emitted / max_revenue) * 100).to_f %>
-        <% collected_pct = ((collected / max_revenue) * 100).to_f %>
-        <div class="grid grid-cols-12 gap-2 items-center">
-          <div class="col-span-1 text-xs font-semibold text-slate-600"><%= label %></div>
-          <div class="col-span-11">
-            <div class="h-4 rounded bg-emerald-100 overflow-hidden">
-              <div class="h-full bg-emerald-500" style="width: <%= emitted_pct.round(2) %>%"></div>
-            </div>
-            <div class="h-4 rounded bg-blue-100 overflow-hidden mt-1">
-              <div class="h-full bg-blue-500" style="width: <%= collected_pct.round(2) %>%"></div>
-            </div>
-            <p class="mt-1 text-[11px] text-slate-500">Emitido: <%= number_to_currency(emitted) %> | Cobrado: <%= number_to_currency(collected) %></p>
-          </div>
-        </div>
-      <% end %>
-    </div>
+    <%= line_chart revenue_chart_data,
+      height: "320px",
+      legend: "top",
+      thousands: ",",
+      prefix: "$",
+      curve: false,
+      discrete: true,
+      colors: ["#10b981", "#3b82f6"],
+      library: {
+        plugins: {
+          legend: {
+            labels: {
+              boxWidth: 12,
+              boxHeight: 12
+            }
+          }
+        }
+      } %>
   </section>
 
   <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
     <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
       <h2 class="text-lg font-bold text-slate-900">Operación de Contenedores (YTD)</h2>
       <p class="text-sm text-slate-600 mb-4">Creados, cerrados y desconsolidados por mes.</p>
-      <div class="space-y-3">
-        <% @operations_metrics[:month_labels].each_with_index do |label, idx| %>
-          <% created = @operations_metrics.dig(:containers, :created, idx).to_i %>
-          <% closed = @operations_metrics.dig(:containers, :closed, idx).to_i %>
-          <% unconsolidated = @operations_metrics.dig(:containers, :unconsolidated, idx).to_i %>
-          <div class="grid grid-cols-12 gap-2 items-center">
-            <div class="col-span-2 text-xs font-semibold text-slate-600"><%= label %></div>
-            <div class="col-span-10">
-              <div class="h-3 rounded bg-slate-100 overflow-hidden"><div class="h-full bg-slate-700" style="width: <%= ((created.to_f / max_containers) * 100).round(2) %>%"></div></div>
-              <div class="h-3 rounded bg-indigo-100 overflow-hidden mt-1"><div class="h-full bg-indigo-500" style="width: <%= ((closed.to_f / max_containers) * 100).round(2) %>%"></div></div>
-              <div class="h-3 rounded bg-cyan-100 overflow-hidden mt-1"><div class="h-full bg-cyan-500" style="width: <%= ((unconsolidated.to_f / max_containers) * 100).round(2) %>%"></div></div>
-              <p class="mt-1 text-[11px] text-slate-500">Creados: <%= created %> | Cerrados: <%= closed %> | Desconsolidados: <%= unconsolidated %></p>
-            </div>
-          </div>
-        <% end %>
-      </div>
+      <%= line_chart containers_chart_data,
+        height: "320px",
+        legend: "top",
+        curve: false,
+        discrete: true,
+        colors: ["#334155", "#4f46e5", "#0ea5e9"],
+        library: {
+          plugins: {
+            legend: {
+              labels: {
+                boxWidth: 12,
+                boxHeight: 12
+              }
+            }
+          }
+        } %>
     </div>
 
     <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
       <h2 class="text-lg font-bold text-slate-900">Partidas (YTD)</h2>
       <p class="text-sm text-slate-600 mb-4">Creadas, revalidadas y despachadas por mes.</p>
-      <div class="space-y-3">
-        <% @operations_metrics[:month_labels].each_with_index do |label, idx| %>
-          <% created = @operations_metrics.dig(:bl_house_lines, :created, idx).to_i %>
-          <% revalidated = @operations_metrics.dig(:bl_house_lines, :revalidated, idx).to_i %>
-          <% dispatched = @operations_metrics.dig(:bl_house_lines, :dispatched, idx).to_i %>
-          <div class="grid grid-cols-12 gap-2 items-center">
-            <div class="col-span-2 text-xs font-semibold text-slate-600"><%= label %></div>
-            <div class="col-span-10">
-              <div class="h-3 rounded bg-amber-100 overflow-hidden"><div class="h-full bg-amber-500" style="width: <%= ((created.to_f / max_bl) * 100).round(2) %>%"></div></div>
-              <div class="h-3 rounded bg-violet-100 overflow-hidden mt-1"><div class="h-full bg-violet-500" style="width: <%= ((revalidated.to_f / max_bl) * 100).round(2) %>%"></div></div>
-              <div class="h-3 rounded bg-emerald-100 overflow-hidden mt-1"><div class="h-full bg-emerald-500" style="width: <%= ((dispatched.to_f / max_bl) * 100).round(2) %>%"></div></div>
-              <p class="mt-1 text-[11px] text-slate-500">Creadas: <%= created %> | Revalidadas: <%= revalidated %> | Despachadas: <%= dispatched %></p>
-            </div>
-          </div>
-        <% end %>
-      </div>
+      <%= line_chart bl_lines_chart_data,
+        height: "320px",
+        legend: "top",
+        curve: false,
+        discrete: true,
+        colors: ["#f59e0b", "#8b5cf6", "#22c55e"],
+        library: {
+          plugins: {
+            legend: {
+              labels: {
+                boxWidth: 12,
+                boxHeight: 12
+              }
+            }
+          }
+        } %>
     </div>
   </section>
 
   <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
     <h2 class="text-lg font-bold text-slate-900">Clasificación por Puerto Destino (Solo Importación)</h2>
     <p class="text-sm text-slate-600 mb-4">Conteo mensual de contenedores por puerto: Manzanillo, Lazaro Cardenas, Altamira y Veracruz.</p>
-
-    <div class="space-y-4">
-      <% @operations_metrics[:destination_port_importation].each do |port_name, values| %>
-        <div>
-          <p class="text-sm font-semibold text-slate-700 mb-1"><%= port_name %></p>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <% @operations_metrics[:month_labels].each_with_index do |label, idx| %>
-              <% count = values[idx].to_i %>
-              <div class="flex items-center gap-2">
-                <span class="w-8 text-xs text-slate-500"><%= label %></span>
-                <div class="flex-1 h-3 rounded bg-rose-100 overflow-hidden">
-                  <div class="h-full bg-rose-500" style="width: <%= ((count.to_f / max_ports) * 100).round(2) %>%"></div>
-                </div>
-                <span class="w-6 text-right text-xs text-slate-600"><%= count %></span>
-              </div>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
-    </div>
+    <%= line_chart destination_ports_chart_data,
+      height: "320px",
+      legend: "top",
+      curve: false,
+      discrete: true,
+      colors: ["#f43f5e", "#ec4899", "#f97316", "#ea580c"],
+      library: {
+        plugins: {
+          legend: {
+            labels: {
+              boxWidth: 12,
+              boxHeight: 12
+            }
+          }
+        }
+      } %>
   </section>
 </div>

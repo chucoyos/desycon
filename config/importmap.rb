@@ -5,4 +5,7 @@ pin "@hotwired/turbo-rails", to: "turbo.min.js"
 pin "@rails/activestorage", to: "activestorage.esm.js"
 pin "@hotwired/stimulus", to: "stimulus.min.js"
 pin "@hotwired/stimulus-loading", to: "stimulus-loading.js"
+pin "chartkick" # @5.0.1
 pin_all_from "app/javascript/controllers", under: "controllers"
+pin "highcharts" # @12.6.0
+pin "chartkick/highcharts", to: "chartkick--highcharts.js" # @5.0.1
