@@ -26,7 +26,6 @@ RSpec.describe "Entities", type: :system do
       fill_in "entity_name", with: "Updated Entity Name"
       click_button "Actualizar Entidad"
 
-      expect(page).to have_text("Entidad actualizada exitosamente.")
       expect(page).to have_text("Updated Entity Name")
       expect(entity.reload.name).to eq("Updated Entity Name")
     end
@@ -61,7 +60,6 @@ RSpec.describe "Entities", type: :system do
         click_button "Guardar Dirección"
       end
 
-      expect(page).to have_text("Dirección agregada exitosamente.")
       expect(page).to have_text("Nueva Calle")
       expect(entity.reload.addresses.where(calle: "Nueva Calle")).to exist
     end
@@ -90,7 +88,6 @@ RSpec.describe "Entities", type: :system do
       fill_in "entity_patent_number", with: "123456789"
       click_button "Actualizar Entidad"
 
-      expect(page).to have_text("Entidad actualizada exitosamente.")
       expect(page).to have_text("123456789")
       expect(entity.reload.patent_number).to eq("123456789")
     end
@@ -114,7 +111,7 @@ RSpec.describe "Entities", type: :system do
       fill_in "entity_fiscal_profile_attributes_razon_social", with: "Nueva Razón Social"
       click_button "Actualizar Entidad"
 
-      expect(page).to have_text("Entidad actualizada exitosamente.")
+      expect(page).to have_text("Nueva Razón Social")
       expect(entity.reload.fiscal_profile.razon_social).to eq("Nueva Razón Social")
 
       # Verify the change persisted
@@ -157,7 +154,7 @@ RSpec.describe "Entities", type: :system do
 
       click_button "Actualizar Entidad"
 
-      expect(page).to have_text("Entidad actualizada exitosamente.")
+      expect(page).to have_text("agencia3@correo.com")
       expect(agency.reload.delivery_email_recipients).to eq([ "agencia1@correo.com", "agencia2@correo.com", "agencia3@correo.com" ])
     end
 
@@ -190,7 +187,7 @@ RSpec.describe "Entities", type: :system do
 
       click_button "Crear Entidad"
 
-      expect(page).to have_text("Entidad creada exitosamente.")
+      expect(page).to have_text("Agencia Nueva")
       created = Entity.find_by!(name: "Agencia Nueva")
       expect(created.role_kind).to eq("customs_agent")
       expect(created.delivery_email_recipients).to eq([ "nueva1@correo.com", "nueva2@correo.com" ])

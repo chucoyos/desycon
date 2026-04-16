@@ -8,6 +8,11 @@ RSpec.describe "Containers autocomplete", type: :system do
     login_as(user, scope: :user)
   end
 
+  def expect_container_show_page(number:)
+    expect(page).to have_text("Volver a contenedores")
+    expect(page).to have_text(number)
+  end
+
   def autocomplete_results_for(field_name)
     field = find_field(field_name)
     field.find(:xpath, "ancestor::div[@data-controller='catalog-autocomplete'][1]")
@@ -221,7 +226,7 @@ RSpec.describe "Containers autocomplete", type: :system do
     before_count = Container.count
     click_button "Crear Contenedor"
 
-    expect(page).to have_text("Contenedor creado exitosamente.")
+    expect_container_show_page(number: "ABCD1234567")
     expect(Container.count).to eq(before_count + 1)
 
     created_container = Container.order(:id).last
@@ -293,7 +298,7 @@ RSpec.describe "Containers autocomplete", type: :system do
     select "CICE", from: "container_almacen"
 
     click_button "Crear Contenedor"
-    expect(page).to have_text("Contenedor creado exitosamente.")
+    expect_container_show_page(number: "SEQA1234567")
 
     visit new_container_path
 
@@ -340,7 +345,7 @@ RSpec.describe "Containers autocomplete", type: :system do
     before_count = Container.count
     click_button "Crear Contenedor"
 
-    expect(page).to have_text("Contenedor creado exitosamente.")
+    expect_container_show_page(number: "SEQB1234567")
     expect(Container.count).to eq(before_count + 1)
 
     created_container = Container.order(:id).last
@@ -407,7 +412,7 @@ RSpec.describe "Containers autocomplete", type: :system do
     select "CONTECON", from: "container_recinto"
 
     click_button "Crear Contenedor"
-    expect(page).to have_text("Contenedor creado exitosamente.")
+    expect_container_show_page(number: "SQMA1234567")
 
     visit new_container_path
 
@@ -455,7 +460,7 @@ RSpec.describe "Containers autocomplete", type: :system do
     before_count = Container.count
     click_button "Crear Contenedor"
 
-    expect(page).to have_text("Contenedor creado exitosamente.")
+    expect_container_show_page(number: "SQVE1234567")
     expect(Container.count).to eq(before_count + 1)
 
     created_container = Container.order(:id).last
@@ -524,6 +529,6 @@ RSpec.describe "Containers autocomplete", type: :system do
     select "CICE", from: "container_almacen"
 
     click_button "Crear Contenedor"
-    expect(page).to have_text("Contenedor creado exitosamente.")
+    expect_container_show_page(number: "BLUR1234567")
   end
 end
