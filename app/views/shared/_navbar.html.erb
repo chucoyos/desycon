@@ -101,6 +101,14 @@
                 <% end %>
                 <% if current_user.admin_or_executive? %>
                   <div class="border-t border-gray-200"></div>
+                  <% if current_user.admin? %>
+                    <%= link_to admin_management_dashboard_path, class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors", role: "menuitem" do %>
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 13.5l7.5-7.5 4.5 4.5L21 4.5v15H3v-6z" />
+                      </svg>
+                      Dashboard Gerencial
+                    <% end %>
+                  <% end %>
                   <%= link_to admin_invoice_payment_evidences_path, class: "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors", role: "menuitem" do %>
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
@@ -311,6 +319,14 @@
           <div class="border-b border-gray-300 mb-2 pb-2">
             <p class="text-xs font-semibold text-gray-600 px-3 py-1">ADMINISTRACIÓN</p>
           </div>
+          <% if current_user.admin? %>
+            <%= link_to admin_management_dashboard_path, class: "flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200" do %>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 13.5l7.5-7.5 4.5 4.5L21 4.5v15H3v-6z" />
+              </svg>
+              Dashboard Gerencial
+            <% end %>
+          <% end %>
           <%= link_to admin_invoice_payment_evidences_path, class: "flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200" do %>
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />

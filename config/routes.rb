@@ -78,6 +78,7 @@ Rails.application.routes.draw do
   end
 
   namespace :admin do
+    get :management_dashboard, to: "management_dashboard#index"
     resources :users
     resources :invoice_payment_evidences, only: [ :index, :show ] do
       member do
