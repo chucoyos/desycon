@@ -13,6 +13,8 @@ end %>
            invoice.provider_response.to_h["numeroComprobante"].presence ||
            invoice.payload_snapshot.to_h["numeroComprobante"].presence ||
            invoice.facturador_comprobante_id&.to_s %>
+<% hbl = @invoice_hbl_by_id[invoice.id].presence || "-" %>
+<% agency_name = @invoice_agency_by_id[invoice.id].presence || "-" %>
 <% status_for_display = invoice.effective_status %>
 <% issue_status_badge_class = case status_for_display
   when "issued" then "bg-emerald-100 text-emerald-800 border-emerald-200"
@@ -34,10 +36,10 @@ end %>
       <p class="text-xs text-gray-500"><%= l(invoice.created_at, format: :short) %></p>
       <% if can_view_details %>
         <%= link_to(invoice_path(invoice), class: "inline-flex items-center mt-1 text-sm font-semibold text-indigo-700 hover:text-indigo-900") do %>
-          <%= invoice.receiver_entity&.name || "Sin receptor" %>
+          <%= truncate(invoice.receiver_entity&.name || "Sin receptor", length: 20) %>
         <% end %>
       <% else %>
-        <p class="mt-1 text-sm font-semibold text-gray-900"><%= invoice.receiver_entity&.name || "Sin receptor" %></p>
+        <p class="mt-1 text-sm font-semibold text-gray-900"><%= truncate(invoice.receiver_entity&.name || "Sin receptor", length: 20) %></p>
       <% end %>
       <p class="mt-1 text-xs font-mono text-gray-600">
         <% if serie.present? || folio.present? %>
@@ -94,6 +96,17 @@ end %>
       </svg>
       <%= invoice.payment_status_label %>
     </span>
+  </div>
+
+  <div class="mt-3 grid grid-cols-2 gap-2 text-xs text-gray-600">
+    <div>
+      <p class="text-gray-500">HBL</p>
+      <p class="font-medium text-gray-800" title="<%= hbl %>"><%= truncate(hbl, length: 14) %></p>
+    </div>
+    <div>
+      <p class="text-gray-500">Agencia</p>
+      <p class="font-medium text-gray-800" title="<%= agency_name %>"><%= truncate(agency_name, length: 16) %></p>
+    </div>
   </div>
 
   <div class="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">

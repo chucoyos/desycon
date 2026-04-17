@@ -125,6 +125,8 @@ class InvoicesController < ApplicationController
 
     @invoices = @invoices.page(params[:page]).per(params[:per] || 10)
 
+    build_invoice_service_context_data(@invoices)
+
     @invoice_statuses = Invoice::STATUSES
     @payment_statuses = Invoice::PAYMENT_STATUSES
     related_client_ids = scoped_invoices.select(:receiver_entity_id)
@@ -475,6 +477,30 @@ class InvoicesController < ApplicationController
   end
 
   private
+
+  def build_invoice_service_context_data(invoices)
+    @invoice_hbl_by_id = {}
+    @invoice_agency_by_id = {}
+
+    rows = invoices.map { |invoice| [ invoice.id, invoice.invoiceable_type, invoice.invoiceable_id ] }
+    bl_service_invoice_rows = rows.select { |_invoice_id, invoiceable_type, _invoiceable_id| invoiceable_type == "BlHouseLineService" }
+    return if bl_service_invoice_rows.empty?
+
+    bl_service_ids = bl_service_invoice_rows.map { |_invoice_id, _invoiceable_type, invoiceable_id| invoiceable_id }
+
+    bl_service_data = BlHouseLineService
+      .includes(bl_house_line: :customs_agent)
+      .where(id: bl_service_ids)
+      .index_by(&:id)
+
+    bl_service_invoice_rows.each do |invoice_id, _invoiceable_type, invoiceable_id|
+      service = bl_service_data[invoiceable_id]
+      next unless service
+
+      @invoice_hbl_by_id[invoice_id] = service.bl_house_line&.blhouse.presence || "-"
+      @invoice_agency_by_id[invoice_id] = service.bl_house_line&.customs_agent&.name.presence || "-"
+    end
+  end
 
   def set_invoice
     @invoice = Invoice.includes(:xml_file_attachment, :pdf_file_attachment).find(params[:id])
