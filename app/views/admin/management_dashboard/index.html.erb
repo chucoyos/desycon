@@ -29,6 +29,17 @@
   destination_ports_chart_data = @operations_metrics[:destination_port_importation].map do |port_name, values|
     { name: port_name, data: month_labels.zip(values).to_h }
   end
+
+  destination_ports_chart_colors = [
+    "#2563eb", # blue
+    "#dc2626", # red
+    "#16a34a", # green
+    "#7c3aed", # violet
+    "#ea580c", # orange
+    "#0891b2", # cyan
+    "#ca8a04", # amber
+    "#be185d"  # rose
+  ]
 %>
 
 <div class="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -193,8 +204,18 @@
       legend: "top",
       curve: false,
       discrete: true,
-      colors: ["#f43f5e", "#ec4899", "#f97316", "#ea580c"],
+      colors: destination_ports_chart_colors,
       library: {
+        plotOptions: {
+          series: {
+            lineWidth: 3,
+            marker: {
+              enabled: true,
+              radius: 4,
+              symbol: "circle"
+            }
+          }
+        },
         plugins: {
           legend: {
             labels: {
