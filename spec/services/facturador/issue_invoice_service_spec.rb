@@ -45,6 +45,9 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
         }
       )
 
+      expect(Facturador::ReconcileAndSyncInvoiceJob).to receive(:perform_later)
+        .with(invoice_id: invoice.id, actor_id: nil)
+
       described_class.call(invoice_id: invoice.id)
 
       invoice.reload
@@ -62,6 +65,8 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
           'errores' => [ { 'mensaje' => 'RFC inválido' } ]
         }
       )
+
+      expect(Facturador::ReconcileAndSyncInvoiceJob).not_to receive(:perform_later)
 
       described_class.call(invoice_id: invoice.id)
 

@@ -3,8 +3,8 @@ module Facturador
     DEFAULT_LIMIT = 100
 
     class << self
-      def call(limit: DEFAULT_LIMIT, actor: nil)
-        new(limit: limit, actor: actor).call
+      def call(limit: DEFAULT_LIMIT, actor: nil, nightly: false)
+        new(limit: limit, actor: actor, nightly: nightly).call
       end
 
       def call_for_invoice(invoice:, actor: nil)
@@ -12,9 +12,10 @@ module Facturador
       end
     end
 
-    def initialize(limit:, actor: nil)
+    def initialize(limit:, actor: nil, nightly: false)
       @limit = limit.to_i.positive? ? limit.to_i : DEFAULT_LIMIT
       @actor = actor
+      @nightly = ActiveModel::Type::Boolean.new.cast(nightly)
     end
 
     def call
@@ -45,10 +46,15 @@ module Facturador
 
     private
 
-    attr_reader :limit, :actor
+    attr_reader :limit, :actor, :nightly
 
     def invoices_scope_for_reconciliation
-      scope = Invoice.reconciliation_candidates.prioritized_for_reconciliation
+      scope = if nightly
+        Invoice.pending_reconciliation.prioritized_for_reconciliation
+      else
+        Invoice.reconciliation_candidates.prioritized_for_reconciliation
+      end
+
       max_age_days = Config.reconciliation_max_age_days
       return scope if max_age_days.blank?
 

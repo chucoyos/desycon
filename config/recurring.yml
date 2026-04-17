@@ -31,6 +31,14 @@ production:
     queue: default
     schedule: "0 1 * * *"
 
+  nightly_facturador_reconcile_cancel_pending:
+    class: "Facturador::ReconcileInvoicesJob"
+    queue: default
+    args:
+      - <%= ENV.fetch("NIGHTLY_FACTURADOR_RECONCILE_LIMIT", "500").to_i %>
+      - true
+    schedule: <%= ENV.fetch("NIGHTLY_FACTURADOR_RECONCILE_CRON", "0 8 * * *") %>
+
 staging:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
@@ -52,5 +60,13 @@ staging:
     class: "Photos::CleanupExpiredArchivesJob"
     queue: default
     schedule: "0 1 * * *"
+
+  nightly_facturador_reconcile_cancel_pending:
+    class: "Facturador::ReconcileInvoicesJob"
+    queue: default
+    args:
+      - <%= ENV.fetch("NIGHTLY_FACTURADOR_RECONCILE_LIMIT", "500").to_i %>
+      - true
+    schedule: <%= ENV.fetch("NIGHTLY_FACTURADOR_RECONCILE_CRON", "0 8 * * *") %>
 
 

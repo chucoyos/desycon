@@ -163,6 +163,26 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
       expect(client_double).to have_received(:buscar_comprobantes).once
     end
 
+    it 'reconciles only cancel_pending invoices in nightly mode' do
+      pending_invoice = create(:invoice, status: 'cancel_pending', sat_uuid: 'UUID-PENDING-NIGHTLY')
+      issued_invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-ISSUED-NIGHTLY')
+
+      allow(client_double).to receive(:buscar_comprobantes).and_return([
+        {
+          'uuid' => 'UUID-PENDING-NIGHTLY',
+          'subestatus' => 'Cancelado',
+          'descripcion' => 'Cancelado (Directo)',
+          'subestatusId' => 3
+        }
+      ])
+
+      described_class.call(limit: 10, nightly: true)
+
+      expect(pending_invoice.reload.status).to eq('cancelled')
+      expect(issued_invoice.reload.status).to eq('issued')
+      expect(client_double).to have_received(:buscar_comprobantes).once
+    end
+
     it 'enqueues document sync when status changes to cancelled and auto sync flag is enabled' do
       invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-AUTO-SYNC-001')
       allow(Facturador::Config).to receive(:auto_sync_documents_on_reconcile_enabled?).and_return(true)

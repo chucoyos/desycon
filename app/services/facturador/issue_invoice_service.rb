@@ -89,6 +89,7 @@ module Facturador
         sync_payment_complement_status!("complement_issued")
 
         send_email_non_blocking(trigger: "auto_issue")
+        enqueue_reconcile_and_sync_non_blocking
       else
         message = extract_error_message(response)
         error_code = ErrorCodeResolver.call(context: :issue, provider_payload: response, message: message)
@@ -128,6 +129,15 @@ module Facturador
       )
     rescue StandardError, NotImplementedError => e
       Rails.logger.warn("Facturador email enqueue skipped after issue for invoice=#{invoice.id}: #{e.message}")
+    end
+
+    def enqueue_reconcile_and_sync_non_blocking
+      Facturador::ReconcileAndSyncInvoiceJob.perform_later(
+        invoice_id: invoice.id,
+        actor_id: actor&.id
+      )
+    rescue StandardError, NotImplementedError => e
+      Rails.logger.warn("Facturador reconcile+sync enqueue skipped after issue for invoice=#{invoice.id}: #{e.message}")
     end
 
     def transient_provider_retryable?(error_code)
