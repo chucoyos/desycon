@@ -56,66 +56,81 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap">
-          <% status_for_display = @invoice.effective_status %>
-          <% badge_class = case status_for_display
-            when 'issued' then 'bg-emerald-100 text-emerald-800 border-emerald-200'
-            when 'queued' then 'bg-blue-100 text-blue-800 border-blue-200'
-            when 'failed' then 'bg-red-100 text-red-800 border-red-200'
-            when 'cancel_pending' then 'bg-amber-100 text-amber-800 border-amber-200'
-            when 'cancelled' then 'bg-slate-100 text-slate-800 border-slate-200'
-            else 'bg-gray-100 text-gray-700 border-gray-200'
-          end %>
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border <%= badge_class %>"><%= t("activerecord.attributes.invoice.statuses.#{status_for_display}", default: status_for_display.humanize) %></span>
-
-          <% if can_sync_files_now %>
-            <% if can_sync_documents %>
-              <% sync_button_label = files_already_synced ? "Re-sincronizar XML/PDF" : "Sincronizar XML/PDF" %>
-              <%= button_to sync_button_label, sync_documents_invoice_path(@invoice), method: :post, class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100" %>
-            <% elsif can_sync_files && !files_already_synced %>
-              <%= button_to "Sincronizar XML/PDF", sync_files_invoice_path(@invoice), method: :post, class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100" %>
-            <% end %>
-          <% end %>
-
-          <% if can_cancel_invoice && @invoice.cancel_retryable? %>
-            <% cancel_button_label = @invoice.last_error_code.to_s.start_with?("FACTURADOR_CANCEL_") ? "Reintentar cancelación CFDI" : "Cancelar CFDI" %>
-            <button type="button"
-                    data-action="click->modal#open"
-                    data-modal-id="invoice-cancel-modal"
-                  class="cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
-              <%= cancel_button_label %>
-            </button>
-          <% end %>
-
-          <% if can_send_email && @invoice.status.in?(["issued", "cancelled"]) && @invoice.sat_uuid.present? %>
-            <%= button_to "Enviar CFDI por correo", send_email_invoice_path(@invoice), method: :post, class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100" %>
-          <% end %>
-
-          <% show_retry_issue = can_retry_issue && @invoice.failed? && @invoice.last_error_code.to_s.start_with?("FACTURADOR_ISSUE_") %>
-          <% if show_retry_issue %>
-            <%= button_to "Reintentar emisión CFDI", retry_issue_invoice_path(@invoice), method: :post, class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" %>
-          <% end %>
-
-          <% if @invoice.xml_file.attached? %>
-            <%= link_to "Descargar XML", rails_blob_path(@invoice.xml_file, disposition: "attachment"), class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
-          <% end %>
-
-          <% if @invoice.pdf_file.attached? %>
-            <%= link_to "Descargar PDF", rails_blob_path(@invoice.pdf_file, disposition: "attachment"), class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
-          <% end %>
-
-          <% if can_destroy_invoice %>
-            <% delete_confirm_message = if @invoice.kind == "pago"
-              "Se eliminará este REP NO timbrado y se desvinculará de sus pagos relacionados para permitir su regeneración.\n\nEsta acción no cancela CFDI timbrados y no se puede deshacer.\n\n¿Deseas continuar?"
-            else
-              "Se eliminará esta factura NO timbrada junto con sus pagos relacionados.\n\nEsta acción no cancela CFDI timbrados y no se puede deshacer.\n\n¿Deseas continuar?"
+        <div class="flex flex-col gap-2 sm:items-end">
+          <div class="flex items-center gap-2 flex-wrap sm:justify-end">
+            <% status_for_display = @invoice.effective_status %>
+            <% badge_class = case status_for_display
+              when 'issued' then 'bg-emerald-100 text-emerald-800 border-emerald-200'
+              when 'queued' then 'bg-blue-100 text-blue-800 border-blue-200'
+              when 'failed' then 'bg-red-100 text-red-800 border-red-200'
+              when 'cancel_pending' then 'bg-amber-100 text-amber-800 border-amber-200'
+              when 'cancelled' then 'bg-slate-100 text-slate-800 border-slate-200'
+              else 'bg-gray-100 text-gray-700 border-gray-200'
             end %>
-            <%= button_to invoice_path(@invoice),
-                method: :delete,
-                form: { data: { turbo_confirm: delete_confirm_message } },
-                class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100" do %>
-              <span><%= @invoice.kind == "pago" ? "Eliminar REP no timbrado" : "Eliminar factura no timbrada" %></span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border <%= badge_class %>"><%= t("activerecord.attributes.invoice.statuses.#{status_for_display}", default: status_for_display.humanize) %></span>
+
+            <% if can_sync_files_now %>
+              <% if can_sync_documents %>
+                <% sync_button_label = files_already_synced ? "Re-sincronizar XML/PDF" : "Sincronizar XML/PDF" %>
+                <%= button_to sync_button_label, sync_documents_invoice_path(@invoice), method: :post, class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100" %>
+              <% elsif can_sync_files && !files_already_synced %>
+                <%= button_to "Sincronizar XML/PDF", sync_files_invoice_path(@invoice), method: :post, class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100" %>
+              <% end %>
             <% end %>
+
+            <% if can_cancel_invoice && @invoice.cancel_retryable? %>
+              <% cancel_button_label = @invoice.last_error_code.to_s.start_with?("FACTURADOR_CANCEL_") ? "Reintentar cancelación CFDI" : "Cancelar CFDI" %>
+              <button type="button"
+                      data-action="click->modal#open"
+                      data-modal-id="invoice-cancel-modal"
+                    class="cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
+                <%= cancel_button_label %>
+              </button>
+            <% end %>
+
+            <% if can_send_email && @invoice.status.in?(["issued", "cancelled"]) && @invoice.sat_uuid.present? %>
+              <%= button_to "Enviar CFDI por correo", send_email_invoice_path(@invoice), method: :post, class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100" %>
+            <% end %>
+
+            <% show_retry_issue = can_retry_issue && @invoice.failed? && @invoice.last_error_code.to_s.start_with?("FACTURADOR_ISSUE_") %>
+            <% if show_retry_issue %>
+              <%= button_to "Reintentar emisión CFDI", retry_issue_invoice_path(@invoice), method: :post, class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100" %>
+            <% end %>
+
+            <% if @invoice.xml_file.attached? %>
+              <%= link_to "Descargar XML", rails_blob_path(@invoice.xml_file, disposition: "attachment"), class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
+            <% end %>
+
+            <% if @invoice.pdf_file.attached? %>
+              <%= link_to "Descargar PDF", rails_blob_path(@invoice.pdf_file, disposition: "attachment"), class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
+            <% end %>
+
+            <% if can_destroy_invoice %>
+              <% delete_confirm_message = if @invoice.kind == "pago"
+                "Se eliminará este REP NO timbrado y se desvinculará de sus pagos relacionados para permitir su regeneración.\n\nEsta acción no cancela CFDI timbrados y no se puede deshacer.\n\n¿Deseas continuar?"
+              else
+                "Se eliminará esta factura NO timbrada junto con sus pagos relacionados.\n\nEsta acción no cancela CFDI timbrados y no se puede deshacer.\n\n¿Deseas continuar?"
+              end %>
+              <%= button_to invoice_path(@invoice),
+                  method: :delete,
+                  form: { data: { turbo_confirm: delete_confirm_message } },
+                  class: "cursor-pointer inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100" do %>
+                <span><%= @invoice.kind == "pago" ? "Eliminar REP no timbrado" : "Eliminar factura no timbrada" %></span>
+              <% end %>
+            <% end %>
+          </div>
+
+          <% if @invoice_hbl.present? || @invoice_agency.present? %>
+            <div class="w-full mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:max-w-xl sm:justify-items-end">
+              <div class="w-full sm:max-w-[16rem]">
+                <p class="text-xs uppercase tracking-wider text-gray-500">HBL</p>
+                <p class="text-base font-bold text-gray-900"><%= @invoice_hbl.presence || "-" %></p>
+              </div>
+              <div class="w-full sm:max-w-[16rem]">
+                <p class="text-xs uppercase tracking-wider text-gray-500">Agencia aduanal</p>
+                <p class="text-base font-bold text-gray-900"><%= @invoice_agency.presence || "-" %></p>
+              </div>
+            </div>
           <% end %>
         </div>
       </div>

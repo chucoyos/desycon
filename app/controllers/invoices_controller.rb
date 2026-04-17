@@ -262,6 +262,7 @@ class InvoicesController < ApplicationController
 
     @invoice_events = @invoice.invoice_events.includes(:created_by).order(created_at: :desc).limit(30)
     @invoice_payments = @invoice.invoice_payments.includes(complement_invoice: [ :xml_file_attachment, :pdf_file_attachment ]).order(paid_at: :desc)
+    build_invoice_show_context_data(@invoice)
   end
 
   def new
@@ -500,6 +501,22 @@ class InvoicesController < ApplicationController
       @invoice_hbl_by_id[invoice_id] = service.bl_house_line&.blhouse.presence || "-"
       @invoice_agency_by_id[invoice_id] = service.bl_house_line&.customs_agent&.name.presence || "-"
     end
+  end
+
+  def build_invoice_show_context_data(invoice)
+    @invoice_hbl = nil
+    @invoice_agency = invoice.customs_agent&.name.to_s.strip.presence
+
+    return unless invoice.invoiceable_type == "BlHouseLineService"
+
+    service = BlHouseLineService
+      .includes(bl_house_line: :customs_agent)
+      .find_by(id: invoice.invoiceable_id)
+
+    return unless service
+
+    @invoice_hbl = service.bl_house_line&.blhouse.to_s.strip.presence
+    @invoice_agency = service.bl_house_line&.customs_agent&.name.to_s.strip.presence || @invoice_agency
   end
 
   def set_invoice

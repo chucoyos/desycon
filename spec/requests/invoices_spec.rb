@@ -652,6 +652,21 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include('$2,320.00')
     end
 
+    it 'shows hbl and customs agency in invoice detail when available' do
+      customs_agent = create(:entity, :customs_agent, name: 'Agencia Aduanal Norte')
+      bl_house_line = create(:bl_house_line, blhouse: 'HBL-DET-001', customs_agent: customs_agent)
+      bl_service = create(:bl_house_line_service, bl_house_line: bl_house_line)
+      invoice = create(:invoice, invoiceable: bl_service, sat_uuid: 'UUID-SHOW-HBL-001')
+
+      get invoice_path(invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('HBL')
+      expect(response.body).to include('HBL-DET-001')
+      expect(response.body).to include('Agencia aduanal')
+      expect(response.body).to include('Agencia Aduanal Norte')
+    end
+
     it 'keeps payment registration form available for PUE invoices' do
       invoice = create(
         :invoice,
