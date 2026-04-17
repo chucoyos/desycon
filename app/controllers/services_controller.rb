@@ -12,6 +12,7 @@ class ServicesController < ApplicationController
 
     @selected_container_number = params[:container_number].to_s.strip.first(11).presence
     @selected_blhouse = params[:blhouse].to_s.strip.presence
+    @selected_customs_agency = params[:customs_agency].to_s.strip.presence
 
     unified_rows = container_service_rows + bl_house_line_service_rows
     unified_rows.sort_by! { |row| [ row[:created_at] || Time.at(0), row[:service_id] ] }
@@ -118,9 +119,11 @@ class ServicesController < ApplicationController
   def container_services_scope
     # If the user filters by BL House, only BL-partida services should be listed.
     return ContainerService.none if @selected_blhouse.present?
+    # Container services do not belong to a customs agency in this listing.
+    return ContainerService.none if @selected_customs_agency.present?
 
     scope = ContainerService
-      .includes(:billed_to_entity, :service_catalog, container: { bl_house_lines: [ :customs_agent, :client ] })
+      .includes(:billed_to_entity, :service_catalog, container: { bl_house_lines: [ :client ] })
 
     if @selected_container_number.present?
       scope = scope.joins(:container).where("containers.number ILIKE ?", "%#{@selected_container_number}%")
@@ -141,6 +144,10 @@ class ServicesController < ApplicationController
 
     if @selected_blhouse.present?
       scope = scope.joins(:bl_house_line).where("bl_house_lines.blhouse ILIKE ?", "%#{@selected_blhouse}%")
+    end
+
+    if @selected_customs_agency.present?
+      scope = scope.joins(:bl_house_line).where(bl_house_lines: { customs_agent_id: customs_agent_ids_for_filter })
     end
 
     scope = scope.where(created_at: @filter_start_date.beginning_of_day..@filter_end_date.end_of_day)
@@ -172,16 +179,15 @@ class ServicesController < ApplicationController
     Date.current
   end
 
+  def customs_agent_ids_for_filter
+    @customs_agent_ids_for_filter ||= begin
+      query = "%#{@selected_customs_agency}%"
+      Entity.customs_agents.where("name ILIKE ?", query).select(:id)
+    end
+  end
+
   def agency_name_for_container_service(service)
-    agency_names = service.container
-      &.bl_house_lines
-      &.filter_map { |bl| bl.customs_agent&.name }
-      &.uniq || []
-
-    return "-" if agency_names.empty?
-    return agency_names.first if agency_names.one?
-
-    "Múltiples"
+    "-"
   end
 
   def client_name_for_container_service(service)

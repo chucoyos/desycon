@@ -68,6 +68,39 @@ RSpec.describe "Services", type: :request do
       expect(response.body).to include("BLH-CONT-001")
     end
 
+    it "filters by customs agency name for BL services" do
+      target_agency = create(:entity, :customs_agent, name: "Agencia Filtro Norte")
+      other_agency = create(:entity, :customs_agent, name: "Agencia Filtro Sur")
+
+      matching_bl = create(:bl_house_line, customs_agent: target_agency)
+      non_matching_bl = create(:bl_house_line, customs_agent: other_agency)
+
+      create(:bl_house_line_service, bl_house_line: matching_bl, factura: nil)
+      create(:bl_house_line_service, bl_house_line: non_matching_bl, factura: nil)
+
+      get services_path, params: { customs_agency: "Norte" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Agencia Filtro Norte")
+      expect(response.body).not_to include("Agencia Filtro Sur")
+    end
+
+    it "applies customs agency filter only to BL services and excludes container services" do
+      target_agency = create(:entity, :customs_agent, name: "Agencia Exclusiva Partida")
+
+      matching_bl = create(:bl_house_line, customs_agent: target_agency)
+      create(:bl_house_line_service, bl_house_line: matching_bl, factura: nil)
+
+      container = create(:container, number: "ABCD1234567")
+      create(:container_service, container: container, factura: nil)
+
+      get services_path, params: { customs_agency: "Exclusiva" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Agencia Exclusiva Partida")
+      expect(response.body).not_to include("ABCD1234567")
+    end
+
     it "uses one-month date range by default" do
       recent_catalog = create(:service_catalog, name: "Srv Recent")
       old_catalog = create(:service_catalog, name: "Srv Old")
