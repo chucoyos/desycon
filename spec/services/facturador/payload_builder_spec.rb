@@ -36,6 +36,25 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         expect(concepto_descripcion).not_to include(':')
       end
 
+      it 'includes container and blhouse in payload for grouped invoices when service context exists' do
+        actor = create(:user, :admin)
+        bl_service = create(:bl_house_line_service, factura: nil)
+        bl_service.update!(billed_to_entity: receiver)
+
+        allow(Facturador::Config).to receive(:enabled?).and_return(true)
+        allow(Facturador::Config).to receive(:manual_actions_enabled?).and_return(true)
+        allow(Facturador::Config).to receive(:issuer_entity).and_return(issuer)
+
+        grouped_result = Facturador::IssueGroupedServicesService.call(serviceables: [ bl_service ], actor: actor)
+        expect(grouped_result.success?).to be(true), grouped_result.error_message
+
+        payload = described_class.build(grouped_result.invoice)
+        concepto_descripcion = payload.dig(:conceptos, 0, :descripcion)
+
+        expect(concepto_descripcion).to include("Contenedor #{bl_service.bl_house_line.container.number}")
+        expect(concepto_descripcion).to include("BlHouse #{bl_service.bl_house_line.blhouse.delete('-')}")
+      end
+
       it 'omits receiver correo when fiscal address email is blank' do
         receiver.fiscal_address.update!(email: nil)
 

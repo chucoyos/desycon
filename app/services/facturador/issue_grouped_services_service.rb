@@ -118,7 +118,7 @@ module Facturador
 
         {
           service_catalog: service_catalog,
-          description: service_catalog.name,
+          description: build_line_item_description(service_catalog.name, service),
           sat_clave_prod_serv: service_catalog.sat_clave_prod_serv.to_s,
           sat_clave_unidad: service_catalog.sat_clave_unidad.to_s,
           sat_objeto_imp: service_catalog.sat_objeto_imp.to_s,
@@ -130,6 +130,42 @@ module Facturador
           total: subtotal + tax_amount
         }
       end
+    end
+
+    def build_line_item_description(base_description, service)
+      description = base_description.to_s
+
+      extras = []
+      container = normalized_grouped_token(grouped_container_number_for(service))
+      blhouse = normalized_grouped_token(grouped_blhouse_number_for(service))
+
+      extras << "Contenedor #{container}" if container.present?
+      extras << "BlHouse #{blhouse}" if blhouse.present?
+      return description if extras.empty?
+
+      "#{description} #{extras.join(' ')}"
+    end
+
+    def grouped_container_number_for(service)
+      if service.respond_to?(:container)
+        service.container&.number.to_s.presence
+      elsif service.respond_to?(:bl_house_line)
+        service.bl_house_line&.container&.number.to_s.presence
+      elsif service.respond_to?(:number)
+        service.number.to_s.presence
+      end
+    end
+
+    def grouped_blhouse_number_for(service)
+      if service.respond_to?(:bl_house_line)
+        service.bl_house_line&.blhouse.to_s.presence
+      elsif service.respond_to?(:blhouse)
+        service.blhouse.to_s.presence
+      end
+    end
+
+    def normalized_grouped_token(value)
+      I18n.transliterate(value.to_s).gsub(/[^A-Za-z0-9]/, "")
     end
 
     def grouped_idempotency_key(issuer_id:, receiver_id:, line_items:)

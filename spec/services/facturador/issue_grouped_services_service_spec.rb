@@ -54,5 +54,21 @@ RSpec.describe Facturador::IssueGroupedServicesService, type: :service do
       expect(result.success?).to be(false)
       expect(result.error_message).to include('mismo receptor')
     end
+
+    it 'enriches grouped line item descriptions with container and blhouse when available' do
+      bl_service = create(:bl_house_line_service, factura: nil)
+      bl_service.update!(billed_to_entity: receiver)
+
+      result = described_class.call(serviceables: [ bl_service ], actor: actor)
+
+      expect(result.success?).to be(true), result.error_message
+
+      line_item = result.invoice.invoice_line_items.first
+      container_token = I18n.transliterate(bl_service.bl_house_line.container.number.to_s).gsub(/[^A-Za-z0-9]/, '')
+      blhouse_token = I18n.transliterate(bl_service.bl_house_line.blhouse.to_s).gsub(/[^A-Za-z0-9]/, '')
+
+      expect(line_item.description).to include("Contenedor #{container_token}")
+      expect(line_item.description).to include("BlHouse #{blhouse_token}")
+    end
   end
 end
