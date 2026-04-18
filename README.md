@@ -74,6 +74,11 @@ bundle exec rspec spec/policies/
 bundle exec rspec --format documentation
 ```
 
+## Runbooks Operativos
+
+- Diagnostico rapido de colas Solid Queue: [docs/solid_queue_quick_diagnosis_runbook.md](docs/solid_queue_quick_diagnosis_runbook.md)
+- Verificacion post-deploy de worker: [docs/worker_post_deploy_health_checklist.md](docs/worker_post_deploy_health_checklist.md)
+
 ## Medicion de rendimiento de carga de fotos
 
 Se incluye un script para medir tiempos del pipeline de fotos (request web, preprocesado de variantes y generacion de ZIP) usando logs de Heroku.

@@ -54,3 +54,7 @@ Objetivo: confirmar estabilidad del worker despues de migrar a Solid Queue y tun
 
 - Reinicio controlado de worker:
   heroku ps:restart worker --app desycon
+
+## Referencia rapida
+
+- Runbook de diagnostico de colas: [docs/solid_queue_quick_diagnosis_runbook.md](docs/solid_queue_quick_diagnosis_runbook.md)
