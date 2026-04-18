@@ -29,7 +29,7 @@ class InvoicesController < ApplicationController
 
     scoped_invoices = policy_scope(Invoice)
     @invoices = scoped_invoices
-          .includes(:receiver_entity)
+          .includes(:receiver_entity, :customs_agent)
           .select("invoices.*", "#{paid_total_sql} AS paid_total_for_index")
                 .where(created_at: start_date.beginning_of_day..end_date.end_of_day)
                 .order(created_at: :desc)
@@ -483,23 +483,46 @@ class InvoicesController < ApplicationController
     @invoice_hbl_by_id = {}
     @invoice_agency_by_id = {}
 
-    rows = invoices.map { |invoice| [ invoice.id, invoice.invoiceable_type, invoice.invoiceable_id ] }
-    bl_service_invoice_rows = rows.select { |_invoice_id, invoiceable_type, _invoiceable_id| invoiceable_type == "BlHouseLineService" }
-    return if bl_service_invoice_rows.empty?
+    invoice_ids = invoices.map(&:id)
+    return if invoice_ids.empty?
 
-    bl_service_ids = bl_service_invoice_rows.map { |_invoice_id, _invoiceable_type, invoiceable_id| invoiceable_id }
+    invoices.each do |invoice|
+      @invoice_agency_by_id[invoice.id] = invoice.customs_agent&.name.to_s.strip.presence
+    end
+
+    bl_service_ids_by_invoice_id = Hash.new { |hash, key| hash[key] = [] }
+
+    invoices.each do |invoice|
+      next unless invoice.invoiceable_type == "BlHouseLineService"
+
+      bl_service_ids_by_invoice_id[invoice.id] << invoice.invoiceable_id
+    end
+
+    linked_rows = InvoiceServiceLink
+      .where(invoice_id: invoice_ids, serviceable_type: "BlHouseLineService")
+      .pluck(:invoice_id, :serviceable_id)
+
+    linked_rows.each do |invoice_id, serviceable_id|
+      bl_service_ids_by_invoice_id[invoice_id] << serviceable_id
+    end
+
+    bl_service_ids = bl_service_ids_by_invoice_id.values.flatten.uniq
+    return if bl_service_ids.empty?
 
     bl_service_data = BlHouseLineService
       .includes(bl_house_line: :customs_agent)
       .where(id: bl_service_ids)
       .index_by(&:id)
 
-    bl_service_invoice_rows.each do |invoice_id, _invoiceable_type, invoiceable_id|
-      service = bl_service_data[invoiceable_id]
-      next unless service
+    bl_service_ids_by_invoice_id.each do |invoice_id, service_ids|
+      services = service_ids.uniq.map { |service_id| bl_service_data[service_id] }.compact
+      next if services.empty?
 
-      @invoice_hbl_by_id[invoice_id] = service.bl_house_line&.blhouse.presence || "-"
-      @invoice_agency_by_id[invoice_id] = service.bl_house_line&.customs_agent&.name.presence || "-"
+      hbl_values = services.map { |service| service.bl_house_line&.blhouse.to_s.strip }.reject(&:blank?).uniq
+      agency_values = services.map { |service| service.bl_house_line&.customs_agent&.name.to_s.strip }.reject(&:blank?).uniq
+
+      @invoice_hbl_by_id[invoice_id] = hbl_values.join(", ").presence
+      @invoice_agency_by_id[invoice_id] = agency_values.join(", ").presence || @invoice_agency_by_id[invoice_id]
     end
   end
 
@@ -507,16 +530,27 @@ class InvoicesController < ApplicationController
     @invoice_hbl = nil
     @invoice_agency = invoice.customs_agent&.name.to_s.strip.presence
 
-    return unless invoice.invoiceable_type == "BlHouseLineService"
+    bl_service_ids = []
+    if invoice.invoiceable_type == "BlHouseLineService" && invoice.invoiceable_id.present?
+      bl_service_ids << invoice.invoiceable_id
+    end
 
-    service = BlHouseLineService
+    linked_service_ids = invoice.invoice_service_links
+      .where(serviceable_type: "BlHouseLineService")
+      .pluck(:serviceable_id)
+    bl_service_ids.concat(linked_service_ids)
+    bl_service_ids.uniq!
+    return if bl_service_ids.empty?
+
+    services = BlHouseLineService
       .includes(bl_house_line: :customs_agent)
-      .find_by(id: invoice.invoiceable_id)
+      .where(id: bl_service_ids)
 
-    return unless service
+    hbl_values = services.map { |service| service.bl_house_line&.blhouse.to_s.strip }.reject(&:blank?).uniq
+    agency_values = services.map { |service| service.bl_house_line&.customs_agent&.name.to_s.strip }.reject(&:blank?).uniq
 
-    @invoice_hbl = service.bl_house_line&.blhouse.to_s.strip.presence
-    @invoice_agency = service.bl_house_line&.customs_agent&.name.to_s.strip.presence || @invoice_agency
+    @invoice_hbl = hbl_values.join(", ").presence
+    @invoice_agency = agency_values.join(", ").presence || @invoice_agency
   end
 
   def set_invoice

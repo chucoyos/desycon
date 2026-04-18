@@ -168,6 +168,20 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).not_to include(pending_invoice.sat_uuid)
       expect(response.body).not_to include(paid_invoice.sat_uuid)
     end
+
+    it 'shows hbl and customs agency for grouped invoices linked to bl services' do
+      customs_agent = create(:entity, :customs_agent, name: 'Agencia Agrupada Centro')
+      bl_house_line = create(:bl_house_line, blhouse: 'BLH-GRP-001', customs_agent: customs_agent)
+      bl_service = create(:bl_house_line_service, bl_house_line: bl_house_line)
+      invoice = create(:invoice, invoiceable: nil, sat_uuid: 'UUID-GRP-LIST-001')
+      create(:invoice_service_link, invoice: invoice, serviceable: bl_service)
+
+      get invoices_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('BLH-GRP-001')
+      expect(response.body).to include('Agencia Agrupada Centro')
+    end
   end
 
   describe 'GET /invoices/new' do
@@ -665,6 +679,22 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include('HBL-DET-001')
       expect(response.body).to include('Agencia aduanal')
       expect(response.body).to include('Agencia Aduanal Norte')
+    end
+
+    it 'shows hbl and customs agency in grouped invoice detail when linked bl services exist' do
+      customs_agent = create(:entity, :customs_agent, name: 'Agencia Agrupada Norte')
+      bl_house_line = create(:bl_house_line, blhouse: 'HBL-GRP-DET-001', customs_agent: customs_agent)
+      bl_service = create(:bl_house_line_service, bl_house_line: bl_house_line)
+      invoice = create(:invoice, invoiceable: nil, sat_uuid: 'UUID-SHOW-GRP-HBL-001')
+      create(:invoice_service_link, invoice: invoice, serviceable: bl_service)
+
+      get invoice_path(invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('HBL')
+      expect(response.body).to include('HBL-GRP-DET-001')
+      expect(response.body).to include('Agencia aduanal')
+      expect(response.body).to include('Agencia Agrupada Norte')
     end
 
     it 'keeps payment registration form available for PUE invoices' do
