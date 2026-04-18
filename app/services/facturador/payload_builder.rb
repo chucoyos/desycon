@@ -380,19 +380,24 @@ module Facturador
 
     def enriched_concept_description(base_description)
       description = normalize_cfdi_description(base_description)
+      container = normalize_cfdi_token(container_number)
+      blhouse = normalize_cfdi_token(blhouse_number)
+      return description if container.blank? && blhouse.blank?
 
-      extras = []
-      extras << "Contenedor #{normalize_cfdi_token(container_number)}" if container_number.present?
-      extras << "BlHouse #{normalize_cfdi_token(blhouse_number)}" if blhouse_number.present?
-      return description if extras.empty?
+      lines = [ description.end_with?(".") ? description : "#{description}." ]
+      lines << "Contenedor: #{container}" if container.present?
+      lines << "BlHouse: #{blhouse}" if blhouse.present?
 
-      normalize_cfdi_description("#{description} #{extras.join(' ')}")
+      normalize_cfdi_description(lines.join("\n"))
     end
 
     def normalize_cfdi_description(value)
       I18n.transliterate(value.to_s)
-        .gsub(/[^A-Za-z0-9 ]/, " ")
-        .squeeze(" ")
+        .gsub(/\r\n?/, "\n")
+        .gsub(/[^A-Za-z0-9 :.\n]/, " ")
+        .gsub(/[ ]+/, " ")
+        .gsub(/[ ]*\n[ ]*/, "\n")
+        .gsub(/\n{2,}/, "\n")
         .strip
     end
 

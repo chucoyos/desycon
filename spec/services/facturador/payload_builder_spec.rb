@@ -30,10 +30,11 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
 
         expect(payload[:descripcionFacturador]).to eq('Factura')
         concepto_descripcion = payload.dig(:conceptos, 0, :descripcion)
-        expect(concepto_descripcion).to include("Contenedor #{bl_service.bl_house_line.container.number}")
-        expect(concepto_descripcion).to include("BlHouse #{bl_service.bl_house_line.blhouse.delete('-')}")
+        expect(concepto_descripcion).to include("Contenedor: #{bl_service.bl_house_line.container.number}")
+        expect(concepto_descripcion).to include("BlHouse: #{bl_service.bl_house_line.blhouse.delete('-')}")
+        expect(concepto_descripcion).to include("\nContenedor:")
+        expect(concepto_descripcion).to include("\nBlHouse:")
         expect(concepto_descripcion).not_to include('|')
-        expect(concepto_descripcion).not_to include(':')
       end
 
       it 'includes container and blhouse in payload for grouped invoices when service context exists' do
@@ -51,8 +52,10 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         payload = described_class.build(grouped_result.invoice)
         concepto_descripcion = payload.dig(:conceptos, 0, :descripcion)
 
-        expect(concepto_descripcion).to include("Contenedor #{bl_service.bl_house_line.container.number}")
-        expect(concepto_descripcion).to include("BlHouse #{bl_service.bl_house_line.blhouse.delete('-')}")
+        expect(concepto_descripcion).to include("Contenedor: #{bl_service.bl_house_line.container.number}")
+        expect(concepto_descripcion).to include("BlHouse: #{bl_service.bl_house_line.blhouse.delete('-')}")
+        expect(concepto_descripcion).to include("\nContenedor:")
+        expect(concepto_descripcion).to include("\nBlHouse:")
       end
 
       it 'omits receiver correo when fiscal address email is blank' do

@@ -133,17 +133,18 @@ module Facturador
     end
 
     def build_line_item_description(base_description, service)
-      description = base_description.to_s
+      description = base_description.to_s.strip
 
       extras = []
       container = normalized_grouped_token(grouped_container_number_for(service))
       blhouse = normalized_grouped_token(grouped_blhouse_number_for(service))
 
-      extras << "Contenedor #{container}" if container.present?
-      extras << "BlHouse #{blhouse}" if blhouse.present?
+      extras << "Contenedor: #{container}" if container.present?
+      extras << "BlHouse: #{blhouse}" if blhouse.present?
       return description if extras.empty?
 
-      "#{description} #{extras.join(' ')}"
+      base_line = description.end_with?(".") ? description : "#{description}."
+      ([ base_line ] + extras).join("\n")
     end
 
     def grouped_container_number_for(service)

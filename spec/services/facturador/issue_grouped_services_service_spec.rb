@@ -67,8 +67,10 @@ RSpec.describe Facturador::IssueGroupedServicesService, type: :service do
       container_token = I18n.transliterate(bl_service.bl_house_line.container.number.to_s).gsub(/[^A-Za-z0-9]/, '')
       blhouse_token = I18n.transliterate(bl_service.bl_house_line.blhouse.to_s).gsub(/[^A-Za-z0-9]/, '')
 
-      expect(line_item.description).to include("Contenedor #{container_token}")
-      expect(line_item.description).to include("BlHouse #{blhouse_token}")
+      expect(line_item.description).to include("Contenedor: #{container_token}")
+      expect(line_item.description).to include("BlHouse: #{blhouse_token}")
+      expect(line_item.description).to include("\nContenedor:")
+      expect(line_item.description).to include("\nBlHouse:")
     end
   end
 end
