@@ -26,6 +26,10 @@ production:
     command: "CustomsAgents::RecalculateAccessRestrictionsJob.perform_later"
     schedule: "0 5 * * *"
 
+  customs_agents_recalculate_access_restrictions_afternoon:
+    command: "CustomsAgents::RecalculateAccessRestrictionsJob.perform_later"
+    schedule: "0 15 * * *"
+
   photos_cleanup_expired_archives:
     class: "Photos::CleanupExpiredArchivesJob"
     queue: default
@@ -37,7 +41,7 @@ production:
     args:
       - <%= ENV.fetch("NIGHTLY_FACTURADOR_RECONCILE_LIMIT", "500").to_i %>
       - true
-    schedule: <%= ENV.fetch("NIGHTLY_FACTURADOR_RECONCILE_CRON", "0 8 * * *") %>
+    schedule: <%= ENV.fetch("NIGHTLY_FACTURADOR_RECONCILE_CRON", "0 3 * * *") %>
 
 staging:
   clear_solid_queue_finished_jobs:
@@ -56,6 +60,10 @@ staging:
     command: "CustomsAgents::RecalculateAccessRestrictionsJob.perform_later"
     schedule: "0 5 * * *"
 
+  customs_agents_recalculate_access_restrictions_afternoon:
+    command: "CustomsAgents::RecalculateAccessRestrictionsJob.perform_later"
+    schedule: "0 15 * * *"
+
   photos_cleanup_expired_archives:
     class: "Photos::CleanupExpiredArchivesJob"
     queue: default
@@ -67,6 +75,6 @@ staging:
     args:
       - <%= ENV.fetch("NIGHTLY_FACTURADOR_RECONCILE_LIMIT", "500").to_i %>
       - true
-    schedule: <%= ENV.fetch("NIGHTLY_FACTURADOR_RECONCILE_CRON", "0 8 * * *") %>
+    schedule: <%= ENV.fetch("NIGHTLY_FACTURADOR_RECONCILE_CRON", "0 3 * * *") %>
 
 
