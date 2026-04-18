@@ -198,6 +198,14 @@ GEM
       activesupport (>= 7.0.0)
     jmespath (1.6.2)
     json (2.19.3)
+    judoscale-rails (1.13.2)
+      judoscale-ruby (= 1.13.2)
+      railties
+    judoscale-ruby (1.13.2)
+      logger
+    judoscale-solid_queue (1.13.2)
+      judoscale-ruby (= 1.13.2)
+      solid_queue (>= 1.0)
     kamal (2.9.0)
       activesupport (>= 7.0)
       base64 (~> 0.2)
@@ -519,6 +527,8 @@ DEPENDENCIES
   image_processing (~> 1.2)
   importmap-rails
   jbuilder
+  judoscale-rails
+  judoscale-solid_queue
   kamal
   kaminari (~> 1.2)
   pg (~> 1.1)
