@@ -78,6 +78,7 @@ bundle exec rspec --format documentation
 
 - Diagnostico rapido de colas Solid Queue: [docs/solid_queue_quick_diagnosis_runbook.md](docs/solid_queue_quick_diagnosis_runbook.md)
 - Verificacion post-deploy de worker: [docs/worker_post_deploy_health_checklist.md](docs/worker_post_deploy_health_checklist.md)
+- Configuracion de New Relic en Heroku: [docs/new_relic_addon_setup.md](docs/new_relic_addon_setup.md)
 
 ## Medicion de rendimiento de carga de fotos
 

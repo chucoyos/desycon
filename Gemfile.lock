@@ -264,6 +264,8 @@ GEM
     net-smtp (0.5.1)
       net-protocol
     net-ssh (7.3.0)
+    newrelic_rpm (10.4.0)
+      logger
     nio4r (2.7.5)
     nokogiri (1.19.2-aarch64-linux-gnu)
       racc (~> 1.4)
@@ -531,6 +533,7 @@ DEPENDENCIES
   judoscale-solid_queue
   kamal
   kaminari (~> 1.2)
+  newrelic_rpm
   pg (~> 1.1)
   prawn (~> 2.4)
   prawn-table (~> 0.2)

@@ -7,6 +7,7 @@ gem "rails", "~> 8.1.1"
 gem "rdoc", "~> 6.16.1"
 gem "judoscale-rails"
 gem "judoscale-solid_queue"
+gem "newrelic_rpm"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use postgresql as the database for Active Record
