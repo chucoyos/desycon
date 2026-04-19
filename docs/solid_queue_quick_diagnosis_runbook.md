@@ -56,6 +56,43 @@ heroku logs --dyno worker -n 300 --app desycon | grep "sample#memory_total"
 
 ```
 
+8. Entrar a Rails console en produccion
+
+```bash
+heroku run rails c -a desycon
+```
+
+## Inspeccion en Rails console (Solid Queue)
+
+Para ver el nombre de la tarea especifica (ej. `ProcessXmlJob`):
+
+```ruby
+SolidQueue::Job.where(id: SolidQueue::ClaimedExecution.pluck(:job_id))
+```
+
+Para ver los procesos en Rails console:
+
+```ruby
+SolidQueue::Process.all.each do |process|
+  job_ids = process.claimed_executions.pluck(:job_id)
+  puts "Worker: #{process.metadata['hostname']} | Jobs en curso (ID): #{job_ids}"
+end
+```
+
+Si quieres saber no solo el ID, sino que esta haciendo:
+
+```ruby
+SolidQueue::Process.all.each do |p|
+  jobs = SolidQueue::Job.where(id: p.claimed_executions.pluck(:job_id))
+
+  if jobs.any?
+    jobs.each { |j| puts "Worker: #{p.metadata['hostname']} esta procesando: #{j.class_name} (ID: #{j.id})" }
+  else
+    puts "Worker: #{p.metadata['hostname']} esta libre (Idle)."
+  end
+end
+```
+
 ## Interpretacion rapida
 
 - Senal sana:
