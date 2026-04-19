@@ -26,11 +26,36 @@ class InvoicesController < ApplicationController
     start_date = [ @selected_start_date, @selected_end_date ].min
     end_date = [ @selected_start_date, @selected_end_date ].max
     paid_total_sql = "COALESCE((SELECT SUM(invoice_payments.amount) FROM invoice_payments WHERE invoice_payments.invoice_id = invoices.id), 0)"
+    last_email_event_type_sql = <<~SQL.squish
+      (
+        SELECT invoice_events.event_type
+        FROM invoice_events
+        WHERE invoice_events.invoice_id = invoices.id
+          AND invoice_events.event_type IN ('email_requested', 'email_sent', 'email_failed')
+        ORDER BY invoice_events.created_at DESC, invoice_events.id DESC
+        LIMIT 1
+      )
+    SQL
+    last_email_event_at_sql = <<~SQL.squish
+      (
+        SELECT invoice_events.created_at
+        FROM invoice_events
+        WHERE invoice_events.invoice_id = invoices.id
+          AND invoice_events.event_type IN ('email_requested', 'email_sent', 'email_failed')
+        ORDER BY invoice_events.created_at DESC, invoice_events.id DESC
+        LIMIT 1
+      )
+    SQL
 
     scoped_invoices = policy_scope(Invoice)
     @invoices = scoped_invoices
           .includes(:receiver_entity, :customs_agent)
-          .select("invoices.*", "#{paid_total_sql} AS paid_total_for_index")
+          .select(
+        "invoices.*",
+        "#{paid_total_sql} AS paid_total_for_index",
+        "#{last_email_event_type_sql} AS last_email_event_type_for_index",
+        "#{last_email_event_at_sql} AS last_email_event_at_for_index"
+          )
                 .where(created_at: start_date.beginning_of_day..end_date.end_of_day)
                 .order(created_at: :desc)
 

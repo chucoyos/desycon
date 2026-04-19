@@ -68,6 +68,15 @@
               else 'bg-gray-100 text-gray-700 border-gray-200'
             end %>
             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border <%= badge_class %>"><%= t("activerecord.attributes.invoice.statuses.#{status_for_display}", default: status_for_display.humanize) %></span>
+            <% email_sent = @invoice.email_delivery_status == "sent" %>
+            <% email_status_badge_class = email_sent ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-rose-100 text-rose-700 border-rose-200" %>
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full border <%= email_status_badge_class %>" title="<%= email_sent ? 'Enviado' : 'No enviado' %>">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16.5V7.5A2.25 2.25 0 015.25 5.25h13.5A2.25 2.25 0 0121 7.5v9a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 16.5z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8.25l8.25 5.25a1.5 1.5 0 001.5 0L21 8.25" />
+              </svg>
+              <span class="sr-only"><%= email_sent ? 'Enviado' : 'No enviado' %></span>
+            </span>
 
             <% if can_sync_files_now %>
               <% if can_sync_documents %>

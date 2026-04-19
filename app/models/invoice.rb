@@ -9,6 +9,13 @@ class Invoice < ApplicationRecord
     "partial" => "Parcial",
     "paid" => "Pagado"
   }.freeze
+  EMAIL_DELIVERY_EVENT_TYPES = %w[email_requested email_sent email_failed].freeze
+  EMAIL_DELIVERY_STATUS_LABELS = {
+    "not_sent" => "No enviado",
+    "requested" => "En proceso",
+    "sent" => "Enviado",
+    "failed" => "Fallido"
+  }.freeze
   CANCELLATION_MOTIVES = %w[02].freeze
 
   belongs_to :invoiceable, polymorphic: true, optional: true
@@ -133,6 +140,33 @@ class Invoice < ApplicationRecord
     payment_registration_eligible? && payment_method_code == FiscalProfile::METODO_PAGO_PPD
   end
 
+  def email_delivery_status
+    event_type = if has_attribute?(:last_email_event_type_for_index)
+      self[:last_email_event_type_for_index].to_s
+    else
+      latest_email_delivery_event&.event_type.to_s
+    end
+
+    case event_type
+    when "email_sent" then "sent"
+    when "email_failed" then "failed"
+    when "email_requested" then "requested"
+    else "not_sent"
+    end
+  end
+
+  def email_delivery_status_label
+    EMAIL_DELIVERY_STATUS_LABELS[email_delivery_status] || "No enviado"
+  end
+
+  def email_delivery_last_attempt_at
+    if has_attribute?(:last_email_event_at_for_index)
+      self[:last_email_event_at_for_index]
+    else
+      latest_email_delivery_event&.created_at
+    end
+  end
+
   def payment_complement_ineligibility_reason
     return payment_registration_ineligibility_reason if payment_registration_ineligibility_reason.present?
     return "La factura fue emitida con metodoPago #{payment_method_code}; REP solo aplica para PPD." unless payment_method_code == FiscalProfile::METODO_PAGO_PPD
@@ -255,6 +289,13 @@ class Invoice < ApplicationRecord
   end
 
   private
+
+  def latest_email_delivery_event
+    @latest_email_delivery_event ||= invoice_events
+      .where(event_type: EMAIL_DELIVERY_EVENT_TYPES)
+      .order(created_at: :desc, id: :desc)
+      .first
+  end
 
   def target_entity_from_invoiceable(record)
     case record
