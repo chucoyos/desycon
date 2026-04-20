@@ -34,6 +34,33 @@ RSpec.describe Invoice, type: :model do
       expect(invoice.queue_issue!).to eq(false)
       expect(invoice.status).to eq('draft')
     end
+
+    it 'preserves manual serie override and locks it when queueing issue' do
+      allow(Facturador::Config).to receive(:enabled?).and_return(true)
+      allow(Facturador::PayloadBuilder).to receive(:build).and_return({ serie: 'GVRZ', total: 100 })
+      allow(Facturador::IssueInvoiceJob).to receive(:perform_later)
+
+      invoice = create(:invoice, payload_snapshot: { 'serie_override' => 'GVRZ', 'manual' => true })
+
+      expect(invoice.queue_issue!).to eq(true)
+
+      invoice.reload
+      expect(invoice.payload_snapshot['serie_override']).to eq('GVRZ')
+      expect(invoice.payload_snapshot['serie_locked']).to eq('GVRZ')
+    end
+
+    it 'locks automatically resolved serie when queueing issue' do
+      allow(Facturador::Config).to receive(:enabled?).and_return(true)
+      allow(Facturador::PayloadBuilder).to receive(:build).and_return({ serie: 'GMZO', total: 100 })
+      allow(Facturador::IssueInvoiceJob).to receive(:perform_later)
+
+      invoice = create(:invoice, payload_snapshot: {})
+
+      expect(invoice.queue_issue!).to eq(true)
+
+      invoice.reload
+      expect(invoice.payload_snapshot['serie_locked']).to eq('GMZO')
+    end
   end
 
   describe '#effective_status' do

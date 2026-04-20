@@ -306,6 +306,35 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         expect(payload[:serie]).to eq('MZ')
       end
 
+      it 'keeps locked serie from payload snapshot over automatic destination mapping' do
+        allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')
+
+        destination_port = create(:port, :manzanillo)
+        voyage = create(:voyage, destination_port: destination_port)
+        container = create(
+          :container,
+          tipo_maniobra: 'importacion',
+          voyage: voyage,
+          recinto: 'CONTECON',
+          almacen: 'SSA'
+        )
+        container_service = create(:container_service, container: container)
+        invoice = create(
+          :invoice,
+          kind: 'ingreso',
+          invoiceable: container_service,
+          issuer_entity: issuer,
+          receiver_entity: receiver,
+          payload_snapshot: {
+            serie_locked: 'GVRZ'
+          }
+        )
+
+        payload = described_class.build(invoice)
+
+        expect(payload[:serie]).to eq('GVRZ')
+      end
+
       it 'uses simplified sandbox mapping for importacion destination ports' do
         allow(Facturador::Config).to receive(:environment).and_return('sandbox')
         allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')

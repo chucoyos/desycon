@@ -57,6 +57,34 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('issue_succeeded')
     end
 
+    it 'preserves serie override and serie lock in payload snapshot during issue' do
+      invoice.update!(payload_snapshot: { 'manual' => true, 'serie_override' => 'GVRZ', 'serie_locked' => 'GVRZ' })
+      allow(Facturador::PayloadBuilder).to receive(:build).with(invoice).and_return({ serie: 'GMZO', total: 100 })
+      allow(client_double).to receive(:emitir_comprobante) do |emisor_id:, payload:, emitir:|
+        expect(emisor_id).to eq(208)
+        expect(emitir).to eq(true)
+        expect(payload['serie']).to eq('GVRZ')
+        expect(payload['serie_override']).to eq('GVRZ')
+        expect(payload['serie_locked']).to eq('GVRZ')
+
+        {
+          'esValido' => true,
+          'uuid' => 'UUID-LOCK-123',
+          'idComprobante' => 11,
+          'subEstatusId' => 2
+        }
+      end
+
+      expect(Facturador::ReconcileAndSyncInvoiceJob).to receive(:perform_later)
+        .with(invoice_id: invoice.id, actor_id: nil)
+
+      described_class.call(invoice_id: invoice.id)
+
+      invoice.reload
+      expect(invoice.payload_snapshot['serie_override']).to eq('GVRZ')
+      expect(invoice.payload_snapshot['serie_locked']).to eq('GVRZ')
+    end
+
     it 'marks invoice as failed when provider response is invalid' do
       allow(client_double).to receive(:emitir_comprobante).and_return(
         {

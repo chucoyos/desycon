@@ -194,10 +194,11 @@ class Invoice < ApplicationRecord
     return false if issued?
 
     payload = Facturador::PayloadBuilder.build(self)
+    snapshot = build_persisted_payload_snapshot(payload)
 
     update!(
       status: "queued",
-      payload_snapshot: payload,
+      payload_snapshot: snapshot,
       last_error_code: nil,
       last_error_message: nil
     )
@@ -205,11 +206,26 @@ class Invoice < ApplicationRecord
     invoice_events.create!(
       event_type: "issue_requested",
       created_by: actor,
-      request_payload: payload,
+      request_payload: snapshot,
       response_payload: {}
     )
     Facturador::IssueInvoiceJob.perform_later(id)
     true
+  end
+
+  def build_persisted_payload_snapshot(payload)
+    incoming = payload.to_h.deep_stringify_keys
+    previous = payload_snapshot.to_h.deep_stringify_keys
+
+    serie_override = previous["serie_override"].to_s.strip.presence
+    serie_locked = previous["serie_locked"].to_s.strip.presence ||
+      serie_override ||
+      incoming["serie"].to_s.strip.presence
+
+    incoming["serie"] = serie_locked if serie_locked.present?
+    incoming["serie_override"] = serie_override if serie_override.present?
+    incoming["serie_locked"] = serie_locked if serie_locked.present?
+    incoming
   end
 
   def email_delivery_target_entity

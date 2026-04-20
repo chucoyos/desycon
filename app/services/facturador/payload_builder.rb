@@ -418,6 +418,9 @@ module Facturador
     end
 
     def resolved_ingreso_serie
+      locked_serie = persisted_serie_lock
+      return locked_serie if locked_serie.present?
+
       manual_serie = manual_serie_override
       return manual_serie if manual_serie.present?
 
@@ -433,6 +436,12 @@ module Facturador
       return unless invoice.payload_snapshot.present?
 
       invoice.payload_snapshot.to_h.deep_stringify_keys["serie_override"].to_s.strip.presence
+    end
+
+    def persisted_serie_lock
+      return unless invoice.payload_snapshot.present?
+
+      invoice.payload_snapshot.to_h.deep_stringify_keys["serie_locked"].to_s.strip.presence
     end
 
     def import_destination_series_map

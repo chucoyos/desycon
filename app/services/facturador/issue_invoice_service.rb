@@ -19,7 +19,8 @@ module Facturador
         return invoice if invoice.issued?
 
         payload = PayloadBuilder.build(invoice)
-        invoice.update!(payload_snapshot: payload)
+        snapshot = invoice.build_persisted_payload_snapshot(payload)
+        invoice.update!(payload_snapshot: snapshot)
 
         access_token = AccessTokenService.fetch!
         emisor_id = EmisorService.emisor_id!(access_token: access_token)
@@ -27,7 +28,7 @@ module Facturador
 
         response = client.emitir_comprobante(
           emisor_id: emisor_id,
-          payload: payload,
+          payload: snapshot,
           emitir: true
         )
 
