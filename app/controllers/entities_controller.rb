@@ -1,4 +1,6 @@
 class EntitiesController < ApplicationController
+  DUPLICATE_RECIPIENT_EMAIL_MESSAGE = "Este correo electronico ya se encuentra registrado para esta entidad. Por favor, intenta con otro".freeze
+
   before_action :authenticate_user!
   before_action :set_entity, only: [ :show, :edit, :update, :destroy ]
   before_action :load_patents, only: [ :show ]
@@ -86,7 +88,14 @@ class EntitiesController < ApplicationController
       @entity.addresses = [ @entity.addresses.last ]
     end
 
-    if @entity.save
+    begin
+      persisted = @entity.save
+    rescue ActiveRecord::RecordNotUnique
+      @entity.errors.add(:entity_email_recipients, DUPLICATE_RECIPIENT_EMAIL_MESSAGE)
+      persisted = false
+    end
+
+    if persisted
       redirect_to @entity, notice: "Entidad creada exitosamente."
     else
       # Rebuild associated objects for form display when validation fails
@@ -104,7 +113,14 @@ class EntitiesController < ApplicationController
     modal_context = params[:modal].present?
 
     respond_to do |format|
-      if @entity.update(entity_params)
+      updated = false
+      begin
+        updated = @entity.update(entity_params)
+      rescue ActiveRecord::RecordNotUnique
+        @entity.errors.add(:entity_email_recipients, DUPLICATE_RECIPIENT_EMAIL_MESSAGE)
+      end
+
+      if updated
         @entity.reload # Reload to ensure associations are fresh
         enqueue_customs_agency_access_recalculation(@entity)
 
@@ -225,7 +241,23 @@ class EntitiesController < ApplicationController
       permitted_attributes += [ :role_kind, :customs_agent_id, :patent_number, :enforce_overdue_payment_rule ]
     end
 
-    params.require(:entity).permit(permitted_attributes)
+    permitted = params.require(:entity).permit(permitted_attributes)
+    normalize_email_recipients!(permitted)
+    permitted
+  end
+
+  def normalize_email_recipients!(permitted)
+    attributes = permitted[:entity_email_recipients_attributes]
+    return if attributes.blank?
+
+    attributes.each do |key, raw_value|
+      row = raw_value.respond_to?(:to_h) ? raw_value.to_h : {}
+      normalized_email = row["email"].to_s.strip.downcase
+
+      if raw_value.respond_to?(:[]=)
+        raw_value[:email] = normalized_email
+      end
+    end
   end
 
   def build_email_recipient_if_needed(entity)

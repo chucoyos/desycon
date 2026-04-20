@@ -144,6 +144,24 @@ RSpec.describe "Entities", type: :request do
       expect(created.role_kind).to eq("customs_agent")
       expect(created.delivery_email_recipients).to eq([ "agencia1@correo.com", "agencia2@correo.com" ])
     end
+
+    it "shows validation error for repeated recipient emails in create payload" do
+      expect {
+        post entities_path, params: {
+          entity: {
+            name: "Agencia Correos Duplicados",
+            role_kind: "customs_agent",
+            entity_email_recipients_attributes: {
+              "0" => { email: " DUPLICADO@correo.com ", position: "0", primary_recipient: "1", active: "1" },
+              "1" => { email: "duplicado@correo.com", position: "1", primary_recipient: "0", active: "1" }
+            }
+          }
+        }
+      }.not_to change(EntityEmailRecipient, :count)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Este correo electronico ya se encuentra registrado para esta entidad. Por favor, intenta con otro")
+    end
   end
 
   describe "PATCH /update" do
@@ -215,6 +233,34 @@ RSpec.describe "Entities", type: :request do
 
       expect(response).to redirect_to(entity_path(consolidator))
       expect(consolidator.reload.delivery_email_recipients).to eq([ "principal@correo.com", "secundario@correo.com" ])
+    end
+
+    it "shows validation error for repeated recipient emails in update payload" do
+      consolidator = create(:entity, :consolidator)
+
+      expect {
+        patch entity_path(consolidator), params: {
+          entity: {
+            entity_email_recipients_attributes: {
+              "0" => {
+                email: " DUP@correo.com ",
+                position: "0",
+                primary_recipient: "1",
+                active: "1"
+              },
+              "1" => {
+                email: "dup@correo.com",
+                position: "1",
+                primary_recipient: "0",
+                active: "1"
+              }
+            }
+          }
+        }
+      }.not_to change(EntityEmailRecipient, :count)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Este correo electronico ya se encuentra registrado para esta entidad. Por favor, intenta con otro")
     end
 
     it "removes an email recipient using _destroy" do

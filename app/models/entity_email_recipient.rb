@@ -5,7 +5,11 @@ class EntityEmailRecipient < ApplicationRecord
   scope :ordered, -> { order(primary_recipient: :desc, position: :asc, id: :asc) }
 
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
-  validates :email, uniqueness: { scope: :entity_id, case_sensitive: false }
+  validates :email, uniqueness: {
+    scope: :entity_id,
+    case_sensitive: false,
+    message: "Este correo electronico ya se encuentra registrado para esta entidad. Por favor, intenta con otro"
+  }
   validates :position, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validate :entity_role_supported
 
