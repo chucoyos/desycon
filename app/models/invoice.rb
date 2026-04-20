@@ -3,11 +3,12 @@ require "digest"
 class Invoice < ApplicationRecord
   KINDS = %w[ingreso egreso pago].freeze
   STATUSES = %w[draft queued issued cancel_pending cancelled failed].freeze
-  PAYMENT_STATUSES = %w[pending partial paid].freeze
+  PAYMENT_STATUSES = %w[pending partial paid unpaid].freeze
   PAYMENT_STATUS_LABELS = {
     "pending" => "Pendiente",
     "partial" => "Parcial",
-    "paid" => "Pagado"
+    "paid" => "Pagado",
+    "unpaid" => "No pagadas"
   }.freeze
   EMAIL_DELIVERY_EVENT_TYPES = %w[email_requested email_sent email_failed].freeze
   EMAIL_DELIVERY_STATUS_LABELS = {
@@ -71,6 +72,8 @@ class Invoice < ApplicationRecord
       where("#{paid_total_sql} > 0 AND #{paid_total_sql} < invoices.total")
     when "paid"
       where("#{paid_total_sql} >= invoices.total")
+    when "unpaid"
+      where("#{paid_total_sql} < invoices.total")
     else
       all
     end

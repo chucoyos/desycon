@@ -41,6 +41,17 @@
   revenue_by_port_color_by_name = revenue_by_port_chart_data.each_with_index.to_h do |series, index|
     [series[:name], revenue_by_port_color_palette[index % revenue_by_port_color_palette.length]]
   end
+  destination_series_by_port_code = if Facturador::Config.environment.to_s.strip.downcase == "sandbox"
+    Facturador::PayloadBuilder::IMPORT_DESTINATION_SERIES_BY_PORT_CODE_SANDBOX
+  else
+    Facturador::PayloadBuilder::IMPORT_DESTINATION_SERIES_BY_PORT_CODE_PRODUCTION
+  end
+  revenue_port_label_to_serie = destination_series_by_port_code.each_with_object({}) do |(port_code, serie), acc|
+    port_label = Admin::ManagementDashboard::RevenueMonthlyService::DESTINATION_PORT_LABELS_BY_CODE[port_code]
+    next if port_label.blank?
+
+    acc[port_label] = serie.to_s
+  end
   destination_port_code_by_label = Admin::ManagementDashboard::RevenueMonthlyService::DESTINATION_PORT_LABELS_BY_CODE.invert
     .merge(Admin::ManagementDashboard::RevenueMonthlyService::UNCLASSIFIED_PORT_LABEL => "N/A")
 
@@ -127,10 +138,17 @@
     </div>
   </section>
 
-  <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+  <section
+    class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"
+    data-controller="revenue-chart-links"
+    data-revenue-chart-links-year-value="<%= @selected_year %>"
+    data-revenue-chart-links-invoices-path-value="<%= invoices_path %>"
+    data-revenue-chart-links-chart-id-value="revenue-monthly-chart"
+  >
     <h2 class="text-lg font-bold text-slate-900">Ingresos Mensuales (YTD)</h2>
     <p class="text-sm text-slate-600 mb-4">Cobrado y por cobrar por mes. El total apilado representa lo facturado.</p>
     <%= column_chart revenue_chart_data,
+      id: "revenue-monthly-chart",
       height: "320px",
       legend: "top",
       thousands: ",",
@@ -200,11 +218,19 @@
     </div>
   </section>
 
-  <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+  <section
+    class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"
+    data-controller="revenue-by-port-chart-links"
+    data-revenue-by-port-chart-links-year-value="<%= @selected_year %>"
+    data-revenue-by-port-chart-links-invoices-path-value="<%= invoices_path %>"
+    data-revenue-by-port-chart-links-chart-id-value="revenue-by-port-monthly-chart"
+    data-revenue-by-port-chart-links-port-series-by-label-value='<%= revenue_port_label_to_serie.to_json %>'
+  >
     <h2 class="text-lg font-bold text-slate-900">Ingresos Mensuales por Puerto (Serie CFDI)</h2>
     <p class="text-sm text-slate-600 mb-4">Clasificacion mensual de ingresos facturados por puerto segun la serie del CFDI (barras apiladas).</p>
     <% if revenue_by_port_chart_data.any? %>
       <%= column_chart revenue_by_port_chart_data,
+        id: "revenue-by-port-monthly-chart",
         height: "320px",
         legend: "top",
         thousands: ",",

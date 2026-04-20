@@ -61,7 +61,8 @@ class InvoicesController < ApplicationController
 
     @invoices = @invoices.where(status: @selected_status) if @selected_status.present? && Invoice::STATUSES.include?(@selected_status)
     @invoices = @invoices.where(kind: @selected_kind) if @selected_kind.present? && Invoice::KINDS.include?(@selected_kind)
-    @invoices = @invoices.with_payment_status(@selected_payment_status) if @selected_payment_status.present? && Invoice::PAYMENT_STATUSES.include?(@selected_payment_status)
+    valid_payment_filter = Invoice::PAYMENT_STATUSES.include?(@selected_payment_status)
+    @invoices = @invoices.with_payment_status(@selected_payment_status) if @selected_payment_status.present? && valid_payment_filter
     @invoices = @invoices.where(receiver_entity_id: @selected_client_id) if @selected_client_id.present?
     if @selected_customs_agent_id.present?
       @invoices = @invoices.joins(:receiver_entity).where(entities: { customs_agent_id: @selected_customs_agent_id })
