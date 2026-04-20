@@ -187,6 +187,7 @@ class BlHouseLinesController < ApplicationController
     assign_container_from_params
 
     if @bl_house_line.save
+      persist_internal_reference_observation(@bl_house_line, params[:internal_reference])
       redirect_to @bl_house_line, notice: "Partida creada correctamente."
     else
       @customs_agents = available_customs_agents
@@ -205,6 +206,7 @@ class BlHouseLinesController < ApplicationController
     assign_container_from_params
 
     if @bl_house_line.update(bl_house_line_params)
+      persist_internal_reference_observation(@bl_house_line, params[:internal_reference])
       redirect_to @bl_house_line, notice: "Partida actualizada correctamente."
     else
       @customs_agents = available_customs_agents
@@ -609,6 +611,7 @@ class BlHouseLinesController < ApplicationController
       :clase_imo,
       :tipo_imo,
       :telex,
+      :observations,
       :hidden_from_customs_agent,
       :bl_endosado_documento, :liberacion_documento, :bl_revalidado_documento, :encomienda_documento, :pago_documento,
       bl_house_line_services_attributes: [
@@ -827,6 +830,21 @@ class BlHouseLinesController < ApplicationController
         action: action
       )
     end
+  end
+
+  def persist_internal_reference_observation(bl_house_line, raw_reference)
+    reference = raw_reference.to_s.strip
+    return if reference.blank?
+
+    history = bl_house_line.bl_house_line_status_histories.order(changed_at: :desc, created_at: :desc, id: :desc).first
+    return if history.blank?
+
+    line = "#{BlHouseLine::INTERNAL_REFERENCE_PREFIX} #{reference}"
+    lines = history.observations.to_s.split(/\r?\n/).map(&:strip).reject(&:blank?)
+    lines.reject! { |entry| entry.match?(/\A#{Regexp.escape(BlHouseLine::INTERNAL_REFERENCE_PREFIX)}/i) }
+    lines << line
+
+    history.update!(observations: lines.join("\n"))
   end
 
   def requesting_customs_agent

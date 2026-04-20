@@ -1,4 +1,6 @@
 class BlHouseLine < ApplicationRecord
+  INTERNAL_REFERENCE_PREFIX = "Referencia Interna:".freeze
+
   # Default values
   attribute :clase_imo, :string, default: "0"
   attribute :tipo_imo, :string, default: "0"
@@ -128,6 +130,14 @@ class BlHouseLine < ApplicationRecord
       .where(status: self.class.statuses[:revalidado])
       .order(changed_at: :desc)
       .pick(:changed_at)
+  end
+
+  def internal_reference
+    observation = latest_internal_reference_observation
+    return if observation.blank?
+
+    match = observation.match(/\b#{Regexp.escape(INTERNAL_REFERENCE_PREFIX)}\s*([^\n\r]+)/i)
+    match&.captures&.first&.to_s&.strip&.presence
   end
 
   def notify_customs_agent_revalidation
@@ -435,6 +445,15 @@ class BlHouseLine < ApplicationRecord
   end
 
   private
+
+  def latest_internal_reference_observation
+    prefix = ActiveRecord::Base.sanitize_sql_like(INTERNAL_REFERENCE_PREFIX)
+
+    bl_house_line_status_histories
+      .where("observations ILIKE ?", "%#{prefix}%")
+      .order(changed_at: :desc, created_at: :desc, id: :desc)
+      .pick(:observations)
+  end
 
   def capture_current_user
     @current_user = defined?(Current) && Current.respond_to?(:user) ? Current.user : nil

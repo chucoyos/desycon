@@ -18,6 +18,8 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
 
       it 'includes container and blhouse in separate lines when both exist' do
         bl_service = create(:bl_house_line_service)
+        latest_history = bl_service.bl_house_line.bl_house_line_status_histories.order(changed_at: :desc, created_at: :desc, id: :desc).first
+        latest_history&.update!(observations: 'Referencia Interna: mi referencia')
         invoice = create(
           :invoice,
           kind: 'ingreso',
@@ -32,8 +34,10 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         concepto_descripcion = payload.dig(:conceptos, 0, :descripcion)
         expect(concepto_descripcion).to include("Contenedor: #{bl_service.bl_house_line.container.number}")
         expect(concepto_descripcion).to include("BlHouse: #{bl_service.bl_house_line.blhouse.delete('-')}")
+        expect(concepto_descripcion).to include("Referencia Interna: mi referencia")
         expect(concepto_descripcion).to include("\nContenedor:")
         expect(concepto_descripcion).to include("\nBlHouse:")
+        expect(concepto_descripcion).to include("\nReferencia Interna:")
         expect(concepto_descripcion).not_to include('|')
       end
 

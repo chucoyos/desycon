@@ -258,5 +258,24 @@ RSpec.describe "CustomsAgents", type: :request do
       expect(bl_house_line.status).to eq("validar_documentos")
       expect(response).to have_http_status(:success)
     end
+
+    it "persists internal reference in observations with required prefix" do
+      bl_house_line = create(:bl_house_line, customs_agent: nil, client: nil)
+
+      sign_in customs_user, scope: :user
+      patch customs_agents_revalidation_update_path(bl_house_line),
+        params: {
+          bl_house_line: { client_id: client.id },
+          internal_reference: "mi referencia"
+        },
+        headers: headers
+
+      bl_house_line.reload
+      latest_history = bl_house_line.bl_house_line_status_histories.order(changed_at: :desc, created_at: :desc, id: :desc).first
+
+      expect(response).to have_http_status(:success)
+      expect(latest_history.observations).to include("Referencia Interna: mi referencia")
+      expect(bl_house_line.internal_reference).to eq("mi referencia")
+    end
   end
 end

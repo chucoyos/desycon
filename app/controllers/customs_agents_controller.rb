@@ -122,6 +122,7 @@ class CustomsAgentsController < ApplicationController
     end
 
     if @bl_house_line.update(sanitized_params.merge(status: :validar_documentos))
+      persist_internal_reference_observation(@bl_house_line, params[:internal_reference])
       @bl_house_line.notify_revalidation_request
       render partial: "customs_agents/revalidation_success", locals: { bl_house_line: @bl_house_line }
     else
@@ -193,6 +194,21 @@ class CustomsAgentsController < ApplicationController
 
   def revalidation_clients
     Entity.clients.where(customs_agent_id: current_user.entity_id).order(:name)
+  end
+
+  def persist_internal_reference_observation(bl_house_line, raw_reference)
+    reference = raw_reference.to_s.strip
+    return if reference.blank?
+
+    last_history = bl_house_line.bl_house_line_status_histories.order(changed_at: :desc, created_at: :desc, id: :desc).first
+    return if last_history.blank?
+
+    reference_line = "#{BlHouseLine::INTERNAL_REFERENCE_PREFIX} #{reference}"
+    existing_lines = last_history.observations.to_s.split(/\r?\n/).map(&:strip).reject(&:blank?)
+    existing_lines.reject! { |line| line.match?(/\A#{Regexp.escape(BlHouseLine::INTERNAL_REFERENCE_PREFIX)}/i) }
+    existing_lines << reference_line
+
+    last_history.update!(observations: existing_lines.join("\n"))
   end
 
   def resolved_start_date

@@ -382,11 +382,13 @@ module Facturador
       description = normalize_cfdi_description(base_description)
       container = normalize_cfdi_token(container_number)
       blhouse = normalize_cfdi_token(blhouse_number)
-      return description if container.blank? && blhouse.blank?
+      internal_reference = normalize_cfdi_description(internal_reference_text)
+      return description if container.blank? && blhouse.blank? && internal_reference.blank?
 
       lines = [ description.end_with?(".") ? description : "#{description}." ]
       lines << "Contenedor: #{container}" if container.present?
       lines << "BlHouse: #{blhouse}" if blhouse.present?
+      lines << "#{BlHouseLine::INTERNAL_REFERENCE_PREFIX} #{internal_reference}" if internal_reference.present?
 
       normalize_cfdi_description(lines.join("\n"))
     end
@@ -459,6 +461,21 @@ module Facturador
         invoice.invoiceable.bl_house_line&.blhouse.to_s.presence
       elsif invoice.invoiceable.respond_to?(:blhouse)
         invoice.invoiceable.blhouse.to_s.presence
+      end
+    end
+
+    def internal_reference_text
+      invoiceable_bl_house_line&.internal_reference
+    end
+
+    def invoiceable_bl_house_line
+      invoiceable = invoice.invoiceable
+      return if invoiceable.blank?
+
+      if invoiceable.respond_to?(:bl_house_line)
+        invoiceable.bl_house_line
+      elsif invoiceable.respond_to?(:blhouse)
+        invoiceable
       end
     end
 
