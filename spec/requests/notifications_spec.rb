@@ -15,21 +15,22 @@ RSpec.describe "Notifications", type: :request do
     end
 
     it "shows user's notifications" do
-      notification = Notification.create!(recipient: user, actor: user, notifiable: create_bl_house_line, action: "test action")
+      Notification.create!(recipient: user, actor: user, notifiable: create_bl_house_line, action: "test action")
 
       get notifications_path
 
       expect(response.body).to include("test action")
     end
 
-    it "includes delete-on-click action for invoice payment evidence notifications" do
+    it "includes mark-as-read-on-click action for invoice payment evidence notifications" do
       evidence = create(:invoice_payment_evidence)
       Notification.create!(recipient: user, actor: user, notifiable: evidence, action: "evidencia rechazada")
 
       get notifications_path
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include("click-&gt;notification#deleteNotification")
+      expect(response.body).to include("click-&gt;notification#markAsRead")
+      expect(response.body).to include("turbo-confirm=\"¿Eliminar esta notificación?\"")
     end
   end
 
