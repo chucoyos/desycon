@@ -21,6 +21,10 @@ module Admin
       end
 
       def call
+        emitted_total = emitted_series.sum
+        collected_total = collected_series.sum
+        outstanding_total = [ emitted_total - collected_total, 0.to_d ].max
+
         {
           year: year,
           month_numbers: month_numbers,
@@ -29,8 +33,9 @@ module Admin
           collected: collected_series,
           emitted_by_destination_port: emitted_by_destination_port_series,
           totals: {
-            emitted: emitted_series.sum,
-            collected: collected_series.sum
+            emitted: emitted_total,
+            collected: collected_total,
+            outstanding: outstanding_total
           }
         }
       end

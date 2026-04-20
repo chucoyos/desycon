@@ -6,14 +6,43 @@
   cobrado_series = @revenue_metrics[:collected]
   por_cobrar_series = facturado_series.zip(cobrado_series).map { |facturado, cobrado| [(facturado - cobrado), 0.to_d].max }
 
+  month_over_month = lambda do |current_value, previous_value|
+    change = current_value - previous_value
+
+    if previous_value.zero?
+      {
+        label: "Sin base comparativa",
+        class_name: "text-slate-500"
+      }
+    else
+      percent = ((change / previous_value) * 100).round(1)
+      sign = percent.positive? ? "+" : ""
+      {
+        label: "#{sign}#{percent}% vs mes anterior",
+        class_name: percent.positive? ? "text-emerald-600" : (percent.negative? ? "text-rose-600" : "text-slate-500")
+      }
+    end
+  end
+
   revenue_chart_data = [
     { name: "Cobrado", data: month_labels.zip(cobrado_series).to_h },
     { name: "Por cobrar", data: month_labels.zip(por_cobrar_series).to_h }
   ]
+  revenue_chart_colors = {
+    "Cobrado" => "#2563eb",
+    "Por cobrar" => "#dc2626",
+    "Total" => "#0f766e"
+  }
 
   revenue_by_port_chart_data = @revenue_metrics.fetch(:emitted_by_destination_port, {}).map do |port_name, values|
     { name: port_name, data: month_labels.zip(values).to_h }
   end
+  revenue_by_port_color_palette = ["#0ea5e9", "#f97316", "#eab308", "#22c55e", "#64748b", "#a855f7", "#ec4899", "#14b8a6"]
+  revenue_by_port_color_by_name = revenue_by_port_chart_data.each_with_index.to_h do |series, index|
+    [series[:name], revenue_by_port_color_palette[index % revenue_by_port_color_palette.length]]
+  end
+  destination_port_code_by_label = Admin::ManagementDashboard::RevenueMonthlyService::DESTINATION_PORT_LABELS_BY_CODE.invert
+    .merge(Admin::ManagementDashboard::RevenueMonthlyService::UNCLASSIFIED_PORT_LABEL => "N/A")
 
   containers_chart_data = [
     { name: "Creados", data: month_labels.zip(@operations_metrics.dig(:containers, :created)).to_h },
@@ -63,7 +92,7 @@
     </div>
   </div>
 
-  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
       <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ingresos Emitidos YTD</p>
       <p class="mt-2 text-2xl font-bold text-emerald-700"><%= number_to_currency(@revenue_metrics.dig(:totals, :emitted)) %></p>
@@ -73,20 +102,28 @@
       <p class="mt-2 text-2xl font-bold text-blue-700"><%= number_to_currency(@revenue_metrics.dig(:totals, :collected)) %></p>
     </div>
     <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ingresos por Cobrar YTD</p>
+      <p class="mt-2 text-2xl font-bold text-rose-700"><%= number_to_currency(@revenue_metrics.dig(:totals, :outstanding)) %></p>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
       <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Contenedores Creados YTD</p>
       <p class="mt-2 text-2xl font-bold text-slate-900"><%= @operations_metrics.dig(:totals, :containers_created) %></p>
     </div>
     <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
       <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Contenedores Desconsolidados YTD</p>
-      <p class="mt-2 text-2xl font-bold text-slate-900"><%= @operations_metrics.dig(:totals, :containers_unconsolidated) %></p>
+      <p class="mt-2 text-2xl font-bold text-green-700"><%= @operations_metrics.dig(:totals, :containers_unconsolidated) %></p>
     </div>
     <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
       <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Partidas Creadas YTD</p>
       <p class="mt-2 text-2xl font-bold text-slate-900"><%= @operations_metrics.dig(:totals, :bl_created) %></p>
     </div>
     <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Partidas Revalidadas / Despachadas YTD</p>
-      <p class="mt-2 text-lg font-bold text-slate-900"><%= @operations_metrics.dig(:totals, :bl_revalidated) %> / <%= @operations_metrics.dig(:totals, :bl_dispatched) %></p>
+      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Partidas Revalidadas YTD</p>
+      <p class="mt-2 text-2xl font-bold text-violet-700"><%= @operations_metrics.dig(:totals, :bl_revalidated) %></p>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Partidas Despachadas YTD</p>
+      <p class="mt-2 text-2xl font-bold text-green-700"><%= @operations_metrics.dig(:totals, :bl_dispatched) %></p>
     </div>
   </section>
 
@@ -98,7 +135,7 @@
       legend: "top",
       thousands: ",",
       prefix: "$",
-      colors: ["#2563eb", "#dc2626"],
+      colors: [revenue_chart_colors["Cobrado"], revenue_chart_colors["Por cobrar"]],
       library: {
         plotOptions: {
           column: {
@@ -117,6 +154,50 @@
           }
         }
       } %>
+
+    <div class="mt-4 border-t border-slate-200 pt-3 overflow-x-auto">
+      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Desglose por mes</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 min-w-[980px]">
+        <% month_labels.each_with_index do |month_label, index| %>
+          <% month_collected = cobrado_series[index].to_d %>
+          <% month_outstanding = por_cobrar_series[index].to_d %>
+          <% month_total = month_collected + month_outstanding %>
+          <% previous_month_total = index.positive? ? (cobrado_series[index - 1].to_d + por_cobrar_series[index - 1].to_d) : 0.to_d %>
+          <% month_total_mom = month_over_month.call(month_total, previous_month_total) %>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider"><%= month_label %></p>
+
+            <div class="mt-2 space-y-1.5 text-xs">
+              <div class="flex items-center justify-between gap-2">
+                <span class="inline-flex items-center gap-1.5 text-slate-700">
+                  <span class="w-2 h-2 rounded-full" style="background-color: <%= revenue_chart_colors['Cobrado'] %>"></span>
+                  Cobrado
+                </span>
+                <span class="font-semibold text-slate-900"><%= number_to_currency(month_collected) %></span>
+              </div>
+
+              <div class="flex items-center justify-between gap-2">
+                <span class="inline-flex items-center gap-1.5 text-slate-700">
+                  <span class="w-2 h-2 rounded-full" style="background-color: <%= revenue_chart_colors['Por cobrar'] %>"></span>
+                  Por cobrar
+                </span>
+                <span class="font-semibold text-slate-900"><%= number_to_currency(month_outstanding) %></span>
+              </div>
+
+              <div class="pt-1 mt-1 border-t border-slate-200 flex items-center justify-between gap-2">
+                <span class="inline-flex items-center gap-1.5 text-slate-800 font-semibold">
+                  <span class="w-2 h-2 rounded-full" style="background-color: <%= revenue_chart_colors['Total'] %>"></span>
+                  Total
+                </span>
+                <span class="font-bold text-slate-900"><%= number_to_currency(month_total) %></span>
+              </div>
+
+              <p class="pt-1 text-[11px] font-semibold <%= month_total_mom[:class_name] %>"><%= month_total_mom[:label] %></p>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
   </section>
 
   <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
@@ -128,7 +209,7 @@
         legend: "top",
         thousands: ",",
         prefix: "$",
-        colors: ["#0ea5e9", "#f97316", "#eab308", "#22c55e", "#64748b"],
+        colors: revenue_by_port_chart_data.map { |series| revenue_by_port_color_by_name[series[:name]] },
         library: {
           plotOptions: {
             column: {
@@ -147,6 +228,52 @@
             }
           }
         } %>
+
+      <div class="mt-4 border-t border-slate-200 pt-3 overflow-x-auto">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Desglose por mes</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 min-w-[980px]">
+          <% month_labels.each_with_index do |month_label, index| %>
+            <% month_total = revenue_by_port_chart_data.sum do |series|
+              series[:data][month_label].to_d
+            end %>
+            <% previous_month_total = if index.positive?
+              previous_month_label = month_labels[index - 1]
+              revenue_by_port_chart_data.sum { |series| series[:data][previous_month_label].to_d }
+            else
+              0.to_d
+            end %>
+            <% month_total_mom = month_over_month.call(month_total, previous_month_total) %>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider"><%= month_label %></p>
+
+              <div class="mt-2 space-y-1.5 text-xs">
+                <% revenue_by_port_chart_data.each do |series| %>
+                  <% amount = series[:data][month_label].to_d %>
+                  <% raw_port_code = destination_port_code_by_label.fetch(series[:name], series[:name]) %>
+                  <% port_code = raw_port_code.to_s.sub(/\AMX/, "") %>
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="inline-flex items-center gap-1.5 text-slate-700">
+                      <span class="w-2 h-2 rounded-full" style="background-color: <%= revenue_by_port_color_by_name[series[:name]] %>"></span>
+                      <span title="<%= series[:name] %>"><%= port_code %></span>
+                    </span>
+                    <span class="font-semibold text-slate-900"><%= number_to_currency(amount) %></span>
+                  </div>
+                <% end %>
+
+                <div class="pt-1 mt-1 border-t border-slate-200 flex items-center justify-between gap-2">
+                  <span class="inline-flex items-center gap-1.5 text-slate-800 font-semibold">
+                    <span class="w-2 h-2 rounded-full" style="background-color: #0f766e"></span>
+                    Total
+                  </span>
+                  <span class="font-bold text-slate-900"><%= number_to_currency(month_total) %></span>
+                </div>
+
+                <p class="pt-1 text-[11px] font-semibold <%= month_total_mom[:class_name] %>"><%= month_total_mom[:label] %></p>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
     <% else %>
       <p class="text-sm text-slate-500">No hay ingresos clasificados por puerto para el periodo seleccionado.</p>
     <% end %>
