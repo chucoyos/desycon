@@ -1,6 +1,18 @@
 <% content_for :title, "Nuevo CFDI" %>
+<% content_for :head do %>
+  <meta name="turbo-cache-control" content="no-cache">
+<% end %>
 <% manual_form_values = @manual_form_values || {} %>
 <% manual_line_items_prefill = @manual_line_items_prefill || [] %>
+<%
+  selected_customs_agent = @customs_agents_for_manual.find do |agent|
+    agent.id.to_s == manual_form_values["customs_agent_id"].to_s
+  end
+
+  selected_receiver = (@receiver_clients + @receiver_consolidators).find do |entity|
+    entity.id.to_s == manual_form_values["receiver_entity_id"].to_s
+  end
+%>
 
 <div class="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
   <div class="mb-6">
@@ -8,7 +20,7 @@
     <p class="text-sm text-gray-500 mt-1">Crea y emite un CFDI manual con uno o varios conceptos.</p>
   </div>
 
-  <%= form_with url: invoices_path, method: :post, scope: :manual_invoice, class: "space-y-6", id: "manual-cfdi-form" do |f| %>
+  <%= form_with url: invoices_path, method: :post, scope: :manual_invoice, class: "space-y-6", id: "manual-cfdi-form", data: { turbo: false } do |f| %>
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
       <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider">Datos Generales</h2>
 
@@ -24,32 +36,97 @@
 
         <div>
           <%= f.label :customs_agent_id, "Agencia aduanal (opcional)", class: "block text-xs font-medium text-gray-600 mb-1" %>
-          <%= f.select :customs_agent_id,
-            options_for_select([["Sin agencia", ""]] + @customs_agents_for_manual.map { |agent| [agent.name, agent.id] }, manual_form_values["customs_agent_id"]),
-            {},
-            class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg",
-            id: "manual_customs_agent_id" %>
+          <div
+            id="manual_customs_agent_autocomplete"
+            data-controller="catalog-autocomplete"
+            data-catalog-autocomplete-url-value="<%= manual_customs_agents_search_invoices_path %>"
+            data-catalog-autocomplete-min-chars-value="2"
+            data-catalog-autocomplete-debounce-value="300"
+            class="relative"
+          >
+            <%= f.hidden_field :customs_agent_id,
+              id: "manual_customs_agent_id",
+              value: manual_form_values["customs_agent_id"],
+              data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+            <%= text_field_tag :manual_customs_agent_search,
+              selected_customs_agent&.name,
+              id: "manual_customs_agent_search",
+              autocomplete: "off",
+              placeholder: "Sin agencia (opcional)",
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg",
+              data: {
+                catalog_autocomplete_target: "input",
+                action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+              } %>
+
+            <div id="manual_customs_agent_status" data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+            <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+          </div>
+
+          <noscript>
+            <%= f.select :customs_agent_id,
+              options_for_select([["Sin agencia", ""]] + @customs_agents_for_manual.map { |agent| [agent.name, agent.id] }, manual_form_values["customs_agent_id"]),
+              {},
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg",
+              id: "manual_customs_agent_id_noscript" %>
+          </noscript>
         </div>
 
         <div>
           <%= f.label :receiver_entity_id, "Receptor", class: "block text-xs font-medium text-gray-600 mb-1" %>
-          <% receiver_options =
-            @receiver_clients.map { |entity| [entity.name, entity.id, { "data-kind": "client", "data-customs-agent-id": entity.customs_agent_id }] } +
-            @receiver_consolidators.map { |entity| [entity.name, entity.id, { "data-kind": "consolidator", "data-customs-agent-id": "" }] } %>
-          <%= f.select :receiver_entity_id,
-            options_for_select(receiver_options, manual_form_values["receiver_entity_id"]),
-            { include_blank: "Seleccionar receptor" },
-            class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg",
-            required: true,
-            id: "manual_receiver_entity_id" %>
+          <div
+            id="manual_receiver_autocomplete"
+            data-controller="catalog-autocomplete"
+            data-base-url="<%= manual_receivers_search_invoices_path %>"
+            data-catalog-autocomplete-url-value="<%= manual_receivers_search_invoices_path(receiver_kind: @selected_receiver_kind) %>"
+            data-catalog-autocomplete-min-chars-value="2"
+            data-catalog-autocomplete-debounce-value="300"
+            data-catalog-autocomplete-depends-on-field-value="manual_customs_agent_id"
+            data-catalog-autocomplete-depends-on-param-value="customs_agent_id"
+            class="relative"
+          >
+            <%= f.hidden_field :receiver_entity_id,
+              id: "manual_receiver_entity_id",
+              value: manual_form_values["receiver_entity_id"],
+              data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+            <%= text_field_tag :manual_receiver_entity_search,
+              selected_receiver&.name,
+              id: "manual_receiver_entity_search",
+              autocomplete: "off",
+              placeholder: "Escribe para buscar receptor",
+              required: true,
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg",
+              data: {
+                catalog_autocomplete_target: "input",
+                action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+              } %>
+
+            <div id="manual_receiver_status" data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+            <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+          </div>
+
+          <noscript>
+            <% receiver_options =
+              @receiver_clients.map { |entity| [entity.name, entity.id, { "data-kind": "client", "data-customs-agent-id": entity.customs_agent_id }] } +
+              @receiver_consolidators.map { |entity| [entity.name, entity.id, { "data-kind": "consolidator", "data-customs-agent-id": "" }] } %>
+            <%= f.select :receiver_entity_id,
+              options_for_select(receiver_options, manual_form_values["receiver_entity_id"]),
+              { include_blank: "Seleccionar receptor" },
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg",
+              required: true,
+              id: "manual_receiver_entity_id_noscript" %>
+          </noscript>
         </div>
 
         <div>
           <%= f.label :serie, "Serie", class: "block text-xs font-medium text-gray-600 mb-1" %>
           <%= f.select :serie,
-            options_for_select(@manual_series_options || [["Automática", ""]], manual_form_values["serie"]),
-            {},
+            options_for_select(@manual_series_options || [], manual_form_values["serie"]),
+            { include_blank: "Seleccionar serie" },
             class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg",
+            required: true,
             id: "manual_serie" %>
         </div>
       </div>
@@ -135,7 +212,11 @@
 
     const receiverKind = document.getElementById('manual_receiver_kind');
     const customsAgent = document.getElementById('manual_customs_agent_id');
-    const receiverEntity = document.getElementById('manual_receiver_entity_id');
+    const customsAgentNoscript = document.getElementById('manual_customs_agent_id_noscript');
+    const receiverEntityHidden = document.getElementById('manual_receiver_entity_id');
+    const receiverEntitySearch = document.getElementById('manual_receiver_entity_search');
+    const receiverEntityNoscript = document.getElementById('manual_receiver_entity_id_noscript');
+    const receiverAutocomplete = document.getElementById('manual_receiver_autocomplete');
 
     const lineItems = document.getElementById('manual-line-items');
     const addButton = document.getElementById('add-manual-line-item');
@@ -143,6 +224,17 @@
     const submitButton = document.getElementById('manual-cfdi-submit');
     const overlay = document.getElementById('manual-cfdi-processing-overlay');
     const prefilledLineItems = <%= raw(manual_line_items_prefill.to_json) %>;
+
+    // In some browsers/navigation states, noscript fallbacks can leak into validation.
+    // Disable them when JS is running so they never block submit.
+    if (customsAgentNoscript) {
+      customsAgentNoscript.disabled = true;
+      customsAgentNoscript.required = false;
+    }
+    if (receiverEntityNoscript) {
+      receiverEntityNoscript.disabled = true;
+      receiverEntityNoscript.required = false;
+    }
 
     const enterSubmittingState = () => {
       if (overlay) overlay.classList.remove('hidden');
@@ -171,6 +263,11 @@
       }
     };
 
+    const prepareForTurboCache = () => {
+      leaveSubmittingState();
+      form.dataset.manualCfdiReady = 'false';
+    };
+
     const preventEnterImplicitSubmit = (event) => {
       if (event.key !== 'Enter') return;
 
@@ -186,29 +283,28 @@
       event.preventDefault();
     };
 
-    const filterReceivers = () => {
-      const selectedKind = receiverKind.value;
-      const selectedAgent = customsAgent.value;
-
-      Array.from(receiverEntity.options).forEach((option) => {
-        if (!option.value) {
-          option.hidden = false;
-          return;
+    const clearReceiverSelection = () => {
+      if (receiverEntityHidden) receiverEntityHidden.value = '';
+      if (receiverEntitySearch) receiverEntitySearch.value = '';
+      if (receiverAutocomplete) {
+        const statusNode = receiverAutocomplete.querySelector('#manual_receiver_status');
+        const resultsNode = receiverAutocomplete.querySelector('[data-catalog-autocomplete-target="results"]');
+        if (statusNode) statusNode.textContent = '';
+        if (resultsNode) {
+          resultsNode.classList.add('hidden');
+          resultsNode.innerHTML = '';
         }
-
-        const kindMatches = option.dataset.kind === selectedKind;
-        let agentMatches = true;
-
-        if (selectedKind === 'client' && selectedAgent) {
-          agentMatches = String(option.dataset.customsAgentId || '') === String(selectedAgent);
-        }
-
-        option.hidden = !(kindMatches && agentMatches);
-      });
-
-      if (receiverEntity.selectedOptions[0] && receiverEntity.selectedOptions[0].hidden) {
-        receiverEntity.value = '';
       }
+    };
+
+    const updateReceiverAutocompleteUrl = () => {
+      if (!receiverAutocomplete) return;
+      const baseUrl = receiverAutocomplete.dataset.baseUrl;
+      if (!baseUrl) return;
+
+      const url = new URL(baseUrl, window.location.origin);
+      url.searchParams.set('receiver_kind', receiverKind.value || 'client');
+      receiverAutocomplete.dataset.catalogAutocompleteUrlValue = `${url.pathname}?${url.searchParams.toString()}`;
     };
 
     const attachLineItemEvents = (lineItem) => {
@@ -252,9 +348,16 @@
       lineItems.appendChild(fragment);
     };
 
-    receiverKind.addEventListener('change', filterReceivers);
-    customsAgent.addEventListener('change', filterReceivers);
-    addButton.addEventListener('click', addLineItem);
+    receiverKind?.addEventListener('change', () => {
+      updateReceiverAutocompleteUrl();
+      clearReceiverSelection();
+    });
+    customsAgent?.addEventListener('change', () => {
+      if ((receiverKind?.value || 'client') === 'client') {
+        clearReceiverSelection();
+      }
+    });
+    addButton?.addEventListener('click', addLineItem);
     form.addEventListener('keydown', preventEnterImplicitSubmit);
 
     form.addEventListener('submit', enterSubmittingState);
@@ -263,13 +366,16 @@
       if (event.detail && event.detail.success) return;
       leaveSubmittingState();
     });
+    document.addEventListener('turbo:before-cache', prepareForTurboCache, { once: true });
 
-    if (Array.isArray(prefilledLineItems) && prefilledLineItems.length > 0) {
-      prefilledLineItems.forEach((item) => addLineItem(item));
-    } else {
-      addLineItem();
+    if (lineItems) {
+      if (Array.isArray(prefilledLineItems) && prefilledLineItems.length > 0) {
+        prefilledLineItems.forEach((item) => addLineItem(item));
+      } else {
+        addLineItem();
+      }
     }
-    filterReceivers();
+    updateReceiverAutocompleteUrl();
 
     };
 

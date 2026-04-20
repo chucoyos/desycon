@@ -44,7 +44,9 @@ Rails.application.routes.draw do
     collection do
       get :consolidators_search
       get :customs_agents_search
+      get :manual_customs_agents_search
       get :receivers_search
+      get :manual_receivers_search
       post :issue_manual
       post :issue_manual_batch
     end

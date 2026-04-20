@@ -203,6 +203,89 @@ class InvoicesController < ApplicationController
     render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
   end
 
+  def manual_receivers_search
+    authorize Invoice, :new?
+
+    query = params[:q].to_s.strip
+    receiver_kind = params[:receiver_kind].to_s.presence || "client"
+    customs_agent_id = params[:customs_agent_id].to_s.presence
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, receiver_kind:, min_chars:, limit:, count: 0 } }
+    end
+
+    receivers_scope = if receiver_kind == "consolidator"
+      Entity.consolidators
+    else
+      scope = Entity.clients
+      scope = scope.where(customs_agent_id:) if customs_agent_id.present?
+      scope
+    end
+
+    cache_key = [
+      "invoices",
+      "manual_receivers_search",
+      current_user.id,
+      receiver_kind,
+      customs_agent_id || "none",
+      query.downcase,
+      limit
+    ].join(":")
+
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      receivers_scope
+        .search_by_name(query)
+        .limit(limit)
+        .pluck(:id, :name)
+        .map do |id, name|
+          {
+            id:,
+            label: name
+          }
+        end
+    end
+
+    render json: { results:, meta: { query:, receiver_kind:, min_chars:, limit:, count: results.size } }
+  end
+
+  def manual_customs_agents_search
+    authorize Invoice, :new?
+
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    cache_key = [
+      "invoices",
+      "manual_customs_agents_search",
+      current_user.id,
+      query.downcase,
+      limit
+    ].join(":")
+
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      Entity
+        .customs_agents
+        .search_by_name(query)
+        .limit(limit)
+        .pluck(:id, :name)
+        .map do |id, name|
+          {
+            id:,
+            label: name
+          }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
   def customs_agents_search
     authorize Invoice, :index?
 
@@ -665,7 +748,7 @@ class InvoicesController < ApplicationController
   end
 
   def build_manual_series_options
-    [ [ "Automática", "" ] ] + series_for_current_environment.map { |serie| [ serie, serie ] }
+    series_for_current_environment.map { |serie| [ serie, serie ] }
   end
 
   def build_series_filter_options
@@ -673,18 +756,11 @@ class InvoicesController < ApplicationController
   end
 
   def series_for_current_environment
-    environment = Facturador::Config.environment.to_s.downcase
-    mapped_series = if environment == "sandbox"
-      [ "MZ", "A", "B", "C" ]
+    if Facturador::Config.environment.to_s.casecmp("sandbox").zero?
+      Facturador::PayloadBuilder::IMPORT_DESTINATION_SERIES_BY_PORT_CODE_SANDBOX.values
     else
-      [ "GMZO", "GLZC", "GVRZ", "GATM" ]
-    end
-
-    global_serie = Facturador::Config.serie.to_s.strip
-    series = mapped_series.dup
-    series << global_serie if global_serie.present?
-
-    series.uniq
+      Facturador::PayloadBuilder::IMPORT_DESTINATION_SERIES_BY_PORT_CODE_PRODUCTION.values
+    end.uniq
   end
 
   def resolved_start_date

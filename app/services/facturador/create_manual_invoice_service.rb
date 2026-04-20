@@ -42,6 +42,11 @@ module Facturador
       return Result.new(error_message: "La agencia aduanal seleccionada no existe") if customs_agent_id.present? && customs_agent.blank?
       return Result.new(error_message: "La entidad seleccionada no es una agencia aduanal") if customs_agent.present? && !customs_agent.role_customs_agent?
 
+      return Result.new(error_message: "Debes seleccionar una serie") if normalized_serie_override.blank?
+      unless allowed_manual_series.include?(normalized_serie_override)
+        return Result.new(error_message: "La serie seleccionada no es válida para este entorno")
+      end
+
       if customs_agent.present? && receiver.role_client? && receiver.customs_agent_id != customs_agent.id
         return Result.new(error_message: "El cliente receptor no pertenece a la agencia aduanal seleccionada")
       end
@@ -114,6 +119,14 @@ module Facturador
 
     def fiscal_ready?(entity)
       entity.fiscal_profile.present? && entity.fiscal_address.present?
+    end
+
+    def allowed_manual_series
+      if Config.environment.to_s.casecmp("sandbox").zero?
+        PayloadBuilder::IMPORT_DESTINATION_SERIES_BY_PORT_CODE_SANDBOX.values
+      else
+        PayloadBuilder::IMPORT_DESTINATION_SERIES_BY_PORT_CODE_PRODUCTION.values
+      end.uniq
     end
 
     def build_line_items

@@ -199,6 +199,8 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include('Nuevo CFDI')
       expect(response.body).to include('Generar CFDI')
       expect(response.body).to include('Serie')
+      expect(response.body).to include('Seleccionar serie')
+      expect(response.body).not_to include('Automática')
     end
   end
 
@@ -292,6 +294,89 @@ RSpec.describe 'Invoices', type: :request do
       sign_in tramitador, scope: :user
 
       get receivers_search_invoices_path, params: { q: 'Receptor' }, as: :json
+
+      expect(response).to have_http_status(:redirect)
+    end
+  end
+
+  describe 'GET /invoices/manual_receivers_search' do
+    before { sign_in admin_user, scope: :user }
+
+    it 'returns empty results when query is too short' do
+      get manual_receivers_search_invoices_path, params: { q: 'a', receiver_kind: 'client' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload['results']).to eq([])
+      expect(payload.dig('meta', 'min_chars')).to eq(2)
+    end
+
+    it 'filters clients by customs agent when receiver_kind is client' do
+      selected_agent = create(:entity, :customs_agent, name: 'Agencia Uno')
+      other_agent = create(:entity, :customs_agent, name: 'Agencia Dos')
+
+      allowed_client = create(:entity, :client, name: 'Cliente Filtro Agencia', customs_agent: selected_agent)
+      blocked_client = create(:entity, :client, name: 'Cliente Filtro Agencia Externo', customs_agent: other_agent)
+
+      get manual_receivers_search_invoices_path,
+        params: { q: 'Cliente Filtro Agencia', receiver_kind: 'client', customs_agent_id: selected_agent.id },
+        as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      ids = payload.fetch('results').map { |result| result.fetch('id') }
+
+      expect(ids).to include(allowed_client.id)
+      expect(ids).not_to include(blocked_client.id)
+    end
+
+    it 'returns consolidators when receiver_kind is consolidator' do
+      consolidator = create(:entity, :consolidator, name: 'Consolidador Auto')
+      client = create(:entity, :client, name: 'Consolidador Auto Cliente')
+
+      get manual_receivers_search_invoices_path,
+        params: { q: 'Consolidador Auto', receiver_kind: 'consolidator' },
+        as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      ids = payload.fetch('results').map { |result| result.fetch('id') }
+
+      expect(ids).to include(consolidator.id)
+      expect(ids).not_to include(client.id)
+    end
+  end
+
+  describe 'GET /invoices/manual_customs_agents_search' do
+    before { sign_in admin_user, scope: :user }
+
+    it 'returns empty results when query is too short' do
+      get manual_customs_agents_search_invoices_path, params: { q: 'a' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload['results']).to eq([])
+      expect(payload.dig('meta', 'min_chars')).to eq(2)
+    end
+
+    it 'returns up to 20 matching customs agencies' do
+      25.times do |i|
+        create(:entity, :customs_agent, name: "Agencia Manual Search #{i}")
+      end
+
+      get manual_customs_agents_search_invoices_path, params: { q: 'Agencia Manual Search' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload['results'].size).to eq(20)
+      expect(payload.dig('meta', 'limit')).to eq(20)
+    end
+
+    it 'rejects users without invoices new permission' do
+      tramitador = create(:user, :tramitador)
+      sign_in tramitador, scope: :user
+
+      get manual_customs_agents_search_invoices_path, params: { q: 'Agencia' }, as: :json
 
       expect(response).to have_http_status(:redirect)
     end

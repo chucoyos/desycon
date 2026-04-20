@@ -5,6 +5,7 @@ RSpec.describe Facturador::CreateManualInvoiceService, type: :service do
     let(:actor) { create(:user, :admin) }
     let(:issuer) { create(:entity, :customs_agent, :with_fiscal_profile, :with_address) }
     let(:receiver) { create(:entity, :client, :with_fiscal_profile, :with_address) }
+    let(:manual_serie) { 'MZ' }
 
     before do
       allow(Facturador::Config).to receive(:enabled?).and_return(true)
@@ -19,6 +20,7 @@ RSpec.describe Facturador::CreateManualInvoiceService, type: :service do
         actor: actor,
         receiver_entity_id: receiver.id,
         customs_agent_id: nil,
+        serie: manual_serie,
         line_items_params: [
           {
             service_catalog_id: service_catalog.id,
@@ -45,6 +47,7 @@ RSpec.describe Facturador::CreateManualInvoiceService, type: :service do
         actor: actor,
         receiver_entity_id: receiver.id,
         customs_agent_id: nil,
+        serie: manual_serie,
         line_items_params: [
           {
             service_catalog_id: '999999',
@@ -67,6 +70,7 @@ RSpec.describe Facturador::CreateManualInvoiceService, type: :service do
         actor: actor,
         receiver_entity_id: receiver.id,
         customs_agent_id: nil,
+        serie: manual_serie,
         line_items_params: [
           {
             service_catalog_id: service_catalog.id,
@@ -89,6 +93,7 @@ RSpec.describe Facturador::CreateManualInvoiceService, type: :service do
         actor: actor,
         receiver_entity_id: receiver.id,
         customs_agent_id: nil,
+        serie: manual_serie,
         line_items_params: [
           {
             service_catalog_id: service_catalog.id,
@@ -111,6 +116,7 @@ RSpec.describe Facturador::CreateManualInvoiceService, type: :service do
         actor: actor,
         receiver_entity_id: receiver.id,
         customs_agent_id: nil,
+        serie: manual_serie,
         line_items_params: [
           {
             service_catalog_id: service_catalog.id,
@@ -123,6 +129,29 @@ RSpec.describe Facturador::CreateManualInvoiceService, type: :service do
 
       expect(result.success?).to be(false)
       expect(result.error_message).to include('cantidad entera mayor o igual a 1')
+      expect(result.invoice).to be_nil
+    end
+
+    it 'returns error when serie is blank' do
+      service_catalog = create(:service_catalog)
+
+      result = described_class.call(
+        actor: actor,
+        receiver_entity_id: receiver.id,
+        customs_agent_id: nil,
+        serie: '',
+        line_items_params: [
+          {
+            service_catalog_id: service_catalog.id,
+            description: 'Concepto serie vacia',
+            quantity: '1',
+            unit_price: '100.00'
+          }
+        ]
+      )
+
+      expect(result.success?).to be(false)
+      expect(result.error_message).to eq('Debes seleccionar una serie')
       expect(result.invoice).to be_nil
     end
   end
