@@ -1,6 +1,7 @@
 class Photos::BuildArchiveJob < ApplicationJob
   # Reuse the Active Storage worker pool so staging works even when default queue workers are not scaled.
   queue_as :active_storage
+  EMPTY_ZIP_MIN_BYTES = 22
 
   discard_on ActiveJob::DeserializationError
 
@@ -19,12 +20,24 @@ class Photos::BuildArchiveJob < ApplicationJob
     return request.mark_failed!("No hay fotografias para generar el ZIP") if photos.empty?
 
     zip_file = build_zip_file(photos: photos)
+    zip_size = File.size(zip_file.path)
+    if zip_size <= EMPTY_ZIP_MIN_BYTES
+      return request.mark_failed!("No se pudo generar un ZIP valido")
+    end
 
-    request.archive.attach(
-      io: zip_file,
-      filename: zip_filename_for(attachable: attachable, section: request.section),
-      content_type: "application/zip"
-    )
+    File.open(zip_file.path, "rb") do |archive_io|
+      request.archive.attach(
+        io: archive_io,
+        filename: zip_filename_for(attachable: attachable, section: request.section),
+        content_type: "application/zip"
+      )
+    end
+
+    stored_size = request.archive_attachment&.blob&.byte_size.to_i
+    if stored_size <= EMPTY_ZIP_MIN_BYTES
+      request.archive.purge_later if request.archive.attached?
+      return request.mark_failed!("No se pudo guardar un ZIP valido")
+    end
 
     request.mark_completed!(photos_count: photos.size)
     log_archive_timing(
@@ -94,12 +107,12 @@ class Photos::BuildArchiveJob < ApplicationJob
     when Container
       "contenedor_#{attachable.number}"
     when BlHouseLine
-      "partida_#{attachable.partida}"
+      attachable.blhouse.presence || "partida_#{attachable.partida}"
     else
       "fotos"
     end
 
-    "#{attachable_key}_#{section}.zip".parameterize(separator: "_")
+    "#{attachable_key}_#{section}".parameterize(separator: "_") + ".zip"
   end
 
   def content_type_extension_for(content_type)
