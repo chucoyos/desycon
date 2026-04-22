@@ -25,13 +25,16 @@ class Photos::BuildArchiveJob < ApplicationJob
       return request.mark_failed!("No se pudo generar un ZIP valido")
     end
 
-    File.open(zip_file.path, "rb") do |archive_io|
-      request.archive.attach(
-        io: archive_io,
-        filename: zip_filename_for(attachable: attachable, section: request.section),
-        content_type: "application/zip"
-      )
+    zip_bytes = IO.binread(zip_file.path)
+    if zip_bytes.bytesize <= EMPTY_ZIP_MIN_BYTES
+      return request.mark_failed!("No se pudo generar un ZIP valido")
     end
+
+    request.archive.attach(
+      io: StringIO.new(zip_bytes),
+      filename: zip_filename_for(attachable: attachable, section: request.section),
+      content_type: "application/zip"
+    )
 
     stored_size = request.archive_attachment&.blob&.byte_size.to_i
     if stored_size <= EMPTY_ZIP_MIN_BYTES
