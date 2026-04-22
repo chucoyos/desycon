@@ -10,7 +10,7 @@ class ServiceCatalog < ApplicationRecord
 
   validates :name, presence: true, length: { maximum: 200 }
   validates :applies_to, presence: true, inclusion: { in: APPLIES_TO }
-  validates :code, length: { maximum: 50 }, allow_blank: true
+  validates :code, presence: true, length: { maximum: 50 }, uniqueness: { scope: :applies_to, case_sensitive: false, message: "El Codigo ya existe" }
   validates :amount, presence: true, numericality: { greater_than: 0 }
   validates :currency, presence: true, inclusion: { in: [ "MXN" ] }
   validates :sat_clave_prod_serv, length: { maximum: 8 }, allow_blank: true

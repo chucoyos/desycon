@@ -1,6 +1,7 @@
 FactoryBot.define do
   factory :service_catalog do
     sequence(:name) { |n| "Servicio #{n}" }
+    sequence(:code) { |n| "SRV-#{n}" }
     applies_to { "container" }
     active { true }
     amount { 100.0 }

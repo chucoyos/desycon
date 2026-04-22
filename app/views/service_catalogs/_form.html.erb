@@ -18,9 +18,9 @@
     </div>
 
     <div class="space-y-1">
-      <%= form.label :code, "Código", class: "block text-sm font-semibold text-gray-800 tracking-wide" %>
-      <%= form.text_field :code, placeholder: "Opcional", class: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 bg-white" %>
-      <p class="text-xs text-gray-500">Úsalo si necesitas referenciarlo en facturación.</p>
+      <%= form.label :code, "Código *", class: "block text-sm font-semibold text-gray-800 tracking-wide" %>
+      <%= form.text_field :code, required: true, class: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 bg-white" %>
+      <p class="text-xs text-gray-500">Requerido para identificar y referenciar el servicio en facturación.</p>
     </div>
   </div>
 
@@ -28,7 +28,7 @@
     <div class="space-y-1">
       <%= form.label :applies_to, "Aplicable a *", class: "block text-sm font-semibold text-gray-800 tracking-wide" %>
       <% options = ServiceCatalog::APPLIES_TO.map { |v| [v == "container" ? "Contenedores" : "BL House", v] } %>
-      <%= form.select :applies_to, options_for_select(options, service_catalog.applies_to), { prompt: "Selecciona" }, class: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 bg-white" %>
+      <%= form.select :applies_to, options_for_select(options, service_catalog.applies_to), { prompt: "Selecciona" }, { required: true, class: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 bg-white" } %>
     </div>
 
     <div class="space-y-1">
