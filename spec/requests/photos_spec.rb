@@ -167,6 +167,45 @@ RSpec.describe "Photos", type: :request do
     end
   end
 
+  describe "DELETE /containers/:id/photos_zip" do
+    let(:container) { create(:container) }
+
+    it "deletes generated zip requests for the selected section" do
+      admin = create(:user, :admin)
+      login_as admin
+
+      request_record = create(
+        :photo_archive_request,
+        :completed,
+        attachable: container,
+        requested_by: admin,
+        section: "apertura"
+      )
+      request_record.archive.attach(
+        io: StringIO.new("zip-bytes"),
+        filename: "ready.zip",
+        content_type: "application/zip"
+      )
+
+      create(
+        :photo_archive_request,
+        :completed,
+        attachable: container,
+        requested_by: admin,
+        section: "vacio"
+      )
+
+      expect {
+        delete photos_zip_container_path(container, section: "apertura")
+      }.to change {
+        PhotoArchiveRequest.where(attachable: container, requested_by: admin, section: "apertura").count
+      }.from(1).to(0)
+
+      expect(PhotoArchiveRequest.where(attachable: container, requested_by: admin, section: "vacio").count).to eq(1)
+      expect(response).to have_http_status(:found)
+    end
+  end
+
   describe "GET /bl_house_lines/:id/photos_download" do
     let(:bl_house_line) { create(:bl_house_line) }
 
@@ -187,6 +226,36 @@ RSpec.describe "Photos", type: :request do
       request_record = PhotoArchiveRequest.order(:created_at).last
       expect(request_record.section).to eq("etiquetado")
       expect(request_record.status).to eq("pending")
+    end
+  end
+
+  describe "DELETE /bl_house_lines/:id/photos_zip" do
+    let(:bl_house_line) { create(:bl_house_line) }
+
+    it "deletes generated zip requests for etiquetado section" do
+      executive = create(:user, :executive)
+      login_as executive
+
+      request_record = create(
+        :photo_archive_request,
+        :completed,
+        attachable: bl_house_line,
+        requested_by: executive,
+        section: "etiquetado"
+      )
+      request_record.archive.attach(
+        io: StringIO.new("zip-bytes"),
+        filename: "ready.zip",
+        content_type: "application/zip"
+      )
+
+      expect {
+        delete photos_zip_bl_house_line_path(bl_house_line, section: "etiquetado")
+      }.to change {
+        PhotoArchiveRequest.where(attachable: bl_house_line, requested_by: executive, section: "etiquetado").count
+      }.from(1).to(0)
+
+      expect(response).to have_http_status(:found)
     end
   end
 

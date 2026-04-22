@@ -16,6 +16,7 @@
 
   upload_path = attachable.is_a?(Container) ? photos_container_path(attachable) : photos_bl_house_line_path(attachable)
   bulk_delete_path = attachable.is_a?(Container) ? photos_section_container_path(attachable) : photos_section_bl_house_line_path(attachable)
+  delete_zip_path = attachable.is_a?(Container) ? photos_zip_container_path(attachable, section: section) : photos_zip_bl_house_line_path(attachable, section: section)
   download_path = attachable.is_a?(Container) ? photos_download_container_path(attachable, section: section) : photos_download_bl_house_line_path(attachable, section: section)
   latest_download_request = PhotoArchiveRequest
     .where(attachable: attachable, requested_by: current_user, section: section)
@@ -159,6 +160,15 @@
               data: { turbo: false, photo_download_target: "readyLink" },
             hidden: !zip_ready,
             class: "w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100" %>
+
+        <% if latest_download_request.present? %>
+          <%= button_to "Eliminar ZIP generado",
+                delete_zip_path,
+                method: :delete,
+                params: { title: title, subtitle: subtitle },
+                form: { data: { turbo_confirm: "¿Eliminar ZIP generado para #{title}?" } },
+                class: "w-full sm:w-auto inline-flex cursor-pointer items-center justify-center rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100" %>
+        <% end %>
 
         <% if !zip_ready && zip_in_progress %>
           <p class="text-xs text-blue-700">Estamos preparando tu ZIP en segundo plano.</p>

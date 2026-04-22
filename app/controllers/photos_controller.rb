@@ -32,6 +32,16 @@ class PhotosController < ApplicationController
     destroy_section_for_attachable(attachable)
   end
 
+  def destroy_zip_for_container
+    attachable = Container.find(params[:id])
+    destroy_zip_for_attachable(attachable)
+  end
+
+  def destroy_zip_for_bl_house_line
+    attachable = BlHouseLine.find(params[:id])
+    destroy_zip_for_attachable(attachable)
+  end
+
   def download_section_for_container
     attachable = Container.find(params[:id])
     download_section_for_attachable(attachable)
@@ -275,6 +285,40 @@ class PhotosController < ApplicationController
     end
 
     redirect_back fallback_location: polymorphic_path(attachable), notice: "#{deleted_count} fotografía(s) eliminada(s) de la sección."
+  end
+
+  def destroy_zip_for_attachable(attachable)
+    authorize attachable, :show?
+    authorize Photo, :download?
+
+    section = sanitized_download_section_for(attachable)
+    if section.blank?
+      return redirect_back fallback_location: polymorphic_path(attachable), alert: "Sección inválida para eliminar ZIP."
+    end
+
+    requests = PhotoArchiveRequest.where(attachable: attachable, requested_by: current_user, section: section)
+
+    if requests.none?
+      return redirect_back fallback_location: polymorphic_path(attachable), notice: "No hay ZIP generado para esta sección."
+    end
+
+    requests.find_each do |download_request|
+      download_request.archive.purge_later if download_request.archive.attached?
+      download_request.destroy!
+    end
+
+    if turbo_frame_request?
+      metadata = default_photo_section_metadata(attachable: attachable, section: section)
+
+      return render_section_frame(
+        attachable: attachable,
+        section: section,
+        title: params[:title].to_s.presence || metadata[:title],
+        subtitle: params[:subtitle].to_s.presence || metadata[:subtitle]
+      )
+    end
+
+    redirect_back fallback_location: polymorphic_path(attachable), notice: "ZIP eliminado. Puedes volver a generarlo cuando quieras."
   end
 
   def latest_download_request_for(attachable:, section:)

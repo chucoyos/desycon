@@ -122,6 +122,7 @@ Rails.application.routes.draw do
       post :photos, to: "photos#create_for_container"
       get :photos_section_frame, to: "photos#section_frame_for_container"
       delete :photos_section, to: "photos#destroy_section_for_container"
+      delete :photos_zip, to: "photos#destroy_zip_for_container"
       get :photos_download, to: "photos#download_section_for_container"
       get :photos_download_all, to: "photos#download_all_for_container"
     end
@@ -154,6 +155,7 @@ Rails.application.routes.draw do
       post :photos, to: "photos#create_for_bl_house_line"
       get :photos_section_frame, to: "photos#section_frame_for_bl_house_line"
       delete :photos_section, to: "photos#destroy_section_for_bl_house_line"
+      delete :photos_zip, to: "photos#destroy_zip_for_bl_house_line"
       get :photos_download, to: "photos#download_section_for_bl_house_line"
       get :photos_download_all, to: "photos#download_all_for_bl_house_line"
     end
