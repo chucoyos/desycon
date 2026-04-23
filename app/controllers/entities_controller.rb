@@ -17,6 +17,12 @@ class EntitiesController < ApplicationController
     # Aplicar filtros de búsqueda
     @entities = @entities.where("name ILIKE ?", "%#{params[:name]}%") if params[:name].present?
     @entities = @entities.where(role_kind: params[:role]) if params[:role].present?
+    case params[:restricted_access]
+    when "restricted"
+      @entities = @entities.where(restricted_access_enabled: true)
+    when "unrestricted"
+      @entities = @entities.where(restricted_access_enabled: [ false, nil ])
+    end
 
     @entities = @entities.order(:name).page(params[:page]).per(per)
     authorize Entity
