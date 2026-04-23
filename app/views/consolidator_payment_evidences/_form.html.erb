@@ -43,7 +43,7 @@
 
       <div>
         <%= form.label :tracking_key, "Clave de rastreo", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
-        <%= form.text_field :tracking_key, value: @payment_evidence&.tracking_key, name: "payment_evidence[tracking_key]", placeholder: "Opcional", class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
+        <%= form.text_field :tracking_key, value: @payment_evidence&.tracking_key, name: "payment_evidence[tracking_key]", required: true, placeholder: "Ingresa la clave de rastreo", class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" %>
       </div>
 
       <div class="md:col-span-2">
