@@ -1,37 +1,92 @@
-<div class="bg-white shadow-sm rounded-xl p-4 border border-gray-100 hover:shadow-md transition-shadow duration-200" id="<%= dom_id(bl_house_line, :mobile) %>">
-  <div class="flex items-start gap-3 mb-3">
-    <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-sm flex-shrink-0">
-      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-      </svg>
-    </div>
-    <div class="flex-1">
-      <h3 class="text-lg font-bold text-gray-900"><%= bl_house_line.blhouse %></h3>
-      <div class="flex items-center gap-2 mt-1">
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-          Partida <%= bl_house_line.partida %>
-        </span>
+<% container = bl_house_line.container %>
+<% consolidator_name = container&.consolidator_entity&.name.presence || container&.consolidator&.name.presence || "N/A" %>
+<% dom_suffix ||= :mobile %>
+<% customs_broker_label = if bl_house_line.customs_broker.present?
+    patent = bl_house_line.customs_broker.patent_number.to_s.strip
+    broker_name = bl_house_line.customs_broker.name.to_s.strip
+    patent.present? ? "#{broker_name} - #{patent}" : broker_name
+  else
+    "N/A"
+  end %>
+<% imo_label = bl_house_line.imo_double_charge_applicable? ? "Si" : "No" %>
+<% menu_dom_id = "dropdown-menu-#{dom_suffix}-#{bl_house_line.id}" %>
+<% button_dom_id = "dropdown-menu-button-#{dom_suffix}-#{bl_house_line.id}" %>
+
+<div class="rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/70 shadow-[0_1px_2px_rgba(15,23,42,0.08),0_12px_28px_rgba(15,23,42,0.08)] hover:shadow-[0_2px_6px_rgba(15,23,42,0.12),0_16px_36px_rgba(15,23,42,0.1)] transition-shadow duration-200 overflow-visible" id="<%= dom_id(bl_house_line, dom_suffix) %>">
+  <div class="flex items-start justify-between gap-3 px-4 py-3 bg-gradient-to-r from-slate-50/95 via-indigo-50/35 to-slate-50/95 border-b border-slate-200/70">
+    <h3 class="inline-flex items-center gap-2 text-base sm:text-lg font-semibold text-slate-900">
+      <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-white shrink-0 shadow-sm">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+      </span>
+      <span><%= bl_house_line.blhouse.presence || "N/A" %></span>
+    </h3>
+    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium shadow-sm <%= bl_house_line_status_badge_class(bl_house_line.status) %>">
+      <%= bl_house_line_status_icon(bl_house_line.status) %>
+      <%= bl_house_line_status_nombre(bl_house_line.status) %>
+    </span>
+  </div>
+
+  <div class="p-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 text-sm">
+      <div class="rounded-lg bg-white/85 backdrop-blur-[1px] px-3 py-2 border border-slate-200/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+        <p class="text-[11px] uppercase tracking-wide text-slate-500">Contenedor</p>
+        <p class="font-semibold text-slate-900 break-words"><%= container&.number.presence || "N/A" %></p>
       </div>
-      <p class="text-sm text-gray-600 flex items-center gap-1 mt-2">Cliente: <%= bl_house_line.client&.name || "N/A" %></p>
-      <div class="mt-2">
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= bl_house_line_status_badge_class(bl_house_line.status) %>">
-          <%= bl_house_line_status_icon(bl_house_line.status) %>
-          <%= bl_house_line_status_nombre(bl_house_line.status) %>
-        </span>
+      <div class="rounded-lg bg-white/85 backdrop-blur-[1px] px-3 py-2 border border-slate-200/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+        <p class="text-[11px] uppercase tracking-wide text-slate-500">BL Master</p>
+        <p class="font-semibold text-slate-900 break-words"><%= container&.bl_master.presence || "N/A" %></p>
+      </div>
+      <div class="rounded-lg bg-white/85 backdrop-blur-[1px] px-3 py-2 border border-slate-200/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+        <p class="text-[11px] uppercase tracking-wide text-slate-500">BL House</p>
+        <p class="font-semibold text-slate-900 break-words"><%= bl_house_line.blhouse.presence || "N/A" %></p>
+      </div>
+      <div class="rounded-lg bg-white/85 backdrop-blur-[1px] px-3 py-2 border border-slate-200/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+        <p class="text-[11px] uppercase tracking-wide text-slate-500">Cantidad</p>
+        <p class="font-semibold text-slate-900"><%= bl_house_line.cantidad || "N/A" %></p>
+      </div>
+      <div class="rounded-lg bg-white/85 backdrop-blur-[1px] px-3 py-2 border border-slate-200/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+        <p class="text-[11px] uppercase tracking-wide text-slate-500">Peso</p>
+        <p class="font-semibold text-slate-900"><%= bl_house_line.peso ? number_with_precision(bl_house_line.peso, precision: 2) : "N/A" %></p>
+      </div>
+      <div class="rounded-lg bg-white/85 backdrop-blur-[1px] px-3 py-2 border border-slate-200/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+        <p class="text-[11px] uppercase tracking-wide text-slate-500">Volumen</p>
+        <p class="font-semibold text-slate-900"><%= bl_house_line.volumen ? number_with_precision(bl_house_line.volumen, precision: 2) : "N/A" %></p>
+      </div>
+      <div class="rounded-lg bg-white/85 backdrop-blur-[1px] px-3 py-2 border border-slate-200/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+        <p class="text-[11px] uppercase tracking-wide text-slate-500">Consolidador</p>
+        <p class="font-semibold text-slate-900 break-words"><%= consolidator_name %></p>
+      </div>
+      <div class="rounded-lg bg-white/85 backdrop-blur-[1px] px-3 py-2 border border-slate-200/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+        <p class="text-[11px] uppercase tracking-wide text-slate-500">Agente Aduanal</p>
+        <p class="font-semibold text-slate-900 break-words"><%= customs_broker_label.presence || "N/A" %></p>
+      </div>
+      <div class="rounded-lg bg-white/85 backdrop-blur-[1px] px-3 py-2 border border-slate-200/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+        <p class="text-[11px] uppercase tracking-wide text-slate-500">Agencia Aduanal</p>
+        <p class="font-semibold text-slate-900 break-words"><%= bl_house_line.customs_agent&.name.presence || "N/A" %></p>
+      </div>
+      <div class="rounded-lg bg-white/85 backdrop-blur-[1px] px-3 py-2 border border-slate-200/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+        <p class="text-[11px] uppercase tracking-wide text-slate-500">Almacén</p>
+        <p class="font-semibold text-slate-900 break-words"><%= container&.almacen.presence || "N/A" %></p>
+      </div>
+      <div class="rounded-lg bg-white/85 backdrop-blur-[1px] px-3 py-2 border border-slate-200/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+        <p class="text-[11px] uppercase tracking-wide text-slate-500">IMO</p>
+        <p class="font-semibold <%= imo_label == 'Si' ? 'text-rose-700' : 'text-emerald-700' %>"><%= imo_label %></p>
       </div>
     </div>
   </div>
 
-  <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+  <div class="flex justify-end gap-2 px-4 py-3 border-t border-slate-200/80 bg-slate-50/60">
     <div class="relative inline-block text-left">
-      <button type="button" class="cursor-pointer inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" id="dropdownMenuButton-mobile-<%= bl_house_line.id %>" aria-expanded="false" aria-haspopup="true" onclick="document.getElementById('dropdown-menu-mobile-<%= bl_house_line.id %>').classList.toggle('hidden')">
+      <button type="button" class="cursor-pointer inline-flex items-center justify-center w-10 h-10 rounded-full bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" id="<%= button_dom_id %>" aria-expanded="false" aria-haspopup="true" onclick="document.getElementById('<%= menu_dom_id %>').classList.toggle('hidden')">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
           <circle cx="6" cy="12" r="1.5" />
           <circle cx="12" cy="12" r="1.5" />
           <circle cx="18" cy="12" r="1.5" />
         </svg>
       </button>
-      <div id="dropdown-menu-mobile-<%= bl_house_line.id %>" class="hidden absolute right-0 z-10 mt-2 w-44 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+      <div id="<%= menu_dom_id %>" class="hidden absolute right-0 z-50 mt-2 w-44 origin-top-right rounded-xl bg-white shadow-lg ring-1 ring-slate-200 focus:outline-none">
         <div class="py-1">
           <%= link_to bl_house_line, class: "flex items-center gap-2 px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 transition-colors duration-150", title: "Ver" do %>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
@@ -60,7 +115,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.973 9.973 0 013.478-5.568m3.065-1.72A9.956 9.956 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-1.249 2.592m-4.764-1.35a3 3 0 11-4.358-4.358" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18" />
                 </svg>
-                Ocultar a la agencia
+                Ocultar Agencia
               <% end %>
             <% end %>
 
@@ -69,7 +124,7 @@
                 <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-7 4h4m-9 6h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                Fecha de Despacho
+                Fecha Despacho
               <% end %>
             <% end %>
           <% end %>
