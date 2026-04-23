@@ -42,14 +42,19 @@ module CustomsAgents
     end
 
     def global_recently_executed?
-      last_run_at = last_recurring_execution_at
+      last_run_at = previous_recurring_execution_at
       return false if last_run_at.blank?
 
       last_run_at >= MIN_GLOBAL_RECALC_INTERVAL.ago
     end
 
-    def last_recurring_execution_at
-      SolidQueue::RecurringExecution.where(task_key: RECURRING_TASK_KEY).maximum(:run_at)
+    def previous_recurring_execution_at
+      SolidQueue::RecurringExecution
+        .where(task_key: RECURRING_TASK_KEY)
+        .order(run_at: :desc)
+        .offset(1)
+        .limit(1)
+        .pick(:run_at)
     rescue StandardError
       nil
     end
