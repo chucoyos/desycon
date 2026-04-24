@@ -56,6 +56,8 @@ class ServicesController < ApplicationController
   def container_service_rows
     container_services_scope.map do |service|
       latest_invoice_id = service.latest_invoice&.id
+      container = service.container
+      weight_total, volume_total = totals_for_container(container)
 
       {
         token: "ContainerService:#{service.id}",
@@ -66,9 +68,15 @@ class ServicesController < ApplicationController
         service_name: service.service_catalog&.name.presence || "-",
         status_label: service.facturado? ? "Facturado" : "Proforma",
         facturado: service.facturado?,
-        container_number: service.container&.number.presence || "-",
+        container_number: container&.number.presence || "-",
+        destination_port: container&.destination_port&.display_name.presence || "-",
+        bl_master: container&.bl_master.presence || "-",
+        peso: weight_total,
+        volumen: volume_total,
+        consolidator_name: container&.consolidator_entity&.name.presence || "-",
         blhouse: "-",
         agency_name: agency_name_for_container_service(service),
+        customs_agent_patent: customs_agent_patent_for_container_service(service),
         client_name: client_name_for_container_service(service),
         amount: service.amount,
         currency: service.currency || "MXN",
@@ -92,6 +100,7 @@ class ServicesController < ApplicationController
 
     services.map do |service|
       bl_house_line = service.bl_house_line
+      container = bl_house_line&.container
       client_name = bl_house_line&.client&.name
       billed_to_name = service.billed_to_entity&.name
       latest_invoice_id = service.latest_invoice&.id
@@ -106,8 +115,14 @@ class ServicesController < ApplicationController
         status_label: service.facturado? ? "Facturado" : "Proforma",
         facturado: service.facturado?,
         container_number: container_numbers_by_service_id[service.id].presence || "-",
+        destination_port: container&.destination_port&.display_name.presence || "-",
+        bl_master: container&.bl_master.presence || "-",
+        peso: bl_house_line&.peso,
+        volumen: bl_house_line&.volumen,
+        consolidator_name: container&.consolidator_entity&.name.presence || "-",
         blhouse: bl_house_line&.blhouse.presence || "-",
         agency_name: bl_house_line&.customs_agent&.name.presence || "-",
+        customs_agent_patent: customs_agent_patent_for_bl_house_line(bl_house_line),
         client_name: client_name.presence || billed_to_name.presence || "-",
         amount: service.amount,
         currency: service.currency || "MXN",
@@ -123,7 +138,15 @@ class ServicesController < ApplicationController
     return ContainerService.none if @selected_customs_agency.present?
 
     scope = ContainerService
-      .includes(:billed_to_entity, :service_catalog, container: { bl_house_lines: [ :client ] })
+      .includes(
+        :billed_to_entity,
+        :service_catalog,
+        container: [
+          { voyage: :destination_port },
+          :consolidator_entity,
+          { bl_house_lines: %i[client customs_agent customs_broker] }
+        ]
+      )
 
     if @selected_container_number.present?
       scope = scope.joins(:container).where("containers.number ILIKE ?", "%#{@selected_container_number}%")
@@ -136,7 +159,16 @@ class ServicesController < ApplicationController
 
   def bl_house_line_services_scope
     scope = BlHouseLineService
-      .includes(:billed_to_entity, :service_catalog, bl_house_line: [ :customs_agent, :client ])
+      .includes(
+        :billed_to_entity,
+        :service_catalog,
+        bl_house_line: [
+          :customs_agent,
+          :customs_broker,
+          :client,
+          { container: [ { voyage: :destination_port }, :consolidator_entity ] }
+        ]
+      )
 
     if @selected_container_number.present?
       scope = scope.joins(bl_house_line: :container).where("containers.number ILIKE ?", "%#{@selected_container_number}%")
@@ -187,7 +219,56 @@ class ServicesController < ApplicationController
   end
 
   def agency_name_for_container_service(service)
-    "-"
+    agency_names = service.container
+      &.bl_house_lines
+      &.filter_map { |bl_house_line| bl_house_line.customs_agent&.name.to_s.strip.presence }
+      &.uniq || []
+
+    return "-" if agency_names.empty?
+    return agency_names.first if agency_names.one?
+
+    "Múltiples"
+  end
+
+  def customs_agent_patent_for_container_service(service)
+    labels = service.container
+      &.bl_house_lines
+      &.filter_map { |bl_house_line| customs_agent_patent_for_bl_house_line(bl_house_line) }
+      &.reject { |label| label == "-" }
+      &.uniq || []
+
+    return "-" if labels.empty?
+    return labels.first if labels.one?
+
+    "Múltiples"
+  end
+
+  def customs_agent_patent_for_bl_house_line(bl_house_line)
+    return "-" if bl_house_line.blank?
+
+    broker_name = bl_house_line.customs_broker&.name.to_s.strip.presence
+    patent = bl_house_line.customs_broker&.patent_number.to_s.strip.presence
+
+    if broker_name.present? && patent.present?
+      "#{broker_name} - Patente #{patent}"
+    elsif broker_name.present?
+      broker_name
+    elsif patent.present?
+      "Patente #{patent}"
+    else
+      "-"
+    end
+  end
+
+  def totals_for_container(container)
+    return [ nil, nil ] if container.blank?
+
+    bl_house_lines = container.bl_house_lines.to_a
+    return [ nil, nil ] if bl_house_lines.empty?
+
+    total_weight = bl_house_lines.sum { |bl_house_line| bl_house_line.peso.to_d }
+    total_volume = bl_house_lines.sum { |bl_house_line| bl_house_line.volumen.to_d }
+    [ total_weight, total_volume ]
   end
 
   def client_name_for_container_service(service)
