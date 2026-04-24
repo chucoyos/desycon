@@ -96,6 +96,9 @@ class CustomsAgentsController < ApplicationController
                                                .first
 
     if @bl_house_line
+      if revalidation_request_blocked?(@bl_house_line)
+        @bl_house_line.errors.add(:base, "Esta partida ya cuenta con una revalidación vigente o el proceso de documentación ha concluido. No se requieren acciones adicionales.")
+      end
       render partial: "customs_agents/revalidation_modal", locals: { bl_house_line: @bl_house_line, customs_agents: revalidation_customs_agents, clients: revalidation_clients }
     else
       render partial: "customs_agents/revalidation_not_found", status: :not_found
@@ -111,6 +114,11 @@ class CustomsAgentsController < ApplicationController
 
     unless @bl_house_line
       render partial: "customs_agents/revalidation_not_found", status: :not_found and return
+    end
+
+    if revalidation_request_blocked?(@bl_house_line)
+      @bl_house_line.errors.add(:base, "Esta partida ya cuenta con una revalidación vigente o el proceso de documentación ha concluido. No se requieren acciones adicionales.")
+      render partial: "customs_agents/revalidation_modal", status: :unprocessable_entity, locals: { bl_house_line: @bl_house_line, customs_agents: revalidation_customs_agents, clients: revalidation_clients } and return
     end
 
     @bl_house_line.skip_revalidation_notification = true
@@ -190,6 +198,10 @@ class CustomsAgentsController < ApplicationController
 
   def revalidation_customs_agents
     Entity.where(id: current_user.entity_id)
+  end
+
+  def revalidation_request_blocked?(bl_house_line)
+    bl_house_line.documentos_ok? || bl_house_line.revalidado? || bl_house_line.despachado?
   end
 
   def revalidation_clients

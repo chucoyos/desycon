@@ -1,4 +1,5 @@
 <turbo-frame id="revalidation_modal">
+<% revalidation_blocked = bl_house_line.documentos_ok? || bl_house_line.revalidado? %>
 <div class="fixed inset-0 z-50 flex items-center justify-center p-4" data-controller="revalidation-wizard">
   <div class="absolute inset-0 bg-gray-900/50" aria-hidden="true" data-action="click->revalidation-wizard#close"></div>
 
@@ -166,7 +167,13 @@
               </div>
             </div>
             <div class="flex items-center gap-2">
-              <%= form.submit "Solicitar Revalidación", class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition cursor-pointer" %>
+              <% if revalidation_blocked %>
+                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 text-sm font-semibold">
+                  Solicitud bloqueada por estatus
+                </span>
+              <% else %>
+                <%= form.submit "Solicitar Revalidación", class: "inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition cursor-pointer" %>
+              <% end %>
             </div>
           </div>
         </div>
