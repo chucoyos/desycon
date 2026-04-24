@@ -42,6 +42,7 @@ Rails.application.routes.draw do
 
   resources :invoices, only: [ :index, :show, :new, :create, :destroy ] do
     collection do
+      get :collections_report
       get :consolidators_search
       get :customs_agents_search
       get :manual_customs_agents_search

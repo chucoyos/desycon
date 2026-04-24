@@ -1,3 +1,7 @@
+require "caxlsx"
+require "prawn"
+require "prawn/table"
+
 class InvoicesController < ApplicationController
   before_action :authenticate_user!
   before_action :set_invoice, only: %i[show retry_issue cancel sync_documents sync_files register_payment send_email destroy]
@@ -48,8 +52,8 @@ class InvoicesController < ApplicationController
     SQL
 
     scoped_invoices = policy_scope(Invoice)
-    @invoices = scoped_invoices
-          .includes(:receiver_entity, :customs_agent)
+            @invoices = scoped_invoices
+              .includes(:receiver_entity, :customs_agent)
           .select(
         "invoices.*",
         "#{paid_total_sql} AS paid_total_for_index",
@@ -152,6 +156,7 @@ class InvoicesController < ApplicationController
     @invoices = @invoices.page(params[:page]).per(params[:per] || 10)
 
     build_invoice_service_context_data(@invoices)
+    @collections_report_text = build_collections_report_text(@invoices)
 
     @invoice_statuses = Invoice::STATUSES
     @payment_statuses = Invoice::PAYMENT_STATUSES
@@ -162,6 +167,48 @@ class InvoicesController < ApplicationController
     @admin_or_executive = admin_or_executive
     @consolidator_portal_user = current_user.consolidator? && current_user.entity&.role_consolidator?
     @series_filter_options = build_series_filter_options
+  end
+
+  def collections_report
+    authorize Invoice, :index?
+
+    invoice_ids = Array(params[:invoice_ids]).map(&:to_i).select(&:positive?).uniq
+    if invoice_ids.empty?
+      return redirect_to invoices_path, alert: "Selecciona al menos una factura para exportar el reporte."
+    end
+
+    invoices = policy_scope(Invoice)
+      .where(id: invoice_ids)
+      .includes(:receiver_entity, :customs_agent)
+      .order(created_at: :desc)
+
+    build_invoice_service_context_data(invoices)
+    rows = build_collections_report_rows(invoices)
+
+    timestamp = Time.current.strftime("%Y%m%d_%H%M")
+    requested_format = params[:format].to_s.downcase.presence || request.format.symbol.to_s
+
+    if requested_format == "xlsx"
+      send_data(
+        build_collections_report_xlsx(rows),
+        filename: "reporte_cobranza_#{timestamp}.xlsx",
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        disposition: "attachment"
+      )
+      return
+    end
+
+    if requested_format == "pdf"
+      send_data(
+        build_collections_report_pdf(rows),
+        filename: "reporte_cobranza_#{timestamp}.pdf",
+        type: "application/pdf",
+        disposition: "attachment"
+      )
+      return
+    end
+
+    redirect_to invoices_path, alert: "Formato de exportación no soportado."
   end
 
   def receivers_search
@@ -591,6 +638,8 @@ class InvoicesController < ApplicationController
   def build_invoice_service_context_data(invoices)
     @invoice_hbl_by_id = {}
     @invoice_agency_by_id = {}
+    @invoice_internal_reference_by_id = {}
+    @invoice_recinto_by_id = {}
 
     invoice_ids = invoices.map(&:id)
     return if invoice_ids.empty?
@@ -616,23 +665,356 @@ class InvoicesController < ApplicationController
     end
 
     bl_service_ids = bl_service_ids_by_invoice_id.values.flatten.uniq
-    return if bl_service_ids.empty?
+    if bl_service_ids.any?
+      bl_service_data = BlHouseLineService
+        .includes(bl_house_line: [ :customs_agent, :container ])
+        .where(id: bl_service_ids)
+        .index_by(&:id)
 
-    bl_service_data = BlHouseLineService
-      .includes(bl_house_line: :customs_agent)
-      .where(id: bl_service_ids)
+      bl_service_ids_by_invoice_id.each do |invoice_id, service_ids|
+        services = service_ids.uniq.map { |service_id| bl_service_data[service_id] }.compact
+        next if services.empty?
+
+        hbl_values = services.map { |service| service.bl_house_line&.blhouse.to_s.strip }.reject(&:blank?).uniq
+        agency_values = services.map { |service| service.bl_house_line&.customs_agent&.name.to_s.strip }.reject(&:blank?).uniq
+        internal_reference_values = services.map { |service| service.bl_house_line&.internal_reference.to_s.strip }.reject(&:blank?).uniq
+        recinto_values = services.map { |service| service.bl_house_line&.container&.recinto.to_s.strip }.reject(&:blank?).uniq
+
+        @invoice_hbl_by_id[invoice_id] = hbl_values.join(", ").presence
+        @invoice_agency_by_id[invoice_id] = agency_values.join(", ").presence || @invoice_agency_by_id[invoice_id]
+        @invoice_internal_reference_by_id[invoice_id] = internal_reference_values.join(", ").presence
+        @invoice_recinto_by_id[invoice_id] = recinto_values.join(", ").presence
+      end
+    end
+
+    container_service_ids_by_invoice_id = Hash.new { |hash, key| hash[key] = [] }
+
+    invoices.each do |invoice|
+      next unless invoice.invoiceable_type == "ContainerService"
+
+      container_service_ids_by_invoice_id[invoice.id] << invoice.invoiceable_id
+    end
+
+    linked_container_rows = InvoiceServiceLink
+      .where(invoice_id: invoice_ids, serviceable_type: "ContainerService")
+      .pluck(:invoice_id, :serviceable_id)
+
+    linked_container_rows.each do |invoice_id, serviceable_id|
+      container_service_ids_by_invoice_id[invoice_id] << serviceable_id
+    end
+
+    container_service_ids = container_service_ids_by_invoice_id.values.flatten.uniq
+    return if container_service_ids.empty?
+
+    container_service_data = ContainerService
+      .includes(:container)
+      .where(id: container_service_ids)
       .index_by(&:id)
 
-    bl_service_ids_by_invoice_id.each do |invoice_id, service_ids|
-      services = service_ids.uniq.map { |service_id| bl_service_data[service_id] }.compact
+    container_service_ids_by_invoice_id.each do |invoice_id, service_ids|
+      next if @invoice_recinto_by_id[invoice_id].present?
+
+      services = service_ids.uniq.map { |service_id| container_service_data[service_id] }.compact
       next if services.empty?
 
-      hbl_values = services.map { |service| service.bl_house_line&.blhouse.to_s.strip }.reject(&:blank?).uniq
-      agency_values = services.map { |service| service.bl_house_line&.customs_agent&.name.to_s.strip }.reject(&:blank?).uniq
-
-      @invoice_hbl_by_id[invoice_id] = hbl_values.join(", ").presence
-      @invoice_agency_by_id[invoice_id] = agency_values.join(", ").presence || @invoice_agency_by_id[invoice_id]
+      recinto_values = services.map { |service| service.container&.recinto.to_s.strip }.reject(&:blank?).uniq
+      @invoice_recinto_by_id[invoice_id] = recinto_values.join(", ").presence
     end
+  end
+
+  def build_collections_report_text(invoices)
+    rows = build_collections_report_rows(invoices)
+    total_column_index = 8
+
+    text_lines = []
+    text_lines << "Reporte de cobranza (pagina actual)"
+    text_lines << "Generado: #{I18n.l(Time.current, format: "%Y-%m-%d %H:%M")}"
+    text_lines << ""
+
+    if rows.empty?
+      text_lines << "Sin facturas para los filtros actuales."
+      return text_lines.join("\n")
+    end
+
+    rows.each_with_index do |row, index|
+      text_lines << "#{index + 1}) Fecha: #{row[0]} | Ser: #{row[1]} | Fol: #{row[2]} | HBL: #{row[3]} | Ref.Int: #{row[4]} | Recinto: #{row[5]} | Agencia: #{row[6]} | Cliente: #{row[7]} | Saldo: $#{format('%.2f', row[total_column_index].to_d)} | M.Pago: #{row[9]} | Estatus Emision: #{row[10]}"
+      text_lines << ""
+    end
+
+    total_general = rows.sum { |row| row[total_column_index].to_d }
+    text_lines << "Total: $#{format('%.2f', total_general)}"
+
+    text_lines.join("\n")
+  end
+
+  def build_collections_report_rows(invoices)
+    invoices.map do |invoice|
+      serie = invoice.provider_response.to_h["serie"].presence || invoice.payload_snapshot.to_h["serie"].presence
+      folio = invoice.provider_response.to_h["folio"].presence ||
+              invoice.provider_response.to_h["noComprobante"].presence ||
+              invoice.provider_response.to_h["numeroComprobante"].presence ||
+              invoice.facturador_comprobante_id&.to_s
+      effective_status = invoice.effective_status.to_s
+      emission_status_label = I18n.t(
+        "activerecord.attributes.invoice.statuses.#{effective_status}",
+        default: effective_status.humanize
+      )
+
+      [
+        invoice.issued_at.present? ? I18n.l(invoice.issued_at, format: "%Y-%m-%d") : "-",
+        serie,
+        folio,
+        @invoice_hbl_by_id[invoice.id],
+        @invoice_internal_reference_by_id[invoice.id],
+        @invoice_recinto_by_id[invoice.id],
+        @invoice_agency_by_id[invoice.id],
+        invoice.receiver_entity&.name,
+        format("%.2f", invoice.outstanding_amount.to_d),
+        invoice.payment_method_code,
+        emission_status_label
+      ].map { |value| report_cell(value) }
+    end
+  end
+
+  def collections_report_headers
+    [
+      "Fecha",
+      "Serie",
+      "Folio",
+      "Blhouse",
+      "Referencia Interna",
+      "Recinto",
+      "Agencia Aduanal",
+      "Cliente",
+      "Saldo",
+      "Metodo de Pago",
+      "Estatus de Emision"
+    ]
+  end
+
+  def build_collections_report_xlsx(rows)
+    package = Axlsx::Package.new
+    package.workbook.add_worksheet(name: "Cobranza") do |sheet|
+      styles = sheet.styles
+
+      title_style = styles.add_style(
+        b: true,
+        sz: 16,
+        fg_color: "0F172A",
+        bg_color: "E2E8F0",
+        alignment: { horizontal: :left, vertical: :center },
+        border: {
+          style: :thin,
+          color: "CBD5E1",
+          edges: %i[left right top bottom]
+        }
+      )
+      subtitle_style = styles.add_style(
+        sz: 10,
+        fg_color: "475569",
+        bg_color: "F8FAFC",
+        alignment: { horizontal: :left, vertical: :center },
+        border: {
+          style: :thin,
+          color: "E2E8F0",
+          edges: %i[left right top bottom]
+        }
+      )
+      header_style = styles.add_style(
+        b: true,
+        sz: 10,
+        fg_color: "FFFFFF",
+        bg_color: "0F766E",
+        alignment: { horizontal: :center, vertical: :center, wrap_text: true },
+        border: {
+          style: :thin,
+          color: "D1D5DB",
+          edges: %i[left right top bottom]
+        }
+      )
+      row_style_even = styles.add_style(
+        sz: 10,
+        fg_color: "111827",
+        bg_color: "FFFFFF",
+        alignment: { vertical: :center, wrap_text: true },
+        border: {
+          style: :thin,
+          color: "E5E7EB",
+          edges: %i[left right top bottom]
+        }
+      )
+      row_style_odd = styles.add_style(
+        sz: 10,
+        fg_color: "111827",
+        bg_color: "F8FAFC",
+        alignment: { vertical: :center, wrap_text: true },
+        border: {
+          style: :thin,
+          color: "E5E7EB",
+          edges: %i[left right top bottom]
+        }
+      )
+      total_style_even = styles.add_style(
+        sz: 10,
+        b: true,
+        fg_color: "111827",
+        bg_color: "FFFFFF",
+        format_code: "$#,##0.00",
+        alignment: { horizontal: :right, vertical: :center },
+        border: {
+          style: :thin,
+          color: "E5E7EB",
+          edges: %i[left right top bottom]
+        }
+      )
+      total_style_odd = styles.add_style(
+        sz: 10,
+        b: true,
+        fg_color: "111827",
+        bg_color: "F8FAFC",
+        format_code: "$#,##0.00",
+        alignment: { horizontal: :right, vertical: :center },
+        border: {
+          style: :thin,
+          color: "E5E7EB",
+          edges: %i[left right top bottom]
+        }
+      )
+      summary_label_style = styles.add_style(
+        sz: 10,
+        b: true,
+        fg_color: "0F172A",
+        bg_color: "E2E8F0",
+        alignment: { horizontal: :right, vertical: :center },
+        border: {
+          style: :thin,
+          color: "CBD5E1",
+          edges: %i[left right top bottom]
+        }
+      )
+      summary_total_style = styles.add_style(
+        sz: 10,
+        b: true,
+        fg_color: "0F172A",
+        bg_color: "E2E8F0",
+        format_code: "$#,##0.00",
+        alignment: { horizontal: :right, vertical: :center },
+        border: {
+          style: :thin,
+          color: "CBD5E1",
+          edges: %i[left right top bottom]
+        }
+      )
+
+      headers = collections_report_headers
+      total_column_index = 8
+      grand_total = 0.to_d
+      sheet.add_row headers, style: Array.new(headers.size, header_style), height: 24
+
+      rows.each_with_index do |row, index|
+        base_style = index.even? ? row_style_even : row_style_odd
+        total_style = index.even? ? total_style_even : total_style_odd
+
+        row_values = row.dup
+        total_value = row_values[total_column_index].to_d
+        grand_total += total_value
+        row_values[total_column_index] = total_value
+
+        styles_for_row = Array.new(row_values.size, base_style)
+        styles_for_row[total_column_index] = total_style
+        sheet.add_row row_values, style: styles_for_row, height: 22
+      end
+
+      summary_row = Array.new(headers.size, "")
+      summary_row[total_column_index - 1] = "Total"
+      summary_row[total_column_index] = grand_total
+      summary_styles = Array.new(headers.size, row_style_even)
+      summary_styles[total_column_index - 1] = summary_label_style
+      summary_styles[total_column_index] = summary_total_style
+      sheet.add_row summary_row, style: summary_styles, height: 22
+
+      sheet.add_row []
+
+      footer_title_row = [ "Reporte de cobranza" ] + Array.new(10, "")
+      footer_subtitle_row = [ "Generado: #{I18n.l(Time.current, format: "%Y-%m-%d %H:%M")}" ] + Array.new(10, "")
+
+      sheet.add_row footer_title_row, style: Array.new(11, title_style), height: 24
+      footer_title_row_index = sheet.rows.size
+      sheet.add_row footer_subtitle_row, style: Array.new(11, subtitle_style), height: 20
+      footer_subtitle_row_index = sheet.rows.size
+
+      sheet.merge_cells("A#{footer_title_row_index}:K#{footer_title_row_index}")
+      sheet.merge_cells("A#{footer_subtitle_row_index}:K#{footer_subtitle_row_index}")
+
+      sheet.column_widths 10, 7, 9, 10, 10, 10, 28, 32, 10, 10, 12
+      sheet.auto_filter = "A1:K1"
+    end
+
+    package.to_stream.read
+  end
+
+  def build_collections_report_pdf(rows)
+    pdf = Prawn::Document.new(page_layout: :landscape, page_size: "LETTER", margin: 24)
+    pdf.fill_color "0F172A"
+    pdf.text "Reporte de cobranza", size: 16, style: :bold
+    pdf.move_down 2
+    pdf.fill_color "475569"
+    pdf.text "Generado: #{I18n.l(Time.current, format: "%Y-%m-%d %H:%M")}", size: 9
+    pdf.fill_color "000000"
+    pdf.move_down 10
+
+    total_column_index = 8
+    report_rows = rows.map do |row|
+      row_values = row.dup
+      row_values[total_column_index] = "$#{format('%.2f', row_values[total_column_index].to_d)}"
+      row_values
+    end
+    total_general = rows.sum { |row| row[total_column_index].to_d }
+    summary_row = Array.new(collections_report_headers.size, "")
+    summary_row[total_column_index - 1] = "Total"
+    summary_row[total_column_index] = "$#{format('%.2f', total_general)}"
+
+    table_data = [ collections_report_headers ] + report_rows + [ summary_row ]
+
+    pdf.table(
+      table_data,
+      header: true,
+      column_widths: [ 56, 42, 54, 68, 60, 88, 60, 88, 100, 52, 62 ],
+      cell_style: {
+        size: 8,
+        padding: [ 4, 5, 4, 5 ],
+        border_width: 0.5,
+        border_color: "D1D5DB",
+        inline_format: true
+      }
+    ) do
+      row(0).font_style = :bold
+      row(0).background_color = "0F766E"
+      row(0).text_color = "FFFFFF"
+      row(0).align = :center
+
+      cells.style do |cell|
+        cell.overflow = :shrink_to_fit
+      end
+
+      (1...row_length).each do |i|
+        row(i).background_color = i.even? ? "FFFFFF" : "F8FAFC"
+      end
+
+      summary_row_index = row_length - 1
+      row(summary_row_index).background_color = "E2E8F0"
+      row(summary_row_index).font_style = :bold
+
+      column(total_column_index).align = :right
+      column(total_column_index).font_style = :bold
+    end
+
+    pdf.render
+  end
+
+  def report_cell(value)
+    cleaned = value.to_s.gsub(/[\t\r\n]+/, " ").squish
+    cleaned.presence || "-"
   end
 
   def build_invoice_show_context_data(invoice)

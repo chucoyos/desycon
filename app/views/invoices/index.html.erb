@@ -219,6 +219,23 @@
     <%= render 'shared/tailwind_pagination', paginated: @invoices %>
   </div>
 
+  <% if current_user.admin_or_executive? %>
+    <div class="mb-3 flex justify-end">
+      <button
+        type="button"
+        data-action="click->modal#open"
+        data-modal-id="collections-report-modal"
+        class="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-sm font-semibold"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75h9A2.25 2.25 0 0118.75 6v12A2.25 2.25 0 0116.5 20.25h-9A2.25 2.25 0 015.25 18V6A2.25 2.25 0 017.5 3.75z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 8.25h7.5m-7.5 3h7.5m-7.5 3h4.5" />
+        </svg>
+        Generar Reporte Cobranza
+      </button>
+    </div>
+  <% end %>
+
   <% if @consolidator_portal_user %>
     <div class="mb-3 flex justify-end">
       <button
@@ -558,11 +575,51 @@
   </div>
 <% end %>
 
+<div id="collections-report-modal" data-modal-target="modal" data-action="click->modal#closeOnBackdrop" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm px-4 py-6" role="dialog" aria-modal="true" aria-labelledby="collections-report-title">
+  <div class="mx-auto max-w-4xl">
+    <div class="rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="flex items-start justify-between gap-4 px-5 py-4 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-white">
+        <div>
+          <h3 id="collections-report-title" class="text-lg font-bold text-slate-900">Reporte de cobranza (página actual)</h3>
+          <p class="text-sm text-slate-600 mt-1">Copia y pega este texto directamente en correo electrónico.</p>
+        </div>
+        <button type="button" data-action="click->modal#close" class="cursor-pointer inline-flex items-center justify-center h-9 w-9 rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100" aria-label="Cerrar reporte">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="px-5 py-5">
+        <textarea id="collections-report-text" readonly class="w-full min-h-[20rem] rounded-xl border border-slate-300 bg-slate-50 p-3 text-[10px] leading-tight text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"><%= @collections_report_text %></textarea>
+        <p id="collections-report-copy-feedback" class="mt-2 text-xs text-slate-500" aria-live="polite"></p>
+      </div>
+
+      <div class="px-5 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-2">
+        <button type="button" data-action="click->modal#close" class="cursor-pointer inline-flex items-center px-4 py-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold">
+          Cerrar
+        </button>
+        <%= link_to collections_report_invoices_path(format: :xlsx, invoice_ids: @invoices.map(&:id)), class: "cursor-pointer inline-flex items-center px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold" do %>
+          Exportar Excel
+        <% end %>
+        <%= link_to collections_report_invoices_path(format: :pdf, invoice_ids: @invoices.map(&:id)), class: "cursor-pointer inline-flex items-center px-4 py-2 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold" do %>
+          Exportar PDF
+        <% end %>
+        <button type="button" id="copy-collections-report-btn" class="cursor-pointer inline-flex items-center px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">
+          Copiar Texto
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <turbo-frame id="payment_evidence_modal"></turbo-frame>
 
 <script>
   document.addEventListener("turbo:load", initConsolidatorInvoiceEvidenceSelection);
   document.addEventListener("turbo:render", initConsolidatorInvoiceEvidenceSelection);
+  document.addEventListener("turbo:load", initCollectionsReportCopy);
+  document.addEventListener("turbo:render", initCollectionsReportCopy);
 
   function initConsolidatorInvoiceEvidenceSelection() {
     const form = document.getElementById("consolidator-payment-evidence-batch-form");
@@ -594,5 +651,30 @@
 
     checkboxes.forEach((checkbox) => checkbox.addEventListener("change", updateState));
     updateState();
+  }
+
+  function initCollectionsReportCopy() {
+    const copyButton = document.getElementById("copy-collections-report-btn");
+    const reportTextarea = document.getElementById("collections-report-text");
+    const feedback = document.getElementById("collections-report-copy-feedback");
+
+    if (!copyButton || !reportTextarea) return;
+    if (copyButton.dataset.bound === "true") return;
+
+    copyButton.dataset.bound = "true";
+
+    copyButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(reportTextarea.value);
+      } catch (_error) {
+        reportTextarea.focus();
+        reportTextarea.select();
+        document.execCommand("copy");
+      }
+
+      if (feedback) {
+        feedback.textContent = "Reporte copiado al portapapeles.";
+      }
+    });
   }
 </script>
