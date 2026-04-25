@@ -1,4 +1,15 @@
 class ServicesController < ApplicationController
+  DESTINATION_PORT_OPTIONS = {
+    "manzanillo" => "Manzanillo",
+    "veracruz" => "Veracruz",
+    "altamira" => "Altamira",
+    "lazaro_cardenas" => "Lazaro Cardenas"
+  }.freeze
+  BILLING_STATUS_OPTIONS = {
+    "proforma" => "Proforma",
+    "facturado" => "Facturado"
+  }.freeze
+
   before_action :authenticate_user!
   after_action :verify_authorized
 
@@ -12,13 +23,66 @@ class ServicesController < ApplicationController
 
     @selected_container_number = params[:container_number].to_s.strip.first(11).presence
     @selected_blhouse = params[:blhouse].to_s.strip.presence
+    @selected_customs_agency_id = params[:customs_agency_id].to_s.presence
     @selected_customs_agency = params[:customs_agency].to_s.strip.presence
+    @selected_service_name = params[:service_name].to_s.strip.presence
+    @selected_consolidator = params[:consolidator].to_s.strip.presence
+    requested_billing_status = params[:billing_status].to_s.strip
+    @selected_billing_status = BILLING_STATUS_OPTIONS.key?(requested_billing_status) ? requested_billing_status : nil
+    requested_destination_port = params[:destination_port].to_s.strip
+    @selected_destination_port = DESTINATION_PORT_OPTIONS.key?(requested_destination_port) ? requested_destination_port : nil
+    @destination_port_filter_options = DESTINATION_PORT_OPTIONS.map { |value, label| [ label, value ] }
+    @billing_status_filter_options = BILLING_STATUS_OPTIONS.map { |value, label| [ label, value ] }
+
+    @selected_customs_agency_label = if @selected_customs_agency_id.present?
+      Entity.customs_agents.where(id: @selected_customs_agency_id).pick(:name)
+    end
+    @selected_customs_agency_label ||= @selected_customs_agency
 
     unified_rows = container_service_rows + bl_house_line_service_rows
+    @service_filter_options = unified_rows.map { |row| row[:service_name].to_s.strip }.reject(&:blank?).uniq.sort
+    @consolidator_filter_options = unified_rows.map { |row| row[:consolidator_name].to_s.strip }.reject(&:blank?).uniq.sort
+    unified_rows = apply_unified_filters(unified_rows)
     unified_rows.sort_by! { |row| [ row[:created_at] || Time.at(0), row[:service_id] ] }
     unified_rows.reverse!
 
     @services = Kaminari.paginate_array(unified_rows).page(params[:page]).per(per_page)
+  end
+
+  def customs_agents_search
+    authorize Invoice, :issue_manual?
+
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    cache_key = [
+      "services",
+      "customs_agents_search",
+      current_user.id,
+      query.downcase,
+      limit
+    ].join(":")
+
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      Entity
+        .customs_agents
+        .search_by_name(query)
+        .limit(limit)
+        .pluck(:id, :name)
+        .map do |id, name|
+          {
+            id:,
+            label: name
+          }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
   end
 
   def issue_batch
@@ -135,7 +199,7 @@ class ServicesController < ApplicationController
     # If the user filters by BL House, only BL-partida services should be listed.
     return ContainerService.none if @selected_blhouse.present?
     # Container services do not belong to a customs agency in this listing.
-    return ContainerService.none if @selected_customs_agency.present?
+    return ContainerService.none if @selected_customs_agency_id.present? || @selected_customs_agency.present?
 
     scope = ContainerService
       .includes(
@@ -178,7 +242,9 @@ class ServicesController < ApplicationController
       scope = scope.joins(:bl_house_line).where("bl_house_lines.blhouse ILIKE ?", "%#{@selected_blhouse}%")
     end
 
-    if @selected_customs_agency.present?
+    if @selected_customs_agency_id.present?
+      scope = scope.joins(:bl_house_line).where(bl_house_lines: { customs_agent_id: @selected_customs_agency_id })
+    elsif @selected_customs_agency.present?
       scope = scope.joins(:bl_house_line).where(bl_house_lines: { customs_agent_id: customs_agent_ids_for_filter })
     end
 
@@ -269,6 +335,40 @@ class ServicesController < ApplicationController
     total_weight = bl_house_lines.sum { |bl_house_line| bl_house_line.peso.to_d }
     total_volume = bl_house_lines.sum { |bl_house_line| bl_house_line.volumen.to_d }
     [ total_weight, total_volume ]
+  end
+
+  def apply_unified_filters(rows)
+    filtered = rows
+
+    if @selected_service_name.present?
+      filtered = filtered.select do |row|
+        normalized_text(row[:service_name]) == normalized_text(@selected_service_name)
+      end
+    end
+
+    if @selected_consolidator.present?
+      filtered = filtered.select do |row|
+        normalized_text(row[:consolidator_name]) == normalized_text(@selected_consolidator)
+      end
+    end
+
+    if @selected_destination_port.present?
+      selected_port_label = DESTINATION_PORT_OPTIONS[@selected_destination_port]
+      filtered = filtered.select do |row|
+        normalized_text(row[:destination_port]).include?(normalized_text(selected_port_label))
+      end
+    end
+
+    if @selected_billing_status.present?
+      wants_facturado = @selected_billing_status == "facturado"
+      filtered = filtered.select { |row| row[:facturado] == wants_facturado }
+    end
+
+    filtered
+  end
+
+  def normalized_text(value)
+    I18n.transliterate(value.to_s).downcase
   end
 
   def client_name_for_container_service(service)

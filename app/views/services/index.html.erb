@@ -26,7 +26,7 @@
     </div>
 
     <%= form_with url: services_path, method: :get, class: "w-full", data: { turbo: false } do |f| %>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">Contenedor</label>
           <%= f.text_field :container_number,
@@ -46,10 +46,61 @@
 
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">Agencia</label>
-          <%= f.text_field :customs_agency,
+          <div
+            data-controller="catalog-autocomplete"
+            data-catalog-autocomplete-url-value="<%= customs_agents_search_services_path %>"
+            data-catalog-autocomplete-min-chars-value="2"
+            data-catalog-autocomplete-debounce-value="300"
+            class="relative"
+          >
+            <%= hidden_field_tag :customs_agency_id,
+              @selected_customs_agency_id,
+              data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+            <%= text_field_tag :customs_agency_search,
+              @selected_customs_agency_label,
+              autocomplete: "off",
+              placeholder: "Todos",
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition-all",
+              data: {
+                catalog_autocomplete_target: "input",
+                action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+              } %>
+
+            <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+            <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+          </div>
+
+          <noscript>
+            <%= f.text_field :customs_agency,
               value: @selected_customs_agency,
               placeholder: "Buscar agencia aduanal",
               class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition-all" %>
+          </noscript>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Servicio</label>
+          <%= f.select :service_name,
+              options_for_select([["Todos", ""]] + @service_filter_options.map { |service_name| [service_name, service_name] }, @selected_service_name),
+              {},
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition-all" %>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Consolidador</label>
+          <%= f.select :consolidator,
+              options_for_select([["Todos", ""]] + @consolidator_filter_options.map { |consolidator_name| [consolidator_name, consolidator_name] }, @selected_consolidator),
+              {},
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition-all" %>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Puerto</label>
+          <%= f.select :destination_port,
+              options_for_select([["Todos", ""]] + @destination_port_filter_options, @selected_destination_port),
+              {},
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition-all" %>
         </div>
 
         <div>
@@ -66,7 +117,15 @@
               class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition-all" %>
         </div>
 
-        <div class="flex gap-2 items-end">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Estatus</label>
+          <%= f.select :billing_status,
+              options_for_select([["Todos", ""]] + @billing_status_filter_options, @selected_billing_status),
+              {},
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition-all" %>
+        </div>
+
+        <div class="col-span-1 md:col-span-2 lg:col-span-4 flex gap-2 items-end justify-start pt-1">
           <%= f.submit "Filtrar", class: "cursor-pointer px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-all shadow-[0_8px_18px_rgba(5,150,105,0.28)] hover:shadow-[0_10px_24px_rgba(5,150,105,0.34)]" %>
           <%= link_to "Limpiar", services_path, class: "px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-medium transition-colors" %>
         </div>

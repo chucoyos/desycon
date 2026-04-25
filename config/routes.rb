@@ -67,6 +67,7 @@ Rails.application.routes.draw do
   resources :services, only: [ :index ] do
     collection do
       post :issue_batch
+      get :customs_agents_search
     end
   end
 
