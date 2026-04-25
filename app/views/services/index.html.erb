@@ -60,7 +60,7 @@
             <%= text_field_tag :customs_agency_search,
               @selected_customs_agency_label,
               autocomplete: "off",
-              placeholder: "Todos",
+              placeholder: "Todas",
               class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition-all",
               data: {
                 catalog_autocomplete_target: "input",
@@ -132,6 +132,25 @@
       </div>
     <% end %>
   </div>
+
+  <% if @applied_filters.present? %>
+    <div class="mb-6 bg-emerald-50/70 border border-emerald-200 rounded-2xl px-4 py-3">
+      <div class="flex items-center gap-2 mb-2">
+        <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/>
+        </svg>
+        <h3 class="text-sm font-semibold text-emerald-800 uppercase tracking-wider">Filtros aplicados</h3>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <% @applied_filters.each do |label, value| %>
+          <span class="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-white px-3 py-1 text-xs font-medium text-emerald-900">
+            <span class="font-semibold"><%= label %>:</span>
+            <span><%= value %></span>
+          </span>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
 
   <div class="mb-6">
     <%= render "shared/tailwind_pagination", paginated: @services %>

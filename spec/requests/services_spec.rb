@@ -44,14 +44,15 @@ RSpec.describe "Services", type: :request do
       parent_catalog = create(:service_catalog, name: "Servicio Padre Único")
       partida_catalog = create(:service_catalog, name: "Servicio Partida Único")
 
-      create(:container_service, container: container, service_catalog: parent_catalog, factura: nil)
-      create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: partida_catalog, factura: nil)
+      parent_service = create(:container_service, container: container, service_catalog: parent_catalog, factura: nil)
+      partida_service = create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: partida_catalog, factura: nil)
 
       get services_path, params: { blhouse: "BLH-ONLY-001" }
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Servicio Partida Único")
-      expect(response.body).not_to include("Servicio Padre Único")
+      expect(response.body).to include("BlHouseLineService:#{partida_service.id}")
+      expect(response.body).not_to include("ContainerService:#{parent_service.id}")
     end
 
     it "includes partida services when filtering by container" do
@@ -113,7 +114,8 @@ RSpec.describe "Services", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Srv Recent")
-      expect(response.body).not_to include("Srv Old")
+      expect(response.body).to include("ContainerService:#{recent_service.id}")
+      expect(response.body).not_to include("ContainerService:#{old_service.id}")
       expect(response.body).to include("name=\"start_date\"")
       expect(response.body).to include("name=\"end_date\"")
 
