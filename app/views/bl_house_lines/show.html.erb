@@ -327,6 +327,7 @@
     <div class="space-y-6">
 
   <% unless is_tramitador %>
+  <% unless is_consolidator %>
   <!-- Servicios -->
   <details id="servicios" class="group bg-white shadow-sm rounded-xl p-5 border border-gray-100 mb-6" data-collapsible="true">
     <summary class="flex items-center justify-between cursor-pointer list-none">
@@ -615,6 +616,7 @@
     <% end %>
     </div>
   </details>
+  <% end %>
   <% end %>
       
 

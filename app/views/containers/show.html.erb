@@ -331,7 +331,7 @@
     <!-- Columna lateral (1/3) -->
     <div class="space-y-6">
 
-      <% unless current_user&.tramitador? %>
+      <% unless current_user&.tramitador? || is_consolidator %>
       <!-- Servicios -->
       <details id="servicios" class="group bg-white shadow-sm rounded-xl p-5 border border-gray-100" data-collapsible="true">
         <summary class="flex items-center justify-between cursor-pointer list-none">

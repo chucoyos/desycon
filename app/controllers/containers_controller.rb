@@ -459,13 +459,13 @@ class ContainersController < ApplicationController
       :voyage
     )
 
-    # Tramitador view does not render services or status history, so avoid
-    # eager loading those associations to keep Bullet happy.
+    # Tramitador and consolidator views do not render services, so avoid
+    # eager loading service associations for those roles to keep Bullet happy.
     @container = if action_name == "show" && !current_user&.tramitador?
-      base_scope.includes(
-        container_services: [ :service_catalog, :billed_to_entity ],
-        container_status_histories: :user
-      ).find(params[:id])
+      includes_associations = [ { container_status_histories: :user } ]
+      includes_associations << { container_services: [ :service_catalog, :billed_to_entity ] } unless current_user&.consolidator?
+
+      base_scope.includes(*includes_associations).find(params[:id])
     else
       base_scope.find(params[:id])
     end
