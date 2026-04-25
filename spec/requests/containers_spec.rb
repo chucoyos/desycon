@@ -199,6 +199,7 @@ RSpec.describe "Containers", type: :request do
       expect(response).to be_successful
       expect(response.body).not_to include("Editar")
       expect(response.body).not_to include("Eliminar")
+      expect(response.body).to include("Servicios")
       expect(response.body).not_to include("Agregar servicio")
       expect(response.body).to include("Fotografías del contenedor")
     end
