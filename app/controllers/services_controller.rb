@@ -1,4 +1,11 @@
 class ServicesController < ApplicationController
+  DESTINATION_PORT_OPTIONS = {
+    "manzanillo" => "Manzanillo",
+    "veracruz" => "Veracruz",
+    "lazaro_cardenas" => "Lazaro Cardenas",
+    "altamira" => "Altamira"
+  }.freeze
+
   BILLING_STATUS_OPTIONS = {
     "proforma" => "Proforma",
     "facturado" => "Facturado"
@@ -23,11 +30,12 @@ class ServicesController < ApplicationController
     @selected_consolidator = params[:consolidator].to_s.strip.presence
     requested_billing_status = params[:billing_status].to_s.strip
     @selected_billing_status = BILLING_STATUS_OPTIONS.key?(requested_billing_status) ? requested_billing_status : nil
-    @selected_destination_port = params[:destination_port].to_s.strip.presence
+    requested_destination_port = params[:destination_port].to_s.strip
+    @selected_destination_port = DESTINATION_PORT_OPTIONS.key?(requested_destination_port) ? requested_destination_port : nil
 
     @service_filter_options = global_service_filter_options
     @consolidator_filter_options = global_consolidator_filter_options
-    @destination_port_filter_options = global_destination_port_filter_options
+    @destination_port_filter_options = DESTINATION_PORT_OPTIONS.map { |value, label| [ label, value ] }
     @billing_status_filter_options = BILLING_STATUS_OPTIONS.map { |value, label| [ label, value ] }
 
     @selected_customs_agency_label = if @selected_customs_agency_id.present?
@@ -348,8 +356,9 @@ class ServicesController < ApplicationController
     end
 
     if @selected_destination_port.present?
+      selected_port_label = DESTINATION_PORT_OPTIONS[@selected_destination_port]
       filtered = filtered.select do |row|
-        normalized_text(row[:destination_port]) == normalized_text(@selected_destination_port)
+        normalized_text(row[:destination_port]).include?(normalized_text(selected_port_label))
       end
     end
 
@@ -382,15 +391,6 @@ class ServicesController < ApplicationController
       .uniq
   end
 
-  def global_destination_port_filter_options
-    Port
-      .order(:name)
-      .pluck(:name)
-      .filter_map { |name| name.to_s.strip.presence }
-      .uniq
-      .map { |name| [ name, name ] }
-  end
-
   def build_applied_filters
     filters = []
 
@@ -400,7 +400,7 @@ class ServicesController < ApplicationController
     filters << [ "Agencia", @selected_customs_agency_label ] if @selected_customs_agency_label.present?
     filters << [ "Servicio", @selected_service_name ] if @selected_service_name.present?
     filters << [ "Consolidador", @selected_consolidator ] if @selected_consolidator.present?
-    filters << [ "Puerto", @selected_destination_port ] if @selected_destination_port.present?
+    filters << [ "Puerto", DESTINATION_PORT_OPTIONS[@selected_destination_port] ] if @selected_destination_port.present?
     filters << [ "Estatus", BILLING_STATUS_OPTIONS[@selected_billing_status] ] if @selected_billing_status.present?
 
     filters
