@@ -916,6 +916,26 @@ services_catalog_data = [
     sat_clave_prod_serv: "80151600",
     sat_clave_unidad: "E48",
     sat_objeto_imp: "02"
+  },
+  {
+    name: "Coordinacion Pegado Etiquetas Adheribles",
+    applies_to: "bl_house_line",
+    code: "BL-ETIADH",
+    amount: 1.68,
+    currency: "MXN",
+    sat_clave_prod_serv: "80151600",
+    sat_clave_unidad: "E48",
+    sat_objeto_imp: "02"
+  },
+  {
+    name: "Coordinacion Pegado Etiquetas Cosidas",
+    applies_to: "bl_house_line",
+    code: "BL-ETICOS",
+    amount: 4.96,
+    currency: "MXN",
+    sat_clave_prod_serv: "80151600",
+    sat_clave_unidad: "E48",
+    sat_objeto_imp: "02"
   }
 ]
 

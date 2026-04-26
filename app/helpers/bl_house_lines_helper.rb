@@ -21,6 +21,12 @@ module BlHouseLinesHelper
         dispatch_date: service.bl_house_line.fecha_despacho,
         unit_price: service.service_catalog.amount
       )
+    when "BL-ETIADH", "BL-ETICOS"
+      BlHouseLines::LabelTaggingChargeCalculator.call(
+        service_code: code,
+        quantity: service.quantity,
+        unit_price: service.service_catalog.amount
+      )
     else
       nil
     end
@@ -48,6 +54,9 @@ module BlHouseLinesHelper
     rows << [ "Peso (kg input)", breakdown[:peso_kg_input] ] if breakdown.key?(:peso_kg_input)
     rows << [ "Peso (ton para calculo)", breakdown[:peso_ton_input] ] if breakdown.key?(:peso_ton_input)
     rows << [ "Volumen (input)", breakdown[:volumen_input] ] if breakdown.key?(:volumen_input)
+    rows << [ "Cantidad capturada", breakdown[:input_quantity] ] if breakdown.key?(:input_quantity)
+    rows << [ "Minimo cobrable", breakdown[:minimum_billable_quantity] ] if breakdown.key?(:minimum_billable_quantity)
+    rows << [ "Cantidad cobrable", breakdown[:billable_quantity] ] if breakdown.key?(:billable_quantity)
     rows << [ "Unidades por peso", breakdown[:weight_units] ] if breakdown.key?(:weight_units)
     rows << [ "Unidades por volumen", breakdown[:volume_units] ] if breakdown.key?(:volume_units)
     rows << [ "Minimo unidades", breakdown[:minimum_units] ] if breakdown.key?(:minimum_units)

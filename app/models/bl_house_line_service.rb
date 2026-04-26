@@ -1,6 +1,7 @@
 class BlHouseLineService < ApplicationRecord
   BILLING_LOCK_STATUSES = %w[queued issued cancel_pending cancelled].freeze
   AUTO_ISSUE_ORIGIN_STATUS_TRANSITION = "status_transition".freeze
+  LABEL_TAGGING_SERVICE_CODES = %w[BL-ETIADH BL-ETICOS].freeze
 
   belongs_to :bl_house_line
   belongs_to :service_catalog
@@ -17,10 +18,12 @@ class BlHouseLineService < ApplicationRecord
 
   validates :service_catalog, presence: true
   validates :amount, presence: true, numericality: { greater_than: 0 }
+  validates :quantity, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validates :currency, presence: true, inclusion: { in: [ "MXN" ] }
   validates :observaciones, length: { maximum: 1000 }, allow_blank: true
   validates :factura, length: { maximum: 100 }, allow_blank: true
   validate :prevent_manual_storage_service_within_grace_period, on: :create
+  validate :quantity_required_for_label_tagging_services
 
   scope :facturados, -> { where.not(factura: nil) }
   scope :pendientes, -> { where(factura: nil) }
@@ -85,7 +88,19 @@ class BlHouseLineService < ApplicationRecord
       return if result.blank? || result.billable_days <= 0
 
       self.amount = result.total
+    when *LABEL_TAGGING_SERVICE_CODES
+      result = label_tagging_charge_result
+      return if result.blank?
+
+      self.amount = result.total
     end
+  end
+
+  def quantity_required_for_label_tagging_services
+    return unless label_tagging_service_code?
+    return if quantity.present?
+
+    errors.add(:quantity, "no puede estar en blanco")
   end
 
   def prevent_manual_storage_service_within_grace_period
@@ -138,5 +153,17 @@ class BlHouseLineService < ApplicationRecord
       dispatch_date: bl_house_line.fecha_despacho,
       unit_price: service_catalog.amount
     )
+  end
+
+  def label_tagging_charge_result
+    BlHouseLines::LabelTaggingChargeCalculator.call(
+      service_code: service_catalog.code,
+      quantity: quantity,
+      unit_price: service_catalog.amount
+    )
+  end
+
+  def label_tagging_service_code?
+    LABEL_TAGGING_SERVICE_CODES.include?(service_catalog&.code.to_s)
   end
 end

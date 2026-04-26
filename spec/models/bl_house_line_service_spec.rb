@@ -208,5 +208,83 @@ RSpec.describe BlHouseLineService, type: :model do
 
       expect(service.reload.amount).to eq(BigDecimal('2646'))
     end
+
+    it 'calcula BL-ETIADH usando cantidad minima cuando la capturada es menor' do
+      catalog = create(
+        :service_catalog,
+        applies_to: 'bl_house_line',
+        code: 'BL-ETIADH',
+        amount: 1.68,
+        currency: 'MXN'
+      )
+      bl_house_line = create(:bl_house_line, peso: 13_200, volumen: 8.1)
+
+      service = create(
+        :bl_house_line_service,
+        bl_house_line: bl_house_line,
+        service_catalog: catalog,
+        quantity: 1000,
+        amount: 1
+      )
+
+      expect(service.amount).to eq(BigDecimal('2004.24'))
+    end
+
+    it 'calcula BL-ETICOS usando cantidad capturada cuando supera el minimo' do
+      catalog = create(
+        :service_catalog,
+        applies_to: 'bl_house_line',
+        code: 'BL-ETICOS',
+        amount: 4.96,
+        currency: 'MXN'
+      )
+      bl_house_line = create(:bl_house_line, peso: 13_200, volumen: 8.1)
+
+      service = create(
+        :bl_house_line_service,
+        bl_house_line: bl_house_line,
+        service_catalog: catalog,
+        quantity: 500,
+        amount: 1
+      )
+
+      expect(service.amount).to eq(BigDecimal('2480.0'))
+    end
+
+    it 'exige cantidad para BL-ETIADH y BL-ETICOS' do
+      catalog = create(
+        :service_catalog,
+        applies_to: 'bl_house_line',
+        code: 'BL-ETIADH',
+        amount: 1.68,
+        currency: 'MXN'
+      )
+      bl_house_line = create(:bl_house_line, peso: 13_200, volumen: 8.1)
+
+      service = build(
+        :bl_house_line_service,
+        bl_house_line: bl_house_line,
+        service_catalog: catalog,
+        quantity: nil,
+        amount: 1
+      )
+
+      expect(service).not_to be_valid
+      expect(service.errors[:quantity]).to include('no puede estar en blanco')
+    end
+
+    it 'mantiene compatibilidad con servicios existentes sin quantity' do
+      catalog = create(
+        :service_catalog,
+        applies_to: 'bl_house_line',
+        code: 'BL-ASIG',
+        amount: 1200,
+        currency: 'MXN'
+      )
+      service = create(:bl_house_line_service, service_catalog: catalog, quantity: nil, amount: nil)
+
+      expect(service).to be_valid
+      expect(service.amount).to eq(BigDecimal('1200.0'))
+    end
   end
 end
