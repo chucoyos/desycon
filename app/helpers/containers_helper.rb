@@ -1,4 +1,19 @@
 module ContainersHelper
+  TENTATIVE_TURNO_LABELS = {
+    "primer_turno" => "Primer Turno",
+    "segundo_turno" => "Segundo Turno",
+    "tercer_turno" => "Tercer Turno"
+  }.freeze
+
+  def formatted_tentative_desconsolidation(container)
+    return "-" if container.blank? || container.fecha_tentativa_desconsolidacion.blank?
+
+    base_date = l(container.fecha_tentativa_desconsolidacion, format: :long)
+    turno_label = TENTATIVE_TURNO_LABELS[container.tentativa_turno.to_s]
+
+    turno_label.present? ? "#{base_date}-#{turno_label}" : base_date
+  end
+
   def status_badge_class(status)
     case status
     when "activo"
