@@ -18,6 +18,7 @@
   bulk_delete_path = attachable.is_a?(Container) ? photos_section_container_path(attachable) : photos_section_bl_house_line_path(attachable)
   delete_zip_path = attachable.is_a?(Container) ? photos_zip_container_path(attachable, section: section) : photos_zip_bl_house_line_path(attachable, section: section)
   download_path = attachable.is_a?(Container) ? photos_download_container_path(attachable, section: section) : photos_download_bl_house_line_path(attachable, section: section)
+  share_link_path = attachable.is_a?(Container) ? photos_share_link_container_path(attachable, section: section) : photos_share_link_bl_house_line_path(attachable, section: section)
   latest_download_request = PhotoArchiveRequest
     .where(attachable: attachable, requested_by: current_user, section: section)
     .recent_first
@@ -160,6 +161,13 @@
               data: { turbo: false, photo_download_target: "readyLink" },
             hidden: !zip_ready,
             class: "w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100" %>
+
+        <button type="button"
+                data-action="click->photo-download#copyShareLink"
+                data-share-url="<%= share_link_path %>"
+          class="w-full sm:w-auto inline-flex cursor-pointer items-center justify-center rounded-full border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100">
+          Copiar link de descarga (72h)
+        </button>
 
         <% if latest_download_request.present? %>
           <%= button_to "Eliminar ZIP generado",

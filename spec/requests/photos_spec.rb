@@ -398,6 +398,75 @@ RSpec.describe "Photos", type: :request do
     end
   end
 
+  describe "POST /containers/:id/photos_share_link" do
+    let(:container) { create(:container) }
+
+    it "creates a signed public share link with 72h expiration" do
+      admin = create(:user, :admin)
+      login_as admin
+
+      expect {
+        post photos_share_link_container_path(container), params: { section: "apertura" }, as: :json
+      }.to change(PhotoDownloadLink, :count).by(1)
+
+      expect(response).to have_http_status(:ok)
+
+      body = JSON.parse(response.body)
+      expect(body["status"]).to eq("ok")
+      expect(body["share_url"]).to be_present
+      expect(body["revoke_path"]).to be_present
+
+      link = PhotoDownloadLink.order(:created_at).last
+      expect(link.section).to eq("apertura")
+      expect((link.expires_at - link.created_at).to_i).to be_within(5).of(72.hours.to_i)
+    end
+  end
+
+  describe "GET /photo_download_link" do
+    let(:container) { create(:container) }
+    let(:creator) { create(:user, :admin) }
+
+    it "enqueues zip generation when archive is not ready yet" do
+      create(:photo, attachable: container, section: "apertura")
+      link = create(:photo_download_link, attachable: container, created_by: creator, section: "apertura")
+      token = Photos::DownloadLinkToken.issue(link: link)
+
+      expect {
+        get photo_download_link_path(token: token)
+      }.to change(PhotoArchiveRequest, :count).by(1)
+
+      expect(response).to have_http_status(:accepted)
+      expect(PhotoArchiveRequest.order(:created_at).last.requested_by).to eq(creator)
+    end
+
+    it "returns gone for expired links" do
+      link = create(:photo_download_link, :expired, attachable: container, created_by: creator, section: "apertura")
+      token = Photos::DownloadLinkToken.issue(link: link)
+
+      get photo_download_link_path(token: token)
+
+      expect(response).to have_http_status(:gone)
+    end
+  end
+
+  describe "DELETE /photo_download_link" do
+    let(:container) { create(:container) }
+
+    it "revokes a share link" do
+      admin = create(:user, :admin)
+      login_as admin
+
+      link = create(:photo_download_link, attachable: container, created_by: admin, section: "apertura")
+      token = Photos::DownloadLinkToken.issue(link: link)
+
+      delete revoke_photo_download_link_path(token: token), as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(link.reload.revoked_at).to be_present
+      expect(link.revoked_by).to eq(admin)
+    end
+  end
+
   private
 
   def uploaded_image(filename)

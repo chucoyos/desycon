@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_26_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_28_123000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -481,6 +481,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_26_110000) do
     t.index ["status"], name: "index_photo_archive_requests_on_status"
   end
 
+  create_table "photo_download_links", force: :cascade do |t|
+    t.bigint "attachable_id", null: false
+    t.string "attachable_type", null: false
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "last_accessed_at"
+    t.datetime "revoked_at"
+    t.bigint "revoked_by_id"
+    t.string "section", null: false
+    t.datetime "updated_at", null: false
+    t.index ["attachable_type", "attachable_id", "section"], name: "index_photo_download_links_on_attachable_and_section"
+    t.index ["attachable_type", "attachable_id"], name: "index_photo_download_links_on_attachable"
+    t.index ["created_by_id"], name: "index_photo_download_links_on_created_by_id"
+    t.index ["expires_at"], name: "index_photo_download_links_on_expires_at"
+    t.index ["revoked_at"], name: "index_photo_download_links_on_revoked_at"
+    t.index ["revoked_by_id"], name: "index_photo_download_links_on_revoked_by_id"
+  end
+
   create_table "photos", force: :cascade do |t|
     t.bigint "attachable_id", null: false
     t.string "attachable_type", null: false
@@ -635,6 +654,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_26_110000) do
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "notifications", "users", column: "recipient_id"
   add_foreign_key "photo_archive_requests", "users", column: "requested_by_id"
+  add_foreign_key "photo_download_links", "users", column: "created_by_id"
+  add_foreign_key "photo_download_links", "users", column: "revoked_by_id"
   add_foreign_key "photos", "users", column: "uploaded_by_id"
   add_foreign_key "role_permissions", "permissions"
   add_foreign_key "role_permissions", "roles"

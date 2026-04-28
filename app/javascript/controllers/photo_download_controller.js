@@ -58,6 +58,42 @@ export default class extends Controller {
     }
   }
 
+  async copyShareLink(event) {
+    event.preventDefault()
+
+    const shareUrlEndpoint = event.currentTarget?.dataset?.shareUrl
+    if (!shareUrlEndpoint) {
+      this.showStatus("No se pudo generar el link de descarga.")
+      this.hideStatusLater(4000)
+      return
+    }
+
+    this.showStatus("Generando link de descarga...")
+
+    try {
+      const response = await fetch(shareUrlEndpoint, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "X-CSRF-Token": this.csrfToken
+        },
+        credentials: "same-origin"
+      })
+
+      const payload = await response.json()
+      if (!response.ok || payload.status !== "ok" || !payload.share_url) {
+        throw new Error(payload.message || "No se pudo generar el link")
+      }
+
+      await this.copyText(payload.share_url)
+      this.showStatus("Copiado")
+      this.hideStatusLater(5000)
+    } catch (_error) {
+      this.showStatus("No se pudo copiar el link. Intenta nuevamente.")
+      this.hideStatusLater(5000)
+    }
+  }
+
   handleDownloadPayload(payload) {
     const status = payload.status
 
@@ -126,6 +162,27 @@ export default class extends Controller {
   disableLink() {
     this.linkTarget.classList.add("opacity-60", "pointer-events-none")
     this.linkTarget.setAttribute("aria-disabled", "true")
+  }
+
+  async copyText(text) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+      return
+    }
+
+    const textarea = document.createElement("textarea")
+    textarea.value = text
+    textarea.setAttribute("readonly", "")
+    textarea.style.position = "absolute"
+    textarea.style.left = "-9999px"
+    document.body.appendChild(textarea)
+    textarea.select()
+    document.execCommand("copy")
+    document.body.removeChild(textarea)
+  }
+
+  get csrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content || ""
   }
 
   enableLink() {

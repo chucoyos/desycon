@@ -39,6 +39,8 @@ Rails.application.routes.draw do
   resources :tutorials, only: [ :index ]
 
   resources :photos, only: [ :destroy ]
+  get "photo_download_link", to: "photos#shared_download", as: :photo_download_link
+  delete "photo_download_link", to: "photos#revoke_shared_link", as: :revoke_photo_download_link
 
   resources :invoices, only: [ :index, :show, :new, :create, :destroy ] do
     collection do
@@ -122,6 +124,7 @@ Rails.application.routes.draw do
 
     member do
       post :photos, to: "photos#create_for_container"
+      post :photos_share_link, to: "photos#create_share_link_for_container"
       get :photos_section_frame, to: "photos#section_frame_for_container"
       delete :photos_section, to: "photos#destroy_section_for_container"
       delete :photos_zip, to: "photos#destroy_zip_for_container"
@@ -155,6 +158,7 @@ Rails.application.routes.draw do
 
     member do
       post :photos, to: "photos#create_for_bl_house_line"
+      post :photos_share_link, to: "photos#create_share_link_for_bl_house_line"
       get :photos_section_frame, to: "photos#section_frame_for_bl_house_line"
       delete :photos_section, to: "photos#destroy_section_for_bl_house_line"
       delete :photos_zip, to: "photos#destroy_zip_for_bl_house_line"
