@@ -17,7 +17,11 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
       end
 
       it 'includes container and blhouse in separate lines when both exist' do
-        bl_service = create(:bl_house_line_service)
+        destination_port = create(:port, :veracruz)
+        voyage = create(:voyage, destination_port: destination_port)
+        container = create(:container, tipo_maniobra: 'importacion', voyage: voyage, recinto: 'ICAVE', almacen: 'CICE')
+        bl_house_line = create(:bl_house_line, container: container)
+        bl_service = create(:bl_house_line_service, bl_house_line: bl_house_line)
         latest_history = bl_service.bl_house_line.bl_house_line_status_histories.order(changed_at: :desc, created_at: :desc, id: :desc).first
         latest_history&.update!(observations: 'Referencia Interna: mi referencia')
         invoice = create(
@@ -43,7 +47,11 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
 
       it 'includes container and blhouse in payload for grouped invoices when service context exists' do
         actor = create(:user, :admin)
-        bl_service = create(:bl_house_line_service, factura: nil)
+        destination_port = create(:port, :veracruz)
+        voyage = create(:voyage, destination_port: destination_port)
+        container = create(:container, tipo_maniobra: 'importacion', voyage: voyage, recinto: 'ICAVE', almacen: 'CICE')
+        bl_house_line = create(:bl_house_line, container: container)
+        bl_service = create(:bl_house_line_service, bl_house_line: bl_house_line, factura: nil)
         bl_service.update!(billed_to_entity: receiver)
 
         allow(Facturador::Config).to receive(:enabled?).and_return(true)
@@ -70,7 +78,8 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
           kind: 'ingreso',
           invoiceable: nil,
           issuer_entity: issuer,
-          receiver_entity: receiver
+          receiver_entity: receiver,
+          payload_snapshot: { manual: true, serie_override: 'GVRZ' }
         )
         create(:invoice_line_item, invoice: invoice)
 
@@ -86,7 +95,8 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
           kind: 'ingreso',
           invoiceable: nil,
           issuer_entity: issuer,
-          receiver_entity: receiver
+          receiver_entity: receiver,
+          payload_snapshot: { manual: true, serie_override: 'GVRZ' }
         )
         create(:invoice_line_item, invoice: invoice)
 
@@ -202,9 +212,7 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         expect(payload[:serie]).to eq('GLZC')
       end
 
-      it 'falls back to global serie for importacion with unmapped destination port' do
-        allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')
-
+      it 'raises for importacion with unmapped destination port' do
         destination_port = create(:port, :los_angeles)
         voyage = create(:voyage, destination_port: destination_port)
         container = create(:container, tipo_maniobra: 'importacion', voyage: voyage)
@@ -217,14 +225,12 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
           receiver_entity: receiver
         )
 
-        payload = described_class.build(invoice)
-
-        expect(payload[:serie]).to eq('GLOBAL')
+        expect {
+          described_class.build(invoice)
+        }.to raise_error(Facturador::ValidationError, /No existe serie configurada para el puerto destino/i)
       end
 
-      it 'keeps global serie for exportacion' do
-        allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')
-
+      it 'uses destination mapping for exportacion too' do
         destination_port = create(:port, :manzanillo)
         voyage = create(:voyage, destination_port: destination_port)
         container = create(:container, tipo_maniobra: 'exportacion', voyage: voyage)
@@ -239,12 +245,10 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
 
         payload = described_class.build(invoice)
 
-        expect(payload[:serie]).to eq('GLOBAL')
+        expect(payload[:serie]).to eq('GMZO')
       end
 
-      it 'falls back to global serie when invoiceable has no container context' do
-        allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')
-
+      it 'raises when invoiceable has no container context and no grouped services context' do
         invoice = create(
           :invoice,
           kind: 'ingreso',
@@ -254,9 +258,9 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         )
         create(:invoice_line_item, invoice: invoice)
 
-        payload = described_class.build(invoice)
-
-        expect(payload[:serie]).to eq('GLOBAL')
+        expect {
+          described_class.build(invoice)
+        }.to raise_error(Facturador::ValidationError, /No se pudo determinar el puerto destino/i)
       end
 
       it 'uses mapped serie for importacion even when global serie is nil' do
@@ -306,9 +310,7 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         expect(payload[:serie]).to eq('MZ')
       end
 
-      it 'keeps locked serie from payload snapshot over automatic destination mapping' do
-        allow(Facturador::Config).to receive(:serie).and_return('GLOBAL')
-
+      it 'keeps locked serie from payload snapshot only for manual snapshots' do
         destination_port = create(:port, :manzanillo)
         voyage = create(:voyage, destination_port: destination_port)
         container = create(
@@ -326,6 +328,7 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
           issuer_entity: issuer,
           receiver_entity: receiver,
           payload_snapshot: {
+            manual: true,
             serie_locked: 'GVRZ'
           }
         )

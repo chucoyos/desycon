@@ -218,9 +218,7 @@ class Invoice < ApplicationRecord
     previous = payload_snapshot.to_h.deep_stringify_keys
 
     serie_override = previous["serie_override"].to_s.strip.presence
-    serie_locked = previous["serie_locked"].to_s.strip.presence ||
-      serie_override ||
-      incoming["serie"].to_s.strip.presence
+    serie_locked = previous["serie_locked"].to_s.strip.presence || serie_override
 
     incoming["serie"] = serie_locked if serie_locked.present?
     incoming["serie_override"] = serie_override if serie_override.present?

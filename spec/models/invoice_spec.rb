@@ -49,7 +49,7 @@ RSpec.describe Invoice, type: :model do
       expect(invoice.payload_snapshot['serie_locked']).to eq('GVRZ')
     end
 
-    it 'locks automatically resolved serie when queueing issue' do
+    it 'does not lock automatically resolved serie when queueing issue' do
       allow(Facturador::Config).to receive(:enabled?).and_return(true)
       allow(Facturador::PayloadBuilder).to receive(:build).and_return({ serie: 'GMZO', total: 100 })
       allow(Facturador::IssueInvoiceJob).to receive(:perform_later)
@@ -59,7 +59,8 @@ RSpec.describe Invoice, type: :model do
       expect(invoice.queue_issue!).to eq(true)
 
       invoice.reload
-      expect(invoice.payload_snapshot['serie_locked']).to eq('GMZO')
+      expect(invoice.payload_snapshot['serie']).to eq('GMZO')
+      expect(invoice.payload_snapshot['serie_locked']).to be_blank
     end
   end
 

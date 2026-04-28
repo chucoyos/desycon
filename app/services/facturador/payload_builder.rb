@@ -424,12 +424,13 @@ module Facturador
       manual_serie = manual_serie_override
       return manual_serie if manual_serie.present?
 
-      fallback_serie = Config.serie
-      container = invoiceable_container
-      return fallback_serie unless container&.tipo_maniobra_importacion?
+      port_code = resolved_ingreso_destination_port_code
+      raise ValidationError, "No se pudo determinar el puerto destino para calcular la serie del CFDI." if port_code.blank?
 
-      port_code = container.destination_port&.code.to_s.upcase
-      import_destination_series_map[port_code].presence || fallback_serie
+      resolved = import_destination_series_map[port_code].to_s.strip.presence
+      raise ValidationError, "No existe serie configurada para el puerto destino #{port_code}." if resolved.blank?
+
+      resolved
     end
 
     def manual_serie_override
@@ -441,7 +442,47 @@ module Facturador
     def persisted_serie_lock
       return unless invoice.payload_snapshot.present?
 
-      invoice.payload_snapshot.to_h.deep_stringify_keys["serie_locked"].to_s.strip.presence
+      snapshot = invoice.payload_snapshot.to_h.deep_stringify_keys
+      return unless manual_invoice_snapshot?(snapshot)
+
+      snapshot["serie_locked"].to_s.strip.presence
+    end
+
+    def manual_invoice_snapshot?(snapshot)
+      snapshot["manual"] == true || snapshot["manual"].to_s.casecmp("true").zero?
+    end
+
+    def resolved_ingreso_destination_port_code
+      container = invoiceable_container || grouped_services_container_for_serie
+      return if container.blank?
+
+      container.destination_port&.code.to_s.upcase.presence
+    end
+
+    def grouped_services_container_for_serie
+      return if invoice.invoiceable.present?
+
+      containers = invoice.invoice_service_links
+        .includes(:serviceable)
+        .filter_map { |link| container_from_serviceable(link.serviceable) }
+      return if containers.empty?
+
+      containers = containers.uniq { |container| container.id }
+      port_codes = containers.map { |container| container.destination_port&.code.to_s.upcase.presence }.compact.uniq
+      raise ValidationError, "No se pudo determinar el puerto destino para servicios agrupados." if port_codes.empty?
+      raise ValidationError, "No se puede emitir CFDI agrupado con servicios de distintos puertos destino." if port_codes.many?
+
+      containers.first
+    end
+
+    def container_from_serviceable(serviceable)
+      return if serviceable.blank?
+
+      if serviceable.respond_to?(:container)
+        serviceable.container
+      elsif serviceable.respond_to?(:bl_house_line)
+        serviceable.bl_house_line&.container
+      end
     end
 
     def import_destination_series_map

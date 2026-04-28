@@ -25,7 +25,16 @@ RSpec.describe Facturador::IssueGroupedServicesService, type: :service do
     end
 
     it 'creates one invoice with multiple line items and links all selected services' do
-      container = create(:container, consolidator_entity: receiver)
+      destination_port = create(:port, :veracruz)
+      voyage = create(:voyage, destination_port: destination_port)
+      container = create(
+        :container,
+        consolidator_entity: receiver,
+        tipo_maniobra: 'importacion',
+        voyage: voyage,
+        recinto: 'ICAVE',
+        almacen: 'CICE'
+      )
       first_service = create(:container_service, container: container, factura: nil)
       second_service = create(:container_service, container: container, factura: nil)
       first_service.update!(billed_to_entity: receiver)
@@ -56,7 +65,11 @@ RSpec.describe Facturador::IssueGroupedServicesService, type: :service do
     end
 
     it 'enriches grouped line item descriptions with container and blhouse when available' do
-      bl_service = create(:bl_house_line_service, factura: nil)
+      destination_port = create(:port, :veracruz)
+      voyage = create(:voyage, destination_port: destination_port)
+      container = create(:container, tipo_maniobra: 'importacion', voyage: voyage, recinto: 'ICAVE', almacen: 'CICE')
+      bl_house_line = create(:bl_house_line, container: container)
+      bl_service = create(:bl_house_line_service, bl_house_line: bl_house_line, factura: nil)
       bl_service.update!(billed_to_entity: receiver)
 
       result = described_class.call(serviceables: [ bl_service ], actor: actor)

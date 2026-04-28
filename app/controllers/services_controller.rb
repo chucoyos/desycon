@@ -155,19 +155,46 @@ class ServicesController < ApplicationController
   def bl_house_line_service_rows
     services = bl_house_line_services_scope.to_a
     service_ids = services.map(&:id)
-    container_numbers_by_service_id = if service_ids.empty?
+    container_details_by_service_id = if service_ids.empty?
       {}
     else
-      BlHouseLineService
-        .joins(bl_house_line: :container)
+      rows = BlHouseLineService
+        .left_joins(bl_house_line: { container: { voyage: :destination_port } })
         .where(id: service_ids)
-        .pluck("bl_house_line_services.id", "containers.number")
-        .to_h
+        .pluck(
+          "bl_house_line_services.id",
+          "containers.id",
+          "containers.number",
+          "ports.name",
+          "ports.code",
+          "containers.bl_master",
+          "containers.consolidator_entity_id"
+        )
+
+      consolidator_ids = rows.map { |_service_id, _container_id, _number, _port_name, _port_code, _bl_master, consolidator_id| consolidator_id }.compact.uniq
+      consolidator_names_by_id = Entity.where(id: consolidator_ids).pluck(:id, :name).to_h
+
+      rows.each_with_object({}) do |(service_id, _container_id, number, port_name, port_code, bl_master, consolidator_id), hash|
+        destination_port = if port_name.present? && port_code.present?
+          "#{port_name} (#{port_code})"
+        elsif port_name.present?
+          port_name
+        elsif port_code.present?
+          port_code
+        end
+
+        hash[service_id] = {
+          number: number.to_s.strip.presence,
+          destination_port: destination_port.to_s.strip.presence,
+          bl_master: bl_master.to_s.strip.presence,
+          consolidator_name: consolidator_names_by_id[consolidator_id].to_s.strip.presence
+        }
+      end
     end
 
     services.map do |service|
       bl_house_line = service.bl_house_line
-      container = bl_house_line&.container
+      container_details = container_details_by_service_id[service.id] || {}
       client_name = bl_house_line&.client&.name
       billed_to_name = service.billed_to_entity&.name
       latest_invoice_id = service.latest_invoice&.id
@@ -181,12 +208,12 @@ class ServicesController < ApplicationController
         service_name: service.service_catalog&.name.presence || "-",
         status_label: service.facturado? ? "Facturado" : "Proforma",
         facturado: service.facturado?,
-        container_number: container_numbers_by_service_id[service.id].presence || "-",
-        destination_port: container&.destination_port&.display_name.presence || "-",
-        bl_master: container&.bl_master.presence || "-",
+        container_number: container_details[:number].presence || "-",
+        destination_port: container_details[:destination_port].presence || "-",
+        bl_master: container_details[:bl_master].presence || "-",
         peso: bl_house_line&.peso,
         volumen: bl_house_line&.volumen,
-        consolidator_name: container&.consolidator_entity&.name.presence || "-",
+        consolidator_name: container_details[:consolidator_name].presence || "-",
         blhouse: bl_house_line&.blhouse.presence || "-",
         agency_name: bl_house_line&.customs_agent&.name.presence || "-",
         customs_agent_patent: customs_agent_patent_for_bl_house_line(bl_house_line),
@@ -232,8 +259,7 @@ class ServicesController < ApplicationController
         bl_house_line: [
           :customs_agent,
           :customs_broker,
-          :client,
-          { container: [ { voyage: :destination_port }, :consolidator_entity ] }
+          :client
         ]
       )
 

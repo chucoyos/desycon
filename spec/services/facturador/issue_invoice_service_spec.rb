@@ -12,7 +12,12 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
         sat_objeto_imp: '02'
       )
     end
-    let(:invoiceable) { create(:container_service, service_catalog: service_catalog) }
+    let(:invoiceable) do
+      destination_port = create(:port, :veracruz)
+      voyage = create(:voyage, destination_port: destination_port)
+      container = create(:container, tipo_maniobra: 'importacion', voyage: voyage, recinto: 'ICAVE', almacen: 'CICE')
+      create(:container_service, container: container, service_catalog: service_catalog)
+    end
 
     let(:invoice) do
       create(
