@@ -54,6 +54,37 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).not_to include(other_invoice.sat_uuid)
     end
 
+    it 'filters by folio with exact match' do
+      exact_match = create(:invoice, provider_response: { 'folio' => '7' }, sat_uuid: 'UUID-FOLIO-EXACT-7')
+      partial_match = create(:invoice, provider_response: { 'folio' => '274' }, sat_uuid: 'UUID-FOLIO-PARTIAL-274')
+
+      get invoices_path, params: { folio: '7' }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(exact_match.sat_uuid)
+      expect(response.body).not_to include(partial_match.sat_uuid)
+      expect(response.body).to include('data-testid="applied-filters"')
+      expect(response.body).to include('data-filter-key="folio"')
+    end
+
+    it 'filters by selected service catalog' do
+      matching_catalog = create(:service_catalog, name: 'Maniobra Especial X9', code: 'MEX-X9')
+      other_catalog = create(:service_catalog, name: 'Almacenaje Premium', code: 'ALM-PRE')
+
+      matching_service = create(:container_service, service_catalog: matching_catalog)
+      other_service = create(:container_service, service_catalog: other_catalog)
+
+      matching_invoice = create(:invoice, invoiceable: matching_service, sat_uuid: 'UUID-SERVICE-MATCH-001')
+      other_invoice = create(:invoice, invoiceable: other_service, sat_uuid: 'UUID-SERVICE-OTHER-001')
+
+      get invoices_path, params: { service_catalog_id: matching_catalog.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(matching_invoice.sat_uuid)
+      expect(response.body).not_to include(other_invoice.sat_uuid)
+      expect(response.body).to include('data-filter-key="service"')
+    end
+
     it 'filters by container number and blhouse' do
       matching_container = create(:container, number: 'ABCD1234567')
       non_matching_container = create(:container, number: 'WXYZ7654321')
@@ -296,6 +327,22 @@ RSpec.describe 'Invoices', type: :request do
       get receivers_search_invoices_path, params: { q: 'Receptor' }, as: :json
 
       expect(response).to have_http_status(:redirect)
+    end
+  end
+
+  describe 'GET /invoices/services_search' do
+    before { sign_in admin_user, scope: :user }
+
+    it 'returns matching services for autocomplete' do
+      matching = create(:service_catalog, name: 'Servicio Radar', code: 'SRV-RADAR')
+      create(:service_catalog, name: 'Servicio Patio', code: 'SRV-PATIO')
+
+      get services_search_invoices_path, params: { q: 'Radar' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      labels = payload.fetch('results').map { |item| item.fetch('label') }
+      expect(labels).to include(matching.display_name)
     end
   end
 

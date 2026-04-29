@@ -207,6 +207,41 @@
           <%= f.text_field :folio, value: @selected_folio, placeholder: "Buscar Folio", class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
         </div>
 
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Servicio</label>
+          <div
+            data-controller="catalog-autocomplete"
+            data-catalog-autocomplete-url-value="<%= services_search_invoices_path %>"
+            data-catalog-autocomplete-min-chars-value="2"
+            data-catalog-autocomplete-debounce-value="300"
+            class="relative"
+          >
+            <%= hidden_field_tag :service_catalog_id,
+              @selected_service_catalog_id,
+              data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+            <%= text_field_tag :service_search,
+              @selected_service,
+              autocomplete: "off",
+              placeholder: "Todos",
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all",
+              data: {
+                catalog_autocomplete_target: "input",
+                action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+              } %>
+
+            <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+            <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+          </div>
+
+          <noscript>
+            <%= text_field_tag :service,
+              @selected_service_query,
+              placeholder: "Buscar servicio (nombre o codigo)",
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
+          </noscript>
+        </div>
+
         <div class="md:col-span-2 xl:col-span-3 flex gap-2 items-end">
           <%= f.submit "Filtrar", class: "px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md cursor-pointer" %>
           <%= link_to "Limpiar", invoices_path, class: "cursor-pointer px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors" %>
@@ -214,6 +249,23 @@
       </div>
     <% end %>
   </div>
+
+  <% if @applied_filters.present? %>
+    <div class="mb-4 rounded-xl border border-indigo-100 bg-indigo-50/60 px-4 py-3" data-testid="applied-filters">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+        <p class="text-xs font-semibold uppercase tracking-wider text-indigo-700">Filtros aplicados</p>
+        <p class="text-xs text-indigo-700"><%= pluralize(@applied_filters.size, "filtro", "filtros") %> activos</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <% @applied_filters.each do |filter| %>
+          <span class="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-white px-3 py-1 text-xs text-indigo-900" data-filter-key="<%= filter[:key] %>">
+            <span class="font-semibold"><%= filter[:label] %>:</span>
+            <span><%= filter[:value] %></span>
+          </span>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
 
   <div class="mb-6">
     <%= render 'shared/tailwind_pagination', paginated: @invoices %>

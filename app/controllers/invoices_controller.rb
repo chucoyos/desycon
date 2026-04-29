@@ -25,7 +25,11 @@ class InvoicesController < ApplicationController
     @selected_blhouse = params[:blhouse].to_s.strip.presence
     @selected_serie = params[:serie].to_s.strip.presence
     @selected_folio = params[:folio].to_s.strip.presence
+    @selected_service_catalog_id = params[:service_catalog_id].to_s.presence
+    @selected_service_query = params[:service].to_s.strip.presence
+    @selected_service = resolved_selected_service_label
     @selected_uuid = params[:uuid].to_s.strip.presence
+    @applied_filters = build_applied_filters(admin_or_executive: admin_or_executive)
 
     start_date = [ @selected_start_date, @selected_end_date ].min
     end_date = [ @selected_start_date, @selected_end_date ].max
@@ -147,8 +151,119 @@ class InvoicesController < ApplicationController
     end
     if @selected_folio.present?
       @invoices = @invoices.where(
-        "COALESCE(invoices.provider_response->>'folio', invoices.provider_response->>'noComprobante', invoices.provider_response->>'numeroComprobante', invoices.facturador_comprobante_id::text, '') ILIKE ?",
-        "%#{@selected_folio}%"
+        "LOWER(COALESCE(invoices.provider_response->>'folio', invoices.provider_response->>'noComprobante', invoices.provider_response->>'numeroComprobante', invoices.facturador_comprobante_id::text, '')) = LOWER(?)",
+        @selected_folio
+      )
+    end
+    if @selected_service_catalog_id.present?
+      @invoices = @invoices.where(
+        <<~SQL,
+          (
+            invoices.invoiceable_type = 'ContainerService' AND EXISTS (
+              SELECT 1
+              FROM container_services
+              WHERE container_services.id = invoices.invoiceable_id
+                AND container_services.service_catalog_id = :service_catalog_id
+            )
+          )
+          OR
+          (
+            invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
+              SELECT 1
+              FROM bl_house_line_services
+              WHERE bl_house_line_services.id = invoices.invoiceable_id
+                AND bl_house_line_services.service_catalog_id = :service_catalog_id
+            )
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM invoice_service_links
+            INNER JOIN container_services
+              ON invoice_service_links.serviceable_type = 'ContainerService'
+             AND invoice_service_links.serviceable_id = container_services.id
+            WHERE invoice_service_links.invoice_id = invoices.id
+              AND container_services.service_catalog_id = :service_catalog_id
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM invoice_service_links
+            INNER JOIN bl_house_line_services
+              ON invoice_service_links.serviceable_type = 'BlHouseLineService'
+             AND invoice_service_links.serviceable_id = bl_house_line_services.id
+            WHERE invoice_service_links.invoice_id = invoices.id
+              AND bl_house_line_services.service_catalog_id = :service_catalog_id
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM invoice_line_items
+            WHERE invoice_line_items.invoice_id = invoices.id
+              AND invoice_line_items.service_catalog_id = :service_catalog_id
+          )
+        SQL
+        service_catalog_id: @selected_service_catalog_id
+      )
+    elsif @selected_service_query.present?
+      @invoices = @invoices.where(
+        <<~SQL,
+          (
+            invoices.invoiceable_type = 'ContainerService' AND EXISTS (
+              SELECT 1
+              FROM container_services
+              INNER JOIN service_catalogs ON service_catalogs.id = container_services.service_catalog_id
+              WHERE container_services.id = invoices.invoiceable_id
+                AND (
+                  service_catalogs.name ILIKE :service_query
+                  OR service_catalogs.code ILIKE :service_query
+                )
+            )
+          )
+          OR
+          (
+            invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
+              SELECT 1
+              FROM bl_house_line_services
+              INNER JOIN service_catalogs ON service_catalogs.id = bl_house_line_services.service_catalog_id
+              WHERE bl_house_line_services.id = invoices.invoiceable_id
+                AND (
+                  service_catalogs.name ILIKE :service_query
+                  OR service_catalogs.code ILIKE :service_query
+                )
+            )
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM invoice_service_links
+            INNER JOIN container_services
+              ON invoice_service_links.serviceable_type = 'ContainerService'
+             AND invoice_service_links.serviceable_id = container_services.id
+            INNER JOIN service_catalogs ON service_catalogs.id = container_services.service_catalog_id
+            WHERE invoice_service_links.invoice_id = invoices.id
+              AND (
+                service_catalogs.name ILIKE :service_query
+                OR service_catalogs.code ILIKE :service_query
+              )
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM invoice_service_links
+            INNER JOIN bl_house_line_services
+              ON invoice_service_links.serviceable_type = 'BlHouseLineService'
+             AND invoice_service_links.serviceable_id = bl_house_line_services.id
+            INNER JOIN service_catalogs ON service_catalogs.id = bl_house_line_services.service_catalog_id
+            WHERE invoice_service_links.invoice_id = invoices.id
+              AND (
+                service_catalogs.name ILIKE :service_query
+                OR service_catalogs.code ILIKE :service_query
+              )
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM invoice_line_items
+            WHERE invoice_line_items.invoice_id = invoices.id
+              AND invoice_line_items.description ILIKE :service_query
+          )
+        SQL
+        service_query: "%#{@selected_service_query}%"
       )
     end
     @invoices = @invoices.where("sat_uuid ILIKE ?", "%#{@selected_uuid}%") if @selected_uuid.present?
@@ -406,6 +521,44 @@ class InvoicesController < ApplicationController
           {
             id:,
             label: name
+          }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
+  def services_search
+    authorize Invoice, :index?
+
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    cache_key = [
+      "invoices",
+      "services_search",
+      current_user.id,
+      query.downcase,
+      limit
+    ].join(":")
+
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      ServiceCatalog
+        .active
+        .where("service_catalogs.name ILIKE :query OR service_catalogs.code ILIKE :query", query: "%#{query}%")
+        .order(:name)
+        .limit(limit)
+        .pluck(:id, :name, :code)
+        .map do |id, name, code|
+          {
+            id:,
+            label: code.present? ? "#{name} (#{code})" : name,
+            subtitle: code.present? ? "Codigo: #{code}" : nil
           }
         end
     end
@@ -1153,6 +1306,15 @@ class InvoicesController < ApplicationController
     parse_filter_date(params[:end_date]) || default_end_date
   end
 
+  def resolved_selected_service_label
+    return nil if @selected_service_catalog_id.blank?
+
+    service_catalog = ServiceCatalog.find_by(id: @selected_service_catalog_id)
+    return nil if service_catalog.blank?
+
+    service_catalog.display_name
+  end
+
   def parse_filter_date(value)
     return nil if value.blank?
 
@@ -1167,6 +1329,64 @@ class InvoicesController < ApplicationController
 
   def default_end_date
     Date.current
+  end
+
+  def build_applied_filters(admin_or_executive:)
+    filters = []
+
+    if params[:start_date].present?
+      filters << { key: "start_date", label: "Desde", value: @selected_start_date.strftime("%d/%m/%Y") }
+    end
+
+    if params[:end_date].present?
+      filters << { key: "end_date", label: "Hasta", value: @selected_end_date.strftime("%d/%m/%Y") }
+    end
+
+    if @selected_status.present? && Invoice::STATUSES.include?(@selected_status)
+      filters << {
+        key: "status",
+        label: "Emision",
+        value: I18n.t("activerecord.attributes.invoice.statuses.#{@selected_status}", default: @selected_status.humanize)
+      }
+    end
+
+    if @selected_kind.present? && Invoice::KINDS.include?(@selected_kind)
+      kind_label = @selected_kind == "ingreso" ? "Factura" : "Pago"
+      filters << { key: "kind", label: "Tipo comprobante", value: kind_label }
+    end
+
+    if @selected_payment_status.present? && Invoice::PAYMENT_STATUSES.include?(@selected_payment_status)
+      payment_label = Invoice::PAYMENT_STATUS_LABELS[@selected_payment_status] || @selected_payment_status.humanize
+      filters << { key: "payment_status", label: "Pago", value: payment_label }
+    end
+
+    if @selected_client_id.present?
+      client_name = Entity.where(id: @selected_client_id).pick(:name)
+      filters << { key: "client", label: "Receptor", value: client_name.presence || @selected_client_id }
+    end
+
+    if admin_or_executive && @selected_customs_agent_id.present?
+      agent_name = Entity.where(id: @selected_customs_agent_id).pick(:name)
+      filters << { key: "customs_agent", label: "Agencia aduanal", value: agent_name.presence || @selected_customs_agent_id }
+    end
+
+    if admin_or_executive && @selected_consolidator_id.present?
+      consolidator_name = Entity.where(id: @selected_consolidator_id).pick(:name)
+      filters << { key: "consolidator", label: "Consolidador", value: consolidator_name.presence || @selected_consolidator_id }
+    end
+
+    filters << { key: "uuid", label: "UUID", value: @selected_uuid } if @selected_uuid.present?
+    filters << { key: "container_number", label: "Contenedor", value: @selected_container_number } if @selected_container_number.present?
+    filters << { key: "blhouse", label: "BL House", value: @selected_blhouse } if @selected_blhouse.present?
+    filters << { key: "serie", label: "Serie", value: @selected_serie } if @selected_serie.present?
+    filters << { key: "folio", label: "Folio", value: @selected_folio } if @selected_folio.present?
+    if @selected_service_catalog_id.present? && @selected_service.present?
+      filters << { key: "service", label: "Servicio", value: @selected_service }
+    elsif @selected_service_query.present?
+      filters << { key: "service", label: "Servicio", value: @selected_service_query }
+    end
+
+    filters
   end
 
   def cancel_error_alert(message, exception_flow:)
