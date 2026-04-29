@@ -26,6 +26,10 @@ class InvoicePaymentEvidence < ApplicationRecord
     self.class.status_label_for(status)
   end
 
+  def sender_entity_name
+    customs_agent&.name.to_s.strip.presence || "-"
+  end
+
   # Maintains backward compatibility with legacy records that only have invoice_id.
   def invoices_for_review
     linked = invoices.to_a

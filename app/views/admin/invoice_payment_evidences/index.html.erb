@@ -51,12 +51,12 @@
   </div>
 
   <div class="hidden lg:block bg-white shadow-sm rounded-xl overflow-hidden border border-gray-100">
-    <table class="min-w-full divide-y divide-gray-200">
+    <table class="min-w-full table-fixed divide-y divide-gray-200">
       <thead class="bg-gradient-to-r from-gray-50 to-white">
         <tr>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ID</th>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Factura</th>
-          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Entidad remitente</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-64">Entidad remitente</th>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Referencia</th>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Estado</th>
           <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Acción</th>
@@ -84,7 +84,11 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 <%= link_to invoice_label, invoice_path(evidence.invoice), class: "text-blue-600 hover:text-blue-800 font-medium" %>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= evidence.customs_agent&.name %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <span class="block max-w-64 truncate" title="<%= evidence.sender_entity_name %>">
+                  <%= evidence.sender_entity_name %>
+                </span>
+              </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= evidence.reference %></td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <% badge_classes = case evidence.status

@@ -24,7 +24,7 @@ end %>
     <div class="min-w-0">
       <p class="text-xs text-gray-500">Evidencia #<%= evidence.id %></p>
       <p class="text-xs text-gray-500 mt-1">Entidad remitente</p>
-      <p class="text-sm font-semibold text-gray-900"><%= evidence.customs_agent&.name %></p>
+      <p class="text-sm font-semibold text-gray-900"><%= evidence.sender_entity_name %></p>
       <p class="text-xs text-gray-600 mt-1">Referencia: <%= evidence.reference %></p>
       <p class="text-xs text-gray-600">Factura: <%= invoice_label %></p>
     </div>
