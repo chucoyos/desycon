@@ -99,6 +99,124 @@ RSpec.describe "Containers", type: :request do
       expect(response.body).not_to include(other_container.number)
       expect(response.body).to include("Línea: #{selected_line.iso_code}")
     end
+
+    it "shows operations report button" do
+      get containers_url
+
+      expect(response).to be_successful
+      expect(response.body).to include("Reporte Operaciones")
+    end
+  end
+
+  describe "GET /containers/operations_report" do
+    before { sign_in user, scope: :user }
+
+    it "exports container listing filtered by consolidator" do
+      consolidator = create(:entity, :consolidator, name: "Consolidador Excel")
+      other_consolidator = create(:entity, :consolidator, name: "Consolidador Otro")
+
+      voyage = create(
+        :voyage,
+        eta: Time.zone.local(2026, 4, 2, 8, 0, 0),
+        ata: Time.zone.local(2026, 4, 3, 9, 30, 0),
+        inicio_operacion: Time.zone.local(2026, 4, 4, 7, 15, 0),
+        fin_operacion: Time.zone.local(2026, 4, 6, 18, 45, 0)
+      )
+
+      container = create(
+        :container,
+        voyage: voyage,
+        status: "activo",
+        consolidator_entity: consolidator,
+        archivo_nr: "REF-OP-001",
+        ejecutivo: "Ejecutivo Test",
+        bl_master: "MBL-OP-001",
+        recinto: "ICAVE",
+        fecha_revalidacion_bl_master: Time.zone.local(2026, 4, 9, 14, 0, 0),
+        fecha_transferencia: Time.zone.local(2026, 4, 11, 10, 0, 0),
+        fecha_desconsolidacion: Date.new(2026, 4, 12),
+        almacen: "CICE"
+      )
+
+      other_container = create(:container, consolidator_entity: other_consolidator, archivo_nr: "REF-OP-999")
+
+      create_list(:bl_house_line, 3, container: container, cantidad: 2, peso: 10.5)
+      create(:bl_house_line, container: other_container, cantidad: 9, peso: 99.9)
+
+      get operations_report_containers_url, params: { consolidator_id: consolidator.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.headers["Content-Type"]).to include("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+      tempfile = Tempfile.new([ "operaciones", ".xlsx" ])
+      tempfile.binmode
+      tempfile.write(response.body)
+      tempfile.rewind
+
+      workbook = Roo::Excelx.new(tempfile.path)
+      sheet = workbook.sheet(0)
+
+      expect(sheet.row(1)).to eq([
+        "Ejecutivo",
+        "Referencia",
+        "Estatus",
+        "Contenedor",
+        "MBL",
+        "Buque",
+        "ETA",
+        "ATA",
+        "Inicio de Operacion",
+        "Fin de Operacion",
+        "Naviera",
+        "Puerto Origen",
+        "Terminal",
+        "Almacen",
+        "Cliente",
+        "No. de Partidas",
+        "No. de Bultos",
+        "Peso",
+        "Fecha Revalidacion Bl Master",
+        "Fecha de Transferencia",
+        "Fecha Desconsolidacion",
+        "Observaciones",
+        "Toque de Piso",
+        "Inicio de Revalidacion(Fecha-hora)",
+        "Tiempo Transcurrido en Horas",
+        "Patio de Entrega",
+        "Entrega de Vacio(fecha)",
+        "Entrega EIR(Fecha)",
+        "Recepcion Documentos",
+        "Solicitud Corte de Demoras(fecha)",
+        "Confirmacion Corte de Demoras por LN(fecha)",
+        "Cuenta de Gastos(fecha)",
+        "Almacenaje de Vacio",
+        "Daños",
+        "Costo",
+        "IMO"
+      ])
+
+      expect(sheet.last_row).to eq(2)
+      expect(sheet.row(2)[0]).to eq("Ejecutivo Test")
+      expect(sheet.row(2)[1]).to eq("REF-OP-001")
+      expect(sheet.row(2)[2]).to eq(container.status.humanize)
+      expect(sheet.row(2)[12]).to eq("ICAVE")
+      expect(sheet.row(2)[13]).to eq("CICE")
+      expect(sheet.row(2)[14]).to eq("Consolidador Excel")
+      expect(sheet.row(2)[15]).to eq(3)
+      expect(sheet.row(2)[16]).to eq(6)
+      expect(sheet.row(2)[17]).to eq(31.5)
+
+      tempfile.close!
+    end
+
+    it "denies customs broker users" do
+      restricted_user = create(:user, :customs_broker)
+      sign_in restricted_user, scope: :user
+
+      get operations_report_containers_url
+
+      expect(response).to have_http_status(:found)
+    end
   end
 
   describe "GET /containers/:id" do

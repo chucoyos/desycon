@@ -1,4 +1,6 @@
 class ContainersController < ApplicationController
+  require "caxlsx"
+
   before_action :authenticate_user!
   after_action :verify_authorized, except: :index
   before_action :set_container, only: %i[
@@ -73,6 +75,48 @@ class ContainersController < ApplicationController
       @clients << @container.consolidator_entity
       @clients.sort_by!(&:name)
     end
+  end
+
+  def operations_report
+    authorize Container, :index?
+
+    scope = policy_scope(Container)
+      .recent
+      .includes(:shipping_line, :vessel, :voyage, :origin_port, :container_status_histories, bl_house_lines: :client)
+
+    selected_start_date = resolved_start_date
+    selected_end_date = resolved_end_date
+    selected_eta = current_user&.consolidator? ? parse_filter_date(params[:eta]) : nil
+    selected_consolidator_id = current_user&.consolidator? ? current_user.entity_id : params[:consolidator_id].presence
+
+    start_date = [ selected_start_date, selected_end_date ].min
+    end_date = [ selected_start_date, selected_end_date ].max
+
+    scope = scope.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+    scope = scope.by_status(params[:status]) if params[:status].present?
+    scope = scope.where("archivo_nr ILIKE ?", "%#{params[:reference]}%") if params[:reference].present?
+    scope = scope.by_consolidator(selected_consolidator_id) if selected_consolidator_id.present?
+
+    if current_user&.consolidator?
+      if selected_eta.present?
+        scope = scope.joins(:voyage).where(voyages: { eta: selected_eta.beginning_of_day..selected_eta.end_of_day })
+      end
+    elsif params[:shipping_line_id].present?
+      scope = scope.by_shipping_line(params[:shipping_line_id])
+    end
+
+    scope = scope.where("bl_master ILIKE ?", "%#{params[:bl_master]}%") if params[:bl_master].present?
+    scope = scope.where("number ILIKE ?", "%#{params[:search]}%") if params[:search].present?
+
+    rows = build_operations_report_rows(scope.order(created_at: :desc, id: :desc))
+    timestamp = Time.current.strftime("%Y%m%d_%H%M%S")
+
+    send_data(
+      build_operations_report_xlsx(rows),
+      filename: "reporte_operaciones_#{timestamp}.xlsx",
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      disposition: "attachment"
+    )
   end
 
   def new
@@ -752,5 +796,121 @@ class ContainersController < ApplicationController
       end
       format.html { redirect_to containers_path, notice: message }
     end
+  end
+
+  def build_operations_report_rows(scope)
+    scope.map do |container|
+      bl_house_lines = container.bl_house_lines
+      consolidator_name = container.consolidator_entity&.name.to_s.strip.presence || "-"
+
+      [
+        container.ejecutivo.to_s.strip.presence || "-",
+        container.archivo_nr.to_s.strip.presence || "-",
+        container.status.to_s.humanize.presence || "-",
+        container.number.to_s.strip.presence || "-",
+        container.bl_master.to_s.strip.presence || "-",
+        container.vessel&.name.to_s.strip.presence || "-",
+        container.voyage&.eta,
+        container.voyage&.ata,
+        container.voyage&.inicio_operacion,
+        container.voyage&.fin_operacion,
+        container.shipping_line&.name.to_s.strip.presence || "-",
+        container.origin_port&.display_name.to_s.strip.presence || container.origin_port&.name.to_s.strip.presence || "-",
+        container.recinto.to_s.strip.presence || "-",
+        container.almacen.to_s.strip.presence || "-",
+        consolidator_name,
+        bl_house_lines.size,
+        bl_house_lines.sum { |line| line.cantidad.to_i },
+        bl_house_lines.sum { |line| line.peso.to_d },
+        container.fecha_revalidacion_bl_master,
+        container.fecha_transferencia,
+        container.fecha_desconsolidacion,
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    end
+  end
+
+  def build_operations_report_xlsx(rows)
+    package = Axlsx::Package.new
+    workbook = package.workbook
+
+    workbook.add_worksheet(name: "Operaciones") do |sheet|
+      header = [
+        "Ejecutivo",
+        "Referencia",
+        "Estatus",
+        "Contenedor",
+        "MBL",
+        "Buque",
+        "ETA",
+        "ATA",
+        "Inicio de Operacion",
+        "Fin de Operacion",
+        "Naviera",
+        "Puerto Origen",
+        "Terminal",
+        "Almacen",
+        "Cliente",
+        "No. de Partidas",
+        "No. de Bultos",
+        "Peso",
+        "Fecha Revalidacion Bl Master",
+        "Fecha de Transferencia",
+        "Fecha Desconsolidacion",
+        "Observaciones",
+        "Toque de Piso",
+        "Inicio de Revalidacion(Fecha-hora)",
+        "Tiempo Transcurrido en Horas",
+        "Patio de Entrega",
+        "Entrega de Vacio(fecha)",
+        "Entrega EIR(Fecha)",
+        "Recepcion Documentos",
+        "Solicitud Corte de Demoras(fecha)",
+        "Confirmacion Corte de Demoras por LN(fecha)",
+        "Cuenta de Gastos(fecha)",
+        "Almacenaje de Vacio",
+        "Daños",
+        "Costo",
+        "IMO"
+      ]
+
+      styles = sheet.styles
+      header_style = styles.add_style(b: true, bg_color: "1F2937", fg_color: "FFFFFF", alignment: { horizontal: :center })
+      datetime_style = styles.add_style(format_code: "yyyy-mm-dd hh:mm")
+      date_style = styles.add_style(format_code: "yyyy-mm-dd")
+      integer_style = styles.add_style(format_code: "0")
+      decimal_style = styles.add_style(format_code: "0.00")
+
+      sheet.add_row(header, style: header_style)
+
+      row_style = Array.new(header.length)
+      [ 6, 7, 8, 9, 18, 19 ].each { |index| row_style[index] = datetime_style }
+      row_style[20] = date_style
+      row_style[15] = integer_style
+      row_style[16] = integer_style
+      row_style[17] = decimal_style
+
+      rows.each do |row|
+        sheet.add_row(row, style: row_style)
+      end
+
+      sheet.column_widths 18, 18, 18, 18, 18, 24, 18, 18, 20, 20, 20, 20, 20, 18, 24, 16, 16, 12, 24, 24, 22, 30, 16, 26, 22, 18, 20, 18, 22, 32, 34, 24, 20, 12, 12, 12
+    end
+
+    package.to_stream.read
   end
 end
