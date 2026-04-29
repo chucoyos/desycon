@@ -627,7 +627,7 @@ class BlHouseLinesController < ApplicationController
         "Peso",
         "M3",
         "Agente Aduanal",
-        "Liberacion",
+        "Telex",
         "Fecha Revalidacion",
         "Fecha Despacho"
       ]
