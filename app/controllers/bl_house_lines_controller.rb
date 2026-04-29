@@ -28,7 +28,7 @@ class BlHouseLinesController < ApplicationController
   end
 
   def revalidations_report
-    authorize BlHouseLine, :index?
+    authorize BlHouseLine, :revalidations_report?
 
     @status_filter_options = customs_agent_user? ? customs_agent_statuses : BlHouseLine.statuses.keys
     rows = build_revalidations_report_rows(

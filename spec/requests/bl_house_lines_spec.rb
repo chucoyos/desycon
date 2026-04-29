@@ -377,6 +377,15 @@ RSpec.describe "BlHouseLines", type: :request do
 
       tempfile.close!
     end
+
+    it "denies access for consolidator users" do
+      consolidator_user = create(:user, :consolidator)
+      sign_in consolidator_user, scope: :user
+
+      get revalidations_report_bl_house_lines_url
+
+      expect(response).to have_http_status(:found)
+    end
   end
 
   describe "GET /bl_house_lines/clients_search" do

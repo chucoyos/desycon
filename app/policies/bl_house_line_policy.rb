@@ -84,6 +84,10 @@ class BlHouseLinePolicy < ApplicationPolicy
     reassign?
   end
 
+  def revalidations_report?
+    user.present? && user.admin_or_executive?
+  end
+
   class Scope < Scope
     def resolve
       if user.nil?
