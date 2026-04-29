@@ -448,6 +448,48 @@ class InvoicesController < ApplicationController
     render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
   end
 
+  def manual_services_search
+    authorize Invoice, :new?
+
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    cache_key = [
+      "invoices",
+      "manual_services_search",
+      current_user.id,
+      query.downcase,
+      limit
+    ].join(":")
+
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      ServiceCatalog
+        .active
+        .where("service_catalogs.name ILIKE :query OR service_catalogs.code ILIKE :query", query: "%#{query}%")
+        .order(:name)
+        .limit(limit)
+        .pluck(:id, :name, :code, :amount)
+        .map do |id, name, code, amount|
+          {
+            id:,
+            label: code.present? ? "#{name} (#{code})" : name,
+            subtitle: code.present? ? "Codigo: #{code}" : nil,
+            data: {
+              service_name: name,
+              service_price: amount.to_s
+            }
+          }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
   def customs_agents_search
     authorize Invoice, :index?
 

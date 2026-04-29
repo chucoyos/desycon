@@ -50,6 +50,7 @@ Rails.application.routes.draw do
       get :manual_customs_agents_search
       get :receivers_search
       get :manual_receivers_search
+      get :manual_services_search
       get :services_search
       post :issue_manual
       post :issue_manual_batch

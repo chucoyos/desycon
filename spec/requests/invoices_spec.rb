@@ -429,6 +429,35 @@ RSpec.describe 'Invoices', type: :request do
     end
   end
 
+  describe 'GET /invoices/manual_services_search' do
+    before { sign_in admin_user, scope: :user }
+
+    it 'returns empty results when query is too short' do
+      get manual_services_search_invoices_path, params: { q: 'a' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload['results']).to eq([])
+      expect(payload.dig('meta', 'min_chars')).to eq(2)
+    end
+
+    it 'returns matching service catalogs with pricing data' do
+      matching = create(:service_catalog, name: 'Concepto Maniobra Especial', code: 'CME-01', amount: 345.67)
+      create(:service_catalog, name: 'Concepto Almacenaje', code: 'CAL-02')
+
+      get manual_services_search_invoices_path, params: { q: 'Maniobra Especial' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      result = payload.fetch('results').find { |item| item.fetch('id') == matching.id }
+
+      expect(result).to be_present
+      expect(result.fetch('label')).to eq(matching.display_name)
+      expect(result.dig('data', 'service_name')).to eq(matching.name)
+      expect(result.dig('data', 'service_price')).to eq(matching.amount.to_s)
+    end
+  end
+
   describe 'GET /invoices/customs_agents_search' do
     before { sign_in admin_user, scope: :user }
 

@@ -4,6 +4,13 @@
 <% end %>
 <% manual_form_values = @manual_form_values || {} %>
 <% manual_line_items_prefill = @manual_line_items_prefill || [] %>
+<% service_catalog_lookup = @service_catalogs_for_manual.each_with_object({}) do |catalog, memo|
+  memo[catalog.id.to_s] = {
+    "label" => catalog.display_name,
+    "name" => catalog.name,
+    "price" => catalog.amount.to_s
+  }
+end %>
 <%
   selected_customs_agent = @customs_agents_for_manual.find do |agent|
     agent.id.to_s == manual_form_values["customs_agent_id"].to_s
@@ -145,12 +152,37 @@
           <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
             <div class="md:col-span-2">
               <label class="block text-xs font-medium text-gray-600 mb-1">Concepto (catálogo)</label>
-              <select name="manual_invoice[line_items][][service_catalog_id]" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg service-catalog-select" required>
-                <option value="">Seleccionar concepto</option>
-                <% @service_catalogs_for_manual.each do |catalog| %>
-                  <option value="<%= catalog.id %>" data-name="<%= catalog.name %>" data-price="<%= catalog.amount %>"><%= catalog.display_name %></option>
-                <% end %>
-              </select>
+              <div
+                data-controller="catalog-autocomplete"
+                data-catalog-autocomplete-url-value="<%= manual_services_search_invoices_path %>"
+                data-catalog-autocomplete-min-chars-value="2"
+                data-catalog-autocomplete-debounce-value="300"
+                class="relative"
+              >
+                <input type="hidden" name="manual_invoice[line_items][][service_catalog_id]" class="service-catalog-hidden" data-catalog-autocomplete-target="hiddenInput">
+
+                <input
+                  type="text"
+                  autocomplete="off"
+                  placeholder="Escribe para buscar concepto"
+                  class="w-full px-3 py-2.5 border border-gray-300 rounded-lg service-catalog-search"
+                  data-catalog-autocomplete-target="input"
+                  data-action="input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+                  required
+                >
+
+                <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+                <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+              </div>
+
+              <noscript>
+                <select name="manual_invoice[line_items][][service_catalog_id]" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg" required>
+                  <option value="">Seleccionar concepto</option>
+                  <% @service_catalogs_for_manual.each do |catalog| %>
+                    <option value="<%= catalog.id %>" data-name="<%= catalog.name %>" data-price="<%= catalog.amount %>"><%= catalog.display_name %></option>
+                  <% end %>
+                </select>
+              </noscript>
             </div>
 
             <div>
@@ -224,6 +256,7 @@
     const submitButton = document.getElementById('manual-cfdi-submit');
     const overlay = document.getElementById('manual-cfdi-processing-overlay');
     const prefilledLineItems = <%= raw(manual_line_items_prefill.to_json) %>;
+    const serviceCatalogLookup = <%= raw(service_catalog_lookup.to_json) %>;
 
     // In some browsers/navigation states, noscript fallbacks can leak into validation.
     // Disable them when JS is running so they never block submit.
@@ -237,6 +270,7 @@
     }
 
     const enterSubmittingState = () => {
+      if (!form.checkValidity()) return;
       if (overlay) overlay.classList.remove('hidden');
       form.setAttribute('aria-busy', 'true');
 
@@ -308,21 +342,29 @@
     };
 
     const attachLineItemEvents = (lineItem) => {
-      const select = lineItem.querySelector('.service-catalog-select');
+      const serviceCatalogHidden = lineItem.querySelector('.service-catalog-hidden');
+      const serviceCatalogSearch = lineItem.querySelector('.service-catalog-search');
       const description = lineItem.querySelector('.line-description');
       const price = lineItem.querySelector('.line-price');
       const removeBtn = lineItem.querySelector('.remove-manual-line-item');
 
-      select.addEventListener('change', () => {
-        const selected = select.selectedOptions[0];
-        if (!selected || !selected.value) {
+      const applyServiceSelection = () => {
+        if (!serviceCatalogHidden.value) {
           description.value = '';
           price.value = '0';
+          serviceCatalogSearch.setCustomValidity('Selecciona un concepto del catalogo.');
           return;
         }
 
-        description.value = selected.dataset.name || '';
-        price.value = selected.dataset.price || '0';
+        serviceCatalogSearch.setCustomValidity('');
+        description.value = serviceCatalogHidden.dataset.serviceName || '';
+        price.value = serviceCatalogHidden.dataset.servicePrice || '0';
+      };
+
+      serviceCatalogHidden.addEventListener('change', applyServiceSelection);
+      serviceCatalogSearch.addEventListener('input', () => {
+        if (serviceCatalogHidden.value) return;
+        serviceCatalogSearch.setCustomValidity('Selecciona un concepto del catalogo.');
       });
 
       removeBtn.addEventListener('click', () => {
@@ -335,12 +377,26 @@
       const lineItem = fragment.querySelector('.manual-line-item');
       attachLineItemEvents(lineItem);
 
-      const select = lineItem.querySelector('.service-catalog-select');
+      const serviceCatalogHidden = lineItem.querySelector('.service-catalog-hidden');
+      const serviceCatalogSearch = lineItem.querySelector('.service-catalog-search');
       const qty = lineItem.querySelector('.line-qty');
       const price = lineItem.querySelector('.line-price');
       const description = lineItem.querySelector('.line-description');
 
-      if (prefill.service_catalog_id) select.value = String(prefill.service_catalog_id);
+      if (prefill.service_catalog_id) {
+        const selectedServiceId = String(prefill.service_catalog_id);
+        const selectedService = serviceCatalogLookup[selectedServiceId];
+        serviceCatalogHidden.value = selectedServiceId;
+
+        if (selectedService) {
+          serviceCatalogSearch.value = selectedService.label || '';
+          serviceCatalogHidden.dataset.serviceName = selectedService.name || '';
+          serviceCatalogHidden.dataset.servicePrice = selectedService.price || '0';
+
+          if (!prefill.description) description.value = selectedService.name || '';
+          if (!prefill.unit_price) price.value = selectedService.price || '0';
+        }
+      }
       if (prefill.quantity) qty.value = String(prefill.quantity);
       if (prefill.unit_price) price.value = String(prefill.unit_price);
       if (prefill.description) description.value = String(prefill.description);
