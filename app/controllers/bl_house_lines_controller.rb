@@ -15,67 +15,34 @@ class BlHouseLinesController < ApplicationController
       redirect_to customs_agents_dashboard_path and return
     end
 
-    scope = policy_scope(BlHouseLine).includes(
-      :customs_broker,
-      :customs_agent,
-      { container: :consolidator_entity }
-    )
-
     @status_filter_options = customs_agent_user? ? customs_agent_statuses : BlHouseLine.statuses.keys
 
-    # Filters
-    if params[:blhouse].present?
-      scope = scope.where("bl_house_lines.blhouse ILIKE ?", "%#{params[:blhouse]}%")
-    end
-
-    if params[:container_number].present?
-      scope = scope.joins(:container).where("containers.number ILIKE ?", "%#{params[:container_number]}%")
-    end
-
-    if current_user&.consolidator?
-      if params[:reference].present? || params[:master_bl].present?
-        scope = scope.joins(:container)
-        scope = scope.where("containers.archivo_nr ILIKE ?", "%#{params[:reference]}%") if params[:reference].present?
-        scope = scope.where("containers.bl_master ILIKE ?", "%#{params[:master_bl]}%") if params[:master_bl].present?
-      end
-    else
-      if params[:client_id].present?
-        scope = scope.where(client_id: params[:client_id])
-      end
-
-      if params[:destination_port_id].present?
-        scope = scope.joins(container: :voyage).where(voyages: { destination_port_id: params[:destination_port_id] })
-      end
-    end
-
-    @selected_start_date = resolved_start_date
-    @selected_end_date = resolved_end_date
-
-    start_date = [ @selected_start_date, @selected_end_date ].min
-    end_date = [ @selected_start_date, @selected_end_date ].max
-
-    scope = scope.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
-
-    @selected_status_filter = selected_status_filter
-
-    if @selected_status_filter.present? && @status_filter_options.include?(@selected_status_filter)
-      scope = scope.where(status: @selected_status_filter)
-    end
-
-    if params[:hidden].present? && !customs_agent_user?
-      case params[:hidden]
-      when "hidden"
-        scope = scope.where(hidden_from_customs_agent: true)
-      when "visible"
-        scope = scope.where(hidden_from_customs_agent: false)
-      end
-    end
+    scope = filtered_bl_house_lines_scope(base_bl_house_lines_scope)
 
     @bl_house_lines = scope.order(created_at: :desc, id: :desc).page(params[:page]).per(params[:per] || 10)
 
     # Data for filters
     load_clients
+    @consolidators = Entity.consolidators.order(:name)
     @destination_ports = destination_port_filter_options
+  end
+
+  def revalidations_report
+    authorize BlHouseLine, :index?
+
+    @status_filter_options = customs_agent_user? ? customs_agent_statuses : BlHouseLine.statuses.keys
+    rows = build_revalidations_report_rows(
+      filtered_bl_house_lines_scope(base_bl_house_lines_scope)
+        .order(created_at: :desc, id: :desc)
+    )
+
+    timestamp = Time.current.strftime("%Y%m%d_%H%M%S")
+    send_data(
+      build_revalidations_report_xlsx(rows),
+      filename: "reporte_revalidaciones_#{timestamp}.xlsx",
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      disposition: "attachment"
+    )
   end
 
   def clients_search
@@ -548,10 +515,151 @@ class BlHouseLinesController < ApplicationController
     params[:blhouse].blank? &&
       params[:container_number].blank? &&
       params[:client_id].blank? &&
+      params[:consolidator_id].blank? &&
       params[:destination_port_id].blank? &&
       params[:start_date].blank? &&
       params[:end_date].blank? &&
       params[:hidden].blank?
+  end
+
+  def base_bl_house_lines_scope
+    policy_scope(BlHouseLine).includes(
+      :customs_broker,
+      :customs_agent,
+      { container: :consolidator_entity }
+    )
+  end
+
+  def filtered_bl_house_lines_scope(scope)
+    if params[:blhouse].present?
+      scope = scope.where("bl_house_lines.blhouse ILIKE ?", "%#{params[:blhouse]}%")
+    end
+
+    if params[:container_number].present?
+      scope = scope.joins(:container).where("containers.number ILIKE ?", "%#{params[:container_number]}%")
+    end
+
+    if current_user&.consolidator?
+      if params[:reference].present? || params[:master_bl].present?
+        scope = scope.joins(:container)
+        scope = scope.where("containers.archivo_nr ILIKE ?", "%#{params[:reference]}%") if params[:reference].present?
+        scope = scope.where("containers.bl_master ILIKE ?", "%#{params[:master_bl]}%") if params[:master_bl].present?
+      end
+    else
+      if params[:client_id].present?
+        scope = scope.where(client_id: params[:client_id])
+      end
+
+      if params[:consolidator_id].present?
+        scope = scope.joins(:container).where(containers: { consolidator_entity_id: params[:consolidator_id] })
+      end
+
+      if params[:destination_port_id].present?
+        scope = scope.joins(container: :voyage).where(voyages: { destination_port_id: params[:destination_port_id] })
+      end
+    end
+
+    @selected_start_date = resolved_start_date
+    @selected_end_date = resolved_end_date
+    start_date = [ @selected_start_date, @selected_end_date ].min
+    end_date = [ @selected_start_date, @selected_end_date ].max
+    scope = scope.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+
+    @selected_status_filter = selected_status_filter
+    if @selected_status_filter.present? && @status_filter_options.include?(@selected_status_filter)
+      scope = scope.where(status: @selected_status_filter)
+    end
+
+    if params[:hidden].present? && !customs_agent_user?
+      case params[:hidden]
+      when "hidden"
+        scope = scope.where(hidden_from_customs_agent: true)
+      when "visible"
+        scope = scope.where(hidden_from_customs_agent: false)
+      end
+    end
+
+    scope
+  end
+
+  def build_revalidations_report_rows(scope)
+    scope.map do |bl_house_line|
+      container = bl_house_line.container
+      broker_name = bl_house_line.customs_broker&.name.to_s.strip
+      broker_patent = bl_house_line.customs_broker&.patent_number.to_s.strip
+      customs_broker_label = if broker_name.present? && broker_patent.present?
+        "#{broker_name} [#{broker_patent}]"
+      else
+        broker_name.presence || "-"
+      end
+
+      [
+        container&.archivo_nr.to_s.strip.presence || "-",
+        container&.ejecutivo.to_s.strip.presence || "-",
+        container&.number.to_s.strip.presence || "-",
+        container&.bl_master.to_s.strip.presence || "-",
+        bl_house_line.blhouse.to_s.strip.presence || "-",
+        container&.almacen.to_s.strip.presence || "-",
+        bl_house_line.cantidad,
+        bl_house_line.peso,
+        bl_house_line.volumen,
+        customs_broker_label,
+        bl_house_line.telex? ? "Si" : "No",
+        bl_house_line.revalidated_at || container&.fecha_revalidacion_bl_master,
+        bl_house_line.fecha_despacho
+      ]
+    end
+  end
+
+  def build_revalidations_report_xlsx(rows)
+    package = Axlsx::Package.new
+    workbook = package.workbook
+
+    workbook.add_worksheet(name: "Revalidaciones") do |sheet|
+      header = [
+        "Referencia",
+        "Ejecutivo",
+        "Contenedor",
+        "MBL",
+        "HBL",
+        "Almacen",
+        "Bultos",
+        "Peso",
+        "M3",
+        "Agente Aduanal",
+        "Liberacion",
+        "Fecha Revalidacion",
+        "Fecha Despacho"
+      ]
+
+      styles = sheet.styles
+      header_style = styles.add_style(b: true, bg_color: "1F2937", fg_color: "FFFFFF", alignment: { horizontal: :center })
+      datetime_style = styles.add_style(format_code: "yyyy-mm-dd hh:mm")
+      date_style = styles.add_style(format_code: "yyyy-mm-dd")
+      number_style = styles.add_style(format_code: "0.00")
+
+      sheet.add_row(header, style: header_style)
+
+      rows.each do |row|
+        sheet.add_row(
+          row,
+          style: [
+            nil, nil, nil, nil, nil, nil,
+            nil,
+            number_style,
+            number_style,
+            nil,
+            nil,
+            datetime_style,
+            date_style
+          ]
+        )
+      end
+
+      sheet.column_widths 20, 20, 18, 18, 18, 18, 10, 12, 10, 28, 18, 20, 18
+    end
+
+    package.to_stream.read
   end
 
   def destination_port_filter_options

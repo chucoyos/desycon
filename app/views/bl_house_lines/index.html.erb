@@ -96,6 +96,14 @@
           </div>
 
           <div class="relative w-full sm:w-auto">
+            <%= f.label :consolidator_id, "Consolidador", class: "sr-only" %>
+            <%= f.select :consolidator_id,
+              options_from_collection_for_select(@consolidators || [], :id, :name, params[:consolidator_id]),
+              { include_blank: "Todos los consolidadores" },
+              class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+          </div>
+
+          <div class="relative w-full sm:w-auto">
             <%= f.label :destination_port_id, "Puerto destino", class: "sr-only" %>
             <%= f.select :destination_port_id,
               options_from_collection_for_select(@destination_ports || [], :id, :display_name, params[:destination_port_id]),
@@ -136,12 +144,15 @@
       <div class="flex flex-wrap items-center gap-2 mt-4">
         <%= f.submit "Buscar", class: "px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md cursor-pointer" %>
         <%= link_to "Limpiar", bl_house_lines_path, class: "px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors" %>
+          <%= link_to "Reporte Revalidaciones",
+            revalidations_report_bl_house_lines_path(request.query_parameters.except("page", "per").merge(format: :xlsx)),
+            class: "px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md" %>
       </div>
 
       <% role_specific_filters_present = if current_user&.consolidator?
           params[:reference].present? || params[:master_bl].present?
         else
-          params[:client_id].present? || params[:destination_port_id].present?
+          params[:client_id].present? || params[:consolidator_id].present? || params[:destination_port_id].present?
         end %>
 
       <% active_filters_present = params[:blhouse].present? ||
@@ -197,6 +208,13 @@
                   <% destination_port_name = @destination_ports.find { |port| port.id == params[:destination_port_id].to_i }&.display_name || "ID #{params[:destination_port_id]}" %>
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     Puerto destino: <%= destination_port_name %>
+                  </span>
+                <% end %>
+
+                <% if params[:consolidator_id].present? %>
+                  <% consolidator_name = @consolidators.find { |entity| entity.id == params[:consolidator_id].to_i }&.name || "ID #{params[:consolidator_id]}" %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                    Consolidador: <%= consolidator_name %>
                   </span>
                 <% end %>
               <% end %>

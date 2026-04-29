@@ -154,6 +154,7 @@ Rails.application.routes.draw do
     collection do
       get :clients_search
       get :customs_agents_search
+      get :revalidations_report
     end
 
     member do

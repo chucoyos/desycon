@@ -284,9 +284,98 @@ RSpec.describe "BlHouseLines", type: :request do
 
       expect(response).to be_successful
       expect(response.body).to include('name="client_id"')
+      expect(response.body).to include('name="consolidator_id"')
       expect(response.body).to include('name="destination_port_id"')
       expect(response.body).not_to include('name="reference"')
       expect(response.body).not_to include('name="master_bl"')
+    end
+
+    it "filters by consolidator id" do
+      sign_in user, scope: :user
+
+      target_consolidator = create(:entity, :consolidator, name: "Consolidador Alfa")
+      other_consolidator = create(:entity, :consolidator, name: "Consolidador Beta")
+
+      target_container = create(:container, consolidator_entity: target_consolidator)
+      other_container = create(:container, consolidator_entity: other_consolidator)
+
+      target_line = create(:bl_house_line, container: target_container, status: "validar_documentos", blhouse: "BLH-CONSOL-ALFA")
+      other_line = create(:bl_house_line, container: other_container, status: "validar_documentos", blhouse: "BLH-CONSOL-BETA")
+
+      get bl_house_lines_url, params: { consolidator_id: target_consolidator.id }
+
+      expect(response).to be_successful
+      expect(response.body).to include(target_line.blhouse)
+      expect(response.body).not_to include(other_line.blhouse)
+      expect(response.body).to include("Consolidador: Consolidador Alfa")
+    end
+  end
+
+  describe "GET /bl_house_lines/revalidations_report" do
+    it "exports all filtered rows to xlsx (without paginator limits)" do
+      sign_in user, scope: :user
+
+      consolidator = create(:entity, :consolidator, name: "Consolidador Excel")
+      container = create(
+        :container,
+        consolidator_entity: consolidator,
+        archivo_nr: "REF-REPV-001",
+        ejecutivo: "Ejecutivo Test",
+        bl_master: "MBL-EXCEL-001",
+        almacen: "CICE"
+      )
+      customs_agent = create(:entity, :customs_agent)
+      customs_broker = create(:entity, :customs_broker, name: "Agente Patente", patent_number: "1234")
+      AgencyBroker.create!(agency: customs_agent, broker: customs_broker)
+
+      create_list(
+        :bl_house_line,
+        12,
+        container: container,
+        status: "validar_documentos",
+        customs_agent: customs_agent,
+        customs_broker: customs_broker,
+        telex: true,
+        fecha_despacho: Date.new(2026, 4, 10)
+      )
+
+      get revalidations_report_bl_house_lines_url, params: { consolidator_id: consolidator.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.headers["Content-Type"]).to include("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+      tempfile = Tempfile.new([ "revalidaciones", ".xlsx" ])
+      tempfile.binmode
+      tempfile.write(response.body)
+      tempfile.rewind
+
+      workbook = Roo::Excelx.new(tempfile.path)
+      sheet = workbook.sheet(0)
+
+      expect(sheet.row(1)).to eq([
+        "Referencia",
+        "Ejecutivo",
+        "Contenedor",
+        "MBL",
+        "HBL",
+        "Almacen",
+        "Bultos",
+        "Peso",
+        "M3",
+        "Agente Aduanal",
+        "Liberacion",
+        "Fecha Revalidacion",
+        "Fecha Despacho"
+      ])
+      expect(sheet.last_row).to eq(13)
+      expect(sheet.row(2)[0]).to eq("REF-REPV-001")
+      expect(sheet.row(2)[1]).to eq("Ejecutivo Test")
+      expect(sheet.row(2)[3]).to eq("MBL-EXCEL-001")
+      expect(sheet.row(2)[5]).to eq("CICE")
+      expect(sheet.row(2)[9]).to eq("Agente Patente [1234]")
+      expect(sheet.row(2)[10]).to eq("Si")
+
+      tempfile.close!
     end
   end
 
