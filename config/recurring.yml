@@ -18,7 +18,7 @@ production:
     class: "Photos::EnqueueVariantBackfillJob"
     queue: default
     args:
-      - <%= ENV.fetch("NIGHTLY_PHOTO_BACKFILL_LIMIT", "300").to_i %>
+      - <%= ENV.fetch("NIGHTLY_PHOTO_BACKFILL_LIMIT", "150").to_i %>
       - <%= ENV.fetch("NIGHTLY_PHOTO_BACKFILL_LOOKBACK_HOURS", "72").to_i %>
     schedule: "10 2 * * *"
 
@@ -52,7 +52,7 @@ staging:
     class: "Photos::EnqueueVariantBackfillJob"
     queue: default
     args:
-      - <%= ENV.fetch("NIGHTLY_PHOTO_BACKFILL_LIMIT", "300").to_i %>
+      - <%= ENV.fetch("NIGHTLY_PHOTO_BACKFILL_LIMIT", "150").to_i %>
       - <%= ENV.fetch("NIGHTLY_PHOTO_BACKFILL_LOOKBACK_HOURS", "72").to_i %>
     schedule: "10 2 * * *"
 
