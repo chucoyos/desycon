@@ -156,7 +156,13 @@ RSpec.describe "Containers", type: :request do
       workbook = Roo::Excelx.new(tempfile.path)
       sheet = workbook.sheet(0)
 
-      expect(sheet.row(1)).to eq([
+      expect(sheet.row(1)[0]).to eq("Fecha de corte")
+      expect(sheet.row(2).first(2)).to eq([ "Total contenedores", 1 ])
+      expect(sheet.row(3).first(2)).to eq([ "Total partidas", 3 ])
+      expect(sheet.row(4).first(2)).to eq([ "Total bultos", 6 ])
+      expect(sheet.row(5).first(2)).to eq([ "Peso total", 31.5 ])
+
+      expect(sheet.row(7)).to eq([
         "Ejecutivo",
         "Referencia",
         "Estatus",
@@ -195,16 +201,16 @@ RSpec.describe "Containers", type: :request do
         "IMO"
       ])
 
-      expect(sheet.last_row).to eq(2)
-      expect(sheet.row(2)[0]).to eq("Ejecutivo Test")
-      expect(sheet.row(2)[1]).to eq("REF-OP-001")
-      expect(sheet.row(2)[2]).to eq(container.status.humanize)
-      expect(sheet.row(2)[12]).to eq("ICAVE")
-      expect(sheet.row(2)[13]).to eq("CICE")
-      expect(sheet.row(2)[14]).to eq("Consolidador Excel")
-      expect(sheet.row(2)[15]).to eq(3)
-      expect(sheet.row(2)[16]).to eq(6)
-      expect(sheet.row(2)[17]).to eq(31.5)
+      expect(sheet.last_row).to eq(8)
+      expect(sheet.row(8)[0]).to eq("Ejecutivo Test")
+      expect(sheet.row(8)[1]).to eq("REF-OP-001")
+      expect(sheet.row(8)[2]).to eq(container.status.humanize)
+      expect(sheet.row(8)[12]).to eq("ICAVE")
+      expect(sheet.row(8)[13]).to eq("CICE")
+      expect(sheet.row(8)[14]).to eq("Consolidador Excel")
+      expect(sheet.row(8)[15]).to eq(3)
+      expect(sheet.row(8)[16]).to eq(6)
+      expect(sheet.row(8)[17]).to eq(31.5)
 
       tempfile.close!
     end

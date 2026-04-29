@@ -739,26 +739,51 @@ class BlHouseLinesController < ApplicationController
 
       styles = sheet.styles
       header_style = styles.add_style(b: true, bg_color: "1F2937", fg_color: "FFFFFF", alignment: { horizontal: :center })
+      summary_label_style = styles.add_style(b: true, bg_color: "E2E8F0", fg_color: "0F172A")
       datetime_style = styles.add_style(format_code: "yyyy-mm-dd hh:mm")
       date_style = styles.add_style(format_code: "yyyy-mm-dd")
       number_style = styles.add_style(format_code: "0.00")
+      integer_style = styles.add_style(format_code: "0")
+      alternate_row_style = styles.add_style(bg_color: "F8FAFC")
+
+      total_bultos = rows.sum { |row| row[6].to_i }
+      total_peso = rows.sum { |row| row[7].to_d }
+      total_m3 = rows.sum { |row| row[8].to_d }
+
+      sheet.add_row([ "Fecha de corte", Time.current ], style: [ summary_label_style, datetime_style ])
+      sheet.add_row([ "Total partidas", rows.size ], style: [ summary_label_style, integer_style ])
+      sheet.add_row([ "Total bultos", total_bultos ], style: [ summary_label_style, integer_style ])
+      sheet.add_row([ "Peso total", total_peso ], style: [ summary_label_style, number_style ])
+      sheet.add_row([ "M3 total", total_m3 ], style: [ summary_label_style, number_style ])
+      sheet.add_row([])
 
       sheet.add_row(header, style: header_style)
 
-      rows.each do |row|
-        sheet.add_row(
-          row,
-          style: [
-            nil, nil, nil, nil, nil, nil,
-            nil,
-            number_style,
-            number_style,
-            nil,
-            nil,
-            datetime_style,
-            date_style
-          ]
-        )
+      base_row_style = [
+        nil, nil, nil, nil, nil, nil,
+        integer_style,
+        number_style,
+        number_style,
+        nil,
+        nil,
+        datetime_style,
+        date_style
+      ]
+      alternate_row_styles = base_row_style.map { |style| style || alternate_row_style }
+
+      rows.each_with_index do |row, index|
+        style = index.even? ? base_row_style : alternate_row_styles
+        sheet.add_row(row, style: style)
+      end
+
+      header_row_index = 7
+      last_row_index = [ header_row_index + rows.size, header_row_index ].max
+      sheet.auto_filter = "A#{header_row_index}:M#{last_row_index}"
+      sheet.sheet_view.pane do |pane|
+        pane.top_left_cell = "A#{header_row_index + 1}"
+        pane.state = :frozen_split
+        pane.y_split = header_row_index
+        pane.active_pane = :bottom_left
       end
 
       sheet.column_widths 20, 20, 18, 18, 18, 18, 10, 12, 10, 28, 18, 20, 18

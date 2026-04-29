@@ -352,7 +352,13 @@ RSpec.describe "BlHouseLines", type: :request do
       workbook = Roo::Excelx.new(tempfile.path)
       sheet = workbook.sheet(0)
 
-      expect(sheet.row(1)).to eq([
+      expect(sheet.row(1)[0]).to eq("Fecha de corte")
+      expect(sheet.row(2).first(2)).to eq([ "Total partidas", 12 ])
+      expect(sheet.row(3).first(2)).to eq([ "Total bultos", 120 ])
+      expect(sheet.row(4).first(2)).to eq([ "Peso total", 1206.0 ])
+      expect(sheet.row(5).first(2)).to eq([ "M3 total", 30.0 ])
+
+      expect(sheet.row(7)).to eq([
         "Referencia",
         "Ejecutivo",
         "Contenedor",
@@ -367,13 +373,13 @@ RSpec.describe "BlHouseLines", type: :request do
         "Fecha Revalidacion",
         "Fecha Despacho"
       ])
-      expect(sheet.last_row).to eq(13)
-      expect(sheet.row(2)[0]).to eq("REF-REPV-001")
-      expect(sheet.row(2)[1]).to eq("Ejecutivo Test")
-      expect(sheet.row(2)[3]).to eq("MBL-EXCEL-001")
-      expect(sheet.row(2)[5]).to eq("CICE")
-      expect(sheet.row(2)[9]).to eq("Agente Patente [1234]")
-      expect(sheet.row(2)[10]).to eq("Si")
+      expect(sheet.last_row).to eq(19)
+      expect(sheet.row(8)[0]).to eq("REF-REPV-001")
+      expect(sheet.row(8)[1]).to eq("Ejecutivo Test")
+      expect(sheet.row(8)[3]).to eq("MBL-EXCEL-001")
+      expect(sheet.row(8)[5]).to eq("CICE")
+      expect(sheet.row(8)[9]).to eq("Agente Patente [1234]")
+      expect(sheet.row(8)[10]).to eq("Si")
 
       tempfile.close!
     end

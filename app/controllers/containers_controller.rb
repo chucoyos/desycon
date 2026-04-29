@@ -890,22 +890,47 @@ class ContainersController < ApplicationController
 
       styles = sheet.styles
       header_style = styles.add_style(b: true, bg_color: "1F2937", fg_color: "FFFFFF", alignment: { horizontal: :center })
+      summary_label_style = styles.add_style(b: true, bg_color: "E2E8F0", fg_color: "0F172A")
       datetime_style = styles.add_style(format_code: "yyyy-mm-dd hh:mm")
       date_style = styles.add_style(format_code: "yyyy-mm-dd")
       integer_style = styles.add_style(format_code: "0")
       decimal_style = styles.add_style(format_code: "0.00")
+      alternate_row_style = styles.add_style(bg_color: "F8FAFC")
+
+      total_partidas = rows.sum { |row| row[15].to_i }
+      total_bultos = rows.sum { |row| row[16].to_i }
+      total_peso = rows.sum { |row| row[17].to_d }
+
+      sheet.add_row([ "Fecha de corte", Time.current ], style: [ summary_label_style, datetime_style ])
+      sheet.add_row([ "Total contenedores", rows.size ], style: [ summary_label_style, integer_style ])
+      sheet.add_row([ "Total partidas", total_partidas ], style: [ summary_label_style, integer_style ])
+      sheet.add_row([ "Total bultos", total_bultos ], style: [ summary_label_style, integer_style ])
+      sheet.add_row([ "Peso total", total_peso ], style: [ summary_label_style, decimal_style ])
+      sheet.add_row([])
 
       sheet.add_row(header, style: header_style)
 
-      row_style = Array.new(header.length)
-      [ 6, 7, 8, 9, 18, 19 ].each { |index| row_style[index] = datetime_style }
-      row_style[20] = date_style
-      row_style[15] = integer_style
-      row_style[16] = integer_style
-      row_style[17] = decimal_style
+      base_row_style = Array.new(header.length)
+      [ 6, 7, 8, 9, 18, 19 ].each { |index| base_row_style[index] = datetime_style }
+      base_row_style[20] = date_style
+      base_row_style[15] = integer_style
+      base_row_style[16] = integer_style
+      base_row_style[17] = decimal_style
+      alternate_row_styles = base_row_style.map { |style| style || alternate_row_style }
 
-      rows.each do |row|
-        sheet.add_row(row, style: row_style)
+      rows.each_with_index do |row, index|
+        style = index.even? ? base_row_style : alternate_row_styles
+        sheet.add_row(row, style: style)
+      end
+
+      header_row_index = 7
+      last_row_index = [ header_row_index + rows.size, header_row_index ].max
+      sheet.auto_filter = "A#{header_row_index}:AJ#{last_row_index}"
+      sheet.sheet_view.pane do |pane|
+        pane.top_left_cell = "A#{header_row_index + 1}"
+        pane.state = :frozen_split
+        pane.y_split = header_row_index
+        pane.active_pane = :bottom_left
       end
 
       sheet.column_widths 18, 18, 18, 18, 18, 24, 18, 18, 20, 20, 20, 20, 20, 18, 24, 16, 16, 12, 24, 24, 22, 30, 16, 26, 22, 18, 20, 18, 22, 32, 34, 24, 20, 12, 12, 12
