@@ -45,6 +45,28 @@ class BlHouseLinesController < ApplicationController
     )
   end
 
+  def inventory_report
+    authorize BlHouseLine, :inventory_report?
+
+    rows = build_inventory_report_rows(
+      base_bl_house_lines_scope
+        .joins(:container)
+        .where(containers: { status: "desconsolidado" })
+        .where(fecha_despacho: nil)
+        .where.not(status: "despachado")
+        .includes(:client, :customs_agent, container: [ :consolidator_entity, :origin_port, :voyage ])
+        .order(created_at: :desc, id: :desc)
+    )
+
+    timestamp = Time.current.strftime("%Y%m%d_%H%M%S")
+    send_data(
+      build_inventory_report_xlsx(rows),
+      filename: "reporte_inventario_#{timestamp}.xlsx",
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      disposition: "attachment"
+    )
+  end
+
   def clients_search
     authorize BlHouseLine, :index?
 
@@ -582,6 +604,57 @@ class BlHouseLinesController < ApplicationController
     scope
   end
 
+  def inventory_filtered_bl_house_lines_scope(scope)
+    if params[:blhouse].present?
+      scope = scope.where("bl_house_lines.blhouse ILIKE ?", "%#{params[:blhouse]}%")
+    end
+
+    if params[:container_number].present?
+      scope = scope.joins(:container).where("containers.number ILIKE ?", "%#{params[:container_number]}%")
+    end
+
+    if current_user&.consolidator?
+      if params[:reference].present? || params[:master_bl].present?
+        scope = scope.joins(:container)
+        scope = scope.where("containers.archivo_nr ILIKE ?", "%#{params[:reference]}%") if params[:reference].present?
+        scope = scope.where("containers.bl_master ILIKE ?", "%#{params[:master_bl]}%") if params[:master_bl].present?
+      end
+    else
+      if params[:client_id].present?
+        scope = scope.where(client_id: params[:client_id])
+      end
+
+      if params[:consolidator_id].present?
+        scope = scope.joins(:container).where(containers: { consolidator_entity_id: params[:consolidator_id] })
+      end
+
+      if params[:destination_port_id].present?
+        scope = scope.joins(container: :voyage).where(voyages: { destination_port_id: params[:destination_port_id] })
+      end
+    end
+
+    start_date = parse_filter_date(params[:start_date]) || default_start_date
+    end_date = parse_filter_date(params[:end_date]) || default_end_date
+    from_date = [ start_date, end_date ].min
+    to_date = [ start_date, end_date ].max
+    scope = scope.where(created_at: from_date.beginning_of_day..to_date.end_of_day)
+
+    if params[:status].present?
+      scope = scope.where(status: params[:status]) if BlHouseLine.statuses.key?(params[:status])
+    end
+
+    if params[:hidden].present? && !customs_agent_user?
+      case params[:hidden]
+      when "hidden"
+        scope = scope.where(hidden_from_customs_agent: true)
+      when "visible"
+        scope = scope.where(hidden_from_customs_agent: false)
+      end
+    end
+
+    scope
+  end
+
   def build_revalidations_report_rows(scope)
     scope.map do |bl_house_line|
       container = bl_house_line.container
@@ -607,6 +680,38 @@ class BlHouseLinesController < ApplicationController
         bl_house_line.telex? ? "Si" : "No",
         bl_house_line.revalidated_at || container&.fecha_revalidacion_bl_master,
         bl_house_line.fecha_despacho
+      ]
+    end
+  end
+
+  def build_inventory_report_rows(scope)
+    scope.map do |bl_house_line|
+      container = bl_house_line.container
+      fecha_desconsolidacion = container&.fecha_desconsolidacion
+      dias_en_almacen = fecha_desconsolidacion.present? ? (Date.current - fecha_desconsolidacion).to_i : nil
+
+      [
+        container&.archivo_nr.to_s.strip.presence || "-",
+        container&.consolidator_entity&.name.to_s.strip.presence || "-",
+        container&.number.to_s.strip.presence || "-",
+        container&.bl_master.to_s.strip.presence || "-",
+        bl_house_line.blhouse.to_s.strip.presence || "-",
+        bl_house_line.partida,
+        bl_house_line.client&.name.to_s.strip.presence || "-",
+        container&.ejecutivo.to_s.strip.presence || "-",
+        container&.origin_port&.display_name.to_s.strip.presence || container&.origin_port&.name.to_s.strip.presence || "-",
+        container&.recinto.to_s.strip.presence || "-",
+        container&.almacen.to_s.strip.presence || "-",
+        bl_house_line.contiene.to_s.strip.presence || "-",
+        bl_house_line.marcas.to_s.strip.presence || "-",
+        bl_house_line.cantidad,
+        bl_house_line.peso,
+        bl_house_line.volumen,
+        fecha_desconsolidacion,
+        dias_en_almacen,
+        bl_house_line.status.to_s.humanize.presence || "-",
+        bl_house_line.customs_agent&.name.to_s.strip.presence || "-",
+        bl_house_line.created_at
       ]
     end
   end
@@ -657,6 +762,85 @@ class BlHouseLinesController < ApplicationController
       end
 
       sheet.column_widths 20, 20, 18, 18, 18, 18, 10, 12, 10, 28, 18, 20, 18
+    end
+
+    package.to_stream.read
+  end
+
+  def build_inventory_report_xlsx(rows)
+    package = Axlsx::Package.new
+    workbook = package.workbook
+
+    workbook.add_worksheet(name: "Inventario") do |sheet|
+      header = [
+        "Referencia",
+        "Consolidador",
+        "Contenedor",
+        "MBL",
+        "HBL",
+        "Partida",
+        "Cliente",
+        "Ejecutivo",
+        "Puerto Origen",
+        "Terminal",
+        "Almacen",
+        "Mercancia",
+        "Marcas",
+        "Bultos",
+        "Peso",
+        "Volumen",
+        "Fecha Desconsolidacion",
+        "Dias en Almacen",
+        "Estatus Partida",
+        "Agencia Aduanal",
+        "Fecha Alta"
+      ]
+
+      styles = sheet.styles
+      header_style = styles.add_style(b: true, bg_color: "1F2937", fg_color: "FFFFFF", alignment: { horizontal: :center })
+      summary_label_style = styles.add_style(b: true, bg_color: "E2E8F0", fg_color: "0F172A")
+      date_style = styles.add_style(format_code: "yyyy-mm-dd")
+      datetime_style = styles.add_style(format_code: "yyyy-mm-dd hh:mm")
+      integer_style = styles.add_style(format_code: "0")
+      decimal_style = styles.add_style(format_code: "0.00")
+      alternate_row_style = styles.add_style(bg_color: "F8FAFC")
+
+      total_bultos = rows.sum { |row| row[13].to_i }
+      total_peso = rows.sum { |row| row[14].to_d }
+
+      sheet.add_row([ "Fecha de corte", Time.current ], style: [ summary_label_style, datetime_style ])
+      sheet.add_row([ "Total partidas", rows.size ], style: [ summary_label_style, integer_style ])
+      sheet.add_row([ "Total bultos", total_bultos ], style: [ summary_label_style, integer_style ])
+      sheet.add_row([ "Peso total", total_peso ], style: [ summary_label_style, decimal_style ])
+      sheet.add_row([])
+
+      sheet.add_row(header, style: header_style)
+
+      base_row_style = Array.new(header.length)
+      base_row_style[16] = date_style
+      base_row_style[20] = datetime_style
+      [ 5, 13, 17 ].each { |index| base_row_style[index] = integer_style }
+      base_row_style[14] = decimal_style
+      base_row_style[15] = decimal_style
+
+      alternate_row_styles = base_row_style.map { |style| style || alternate_row_style }
+
+      rows.each_with_index do |row, index|
+        style = index.even? ? base_row_style : alternate_row_styles
+        sheet.add_row(row, style: style)
+      end
+
+      header_row_index = 6
+      last_row_index = [ header_row_index + rows.size, header_row_index ].max
+      sheet.auto_filter = "A#{header_row_index}:U#{last_row_index}"
+      sheet.sheet_view.pane do |pane|
+        pane.top_left_cell = "A#{header_row_index + 1}"
+        pane.state = :frozen_split
+        pane.y_split = header_row_index
+        pane.active_pane = :bottom_left
+      end
+
+      sheet.column_widths 16, 24, 16, 16, 16, 10, 24, 16, 20, 16, 16, 26, 20, 10, 12, 12, 20, 16, 18, 24, 20
     end
 
     package.to_stream.read

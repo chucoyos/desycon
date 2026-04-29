@@ -388,6 +388,150 @@ RSpec.describe "BlHouseLines", type: :request do
     end
   end
 
+  describe "GET /bl_house_lines/inventory_report" do
+    it "exports inventory rules only and ignores applied list filters" do
+      sign_in user, scope: :user
+
+      consolidator = create(:entity, :consolidator, name: "Consolidador Inventario")
+      other_consolidator = create(:entity, :consolidator, name: "Consolidador Secundario")
+      client = create(:entity, :client, name: "Cliente Inventario")
+      customs_agent = create(:entity, :customs_agent, name: "Agencia Inventario")
+
+      inventory_container = create(
+        :container,
+        consolidator_entity: consolidator,
+        archivo_nr: "REF-INV-001",
+        ejecutivo: "Ejecutivo Inventario",
+        bl_master: "MBL-INV-001",
+        recinto: "ICAVE",
+        almacen: "CICE",
+        fecha_desconsolidacion: Date.new(2026, 4, 10)
+      )
+      inventory_container.update_column(:status, "desconsolidado")
+
+      secondary_inventory_container = create(
+        :container,
+        consolidator_entity: other_consolidator,
+        archivo_nr: "REF-INV-002",
+        bl_master: "MBL-INV-002",
+        fecha_desconsolidacion: Date.new(2026, 4, 8)
+      )
+      secondary_inventory_container.update_column(:status, "desconsolidado")
+
+      out_of_scope_container = create(:container, consolidator_entity: consolidator)
+
+      in_scope_line = create(
+        :bl_house_line,
+        container: inventory_container,
+        client: client,
+        customs_agent: customs_agent,
+        status: "validar_documentos",
+        blhouse: "HBL-INV-001",
+        partida: 7,
+        cantidad: 4,
+        peso: 120.5,
+        volumen: 9.8,
+        contiene: "Mercancia inventariable",
+        marcas: "MI-001",
+        fecha_despacho: nil
+      )
+
+      create(
+        :bl_house_line,
+        container: inventory_container,
+        status: "despachado",
+        fecha_despacho: Date.new(2026, 4, 12)
+      )
+
+      create(
+        :bl_house_line,
+        container: secondary_inventory_container,
+        status: "validar_documentos",
+        blhouse: "HBL-INV-002",
+        cantidad: 3,
+        peso: 50.0,
+        fecha_despacho: nil
+      )
+
+      create(
+        :bl_house_line,
+        container: out_of_scope_container,
+        status: "validar_documentos",
+        fecha_despacho: nil
+      )
+
+      get inventory_report_bl_house_lines_url, params: { consolidator_id: consolidator.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.headers["Content-Type"]).to include("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+      tempfile = Tempfile.new([ "inventario", ".xlsx" ])
+      tempfile.binmode
+      tempfile.write(response.body)
+      tempfile.rewind
+
+      workbook = Roo::Excelx.new(tempfile.path)
+      sheet = workbook.sheet(0)
+
+      expect(sheet.row(1)[0]).to eq("Fecha de corte")
+      expect(sheet.row(2).first(2)).to eq([ "Total partidas", 2 ])
+      expect(sheet.row(3).first(2)).to eq([ "Total bultos", 7 ])
+      expect(sheet.row(4).first(2)).to eq([ "Peso total", 170.5 ])
+
+      expect(sheet.row(6)).to eq([
+        "Referencia",
+        "Consolidador",
+        "Contenedor",
+        "MBL",
+        "HBL",
+        "Partida",
+        "Cliente",
+        "Ejecutivo",
+        "Puerto Origen",
+        "Terminal",
+        "Almacen",
+        "Mercancia",
+        "Marcas",
+        "Bultos",
+        "Peso",
+        "Volumen",
+        "Fecha Desconsolidacion",
+        "Dias en Almacen",
+        "Estatus Partida",
+        "Agencia Aduanal",
+        "Fecha Alta"
+      ])
+
+      expect(sheet.last_row).to eq(8)
+
+      exported_rows = [ sheet.row(7), sheet.row(8) ]
+      exported_hbls = exported_rows.map { |row| row[4] }
+      expect(exported_hbls).to contain_exactly("HBL-INV-001", "HBL-INV-002")
+
+      primary_row = exported_rows.find { |row| row[4] == "HBL-INV-001" }
+      expect(primary_row[0]).to eq("REF-INV-001")
+      expect(primary_row[1]).to eq("Consolidador Inventario")
+      expect(primary_row[5]).to eq(7)
+      expect(primary_row[6]).to eq("Cliente Inventario")
+      expect(primary_row[11]).to eq("Mercancia inventariable")
+      expect(primary_row[13]).to eq(4)
+      expect(primary_row[14]).to eq(120.5)
+      expect(primary_row[18]).to eq(in_scope_line.status.humanize)
+      expect(primary_row[19]).to eq("Agencia Inventario")
+
+      tempfile.close!
+    end
+
+    it "denies access for consolidator users" do
+      consolidator_user = create(:user, :consolidator)
+      sign_in consolidator_user, scope: :user
+
+      get inventory_report_bl_house_lines_url
+
+      expect(response).to have_http_status(:found)
+    end
+  end
+
   describe "GET /bl_house_lines/clients_search" do
     before { sign_in user, scope: :user }
 

@@ -88,6 +88,10 @@ class BlHouseLinePolicy < ApplicationPolicy
     user.present? && user.admin_or_executive?
   end
 
+  def inventory_report?
+    user.present? && user.admin_or_executive?
+  end
+
   class Scope < Scope
     def resolve
       if user.nil?
