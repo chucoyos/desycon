@@ -133,10 +133,11 @@ module Facturador
       Array(line_items_params).map.with_index(1) do |item, index|
         service_catalog_id = item[:service_catalog_id].to_s.strip
         description_raw = item[:description].to_s.strip
+        description = normalize_manual_description(description_raw)
         quantity_raw = item[:quantity].to_s.strip
         unit_price_raw = item[:unit_price].to_s.strip
 
-        if service_catalog_id.blank? || description_raw.blank? || quantity_raw.blank? || unit_price_raw.blank?
+        if service_catalog_id.blank? || description.blank? || quantity_raw.blank? || unit_price_raw.blank?
           raise ValidationError, "El concepto ##{index} está incompleto. Debes capturar concepto, descripción, cantidad y precio unitario."
         end
 
@@ -163,7 +164,7 @@ module Facturador
 
         {
           service_catalog: service_catalog,
-          description: description_raw,
+          description: description,
           sat_clave_prod_serv: service_catalog.sat_clave_prod_serv.to_s,
           sat_clave_unidad: service_catalog.sat_clave_unidad.to_s,
           sat_objeto_imp: service_catalog.sat_objeto_imp.to_s,
@@ -175,6 +176,18 @@ module Facturador
           total: subtotal + tax_amount
         }
       end
+    end
+
+    def normalize_manual_description(value)
+      value.to_s
+        .scrub("")
+        .then { |text| I18n.transliterate(text) }
+        .gsub(/\r\n?/, "\n")
+        .gsub(/[^A-Za-z0-9 :.,()\-\n]/, " ")
+        .gsub(/[ ]+/, " ")
+        .gsub(/[ ]*\n[ ]*/, "\n")
+        .gsub(/\n{2,}/, "\n")
+        .strip
     end
 
     def manual_idempotency_key(issuer_id:, receiver_id:, line_items:)

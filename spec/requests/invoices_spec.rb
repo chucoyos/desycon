@@ -648,6 +648,8 @@ RSpec.describe 'Invoices', type: :request do
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include('Nuevo CFDI')
+      expect(response.body).to include('Debes agregar al menos un concepto')
+      expect(response.body).to include('data-testid="manual-cfdi-alert"')
     end
   end
 

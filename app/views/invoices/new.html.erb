@@ -27,6 +27,12 @@ end %>
     <p class="text-sm text-gray-500 mt-1">Crea y emite un CFDI manual con uno o varios conceptos.</p>
   </div>
 
+  <% if flash.now[:alert].present? || flash[:alert].present? %>
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" data-testid="manual-cfdi-alert">
+      <%= flash.now[:alert].presence || flash[:alert] %>
+    </div>
+  <% end %>
+
   <%= form_with url: invoices_path, method: :post, scope: :manual_invoice, class: "space-y-6", id: "manual-cfdi-form", data: { turbo: false } do |f| %>
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
       <h2 class="text-sm font-semibold text-gray-800 uppercase tracking-wider">Datos Generales</h2>
@@ -270,7 +276,10 @@ end %>
     }
 
     const enterSubmittingState = () => {
-      if (!form.checkValidity()) return;
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
       if (overlay) overlay.classList.remove('hidden');
       form.setAttribute('aria-busy', 'true');
 
@@ -375,6 +384,16 @@ end %>
     const addLineItem = (prefill = {}) => {
       const fragment = template.content.cloneNode(true);
       const lineItem = fragment.querySelector('.manual-line-item');
+
+      // Prevent noscript fallback controls from participating in validation
+      // when JS is active; otherwise hidden required selects can block submit.
+      const noscriptServiceSelects = lineItem.querySelectorAll('select[name="manual_invoice[line_items][][service_catalog_id]"]');
+      noscriptServiceSelects.forEach((select) => {
+        select.disabled = true;
+        select.required = false;
+        select.removeAttribute('name');
+      });
+
       attachLineItemEvents(lineItem);
 
       const serviceCatalogHidden = lineItem.querySelector('.service-catalog-hidden');

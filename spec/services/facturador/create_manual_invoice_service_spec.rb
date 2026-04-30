@@ -154,5 +154,19 @@ RSpec.describe Facturador::CreateManualInvoiceService, type: :service do
       expect(result.error_message).to eq('Debes seleccionar una serie')
       expect(result.invoice).to be_nil
     end
+
+    it 'normalizes manual description with special characters' do
+      service = described_class.new(
+        actor: actor,
+        receiver_entity_id: receiver.id,
+        customs_agent_id: nil,
+        serie: manual_serie,
+        line_items_params: []
+      )
+
+      normalized = service.send(:normalize_manual_description, "Concepto ñáéíóú ✅ — prueba")
+
+      expect(normalized).to eq('Concepto naeiou prueba')
+    end
   end
 end
