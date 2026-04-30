@@ -748,6 +748,35 @@ RSpec.describe "BlHouseLines", type: :request do
         expect(bl_house_line.bl_house_line_services.order(:id).last.amount).to eq(210.25)
       end
 
+      it "computes amount on show flow create when quantity is greater than one" do
+        sign_in user, scope: :user
+        bl_house_line = create(:bl_house_line, client: client)
+        service_catalog = create(:service_catalog, applies_to: "bl_house_line", amount: 9, active: true)
+
+        expect {
+          patch bl_house_line_url(bl_house_line), params: {
+            source: "show_services",
+            service_action: "create",
+            bl_house_line: {
+              bl_house_line_services_attributes: {
+                "0" => {
+                  service_catalog_id: service_catalog.id,
+                  quantity: "25",
+                  amount: "9.00",
+                  billed_to_entity_id: client.id,
+                  observaciones: "Alta con cantidad"
+                }
+              }
+            }
+          }
+        }.to change(bl_house_line.bl_house_line_services, :count).by(1)
+
+        service = bl_house_line.bl_house_line_services.order(:id).last
+        expect(response).to redirect_to(bl_house_line_url(bl_house_line, anchor: "servicios"))
+        expect(service.quantity).to eq(25)
+        expect(service.amount).to eq(225)
+      end
+
       it "calculates BL-ENTCAM amount from formula on show flow create" do
         sign_in user, scope: :user
         bl_house_line = create(:bl_house_line, client: client, peso: 13_200, volumen: 8.1)

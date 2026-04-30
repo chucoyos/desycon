@@ -109,7 +109,15 @@ class BlHouseLineService < ApplicationRecord
   def assign_quantity_based_amount_for_standard_services
     return if service_catalog.blank?
     return unless quantity_driven_service_code?
-    return if new_record? && amount.present?
+    if new_record? && amount.present?
+      quantity_value = quantity.to_i
+      catalog_amount = service_catalog.amount.to_d.round(2)
+      provided_amount = amount.to_d.round(2)
+
+      # Preserve intentional manual amount on create, but if amount was just
+      # autofilled from catalog and quantity > 1, compute the expected total.
+      return unless quantity_value > 1 && provided_amount == catalog_amount
+    end
     return unless will_save_change_to_quantity? || amount.blank?
 
     self.amount = (quantity.to_i * service_catalog.amount.to_d).round(2)
