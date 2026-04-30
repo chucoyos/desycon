@@ -67,12 +67,30 @@ RSpec.describe BlHouseLineService, type: :model do
   end
 
   describe 'monto por servicio' do
-    it 'usa el monto del catalogo por defecto al crear' do
+    it 'usa cantidad 1 por defecto y monto del catalogo al crear' do
       catalog = create(:service_catalog, applies_to: 'bl_house_line', amount: 180.25)
 
       service = create(:bl_house_line_service, service_catalog: catalog, amount: nil)
 
+      expect(service.quantity).to eq(1)
       expect(service.amount).to eq(180.25)
+    end
+
+    it 'calcula monto por cantidad para servicios estandar' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-ASIG', amount: 150)
+
+      service = create(:bl_house_line_service, service_catalog: catalog, quantity: 3, amount: nil)
+
+      expect(service.amount).to eq(BigDecimal('450.0'))
+    end
+
+    it 'recalcula monto al cambiar cantidad en servicios estandar' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-ASIG', amount: 120)
+      service = create(:bl_house_line_service, service_catalog: catalog, quantity: 1, amount: nil)
+
+      service.update!(quantity: 4)
+
+      expect(service.reload.amount).to eq(BigDecimal('480.0'))
     end
 
     it 'permite conservar un monto distinto al catalogo' do
@@ -273,7 +291,7 @@ RSpec.describe BlHouseLineService, type: :model do
       expect(service.errors[:quantity]).to include('no puede estar en blanco')
     end
 
-    it 'mantiene compatibilidad con servicios existentes sin quantity' do
+    it 'mantiene compatibilidad con servicios existentes sin quantity capturada' do
       catalog = create(
         :service_catalog,
         applies_to: 'bl_house_line',
@@ -284,6 +302,7 @@ RSpec.describe BlHouseLineService, type: :model do
       service = create(:bl_house_line_service, service_catalog: catalog, quantity: nil, amount: nil)
 
       expect(service).to be_valid
+      expect(service.quantity).to eq(1)
       expect(service.amount).to eq(BigDecimal('1200.0'))
     end
   end

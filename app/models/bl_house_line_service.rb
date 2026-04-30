@@ -2,6 +2,7 @@ class BlHouseLineService < ApplicationRecord
   BILLING_LOCK_STATUSES = %w[queued issued cancel_pending cancelled].freeze
   AUTO_ISSUE_ORIGIN_STATUS_TRANSITION = "status_transition".freeze
   LABEL_TAGGING_SERVICE_CODES = %w[BL-ETIADH BL-ETICOS].freeze
+  FORMULA_AMOUNT_SERVICE_CODES = %w[BL-ENTCAM BL-PREVIO BL-RECASU BL-ALMA].freeze
 
   belongs_to :bl_house_line
   belongs_to :service_catalog
@@ -10,6 +11,8 @@ class BlHouseLineService < ApplicationRecord
   has_many :invoice_service_links, as: :serviceable, dependent: :destroy
 
   before_validation :assign_default_billed_to_entity
+  before_validation :assign_default_quantity
+  before_validation :assign_quantity_based_amount_for_standard_services
   before_validation :assign_default_amount
   before_validation :assign_formula_amount_for_bl_services
   before_update :prevent_changes_if_facturado
@@ -71,6 +74,13 @@ class BlHouseLineService < ApplicationRecord
     self.billed_to_entity_id = bl_house_line&.client_id
   end
 
+  def assign_default_quantity
+    return if quantity.present?
+    return if label_tagging_service_code?
+
+    self.quantity = 1
+  end
+
   def assign_default_amount
     return if amount.present?
 
@@ -94,6 +104,15 @@ class BlHouseLineService < ApplicationRecord
 
       self.amount = result.total
     end
+  end
+
+  def assign_quantity_based_amount_for_standard_services
+    return if service_catalog.blank?
+    return unless quantity_driven_service_code?
+    return if new_record? && amount.present?
+    return unless will_save_change_to_quantity? || amount.blank?
+
+    self.amount = (quantity.to_i * service_catalog.amount.to_d).round(2)
   end
 
   def quantity_required_for_label_tagging_services
@@ -165,5 +184,13 @@ class BlHouseLineService < ApplicationRecord
 
   def label_tagging_service_code?
     LABEL_TAGGING_SERVICE_CODES.include?(service_catalog&.code.to_s)
+  end
+
+  def formula_amount_service_code?
+    FORMULA_AMOUNT_SERVICE_CODES.include?(service_catalog&.code.to_s)
+  end
+
+  def quantity_driven_service_code?
+    !formula_amount_service_code? && !label_tagging_service_code?
   end
 end
