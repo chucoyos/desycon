@@ -160,7 +160,7 @@ module Admin
       end
 
       def month_extract_sql(column_name)
-        "EXTRACT(MONTH FROM #{column_name} AT TIME ZONE '#{sql_time_zone_name}')"
+        "EXTRACT(MONTH FROM ((#{column_name} AT TIME ZONE 'UTC') AT TIME ZONE '#{sql_time_zone_name}'))"
       end
 
       def sql_time_zone_name
