@@ -437,6 +437,27 @@ RSpec.describe "Containers", type: :request do
       expect(response.body).to include("Línea Naviera")
       expect(response.body).to include("Línea")
     end
+
+    it "filters by ETA date (ignoring time) for admin users" do
+      sign_in user, scope: :user
+
+      selected_voyage = create(:voyage, eta: Time.zone.parse("2026-04-09 10:30:00"))
+      same_day_voyage = create(:voyage, eta: Time.zone.parse("2026-04-09 21:15:00"))
+      other_day_voyage = create(:voyage, eta: Time.zone.parse("2026-04-11 09:00:00"))
+
+      selected_container = create(:container, number: "AETA1234501", voyage: selected_voyage)
+      same_day_container = create(:container, number: "AETA1234502", voyage: same_day_voyage)
+      other_container = create(:container, number: "AETA1234503", voyage: other_day_voyage)
+
+      get containers_url, params: { eta: "2026-04-09" }
+
+      expect(response).to be_successful
+      expect(response.body).to include(selected_container.number)
+      expect(response.body).to include(same_day_container.number)
+      expect(response.body).not_to include(other_container.number)
+      expect(response.body).to include('name="eta"')
+      expect(response.body).to include("ETA:")
+    end
   end
 
   describe "GET /containers/shipping_lines_search" do
