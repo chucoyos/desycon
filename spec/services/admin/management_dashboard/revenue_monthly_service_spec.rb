@@ -62,5 +62,24 @@ RSpec.describe Admin::ManagementDashboard::RevenueMonthlyService do
       expect(emitted_by_port.fetch("Altamira")).to eq(Array.new(12, 0.to_d))
       expect(emitted_by_port.fetch("Sin clasificar")).to eq([ 0.to_d, 0.to_d, 150.to_d, 0.to_d ] + Array.new(8, 0.to_d))
     end
+
+    it "groups emitted totals by app timezone month near UTC boundary" do
+      allow(Facturador::Config).to receive(:environment).and_return("production")
+
+      tz = Time.zone
+      create(
+        :invoice,
+        kind: "ingreso",
+        status: "issued",
+        total: 250,
+        # Local time is still April, even if UTC timestamp crosses into May.
+        issued_at: tz.local(2026, 4, 30, 18, 0, 0)
+      )
+
+      result = described_class.call(year: 2026)
+
+      expect(result[:emitted][3]).to eq(250.to_d) # Abril
+      expect(result[:emitted][4]).to eq(0.to_d)   # Mayo
+    end
   end
 end

@@ -107,7 +107,7 @@ module Admin
         @container_created_by_month ||= begin
           rows = Container
             .where(created_at: range_start..range_end)
-            .group("EXTRACT(MONTH FROM containers.created_at)")
+            .group(month_extract_sql("containers.created_at"))
             .count
 
           normalize_month_hash(rows)
@@ -118,7 +118,7 @@ module Admin
         @container_closed_by_month ||= begin
           rows = ContainerStatusHistory
             .where(status: %w[descargado desconsolidado], fecha_actualizacion: range_start..range_end)
-            .group("EXTRACT(MONTH FROM container_status_histories.fecha_actualizacion)")
+            .group(month_extract_sql("container_status_histories.fecha_actualizacion"))
             .distinct
             .count(:container_id)
 
@@ -130,7 +130,7 @@ module Admin
         @container_unconsolidated_by_month ||= begin
           rows = ContainerStatusHistory
             .where(status: "desconsolidado", fecha_actualizacion: range_start..range_end)
-            .group("EXTRACT(MONTH FROM container_status_histories.fecha_actualizacion)")
+            .group(month_extract_sql("container_status_histories.fecha_actualizacion"))
             .distinct
             .count(:container_id)
 
@@ -142,7 +142,7 @@ module Admin
         @bl_created_by_month ||= begin
           rows = BlHouseLine
             .where(created_at: range_start..range_end)
-            .group("EXTRACT(MONTH FROM bl_house_lines.created_at)")
+            .group(month_extract_sql("bl_house_lines.created_at"))
             .count
 
           normalize_month_hash(rows)
@@ -153,7 +153,7 @@ module Admin
         @bl_revalidated_by_month ||= begin
           rows = BlHouseLineStatusHistory
             .where(status: "revalidado", changed_at: range_start..range_end)
-            .group("EXTRACT(MONTH FROM bl_house_line_status_histories.changed_at)")
+            .group(month_extract_sql("bl_house_line_status_histories.changed_at"))
             .distinct
             .count(:bl_house_line_id)
 
@@ -165,7 +165,7 @@ module Admin
         @bl_dispatched_by_month ||= begin
           rows = BlHouseLineStatusHistory
             .where(status: "despachado", changed_at: range_start..range_end)
-            .group("EXTRACT(MONTH FROM bl_house_line_status_histories.changed_at)")
+            .group(month_extract_sql("bl_house_line_status_histories.changed_at"))
             .distinct
             .count(:bl_house_line_id)
 
@@ -180,7 +180,7 @@ module Admin
             .where(tipo_maniobra: "importacion")
             .where(created_at: range_start..range_end)
             .where(ports: { code: IMPORT_DESTINATION_PORTS.keys })
-            .group("ports.code", "EXTRACT(MONTH FROM containers.created_at)")
+            .group("ports.code", month_extract_sql("containers.created_at"))
             .count
 
           rows.each_with_object({}) do |((code, month), count), acc|
@@ -194,6 +194,14 @@ module Admin
         rows.each_with_object({}) do |(month, value), acc|
           acc[month.to_i] = value.to_i
         end
+      end
+
+      def month_extract_sql(column_name)
+        "EXTRACT(MONTH FROM #{column_name} AT TIME ZONE '#{sql_time_zone_name}')"
+      end
+
+      def sql_time_zone_name
+        @sql_time_zone_name ||= ActiveRecord::Base.connection.quote_string(Time.zone.tzinfo.name)
       end
     end
   end

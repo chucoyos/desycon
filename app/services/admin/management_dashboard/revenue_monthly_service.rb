@@ -69,7 +69,7 @@ module Admin
           .where(kind: "ingreso")
           .where(issued_at: range_start..range_end)
           .where(status: %w[issued cancel_pending failed])
-          .group("EXTRACT(MONTH FROM invoices.issued_at)")
+          .group(month_extract_sql("invoices.issued_at"))
           .sum(:total)
 
         normalize_month_hash(rows)
@@ -81,7 +81,7 @@ module Admin
           .where(paid_at: range_start..range_end)
           .where(invoices: { kind: "ingreso" })
           .where.not(invoices: { status: "cancelled" })
-          .group("EXTRACT(MONTH FROM invoice_payments.paid_at)")
+          .group(month_extract_sql("invoice_payments.paid_at"))
           .sum("invoice_payments.amount")
 
         normalize_month_hash(rows)
@@ -109,7 +109,7 @@ module Admin
             .where(kind: "ingreso")
             .where(issued_at: range_start..range_end)
             .where(status: %w[issued cancel_pending failed])
-            .group("EXTRACT(MONTH FROM invoices.issued_at)", emitted_serie_sql)
+            .group(month_extract_sql("invoices.issued_at"), emitted_serie_sql)
             .sum(:total)
 
           rows.each_with_object({}) do |((month, serie), total), acc|
@@ -157,6 +157,14 @@ module Admin
         rows.each_with_object({}) do |(month, value), acc|
           acc[month.to_i] = value.to_d
         end
+      end
+
+      def month_extract_sql(column_name)
+        "EXTRACT(MONTH FROM #{column_name} AT TIME ZONE '#{sql_time_zone_name}')"
+      end
+
+      def sql_time_zone_name
+        @sql_time_zone_name ||= ActiveRecord::Base.connection.quote_string(Time.zone.tzinfo.name)
       end
     end
   end
