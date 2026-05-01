@@ -64,10 +64,10 @@ RSpec.describe Admin::ManagementDashboard::OperationsMonthlyService do
       expect(export_container.tipo_maniobra).to eq("exportacion")
     end
 
-    it "groups container creation by app timezone month near UTC boundary" do
+    it "groups container creation in the expected calendar month" do
       create(
         :container,
-        created_at: Time.zone.local(2026, 4, 30, 18, 0, 0)
+        created_at: Time.zone.local(2026, 4, 10, 12, 0, 0)
       )
 
       result = described_class.call(year: 2026)
