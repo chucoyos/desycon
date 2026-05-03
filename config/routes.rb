@@ -56,7 +56,11 @@ Rails.application.routes.draw do
       post :issue_manual_batch
     end
 
-    resources :invoice_payments, only: [ :show, :edit, :update, :destroy ]
+    resources :invoice_payments, only: [ :show, :edit, :update, :destroy ] do
+      member do
+        post :issue_rep
+      end
+    end
 
     member do
       post :retry_issue

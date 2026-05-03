@@ -54,7 +54,7 @@ module Facturador
           payments << payment
         end
 
-        if payments.many? && payments.all? { |payment| payment.invoice.payment_complement_eligible? }
+        if Facturador::Config.auto_issue_rep_enabled? && payments.many? && payments.all? { |payment| payment.invoice.payment_complement_eligible? }
           group_key = Digest::SHA256.hexdigest("evidence-grouped-rep:#{evidence.id}:#{payments.map(&:id).sort.join(':')}")
           complement_invoice = IssueGroupedPaymentComplementService.call(
             payments: payments,
@@ -65,6 +65,7 @@ module Facturador
         end
 
         payments.each do |payment|
+          next unless Facturador::Config.auto_issue_rep_enabled?
           next unless payment.invoice.payment_complement_eligible?
 
           IssuePaymentComplementService.call(payment: payment, actor: actor)

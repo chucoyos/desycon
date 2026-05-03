@@ -11,6 +11,10 @@ class InvoicePaymentPolicy < ApplicationPolicy
     manageable_user?
   end
 
+  def issue_rep?
+    manageable_user?
+  end
+
   class Scope < Scope
     def resolve
       return scope.none unless user.present?

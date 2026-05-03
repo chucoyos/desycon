@@ -43,6 +43,10 @@ module Facturador
         ActiveModel::Type::Boolean.new.cast(env_value(:payment_complements_enabled, false))
       end
 
+      def auto_issue_rep_enabled?
+        ActiveModel::Type::Boolean.new.cast(env_value(:auto_issue_rep_enabled, true))
+      end
+
       def email_enabled?
         ActiveModel::Type::Boolean.new.cast(env_value(:email_enabled, false))
       end

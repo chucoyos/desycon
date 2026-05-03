@@ -48,7 +48,7 @@ module Facturador
 
       payment.receipt_file.attach(receipt_file) if receipt_file.present?
 
-      if issue_payment_complement? && complement_eligible_before_payment
+      if issue_payment_complement? && complement_eligible_before_payment && Facturador::Config.auto_issue_rep_enabled?
         invoice.invoice_events.create!(
           event_type: "payment_registered",
           created_by: actor,

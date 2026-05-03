@@ -106,6 +106,27 @@ RSpec.describe 'InvoicePayments', type: :request do
     end
   end
 
+  describe 'POST /invoices/:invoice_id/invoice_payments/:id/issue_rep' do
+    it 'requests REP manually and redirects to payments section' do
+      expect(Facturador::RequestPaymentComplementService).to receive(:call).with(payment: payment, actor: admin_user)
+
+      post issue_rep_invoice_invoice_payment_path(invoice, payment)
+
+      expect(response).to redirect_to(invoice_path(invoice, anchor: 'payments-section'))
+      expect(flash[:notice]).to include('Solicitud de REP encolada')
+    end
+
+    it 'shows alert when manual REP request fails' do
+      allow(Facturador::RequestPaymentComplementService).to receive(:call).and_raise(Facturador::RequestError, 'bloqueado por duplicado')
+
+      post issue_rep_invoice_invoice_payment_path(invoice, payment)
+
+      expect(response).to redirect_to(invoice_path(invoice, anchor: 'payments-section'))
+      expect(flash[:alert]).to include('No fue posible solicitar el REP')
+      expect(flash[:alert]).to include('bloqueado por duplicado')
+    end
+  end
+
   describe 'authorization' do
     it 'denies customs broker users' do
       sign_out admin_user
@@ -113,6 +134,17 @@ RSpec.describe 'InvoicePayments', type: :request do
       sign_in broker_user, scope: :user
 
       get invoice_invoice_payment_path(invoice, payment)
+
+      expect(response).to redirect_to(customs_agents_dashboard_path)
+      expect(flash[:alert]).to be_present
+    end
+
+    it 'denies customs broker users for manual REP request' do
+      sign_out admin_user
+      broker_user = create(:user, :customs_broker)
+      sign_in broker_user, scope: :user
+
+      post issue_rep_invoice_invoice_payment_path(invoice, payment)
 
       expect(response).to redirect_to(customs_agents_dashboard_path)
       expect(flash[:alert]).to be_present

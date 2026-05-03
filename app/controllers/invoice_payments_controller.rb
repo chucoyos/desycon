@@ -35,6 +35,15 @@ class InvoicePaymentsController < ApplicationController
     redirect_to invoice_path(@invoice, anchor: "payments-section"), notice: "Pago eliminado correctamente."
   end
 
+  def issue_rep
+    authorize @payment, :issue_rep?
+
+    Facturador::RequestPaymentComplementService.call(payment: @payment, actor: current_user)
+    redirect_to invoice_path(@invoice, anchor: "payments-section"), notice: "Solicitud de REP encolada correctamente."
+  rescue Facturador::Error => e
+    redirect_to invoice_path(@invoice, anchor: "payments-section"), alert: "No fue posible solicitar el REP: #{e.message}"
+  end
+
   private
 
   def set_invoice

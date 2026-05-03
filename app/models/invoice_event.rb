@@ -13,6 +13,10 @@ class InvoiceEvent < ApplicationRecord
     pdf_requested
     pdf_stored
     payment_registered
+    payment_complement_manual_requested
+    payment_complement_manual_blocked_duplicate
+    payment_complement_manual_queued
+    payment_complement_manual_failed
     reconcile_requested
     reconcile_synced
     reconcile_not_found

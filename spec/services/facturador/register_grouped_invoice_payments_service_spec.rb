@@ -43,6 +43,7 @@ RSpec.describe Facturador::RegisterGroupedInvoicePaymentsService, type: :service
       create(:invoice_payment_evidence_link, invoice_payment_evidence: evidence, invoice: second_invoice)
       evidence.reload
       allow(Facturador::IssuePaymentComplementService).to receive(:call)
+      allow(Facturador::Config).to receive(:auto_issue_rep_enabled?).and_return(true)
     end
 
     it "registers all payments and requests one grouped REP when all are PPD" do
@@ -124,6 +125,32 @@ RSpec.describe Facturador::RegisterGroupedInvoicePaymentsService, type: :service
           actor: admin_user
         )
       end.to raise_error(Facturador::RequestError, /monto mayor a cero/)
+    end
+
+    it "registers payments without issuing REP automatically when auto issue REP is disabled" do
+      allow(Facturador::Config).to receive(:auto_issue_rep_enabled?).and_return(false)
+
+      payment_one = create(:invoice_payment, invoice: first_invoice, amount: 500, paid_at: Time.current, payment_method: "03")
+      payment_two = create(:invoice_payment, invoice: second_invoice, amount: 300, paid_at: Time.current, payment_method: "03")
+
+      allow(Facturador::RegisterInvoicePaymentService).to receive(:call).and_return(payment_one, payment_two)
+      allow(Facturador::IssueGroupedPaymentComplementService).to receive(:call)
+
+      result = described_class.call(
+        evidence: evidence,
+        invoice_amounts: {
+          first_invoice.id.to_s => "500.00",
+          second_invoice.id.to_s => "300.00"
+        },
+        paid_at: paid_at,
+        payment_method: "03",
+        actor: admin_user
+      )
+
+      expect(result.payments).to match_array([ payment_one, payment_two ])
+      expect(result.complement_invoice).to be_nil
+      expect(Facturador::IssueGroupedPaymentComplementService).not_to have_received(:call)
+      expect(Facturador::IssuePaymentComplementService).not_to have_received(:call)
     end
   end
 end

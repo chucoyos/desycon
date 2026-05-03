@@ -192,6 +192,15 @@ Facturador::EmisorService.clear!
 2. Si deseas ocultar captura manual: `FACTURADOR_MANUAL_ACTIONS_ENABLED=false`.
 3. Si deseas cortar todo PAC: `FACTURADOR_ENABLED=false`.
 
+### Modo troubleshooting REP (manual por pago)
+Usar cuando PAC responde errores ambiguos o se requiere controlar reintentos sin duplicar auto-disparos:
+
+1. `FACTURADOR_PAYMENT_COMPLEMENTS_ENABLED=true`
+2. `FACTURADOR_AUTO_ISSUE_REP_ENABLED=false`
+3. `FACTURADOR_MANUAL_ACTIONS_ENABLED=true`
+
+Con este modo, registrar pagos no encola REP automaticamente; el REP se solicita manualmente por pago desde UI.
+
 ### Checklist de validacion REP (staging)
 1. Confirmar flags activos:
 	- `FACTURADOR_ENABLED=true`

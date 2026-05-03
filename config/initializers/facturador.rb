@@ -20,6 +20,9 @@ Rails.application.config.x.facturador.reconciliation_enabled = ActiveModel::Type
 Rails.application.config.x.facturador.payment_complements_enabled = ActiveModel::Type::Boolean.new.cast(
   ENV.fetch("FACTURADOR_PAYMENT_COMPLEMENTS_ENABLED", facturador_credentials[:payment_complements_enabled] || false)
 )
+Rails.application.config.x.facturador.auto_issue_rep_enabled = ActiveModel::Type::Boolean.new.cast(
+  ENV.fetch("FACTURADOR_AUTO_ISSUE_REP_ENABLED", facturador_credentials[:auto_issue_rep_enabled].nil? ? true : facturador_credentials[:auto_issue_rep_enabled])
+)
 Rails.application.config.x.facturador.email_enabled = ActiveModel::Type::Boolean.new.cast(
   ENV.fetch("FACTURADOR_EMAIL_ENABLED", facturador_credentials[:email_enabled] || false)
 )

@@ -6,6 +6,7 @@ RSpec.describe Facturador::RegisterInvoicePaymentService, type: :service do
 
     before do
       allow(Facturador::IssuePaymentComplementService).to receive(:call)
+      allow(Facturador::Config).to receive(:auto_issue_rep_enabled?).and_return(true)
     end
 
     it 'registers payment and triggers complement service' do
@@ -82,6 +83,26 @@ RSpec.describe Facturador::RegisterInvoicePaymentService, type: :service do
       expect(payment.amount.to_d).to eq(invoice.total.to_d)
       expect(Facturador::IssuePaymentComplementService).to have_received(:call).with(payment: payment, actor: nil)
       expect(invoice.invoice_events.where(event_type: 'payment_registered')).to be_present
+    end
+
+    it 'registers payment without auto-triggering complement when auto issue REP is disabled' do
+      invoice.update!(payload_snapshot: { metodoPago: 'PPD' })
+      allow(Facturador::Config).to receive(:auto_issue_rep_enabled?).and_return(false)
+
+      payment = described_class.call(
+        invoice: invoice,
+        amount: 120,
+        paid_at: Time.current,
+        payment_method: '03',
+        reference: 'NO-AUTO-REP',
+        notes: nil,
+        actor: nil
+      )
+
+      expect(payment).to be_persisted
+      expect(payment.status).to eq('registered')
+      expect(Facturador::IssuePaymentComplementService).not_to have_received(:call)
+      expect(invoice.invoice_events.where(event_type: 'payment_registered')).to be_empty
     end
   end
 end
