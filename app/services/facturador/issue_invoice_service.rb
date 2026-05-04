@@ -43,18 +43,25 @@ module Facturador
 
       is_transient_transport = transient_transport_retryable?(e)
       message = normalized_issue_error_message(e)
+      provider_payload = provider_payload_from_exception(e)
 
-      error_code = ErrorCodeResolver.call(context: :issue, message: message, exception: e)
-      invoice.mark_failed!(error_code: error_code, error_message: message)
+      error_code = ErrorCodeResolver.call(context: :issue, provider_payload: provider_payload, message: message, exception: e)
+      failure_provider_response = failure_provider_response_for(error: e, error_code: error_code, message: message, provider_payload: provider_payload)
+
+      invoice.mark_failed!(error_code: error_code, error_message: message, provider_response: failure_provider_response)
       invoice.invoice_events.create!(
         event_type: "issue_failed",
         created_by: actor,
         request_payload: invoice.payload_snapshot,
-        response_payload: { error: message },
+        response_payload: failure_provider_response,
         provider_error_message: message
       )
 
-      sync_payment_complement_status!("failed") unless is_transient_transport
+      if pending_review_issue_error?(error_code)
+        sync_payment_complement_status!("complement_queued")
+      elsif !is_transient_transport
+        sync_payment_complement_status!("failed")
+      end
 
       if is_transient_transport
         raise TransientIssueError, e.message
@@ -171,6 +178,39 @@ module Facturador
       return unless invoice.kind == "pago"
 
       invoice.payment_complements.update_all(status: status, updated_at: Time.current)
+    end
+
+    def pending_review_issue_error?(error_code)
+      error_code.to_s == "FACTURADOR_ISSUE_PENDING_REVIEW"
+    end
+
+    def provider_payload_from_exception(error)
+      return unless error.respond_to?(:provider_payload)
+
+      error.provider_payload
+    end
+
+    def failure_provider_response_for(error:, error_code:, message:, provider_payload:)
+      payload = provider_payload.is_a?(Hash) ? provider_payload.deep_stringify_keys : {}
+      payload = payload.merge(
+        "issue_error_diagnostics" => issue_error_diagnostics(error: error, error_code: error_code, message: message)
+      )
+
+      payload
+    end
+
+    def issue_error_diagnostics(error:, error_code:, message:)
+      diagnostics = {
+        "error_code" => error_code,
+        "error_message" => message
+      }
+
+      if error.respond_to?(:to_h)
+        request_error_details = error.to_h.deep_stringify_keys
+        diagnostics["request_error"] = request_error_details if request_error_details.present?
+      end
+
+      diagnostics
     end
   end
 end

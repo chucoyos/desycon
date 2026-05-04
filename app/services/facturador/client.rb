@@ -253,14 +253,27 @@ module Facturador
       return parsed if response.is_a?(Net::HTTPSuccess)
 
       message = ErrorMessageExtractor.call(parsed, fallback: body)
-      raise_with_message(response: response, message: message.presence || response.message, request: request, uri: uri)
+      raise_with_message(
+        response: response,
+        message: message.presence || response.message,
+        request: request,
+        uri: uri,
+        provider_payload: parsed,
+        raw_body: body
+      )
     rescue JSON::ParserError
       if response.is_a?(Net::HTTPSuccess)
         raise RequestError, "Invalid JSON response from Facturador"
       end
 
       raw_message = response.body.to_s.strip
-      raise_with_message(response: response, message: raw_message.presence || response.message, request: request, uri: uri)
+      raise_with_message(
+        response: response,
+        message: raw_message.presence || response.message,
+        request: request,
+        uri: uri,
+        raw_body: response.body.to_s
+      )
     end
 
     def raise_for_unsuccessful_response(response, request:, uri:)
@@ -272,19 +285,43 @@ module Facturador
         message = ErrorMessageExtractor.call(parsed, fallback: raw)
       end
 
-      raise_with_message(response: response, message: message.presence || response.message, request: request, uri: uri)
+      raise_with_message(
+        response: response,
+        message: message.presence || response.message,
+        request: request,
+        uri: uri,
+        provider_payload: parsed,
+        raw_body: raw
+      )
     rescue JSON::ParserError
-      raise_with_message(response: response, message: response.body.to_s.strip.presence || response.message, request: request, uri: uri)
+      raise_with_message(
+        response: response,
+        message: response.body.to_s.strip.presence || response.message,
+        request: request,
+        uri: uri,
+        raw_body: response.body.to_s
+      )
     end
 
-    def raise_with_message(response:, message:, request:, uri:)
+    def raise_with_message(response:, message:, request:, uri:, provider_payload: nil, raw_body: nil)
       detailed_message = compose_error_message(response: response, message: message, request: request, uri: uri)
 
       if response.code.to_i == 401
         raise AuthenticationError, detailed_message
       end
 
-      raise RequestError, detailed_message
+      raise RequestError.new(
+        detailed_message,
+        status_code: response.code.to_i,
+        provider_payload: provider_payload,
+        response_body: raw_body,
+        response_headers: response.to_hash,
+        request_method: request.method,
+        request_path: uri.path,
+        request_host: uri.host,
+        request_query: uri.query,
+        request_id: response_request_id(response)
+      )
     end
 
     def compose_error_message(response:, message:, request:, uri:)

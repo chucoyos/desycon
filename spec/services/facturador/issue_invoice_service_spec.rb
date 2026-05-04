@@ -245,8 +245,16 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
       it 'marks linked payment as failed on generic 500 from api/v1 emit endpoint' do
         allow(Facturador::PayloadBuilder).to receive(:build).with(invoice).and_return({ sample: 'payload' })
         allow(client_double).to receive(:emitir_comprobante).and_raise(
-          Facturador::RequestError,
-          '500: An error has occurred. (POST /api/v1/emisores/273059/comprobantes, host=emision-api.facturador.com, query=emitir=true)'
+          Facturador::RequestError.new(
+            '500: An error has occurred. (POST /api/v1/emisores/273059/comprobantes, host=emision-api.facturador.com, query=emitir=true)',
+            status_code: 500,
+            provider_payload: { 'detalle' => 'Pendiente de timbrado' },
+            request_id: 'req-500-rep-1',
+            request_method: 'POST',
+            request_path: '/api/v1/emisores/273059/comprobantes',
+            request_host: 'emision-api.facturador.com',
+            request_query: 'emitir=true'
+          )
         )
 
         expect {
@@ -256,7 +264,10 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
         invoice.reload
         expect(invoice.last_error_code).to eq('FACTURADOR_ISSUE_PENDING_REVIEW')
         expect(invoice.last_error_message).to include('Posible estado pendiente en PAC')
-        expect(payment.reload.status).to eq('failed')
+        expect(invoice.provider_response['issue_error_diagnostics']).to be_present
+        expect(invoice.provider_response.dig('issue_error_diagnostics', 'request_error', 'request_id')).to eq('req-500-rep-1')
+        expect(invoice.provider_response['detalle']).to eq('Pendiente de timbrado')
+        expect(payment.reload.status).to eq('complement_queued')
       end
     end
   end
