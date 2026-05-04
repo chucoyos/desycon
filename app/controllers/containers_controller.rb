@@ -27,7 +27,7 @@ class ContainersController < ApplicationController
     @containers = if current_user&.consolidator?
       base_scope.includes(:vessel, :voyage)
     else
-      base_scope.includes(:shipping_line, :vessel, :voyage)
+      base_scope.includes(:vessel, :voyage)
     end
     @consolidators = Entity.consolidators.order(:name)
     @shipping_lines = ShippingLine.alphabetical

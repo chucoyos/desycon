@@ -458,6 +458,23 @@ RSpec.describe "Containers", type: :request do
       expect(response.body).to include('name="eta"')
       expect(response.body).to include("ETA:")
     end
+
+    it "shows ETA column for internal users" do
+      sign_in user, scope: :user
+
+      eta = Time.zone.parse("2026-04-09 10:30:00")
+      shipping_line = create(:shipping_line, iso_code: "INT")
+      container = create(:container, number: "IETA1234501", voyage: create(:voyage, eta: eta), shipping_line: shipping_line)
+
+      get containers_url
+
+      expect(response).to be_successful
+      doc = Nokogiri::HTML(response.body)
+      headers = doc.css("table thead th").map { |th| th.text.strip }
+      expect(headers).to include("ETA")
+      expect(response.body).to include(container.number)
+      expect(response.body).to include(eta.strftime("%d/%m/%y %H:%M"))
+    end
   end
 
   describe "GET /containers/shipping_lines_search" do

@@ -461,6 +461,8 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         expect(payload[:tipoDeComprobante]).to eq('P')
         expect(payload[:serie]).to eq('PAY')
         expect(payload[:receptor][:usoCFDI]).to eq('CP01')
+        expect(payload.key?(:formaPago)).to be(false)
+        expect(payload.key?(:metodoPago)).to be(false)
 
         complemento = payload.dig(:complemento, :complementoPago20)
         expect(complemento).to be_present
@@ -481,7 +483,7 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         expect(docto[:serie]).to eq('Sin Serie')
         expect(docto[:folio]).to eq('123')
         expect(docto[:monedaDR]).to eq('MXN')
-        expect(docto[:equivalenciaDR]).to eq(1)
+        expect(docto.key?(:equivalenciaDR)).to be(false)
         expect(docto[:objetoImpDR]).to eq('02')
         expect(docto[:numParcialidad]).to eq('2')
         expect(docto[:impSaldoAnt]).to eq(960.0)
@@ -502,6 +504,31 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         expect(traslado_p[:tasaOCuotaP]).to eq('0.160000')
         expect(traslado_p[:importeP]).to eq(41.38)
         expect(docto.key?(:tipoCambioActual)).to be(false)
+      end
+
+      it 'includes equivalenciaDR when DR currency differs from payment currency' do
+        builder = described_class.new(complement_invoice)
+        source = {
+          sat_uuid: 'UUID-SOURCE-FOREIGN',
+          currency: 'USD',
+          previous_balance: 100.to_d,
+          remaining_balance: 0.to_d,
+          partiality_number: 1,
+          serie: nil,
+          folio: nil,
+          objeto_imp: '01'
+        }
+        payment_data = {
+          amount: 100.to_d,
+          paid_at: Time.zone.parse('2026-03-09 12:00:00'),
+          payment_method: '03',
+          currency: 'MXN'
+        }
+
+        docto = builder.send(:payment_related_document, source: source, payment_data: payment_data, taxes: nil)
+
+        expect(docto[:monedaDR]).to eq('USD')
+        expect(docto[:equivalenciaDR]).to eq(1)
       end
 
       it 'raises when payment serie is not configured' do

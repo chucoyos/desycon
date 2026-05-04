@@ -84,13 +84,11 @@ module Facturador
         ],
         version: "4.0",
         fecha: Time.current.strftime("%Y-%m-%dT%H:%M:%S"),
-        formaPago: "99",
         subTotal: 0,
         moneda: "XXX",
         total: 0,
         tipoDeComprobante: "P",
         exportacion: "01",
-        metodoPago: "PUE",
         lugarExpedicion: emisor_address.codigo_postal,
         descripcionFacturador: descripcion_facturador,
         metadataInterna: internal_metadata_snapshot,
@@ -172,13 +170,11 @@ module Facturador
         ],
         version: "4.0",
         fecha: Time.current.strftime("%Y-%m-%dT%H:%M:%S"),
-        formaPago: "99",
         subTotal: 0,
         moneda: "XXX",
         total: 0,
         tipoDeComprobante: "P",
         exportacion: "01",
-        metodoPago: "PUE",
         lugarExpedicion: emisor_address.codigo_postal,
         descripcionFacturador: descripcion_facturador,
         metadataInterna: internal_metadata_snapshot,
@@ -727,13 +723,13 @@ module Facturador
       doc = {
         idDocumento: source[:sat_uuid],
         monedaDR: source[:currency],
-        equivalenciaDR: 1,
         objetoImpDR: source[:objeto_imp],
         numParcialidad: source[:partiality_number].to_s,
         impSaldoAnt: source[:previous_balance].to_f,
         impPagado: payment_data[:amount].to_f,
         impSaldoInsoluto: source[:remaining_balance].to_f
       }
+      doc[:equivalenciaDR] = 1 if source[:currency].to_s != payment_data[:currency].to_s
       doc[:serie] = source[:serie] if source[:serie].present?
       doc[:folio] = source[:folio] if source[:folio].present?
 
