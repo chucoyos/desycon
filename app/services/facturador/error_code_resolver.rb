@@ -14,6 +14,8 @@ module Facturador
     end
 
     def call
+      return "#{prefix}_PENDING_REVIEW" if pending_review_error?
+
       code = provider_error_code
       return "#{prefix}_PROVIDER_#{sanitize(code)}" if code.present?
       return "#{prefix}_PROVIDER_ERROR" if provider_error_payload?
@@ -89,6 +91,13 @@ module Facturador
 
     def network_error?
       message.match?(/econnrefused|socketerror|getaddrinfo|name or service not known|network/i)
+    end
+
+    def pending_review_error?
+      context == "ISSUE" &&
+        message.match?(/(?:\A|\s)500:/i) &&
+        message.match?(%r{POST\s+/api/v1/emisores/\d+/comprobantes}i) &&
+        message.match?(/query=emitir=true/i)
     end
 
     def sanitize(value)

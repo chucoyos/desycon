@@ -33,5 +33,13 @@ RSpec.describe Facturador::ErrorCodeResolver do
 
       expect(code).to eq('FACTURADOR_CANCEL_AUTH_ERROR')
     end
+
+    it 'maps emitir 500 into pending review code for issue context' do
+      message = '500: An error has occurred. (POST /api/v1/emisores/273059/comprobantes, host=emision-api.facturador.com, query=emitir=true)'
+
+      code = described_class.call(context: :issue, message: message)
+
+      expect(code).to eq('FACTURADOR_ISSUE_PENDING_REVIEW')
+    end
   end
 end

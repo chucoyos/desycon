@@ -42,15 +42,16 @@ module Facturador
       raise if e.is_a?(TransientIssueError)
 
       is_transient_transport = transient_transport_retryable?(e)
+      message = normalized_issue_error_message(e)
 
-      error_code = ErrorCodeResolver.call(context: :issue, message: e.message, exception: e)
-      invoice.mark_failed!(error_code: error_code, error_message: e.message)
+      error_code = ErrorCodeResolver.call(context: :issue, message: message, exception: e)
+      invoice.mark_failed!(error_code: error_code, error_message: message)
       invoice.invoice_events.create!(
         event_type: "issue_failed",
         created_by: actor,
         request_payload: invoice.payload_snapshot,
-        response_payload: { error: e.message },
-        provider_error_message: e.message
+        response_payload: { error: message },
+        provider_error_message: message
       )
 
       sync_payment_complement_status!("failed") unless is_transient_transport
@@ -150,6 +151,20 @@ module Facturador
 
       message = error.message.to_s
       message.match?(/Temporary failure in name resolution|getaddrinfo\(3\)|Failed to open TCP connection|execution expired|timed out|timeout/i)
+    end
+
+    def normalized_issue_error_message(error)
+      base = error.message.to_s
+      return base unless invoice.kind == "pago"
+      return base unless potential_pending_timbrado_error?(base)
+
+      "#{base} | Posible estado pendiente en PAC: el comprobante pudo registrarse sin timbrarse. Verifica en Facturador antes de reintentar para evitar duplicados."
+    end
+
+    def potential_pending_timbrado_error?(message)
+      message.match?(/(?:\A|\s)500:/i) &&
+        message.match?(%r{POST\s+/api/v1/emisores/\d+/comprobantes}i) &&
+        message.match?(/query=emitir=true/i)
     end
 
     def sync_payment_complement_status!(status)

@@ -253,6 +253,9 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
           described_class.call(invoice_id: invoice.id)
         }.to raise_error(Facturador::RequestError, /An error has occurred/)
 
+        invoice.reload
+        expect(invoice.last_error_code).to eq('FACTURADOR_ISSUE_PENDING_REVIEW')
+        expect(invoice.last_error_message).to include('Posible estado pendiente en PAC')
         expect(payment.reload.status).to eq('failed')
       end
     end
