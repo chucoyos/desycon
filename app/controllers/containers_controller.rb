@@ -840,44 +840,29 @@ class ContainersController < ApplicationController
     scope.map do |container|
       bl_house_lines = container.bl_house_lines
       consolidator_name = container.consolidator_entity&.name.to_s.strip.presence || "-"
+      vessel_name = container.vessel&.name.to_s.strip
+      voyage_name = container.voyage&.viaje.to_s.strip
+      vessel_and_voyage = [ vessel_name.presence, voyage_name.presence ].compact.join(" / ").presence || "-"
+      shipping_line_name = container.shipping_line&.name.to_s.strip.presence || container.shipping_line&.iso_code.to_s.strip.presence || "-"
 
       [
         container.ejecutivo.to_s.strip.presence || "-",
         container.archivo_nr.to_s.strip.presence || "-",
         container.status.to_s.humanize.presence || "-",
-        container.number.to_s.strip.presence || "-",
-        container.bl_master.to_s.strip.presence || "-",
-        container.vessel&.name.to_s.strip.presence || "-",
-        container.voyage&.eta,
-        container.voyage&.ata,
-        container.voyage&.inicio_operacion,
-        container.voyage&.fin_operacion,
-        container.shipping_line&.name.to_s.strip.presence || "-",
-        container.origin_port&.display_name.to_s.strip.presence || container.origin_port&.name.to_s.strip.presence || "-",
-        container.recinto.to_s.strip.presence || "-",
-        container.almacen.to_s.strip.presence || "-",
         consolidator_name,
+        container.number.to_s.strip.presence || "-",
+        container.type_size.to_s.strip.presence || "-",
+        vessel_and_voyage,
+        container.voyage&.eta,
+        container.bl_master.to_s.strip.presence || "-",
+        shipping_line_name,
         bl_house_lines.size,
         bl_house_lines.sum { |line| line.cantidad.to_i },
         bl_house_lines.sum { |line| line.peso.to_d },
-        container.fecha_revalidacion_bl_master,
-        container.fecha_transferencia,
-        container.fecha_desconsolidacion,
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        ""
+        bl_house_lines.sum { |line| line.volumen.to_d },
+        container.recinto.to_s.strip.presence || "-",
+        container.almacen.to_s.strip.presence || "-",
+        container.fecha_desconsolidacion
       ]
     end
   end
@@ -888,72 +873,49 @@ class ContainersController < ApplicationController
 
     workbook.add_worksheet(name: "Operaciones") do |sheet|
       header = [
-        "Ejecutivo",
-        "Referencia",
-        "Estatus",
-        "Contenedor",
-        "MBL",
-        "Buque",
+        "EJECUTIVO",
+        "REFERENCIA",
+        "OBSERVACIONES",
+        "CLIENTE",
+        "CONTENEDOR",
+        "TAMAÑO",
+        "BUQUE",
         "ETA",
-        "ATA",
-        "Inicio de Operacion",
-        "Fin de Operacion",
-        "Naviera",
-        "Puerto Origen",
-        "Terminal",
-        "Almacen",
-        "Cliente",
-        "No. de Partidas",
-        "No. de Bultos",
-        "Peso",
-        "Fecha Revalidacion Bl Master",
-        "Fecha de Transferencia",
-        "Fecha Desconsolidacion",
-        "Observaciones",
-        "Toque de Piso",
-        "Inicio de Revalidacion(Fecha-hora)",
-        "Tiempo Transcurrido en Horas",
-        "Patio de Entrega",
-        "Entrega de Vacio(fecha)",
-        "Entrega EIR(Fecha)",
-        "Recepcion Documentos",
-        "Solicitud Corte de Demoras(fecha)",
-        "Confirmacion Corte de Demoras por LN(fecha)",
-        "Cuenta de Gastos(fecha)",
-        "Almacenaje de Vacio",
-        "Daños",
-        "Costo",
-        "IMO"
+        "MBL",
+        "LN",
+        "#PARTIDAS",
+        "BULTOS",
+        "PESO",
+        "CUBICAJE",
+        "TERMINAL",
+        "ALMACEN",
+        "FECHA DESCO"
       ]
 
       styles = sheet.styles
-      header_style = styles.add_style(b: true, bg_color: "1F2937", fg_color: "FFFFFF", alignment: { horizontal: :center })
-      summary_label_style = styles.add_style(b: true, bg_color: "E2E8F0", fg_color: "0F172A")
-      datetime_style = styles.add_style(format_code: "yyyy-mm-dd hh:mm")
-      date_style = styles.add_style(format_code: "yyyy-mm-dd")
-      integer_style = styles.add_style(format_code: "0")
-      decimal_style = styles.add_style(format_code: "0.00")
-      alternate_row_style = styles.add_style(bg_color: "F8FAFC")
-
-      total_partidas = rows.sum { |row| row[15].to_i }
-      total_bultos = rows.sum { |row| row[16].to_i }
-      total_peso = rows.sum { |row| row[17].to_d }
-
-      sheet.add_row([ "Fecha de corte", Time.current ], style: [ summary_label_style, datetime_style ])
-      sheet.add_row([ "Total contenedores", rows.size ], style: [ summary_label_style, integer_style ])
-      sheet.add_row([ "Total partidas", total_partidas ], style: [ summary_label_style, integer_style ])
-      sheet.add_row([ "Total bultos", total_bultos ], style: [ summary_label_style, integer_style ])
-      sheet.add_row([ "Peso total", total_peso ], style: [ summary_label_style, decimal_style ])
-      sheet.add_row([])
+      shared_border = { style: :thin, color: "D1D5DB" }
+      header_style = styles.add_style(
+        b: true,
+        bg_color: "3B82F6",
+        fg_color: "FFFFFF",
+        alignment: { horizontal: :center },
+        border: shared_border
+      )
+      datetime_style = styles.add_style(format_code: "yyyy-mm-dd hh:mm", border: shared_border)
+      date_style = styles.add_style(format_code: "yyyy-mm-dd", border: shared_border)
+      integer_style = styles.add_style(format_code: "0", border: shared_border)
+      decimal_style = styles.add_style(format_code: "0.00", border: shared_border)
+      alternate_row_style = styles.add_style(bg_color: "F8FAFC", border: shared_border)
 
       sheet.add_row(header, style: header_style)
 
       base_row_style = Array.new(header.length)
-      [ 6, 7, 8, 9, 18, 19 ].each { |index| base_row_style[index] = datetime_style }
-      base_row_style[20] = date_style
-      base_row_style[15] = integer_style
-      base_row_style[16] = integer_style
-      base_row_style[17] = decimal_style
+      base_row_style[7] = datetime_style
+      base_row_style[16] = date_style
+      base_row_style[10] = integer_style
+      base_row_style[11] = integer_style
+      base_row_style[12] = decimal_style
+      base_row_style[13] = decimal_style
       alternate_row_styles = base_row_style.map { |style| style || alternate_row_style }
 
       rows.each_with_index do |row, index|
@@ -961,9 +923,9 @@ class ContainersController < ApplicationController
         sheet.add_row(row, style: style)
       end
 
-      header_row_index = 7
+      header_row_index = 1
       last_row_index = [ header_row_index + rows.size, header_row_index ].max
-      sheet.auto_filter = "A#{header_row_index}:AJ#{last_row_index}"
+      sheet.auto_filter = "A#{header_row_index}:Q#{last_row_index}"
       sheet.sheet_view.pane do |pane|
         pane.top_left_cell = "A#{header_row_index + 1}"
         pane.state = :frozen_split
@@ -971,7 +933,7 @@ class ContainersController < ApplicationController
         pane.active_pane = :bottom_left
       end
 
-      sheet.column_widths 18, 18, 18, 18, 18, 24, 18, 18, 20, 20, 20, 20, 20, 18, 24, 16, 16, 12, 24, 24, 22, 30, 16, 26, 22, 18, 20, 18, 22, 32, 34, 24, 20, 12, 12, 12
+      sheet.column_widths 18, 18, 18, 24, 18, 12, 28, 18, 18, 18, 12, 12, 12, 12, 16, 16, 16
     end
 
     package.to_stream.read
