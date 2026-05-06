@@ -36,6 +36,10 @@ class ContainersController < ApplicationController
     @selected_end_date = resolved_end_date
     @selected_eta = parse_filter_date(params[:eta])
     @selected_consolidator_id = current_user&.consolidator? ? current_user.entity_id : params[:consolidator_id].presence
+    @selected_voyage_id = params[:voyage_id].presence
+    @selected_voyage = @selected_voyage_id.present? ? Voyage.includes(:destination_port).find_by(id: @selected_voyage_id) : nil
+    @selected_vessel_id = params[:vessel_id].presence
+    @selected_vessel = @selected_vessel_id.present? ? Vessel.find_by(id: @selected_vessel_id) : nil
 
     start_date = [ @selected_start_date, @selected_end_date ].min
     end_date = [ @selected_start_date, @selected_end_date ].max
@@ -52,6 +56,8 @@ class ContainersController < ApplicationController
     if !current_user&.consolidator? && params[:shipping_line_id].present?
       @containers = @containers.by_shipping_line(params[:shipping_line_id])
     end
+    @containers = @containers.where(vessel_id: @selected_vessel_id) if @selected_vessel_id.present?
+    @containers = @containers.where(voyage_id: @selected_voyage_id) if @selected_voyage_id.present?
     @containers = @containers.where("bl_master ILIKE ?", "%#{params[:bl_master]}%") if params[:bl_master].present?
 
     # Búsqueda por número
@@ -87,6 +93,8 @@ class ContainersController < ApplicationController
     selected_end_date = resolved_end_date
     selected_eta = parse_filter_date(params[:eta])
     selected_consolidator_id = current_user&.consolidator? ? current_user.entity_id : params[:consolidator_id].presence
+    selected_vessel_id = params[:vessel_id].presence
+    selected_voyage_id = params[:voyage_id].presence
 
     start_date = [ selected_start_date, selected_end_date ].min
     end_date = [ selected_start_date, selected_end_date ].max
@@ -102,6 +110,8 @@ class ContainersController < ApplicationController
     if !current_user&.consolidator? && params[:shipping_line_id].present?
       scope = scope.by_shipping_line(params[:shipping_line_id])
     end
+    scope = scope.where(vessel_id: selected_vessel_id) if selected_vessel_id.present?
+    scope = scope.where(voyage_id: selected_voyage_id) if selected_voyage_id.present?
 
     scope = scope.where("bl_master ILIKE ?", "%#{params[:bl_master]}%") if params[:bl_master].present?
     scope = scope.where("number ILIKE ?", "%#{params[:search]}%") if params[:search].present?
@@ -189,7 +199,7 @@ class ContainersController < ApplicationController
   end
 
   def vessels_search
-    authorize Container, :create?
+    authorize Container, :index?
 
     query = params[:q].to_s.strip
     min_chars = 2
@@ -246,7 +256,7 @@ class ContainersController < ApplicationController
   end
 
   def voyages_search
-    authorize Container, :create?
+    authorize Container, :index?
 
     query = params[:q].to_s.strip
     vessel_id = params[:vessel_id].presence

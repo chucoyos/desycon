@@ -475,6 +475,40 @@ RSpec.describe "Containers", type: :request do
       expect(response.body).to include(container.number)
       expect(response.body).to include(eta.strftime("%d/%m/%y %H:%M"))
     end
+
+    it "filters by vessel for admin users" do
+      sign_in user, scope: :user
+
+      selected_vessel = create(:vessel, name: "Buque Alfa")
+      other_vessel = create(:vessel, name: "Buque Beta")
+
+      selected_container = create(:container, number: "VESL1234501", vessel: selected_vessel)
+      other_container = create(:container, number: "VESL1234502", vessel: other_vessel)
+
+      get containers_url, params: { vessel_id: selected_vessel.id }
+
+      expect(response).to be_successful
+      expect(response.body).to include(selected_container.number)
+      expect(response.body).not_to include(other_container.number)
+      expect(response.body).to include("Buque: #{selected_vessel.name}")
+    end
+
+    it "filters by voyage for admin users" do
+      sign_in user, scope: :user
+
+      selected_voyage = create(:voyage, viaje: "VOY-ALFA")
+      other_voyage = create(:voyage, viaje: "VOY-BETA")
+
+      selected_container = create(:container, number: "VOYG1234501", voyage: selected_voyage)
+      other_container = create(:container, number: "VOYG1234502", voyage: other_voyage)
+
+      get containers_url, params: { voyage_id: selected_voyage.id }
+
+      expect(response).to be_successful
+      expect(response.body).to include(selected_container.number)
+      expect(response.body).not_to include(other_container.number)
+      expect(response.body).to include("Viaje: #{selected_voyage.viaje}")
+    end
   end
 
   describe "GET /containers/shipping_lines_search" do
@@ -608,7 +642,7 @@ RSpec.describe "Containers", type: :request do
       expect(payload.dig("meta", "limit")).to eq(20)
     end
 
-    it "requires create permissions" do
+    it "requires index permissions" do
       restricted_user = create(:user, :customs_broker)
       sign_in restricted_user, scope: :user
 
@@ -648,7 +682,7 @@ RSpec.describe "Containers", type: :request do
       expect(ids).to contain_exactly(selected_voyage.id)
     end
 
-    it "requires create permissions" do
+    it "requires index permissions" do
       restricted_user = create(:user, :customs_broker)
       sign_in restricted_user, scope: :user
 
