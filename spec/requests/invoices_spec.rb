@@ -1316,6 +1316,91 @@ RSpec.describe 'Invoices', type: :request do
       expect(flash[:notice]).to include('Factura no timbrada eliminada correctamente')
     end
 
+    it 'blocks deletion for queued invoices' do
+      sign_in admin_user, scope: :user
+      invoice = create(:invoice, status: 'queued', sat_uuid: nil)
+
+      expect {
+        delete invoice_path(invoice)
+      }.not_to change(Invoice, :count)
+
+      expect(response).to redirect_to(invoice_path(invoice))
+      expect(flash[:alert]).to include('en proceso de timbrado')
+    end
+
+    it 'blocks deletion when recent issue_requested has provider match in Facturador' do
+      sign_in admin_user, scope: :user
+      invoice = create(
+        :invoice,
+        status: 'failed',
+        sat_uuid: nil,
+        total: 116.0,
+        payload_snapshot: {
+          'serie' => 'GVRZ',
+          'receptor' => { 'rfc' => 'XAXX010101000' }
+        }
+      )
+      invoice.invoice_events.create!(
+        event_type: 'issue_requested',
+        created_by: admin_user,
+        request_payload: invoice.payload_snapshot,
+        response_payload: {}
+      )
+
+      allow(Facturador::Config).to receive(:enabled?).and_return(true)
+      allow(Facturador::AccessTokenService).to receive(:fetch!).and_return('token')
+      allow(Facturador::EmisorService).to receive(:emisor_id!).with(access_token: 'token').and_return(123)
+      client = instance_double(Facturador::Client)
+      allow(Facturador::Client).to receive(:new).with(access_token: 'token').and_return(client)
+      allow(client).to receive(:buscar_comprobantes).and_return(
+        {
+          'resumenComprobante' => [
+            { 'serie' => 'GVRZ', 'receptorRfc' => 'XAXX010101000', 'total' => '116.00' }
+          ]
+        }
+      )
+
+      expect {
+        delete invoice_path(invoice)
+      }.not_to change(Invoice, :count)
+
+      expect(response).to redirect_to(invoice_path(invoice))
+      expect(flash[:alert]).to include('se detectó un CFDI existente en Facturador')
+    end
+
+    it 'allows deletion when recent issue_requested is verified clear in Facturador' do
+      sign_in admin_user, scope: :user
+      invoice = create(
+        :invoice,
+        status: 'failed',
+        sat_uuid: nil,
+        payload_snapshot: {
+          'serie' => 'GVRZ',
+          'receptor' => { 'rfc' => 'XAXX010101000' }
+        }
+      )
+      invoice.invoice_events.create!(
+        event_type: 'issue_requested',
+        created_by: admin_user,
+        request_payload: invoice.payload_snapshot,
+        response_payload: {}
+      )
+
+      allow(Facturador::Config).to receive(:enabled?).and_return(true)
+      allow(Facturador::AccessTokenService).to receive(:fetch!).and_return('token')
+      allow(Facturador::EmisorService).to receive(:emisor_id!).with(access_token: 'token').and_return(123)
+      client = instance_double(Facturador::Client)
+      allow(Facturador::Client).to receive(:new).with(access_token: 'token').and_return(client)
+      allow(client).to receive(:buscar_comprobantes).and_return({ 'resumenComprobante' => [] })
+
+      expect {
+        delete invoice_path(invoice)
+      }.to change(Invoice, :count).by(-1)
+
+      expect(response).to redirect_to(invoices_path)
+      expect(flash[:notice]).to include('Factura no timbrada eliminada correctamente')
+    end
+
     it 'does not allow admin to delete stamped invoice' do
       sign_in admin_user, scope: :user
       invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-ISSUED-DELETE-001')

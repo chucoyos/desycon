@@ -3,6 +3,8 @@ require "prawn"
 require "prawn/table"
 
 class InvoicesController < ApplicationController
+  DESTROY_ISSUE_REQUESTED_GUARD_WINDOW = 60.minutes
+
   before_action :authenticate_user!
   before_action :set_invoice, only: %i[show retry_issue cancel sync_documents sync_files register_payment send_email destroy]
   before_action :load_manual_invoice_options, only: %i[new create]
@@ -808,6 +810,31 @@ class InvoicesController < ApplicationController
   def destroy
     authorize @invoice, :destroy?
 
+    if @invoice.status == "queued"
+      return redirect_back(
+        fallback_location: invoice_path(@invoice),
+        alert: "No se puede eliminar una factura en proceso de timbrado. Espera a que concluya y reintenta."
+      )
+    end
+
+    if issue_requested_recently_for_destroy?(@invoice)
+      verification = verify_facturador_before_destroy(@invoice)
+
+      if verification[:status] == :found
+        return redirect_back(
+          fallback_location: invoice_path(@invoice),
+          alert: "No se puede eliminar: se detectó un CFDI existente en Facturador para esta factura. Sincroniza antes de intentar borrar."
+        )
+      end
+
+      if verification[:status] == :unknown
+        return redirect_back(
+          fallback_location: invoice_path(@invoice),
+          alert: "No se puede eliminar por ahora: no fue posible verificar en Facturador. Reintenta en unos minutos."
+        )
+      end
+    end
+
     own_payments_count = @invoice.invoice_payments.count
     linked_rep_payments_count = @invoice.kind == "pago" ? @invoice.payment_complements.count : 0
 
@@ -1469,5 +1496,66 @@ class InvoicesController < ApplicationController
     return invoices_path unless return_to.start_with?("/")
 
     return_to
+  end
+
+  def issue_requested_recently_for_destroy?(invoice)
+    cutoff = Time.current - DESTROY_ISSUE_REQUESTED_GUARD_WINDOW
+    invoice.invoice_events.where(event_type: "issue_requested").where("created_at >= ?", cutoff).exists?
+  end
+
+  def verify_facturador_before_destroy(invoice)
+    return { status: :clear } unless Facturador::Config.enabled?
+
+    access_token = Facturador::AccessTokenService.fetch!
+    emisor_id = Facturador::EmisorService.emisor_id!(access_token: access_token)
+    client = Facturador::Client.new(access_token: access_token)
+
+    date_from = (invoice.created_at || Time.current).to_i - 2.days.to_i
+    date_to = Time.current.to_i
+    response = client.buscar_comprobantes(
+      emisor_id: emisor_id,
+      finicial: date_from,
+      ffinal: date_to,
+      uuid: invoice.sat_uuid.presence,
+      take: 100
+    )
+
+    items = response.is_a?(Hash) ? Array(response["resumenComprobante"]) : Array(response)
+    return { status: :found } if factura_matches_provider_items?(invoice, items)
+
+    { status: :clear }
+  rescue Facturador::Error, StandardError => e
+    Rails.logger.warn("Facturador destroy verification failed for invoice=#{invoice.id}: #{e.message}")
+    { status: :unknown }
+  end
+
+  def factura_matches_provider_items?(invoice, items)
+    uuid = invoice.sat_uuid.to_s.strip
+    return true if uuid.present? && items.any? { |item| item.is_a?(Hash) && item["uuid"].to_s.casecmp(uuid).zero? }
+
+    serie = invoice_series_candidate(invoice)
+    receiver_rfc = invoice.payload_snapshot.to_h.dig("receptor", "rfc").to_s.upcase.strip.presence
+    target_total = invoice.total.to_d
+
+    return false if serie.blank? || receiver_rfc.blank?
+
+    items.any? do |item|
+      next false unless item.is_a?(Hash)
+
+      provider_serie = item["serie"].to_s.strip
+      provider_rfc = item["receptorRfc"].to_s.upcase.strip
+      provider_total = item["total"].to_d
+
+      provider_serie.casecmp(serie).zero? && provider_rfc == receiver_rfc && provider_total == target_total
+    end
+  end
+
+  def invoice_series_candidate(invoice)
+    provider = invoice.provider_response.to_h
+    payload = invoice.payload_snapshot.to_h
+
+    provider["serie"].to_s.strip.presence ||
+      payload["serie"].to_s.strip.presence ||
+      payload["serie_override"].to_s.strip.presence
   end
 end
