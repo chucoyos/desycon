@@ -1,5 +1,6 @@
 class ContainersController < ApplicationController
   require "caxlsx"
+  DATE_FILTER_TYPES = %w[created_at fecha_desconsolidacion].freeze
 
   before_action :authenticate_user!
   after_action :verify_authorized, except: :index
@@ -34,6 +35,7 @@ class ContainersController < ApplicationController
 
     @selected_start_date = resolved_start_date
     @selected_end_date = resolved_end_date
+    @selected_date_filter_type = resolved_date_filter_type
     @selected_eta = parse_filter_date(params[:eta])
     @selected_consolidator_id = current_user&.consolidator? ? current_user.entity_id : params[:consolidator_id].presence
     @selected_voyage_id = params[:voyage_id].presence
@@ -44,7 +46,12 @@ class ContainersController < ApplicationController
     start_date = [ @selected_start_date, @selected_end_date ].min
     end_date = [ @selected_start_date, @selected_end_date ].max
 
-    @containers = @containers.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+    @containers = apply_date_range_filter(
+      scope: @containers,
+      start_date: start_date,
+      end_date: end_date,
+      date_filter_type: @selected_date_filter_type
+    )
 
     # Filtros opcionales
     @containers = @containers.by_status(params[:status]) if params[:status].present?
@@ -91,6 +98,7 @@ class ContainersController < ApplicationController
 
     selected_start_date = resolved_start_date
     selected_end_date = resolved_end_date
+    selected_date_filter_type = resolved_date_filter_type
     selected_eta = parse_filter_date(params[:eta])
     selected_consolidator_id = current_user&.consolidator? ? current_user.entity_id : params[:consolidator_id].presence
     selected_vessel_id = params[:vessel_id].presence
@@ -99,7 +107,12 @@ class ContainersController < ApplicationController
     start_date = [ selected_start_date, selected_end_date ].min
     end_date = [ selected_start_date, selected_end_date ].max
 
-    scope = scope.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+    scope = apply_date_range_filter(
+      scope: scope,
+      start_date: start_date,
+      end_date: end_date,
+      date_filter_type: selected_date_filter_type
+    )
     scope = scope.by_status(params[:status]) if params[:status].present?
     scope = scope.where("archivo_nr ILIKE ?", "%#{params[:reference]}%") if params[:reference].present?
     scope = scope.by_consolidator(selected_consolidator_id) if selected_consolidator_id.present?
@@ -756,6 +769,23 @@ class ContainersController < ApplicationController
     Date.iso8601(value)
   rescue ArgumentError
     nil
+  end
+
+  def resolved_date_filter_type
+    type = params[:date_filter_type].to_s
+    return type if DATE_FILTER_TYPES.include?(type)
+
+    "created_at"
+  end
+
+  def apply_date_range_filter(scope:, start_date:, end_date:, date_filter_type:)
+    range = start_date.beginning_of_day..end_date.end_of_day
+    case date_filter_type
+    when "fecha_desconsolidacion"
+      scope.where(fecha_desconsolidacion: range)
+    else
+      scope.where(created_at: range)
+    end
   end
 
   def default_start_date

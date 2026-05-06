@@ -44,6 +44,24 @@ RSpec.describe "Containers", type: :request do
       expect(response.body).to include("Filtros activos:")
     end
 
+      it "filters by fecha_desconsolidacion when selected in date filter type" do
+        sign_in user, scope: :user
+
+        selected_container = create(:container, number: "FDSC1234501", fecha_desconsolidacion: Date.new(2026, 4, 9))
+        other_container = create(:container, number: "FDSC1234502", fecha_desconsolidacion: Date.new(2026, 4, 11))
+
+        get containers_url, params: {
+          date_filter_type: "fecha_desconsolidacion",
+          start_date: "2026-04-09",
+          end_date: "2026-04-09"
+        }
+
+        expect(response).to be_successful
+        expect(response.body).to include(selected_container.number)
+        expect(response.body).not_to include(other_container.number)
+        expect(response.body).to include("Desconsolidación: 2026-04-09 - 2026-04-09")
+      end
+
     it "hides create/edit/destroy actions for tramitador users" do
       tramitador = create(:user, :tramitador)
       container = create(:container, number: "TRAM1234567")
@@ -211,6 +229,33 @@ RSpec.describe "Containers", type: :request do
       expect(sheet.row(8)[15]).to eq(3)
       expect(sheet.row(8)[16]).to eq(6)
       expect(sheet.row(8)[17]).to eq(31.5)
+
+      tempfile.close!
+    end
+
+    it "exports using fecha_desconsolidacion date range when selected" do
+      selected_container = create(:container, archivo_nr: "REF-FD-001", fecha_desconsolidacion: Date.new(2026, 4, 9))
+      other_container = create(:container, archivo_nr: "REF-FD-999", fecha_desconsolidacion: Date.new(2026, 4, 11))
+
+      get operations_report_containers_url, params: {
+        date_filter_type: "fecha_desconsolidacion",
+        start_date: "2026-04-09",
+        end_date: "2026-04-09"
+      }
+
+      expect(response).to have_http_status(:ok)
+
+      tempfile = Tempfile.new([ "operaciones_fecha_desconsolidacion", ".xlsx" ])
+      tempfile.binmode
+      tempfile.write(response.body)
+      tempfile.rewind
+
+      workbook = Roo::Excelx.new(tempfile.path)
+      sheet = workbook.sheet(0)
+      references = (8..sheet.last_row).map { |row| sheet.row(row)[1] }.compact
+
+      expect(references).to include(selected_container.archivo_nr)
+      expect(references).not_to include(other_container.archivo_nr)
 
       tempfile.close!
     end

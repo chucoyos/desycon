@@ -177,6 +177,14 @@
       <% end %>
 
       <div class="md:col-span-12 lg:col-span-4">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Tipo de fecha</label>
+        <%= f.select :date_filter_type,
+          options_for_select([["Creación", "created_at"], ["Desconsolidación", "fecha_desconsolidacion"]], @selected_date_filter_type),
+          {},
+          class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all" %>
+      </div>
+
+      <div class="md:col-span-12 lg:col-span-4">
         <label class="block text-xs font-medium text-gray-600 mb-1">Rango de fechas</label>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <%= f.date_field :start_date, value: @selected_start_date, class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all" %>
@@ -269,7 +277,7 @@
 
               <% if @selected_start_date.present? || @selected_end_date.present? %>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                  Fecha: <%= [@selected_start_date, @selected_end_date].compact.join(" - ") %>
+                  <%= @selected_date_filter_type == "fecha_desconsolidacion" ? "Desconsolidación" : "Creación" %>: <%= [@selected_start_date, @selected_end_date].compact.join(" - ") %>
                 </span>
               <% end %>
             </div>
