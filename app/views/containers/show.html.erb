@@ -392,7 +392,8 @@
                     </div>
                   </div>
                   <div class="text-right">
-                    <p class="text-base font-bold text-gray-900">$<%= number_with_delimiter(service.amount, delimiter: ',') %> <%= service.currency || 'MXN' %></p>
+                    <p class="text-base font-bold text-gray-900">$<%= number_with_delimiter(service_amount_with_vat(service), delimiter: ',') %> <%= service.currency || 'MXN' %></p>
+                    <p class="text-[11px] text-gray-500"><%= service_vat_badge_label(service) %></p>
                     <% if service.facturado? %>
                       <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-100 text-green-800">Facturado</span>
                     <% else %>

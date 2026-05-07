@@ -95,4 +95,28 @@ module ApplicationHelper
 
     lines
   end
+
+  def service_amount_with_vat(service)
+    amount = service&.amount.to_d
+    return amount unless service_vat_applicable?(service)
+
+    amount + (amount * service_vat_rate(service))
+  end
+
+  def service_vat_badge_label(service)
+    return "IVA no aplica" unless service_vat_applicable?(service)
+
+    rate_percentage = service_vat_rate(service) * 100
+    "IVA #{number_with_precision(rate_percentage, precision: 2, strip_insignificant_zeros: true)}% incluido"
+  end
+
+  private
+
+  def service_vat_applicable?(service)
+    service&.service_catalog&.sat_objeto_imp.to_s == "02"
+  end
+
+  def service_vat_rate(service)
+    service&.service_catalog&.sat_tasa_iva.to_d
+  end
 end

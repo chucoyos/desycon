@@ -524,11 +524,11 @@ class ContainersController < ApplicationController
       :voyage
     )
 
-    # Tramitador and consolidator views do not render services, so avoid
-    # eager loading service associations for those roles to keep Bullet happy.
+    # Show view renders container services for non-tramitador roles, so
+    # preload service associations to avoid Bullet N+1 warnings.
     @container = if action_name == "show" && !current_user&.tramitador?
       includes_associations = [ { container_status_histories: :user } ]
-      includes_associations << { container_services: [ :service_catalog, :billed_to_entity ] } unless current_user&.consolidator?
+      includes_associations << { container_services: [ :service_catalog, :billed_to_entity ] }
 
       base_scope.includes(*includes_associations).find(params[:id])
     else
