@@ -453,12 +453,15 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         receiver.reload
 
         allow(Facturador::Config).to receive(:payment_serie).and_return('PAY')
+        allow(Facturador::Config).to receive(:payment_serie_id).and_return(nil)
+        allow(Facturador::Config).to receive(:serie_id).and_return(nil)
       end
 
       it 'builds REP payload with CP01 and complementoPago20 doctoRelacionado' do
         payload = described_class.build(complement_invoice)
 
         expect(payload[:tipoDeComprobante]).to eq('P')
+        expect(payload[:idFacturador]).to eq(16)
         expect(payload[:serie]).to eq('PAY')
         expect(payload[:receptor][:usoCFDI]).to eq('CP01')
         expect(payload.key?(:formaPago)).to be(false)
@@ -504,6 +507,15 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
         expect(traslado_p[:tasaOCuotaP]).to eq('0.160000')
         expect(traslado_p[:importeP]).to eq(41.38)
         expect(docto.key?(:tipoCambioActual)).to be(false)
+      end
+
+      it 'includes serieId when payment serie id is configured' do
+        allow(Facturador::Config).to receive(:payment_serie_id).and_return(1_647_955)
+
+        payload = described_class.build(complement_invoice)
+
+        expect(payload[:serie]).to eq('PAY')
+        expect(payload[:serieId]).to eq(1_647_955)
       end
 
       it 'includes equivalenciaDR when DR currency differs from payment currency' do
@@ -634,6 +646,8 @@ RSpec.describe Facturador::PayloadBuilder, type: :service do
 
         complemento = payload.dig(:complemento, :complementoPago20)
         expect(complemento).to be_present
+        expect(payload[:idFacturador]).to eq(16)
+        expect(payload.key?(:serieId)).to be(false)
         expect(payload[:pagos20]).to eq(complemento)
         expect(complemento.dig(:totales, :montoTotalPagos)).to eq(500.0)
 

@@ -1,5 +1,7 @@
 module Facturador
   class PayloadBuilder
+    PAYMENT_COMPLEMENT_FACTURADOR_ID = 16
+
     IMPORT_DESTINATION_SERIES_BY_PORT_CODE_PRODUCTION = {
       "MXZLO" => "GMZO",
       "MXLZC" => "GLZC",
@@ -90,6 +92,7 @@ module Facturador
         tipoDeComprobante: "P",
         exportacion: "01",
         lugarExpedicion: emisor_address.codigo_postal,
+        idFacturador: PAYMENT_COMPLEMENT_FACTURADOR_ID,
         descripcionFacturador: descripcion_facturador,
         metadataInterna: internal_metadata_snapshot,
         pagos20: complemento_pago20,
@@ -98,7 +101,7 @@ module Facturador
         }
       }
 
-      payload[:serie] = required_payment_serie
+      apply_payment_serie!(payload)
       payload
     end
 
@@ -176,6 +179,7 @@ module Facturador
         tipoDeComprobante: "P",
         exportacion: "01",
         lugarExpedicion: emisor_address.codigo_postal,
+        idFacturador: PAYMENT_COMPLEMENT_FACTURADOR_ID,
         descripcionFacturador: descripcion_facturador,
         metadataInterna: internal_metadata_snapshot,
         pagos20: complemento_pago20,
@@ -184,7 +188,7 @@ module Facturador
         }
       }
 
-      payload[:serie] = required_payment_serie
+      apply_payment_serie!(payload)
       payload
     end
 
@@ -846,6 +850,16 @@ module Facturador
       return serie if serie.present? && !serie.casecmp("sin serie").zero?
 
       raise ValidationError, "A valid payment series is required to emit payment complements (set FACTURADOR_PAYMENT_SERIE or FACTURADOR_SERIE)"
+    end
+
+    def required_payment_serie_id
+      Config.payment_serie_id || Config.serie_id
+    end
+
+    def apply_payment_serie!(payload)
+      payload[:serie] = required_payment_serie
+      serie_id = required_payment_serie_id
+      payload[:serieId] = serie_id if serie_id.present?
     end
   end
 end

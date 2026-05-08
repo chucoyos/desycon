@@ -78,6 +78,14 @@ module Facturador
         env_value(:payment_serie).presence
       end
 
+      def serie_id
+        normalized_serie_id(env_value(:serie_id))
+      end
+
+      def payment_serie_id
+        normalized_serie_id(env_value(:payment_serie_id))
+      end
+
       def username
         env_value(:username)
       end
@@ -115,6 +123,14 @@ module Facturador
       end
 
       private
+
+      def normalized_serie_id(value)
+        raw = value.to_s.strip
+        return nil if raw.blank?
+
+        parsed = raw.to_i
+        parsed.positive? ? parsed : nil
+      end
 
       def env_value(key, fallback = nil)
         env_key = "FACTURADOR_#{key.to_s.upcase}"

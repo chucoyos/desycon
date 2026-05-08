@@ -25,7 +25,9 @@ Runbook relacionado:
 - `FACTURADOR_CLIENT_ID`
 - `FACTURADOR_CLIENT_SECRET`
 - `FACTURADOR_SERIE`
+- `FACTURADOR_SERIE_ID` (opcional; id numerico de serie en Facturador)
 - `FACTURADOR_PAYMENT_SERIE` (recomendada para REP; si falta usa `FACTURADOR_SERIE` siempre que no sea `Sin Serie`)
+- `FACTURADOR_PAYMENT_SERIE_ID` (opcional; recomendado para REP cuando PAC requiere `serieId`)
 - `FACTURADOR_EMAIL_SUBJECT`
 - `FACTURADOR_EMAIL_MESSAGE`
 
