@@ -192,7 +192,7 @@
         <div class="bg-white rounded-2xl border border-slate-200 shadow-[0_8px_24px_rgba(15,23,42,0.08)] hover:shadow-[0_12px_32px_rgba(15,23,42,0.12)] transition-all duration-200">
           <div class="px-4 py-3 border-b border-slate-100 flex items-start justify-between gap-4 bg-gradient-to-r from-white to-slate-50/70 rounded-t-2xl">
             <div class="flex items-start gap-3">
-              <% unless service[:facturado] %>
+              <% if service[:issuable] %>
                 <input
                   type="checkbox"
                   name="service_tokens[]"
@@ -208,7 +208,16 @@
             </div>
 
             <div class="flex items-center gap-2">
-              <% status_badge_class = service[:facturado] ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-amber-100 text-amber-800 border-amber-200" %>
+              <% status_badge_class = case service[:billing_state]
+                 when "facturado"
+                   "bg-emerald-100 text-emerald-800 border-emerald-200"
+                 when "en_proceso"
+                   "bg-sky-100 text-sky-800 border-sky-200"
+                 when "fallido"
+                   "bg-rose-100 text-rose-800 border-rose-200"
+                 else
+                   "bg-amber-100 text-amber-800 border-amber-200"
+                 end %>
               <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border shadow-sm <%= status_badge_class %>">
                 <%= service[:status_label] %>
               </span>
@@ -233,21 +242,19 @@
                       <% end %>
                     <% end %>
 
-                    <% unless service[:facturado] %>
+                    <% if service[:issuable] %>
                       <div class="my-1 border-t border-slate-200"></div>
                       <%= button_to "Facturar individual",
                           issue_manual_invoices_path(invoiceable_type: service[:type], invoiceable_id: service[:service_id]),
                           method: :post,
                           form: { data: { turbo_confirm: "Se emitirá CFDI para este servicio. ¿Deseas continuar?" } },
                           class: "w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-700 hover:bg-indigo-50 hover:text-indigo-900 transition-colors" %>
-                    <% else %>
-                      <% if service[:invoice_id].present? %>
-                        <%= link_to invoice_path(service[:invoice_id]), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-700 hover:bg-indigo-50 hover:text-indigo-900 transition-colors", role: "menuitem" do %>
-                          Ver factura
-                        <% end %>
-                      <% else %>
-                        <div class="px-4 py-2.5 text-sm text-gray-400">Factura no disponible</div>
+                    <% elsif service[:invoice_id].present? %>
+                      <%= link_to invoice_path(service[:invoice_id]), class: "flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-700 hover:bg-indigo-50 hover:text-indigo-900 transition-colors", role: "menuitem" do %>
+                        Ver factura
                       <% end %>
+                    <% else %>
+                      <div class="px-4 py-2.5 text-sm text-gray-400">No disponible para facturación</div>
                     <% end %>
                   </div>
                 </div>
@@ -321,10 +328,19 @@
           <div class="flex items-start justify-between gap-3">
             <div>
               <p class="text-xs text-gray-500">Estado</p>
-              <% status_badge_class = service[:facturado] ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800" %>
+              <% status_badge_class = case service[:billing_state]
+                 when "facturado"
+                   "bg-emerald-100 text-emerald-800"
+                 when "en_proceso"
+                   "bg-sky-100 text-sky-800"
+                 when "fallido"
+                   "bg-rose-100 text-rose-800"
+                 else
+                   "bg-amber-100 text-amber-800"
+                 end %>
               <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm <%= status_badge_class %>"><%= service[:status_label] %></span>
             </div>
-            <% unless service[:facturado] %>
+            <% if service[:issuable] %>
               <input
                 type="checkbox"
                 name="service_tokens[]"
@@ -386,7 +402,7 @@
             </div>
           </div>
 
-          <% unless service[:facturado] %>
+          <% if service[:issuable] || service[:invoice_id].present? %>
             <div class="mt-3 pt-3 border-t border-gray-100 space-y-2">
               <% if service[:type] == "ContainerService" %>
                 <%= link_to "Ver", container_path(service[:container_id], anchor: "servicios"), class: "w-full inline-flex items-center justify-center px-3 py-2 rounded-lg text-sm font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
@@ -394,11 +410,15 @@
                 <%= link_to "Ver", bl_house_line_path(service[:bl_house_line_id], anchor: "servicios"), class: "w-full inline-flex items-center justify-center px-3 py-2 rounded-lg text-sm font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100" %>
               <% end %>
 
-              <%= button_to "Facturar individual",
-                  issue_manual_invoices_path(invoiceable_type: service[:type], invoiceable_id: service[:service_id]),
-                  method: :post,
-                  form: { data: { turbo_confirm: "Se emitirá CFDI para este servicio. ¿Deseas continuar?" } },
-                  class: "w-full cursor-pointer inline-flex items-center justify-center px-3 py-2 rounded-lg text-sm font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100" %>
+              <% if service[:issuable] %>
+                <%= button_to "Facturar individual",
+                    issue_manual_invoices_path(invoiceable_type: service[:type], invoiceable_id: service[:service_id]),
+                    method: :post,
+                    form: { data: { turbo_confirm: "Se emitirá CFDI para este servicio. ¿Deseas continuar?" } },
+                    class: "w-full cursor-pointer inline-flex items-center justify-center px-3 py-2 rounded-lg text-sm font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100" %>
+              <% elsif service[:invoice_id].present? %>
+                <%= link_to "Ver factura", invoice_path(service[:invoice_id]), class: "w-full inline-flex items-center justify-center px-3 py-2 rounded-lg text-sm font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100" %>
+              <% end %>
             </div>
           <% end %>
         </div>
@@ -481,7 +501,7 @@
             Reglas para emisión exitosa
           </p>
           <p class="mt-1">1) En lote, selecciona servicios del <span class="font-semibold">mismo cliente receptor</span>.</p>
-          <p class="mt-1">2) No incluyas servicios ya facturados; solo se facturan los pendientes.</p>
+          <p class="mt-1">2) Solo servicios en <span class="font-semibold">Proforma</span> son facturables desde esta vista.</p>
           <p class="mt-1">3) Revisa contenedor, BL House y monto antes de confirmar.</p>
           <p class="mt-1">4) Si un servicio ya tiene CFDI, usa <span class="font-semibold">Ver factura</span> en opciones.</p>
         </div>

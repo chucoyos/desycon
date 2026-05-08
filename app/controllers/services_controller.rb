@@ -8,6 +8,8 @@ class ServicesController < ApplicationController
 
   BILLING_STATUS_OPTIONS = {
     "proforma" => "Proforma",
+    "en_proceso" => "En proceso",
+    "fallido" => "Fallido",
     "facturado" => "Facturado"
   }.freeze
 
@@ -35,7 +37,11 @@ class ServicesController < ApplicationController
     requested_service_type = params[:service_type].to_s.strip
     @selected_service_type = SERVICE_TYPE_OPTIONS.key?(requested_service_type) ? requested_service_type : "all"
     @selected_consolidator = params[:consolidator].to_s.strip.presence
-    requested_billing_status = params[:billing_status].to_s.strip
+    requested_billing_status = if params.key?(:billing_status)
+      params[:billing_status].to_s.strip
+    else
+      "proforma"
+    end
     @selected_billing_status = BILLING_STATUS_OPTIONS.key?(requested_billing_status) ? requested_billing_status : nil
     requested_destination_port = params[:destination_port].to_s.strip
     @selected_destination_port = DESTINATION_PORT_OPTIONS.key?(requested_destination_port) ? requested_destination_port : nil
@@ -128,7 +134,9 @@ class ServicesController < ApplicationController
 
   def container_service_rows
     container_services_scope.map do |service|
-      latest_invoice_id = service.latest_invoice&.id
+      billing_invoice = latest_non_payment_invoice_for(service)
+      latest_invoice_id = billing_invoice&.id
+      billing_state = billing_state_for_service(service, billing_invoice)
       container = service.container
       weight_total, volume_total = totals_for_container(container)
 
@@ -139,8 +147,10 @@ class ServicesController < ApplicationController
         container_id: service.container_id,
         invoice_id: latest_invoice_id,
         service_name: service.service_catalog&.name.presence || "-",
-        status_label: service.facturado? ? "Facturado" : "Proforma",
+        status_label: BILLING_STATUS_OPTIONS[billing_state],
+        billing_state: billing_state,
         facturado: service.facturado?,
+        issuable: service_issuable_for_issue?(service, billing_invoice),
         container_number: container&.number.presence || "-",
         destination_port: container&.destination_port&.display_name.presence || "-",
         bl_master: container&.bl_master.presence || "-",
@@ -203,7 +213,9 @@ class ServicesController < ApplicationController
       container_details = container_details_by_service_id[service.id] || {}
       client_name = bl_house_line&.client&.name
       billed_to_name = service.billed_to_entity&.name
-      latest_invoice_id = service.latest_invoice&.id
+      billing_invoice = latest_non_payment_invoice_for(service)
+      latest_invoice_id = billing_invoice&.id
+      billing_state = billing_state_for_service(service, billing_invoice)
 
       {
         token: "BlHouseLineService:#{service.id}",
@@ -212,8 +224,10 @@ class ServicesController < ApplicationController
         bl_house_line_id: service.bl_house_line_id,
         invoice_id: latest_invoice_id,
         service_name: service.service_catalog&.name.presence || "-",
-        status_label: service.facturado? ? "Facturado" : "Proforma",
+        status_label: BILLING_STATUS_OPTIONS[billing_state],
+        billing_state: billing_state,
         facturado: service.facturado?,
+        issuable: service_issuable_for_issue?(service, billing_invoice),
         container_number: container_details[:number].presence || "-",
         destination_port: container_details[:destination_port].presence || "-",
         bl_master: container_details[:bl_master].presence || "-",
@@ -399,8 +413,7 @@ class ServicesController < ApplicationController
     end
 
     if @selected_billing_status.present?
-      wants_facturado = @selected_billing_status == "facturado"
-      filtered = filtered.select { |row| row[:facturado] == wants_facturado }
+      filtered = filtered.select { |row| row[:billing_state] == @selected_billing_status }
     end
 
     filtered
@@ -472,10 +485,44 @@ class ServicesController < ApplicationController
       model = type == "ContainerService" ? ContainerService : BlHouseLineService
       records = model.where(id: ids.uniq).to_a
       return [] unless records.size == ids.uniq.size
+      return [] if records.any? { |record| !service_issuable_for_issue?(record) }
 
       serviceables.concat(records)
     end
 
     serviceables
+  end
+
+  def service_issuable_for_issue?(service, billing_invoice = nil)
+    billing_state_for_service(service, billing_invoice) == "proforma"
+  end
+
+  def billing_state_for_service(service, billing_invoice = nil)
+    return "facturado" if service.factura.present?
+
+    billing_invoice ||= latest_non_payment_invoice_for(service)
+    return "proforma" if billing_invoice.blank?
+
+    case billing_invoice.status.to_s
+    when "issued", "cancel_pending", "cancelled"
+      "facturado"
+    when "draft", "queued"
+      "en_proceso"
+    when "failed"
+      "fallido"
+    else
+      "proforma"
+    end
+  end
+
+  def latest_non_payment_invoice_for(service)
+    direct_invoice = service.invoices.where.not(kind: "pago").recent_first.first
+    linked_invoice = Invoice.joins(:invoice_service_links)
+      .where(invoice_service_links: { serviceable_type: service.class.name, serviceable_id: service.id })
+      .where.not(kind: "pago")
+      .recent_first
+      .first
+
+    [ direct_invoice, linked_invoice ].compact.max_by(&:created_at)
   end
 end

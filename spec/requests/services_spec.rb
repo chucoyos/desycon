@@ -19,6 +19,24 @@ RSpec.describe "Services", type: :request do
       expect(response.body).to include("Proforma")
     end
 
+    it "applies proforma filter by default on initial load" do
+      proforma_catalog = create(:service_catalog, name: "Srv Proforma Default")
+      failed_catalog = create(:service_catalog, name: "Srv Failed Hidden By Default")
+
+      proforma_service = create(:container_service, service_catalog: proforma_catalog, factura: nil)
+      failed_service = create(:container_service, service_catalog: failed_catalog, factura: nil)
+      create(:invoice, invoiceable: failed_service, kind: "ingreso", status: "failed")
+
+      get services_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Srv Proforma Default")
+      expect(response.body).to include("ContainerService:#{proforma_service.id}")
+      expect(response.body).not_to include("Srv Failed Hidden By Default")
+      expect(response.body).to include("Estatus")
+      expect(response.body).to include("Proforma")
+    end
+
     it "filters by service_type container" do
       container = create(:container, number: "TYPE1234567")
       bl_house_line = create(:bl_house_line, container: container, blhouse: "BLH-TYPE-001")
@@ -164,6 +182,54 @@ RSpec.describe "Services", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Srv Old Expanded")
+    end
+
+    it "shows failed services as non-issuable" do
+      catalog = create(:service_catalog, name: "Srv Failed Visible")
+      service = create(:container_service, service_catalog: catalog, factura: nil)
+      create(:invoice, invoiceable: service, kind: "ingreso", status: "failed")
+
+      get services_path, params: { billing_status: "fallido" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Srv Failed Visible")
+      expect(response.body).to include("Fallido")
+      expect(response.body).not_to include("ContainerService:#{service.id}")
+    end
+
+    it "uses non-REP invoice link for in-process services" do
+      catalog = create(:service_catalog, name: "Srv InProcess Link")
+      service = create(:container_service, service_catalog: catalog, factura: nil)
+      ingreso_invoice = create(:invoice, invoiceable: service, kind: "ingreso", status: "draft")
+      rep_invoice = create(:invoice, invoiceable: service, kind: "pago", status: "draft")
+
+      get services_path, params: { billing_status: "en_proceso" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Srv InProcess Link")
+      expect(response.body).to include(invoice_path(ingreso_invoice))
+      expect(response.body).not_to include(invoice_path(rep_invoice))
+    end
+
+    it "filters by billing status fallido" do
+      failed_catalog = create(:service_catalog, name: "Srv Failed Filter")
+      queued_catalog = create(:service_catalog, name: "Srv Queued Filter")
+      proforma_catalog = create(:service_catalog, name: "Srv Proforma Filter")
+
+      failed_service = create(:container_service, service_catalog: failed_catalog, factura: nil)
+      queued_service = create(:container_service, service_catalog: queued_catalog, factura: nil)
+      proforma_service = create(:container_service, service_catalog: proforma_catalog, factura: nil)
+
+      create(:invoice, invoiceable: failed_service, status: "failed")
+      create(:invoice, invoiceable: queued_service, status: "queued")
+
+      get services_path, params: { billing_status: "fallido" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Srv Failed Filter")
+      expect(response.body).not_to include("Srv Queued Filter")
+      expect(response.body).not_to include("Srv Proforma Filter")
+      expect(response.body).to include("Fallido")
     end
   end
 

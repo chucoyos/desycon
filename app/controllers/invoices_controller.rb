@@ -661,6 +661,11 @@ class InvoicesController < ApplicationController
       return redirect_back fallback_location: containers_path, alert: "Servicio no encontrado."
     end
 
+    unless service_issuable_for_manual_issue?(invoiceable)
+      return redirect_back fallback_location: containers_path,
+                           alert: "El servicio no esta disponible para facturar. Verifica si ya esta en proceso o fallido."
+    end
+
     invoice = Facturador::ManualIssueService.call(invoiceable: invoiceable, actor: current_user)
 
     if invoice.present?
@@ -678,6 +683,11 @@ class InvoicesController < ApplicationController
     serviceables = find_invoiceables_batch
     if serviceables.blank?
       return redirect_back fallback_location: containers_path, alert: "Selecciona al menos un servicio válido."
+    end
+
+    unless serviceables.all? { |serviceable| service_issuable_for_manual_issue?(serviceable) }
+      return redirect_back fallback_location: containers_path,
+                           alert: "Solo se pueden facturar servicios en estatus Proforma."
     end
 
     result = Facturador::IssueGroupedServicesService.call(serviceables: serviceables, actor: current_user)
@@ -1305,6 +1315,27 @@ class InvoicesController < ApplicationController
     return [] unless services.size == ids.uniq.size
 
     services
+  end
+
+  def service_issuable_for_manual_issue?(service)
+    return false if service.blank?
+    return false if service.factura.present?
+
+    latest_invoice = latest_non_payment_invoice_for(service)
+    return true if latest_invoice.blank?
+
+    !latest_invoice.status.in?([ "draft", "queued", "failed" ])
+  end
+
+  def latest_non_payment_invoice_for(service)
+    direct_invoice = service.invoices.where.not(kind: "pago").recent_first.first
+    linked_invoice = Invoice.joins(:invoice_service_links)
+      .where(invoice_service_links: { serviceable_type: service.class.name, serviceable_id: service.id })
+      .where.not(kind: "pago")
+      .recent_first
+      .first
+
+    [ direct_invoice, linked_invoice ].compact.max_by(&:created_at)
   end
 
   def payment_params

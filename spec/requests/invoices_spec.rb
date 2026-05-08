@@ -695,7 +695,7 @@ RSpec.describe 'Invoices', type: :request do
 
     it 'redirects to the newly created invoice when issuing one service' do
       service = create(:container_service, factura: nil)
-      issued_invoice = create(:invoice, invoiceable: service)
+      issued_invoice = create(:invoice, invoiceable: nil)
 
       allow(Facturador::ManualIssueService).to receive(:call).and_return(issued_invoice)
 
@@ -707,6 +707,22 @@ RSpec.describe 'Invoices', type: :request do
       expect(Facturador::ManualIssueService).to have_received(:call).with(invoiceable: service, actor: admin_user)
       expect(response).to redirect_to(invoice_path(issued_invoice))
       expect(flash[:notice]).to include('Emisión manual encolada/ejecutada correctamente')
+    end
+
+    it 'rejects manual issuance when service has failed invoice attempt' do
+      service = create(:container_service, factura: nil)
+      create(:invoice, invoiceable: service, status: 'failed')
+
+      expect(Facturador::ManualIssueService).not_to receive(:call)
+
+      post issue_manual_invoices_path, params: {
+        invoiceable_type: 'ContainerService',
+        invoiceable_id: service.id
+      }
+
+      expect(response).to have_http_status(:found)
+      follow_redirect!
+      expect(response.body).to include('El servicio no esta disponible para facturar')
     end
   end
 
