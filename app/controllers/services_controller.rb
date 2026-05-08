@@ -169,7 +169,7 @@ class ServicesController < ApplicationController
   end
 
   def bl_house_line_service_rows
-    services = bl_house_line_services_scope.to_a
+    services = bl_house_line_services_scope.to_a.reject { |service| hidden_by_nipon_exception_rule?(service) }
     service_ids = services.map(&:id)
     container_details_by_service_id = if service_ids.empty?
       {}
@@ -485,6 +485,7 @@ class ServicesController < ApplicationController
       model = type == "ContainerService" ? ContainerService : BlHouseLineService
       records = model.where(id: ids.uniq).to_a
       return [] unless records.size == ids.uniq.size
+      return [] if records.any? { |record| hidden_by_nipon_exception_rule?(record) }
       return [] if records.any? { |record| !service_issuable_for_issue?(record) }
 
       serviceables.concat(records)
@@ -524,5 +525,27 @@ class ServicesController < ApplicationController
       .first
 
     [ direct_invoice, linked_invoice ].compact.max_by(&:created_at)
+  end
+
+  def hidden_by_nipon_exception_rule?(service)
+    return false unless service.is_a?(BlHouseLineService)
+    return false unless Facturador::Config.auto_issue_nipon_exception_enabled?
+
+    target_rfc = Facturador::Config.auto_issue_nipon_rfc
+    return false if target_rfc.blank?
+
+    consolidator = service.bl_house_line&.container&.consolidator_entity
+    receiver = service.billed_to_entity
+    consolidator_rfc = normalized_rfc_for_exception(consolidator)
+    receiver_rfc = normalized_rfc_for_exception(receiver)
+
+    consolidator_rfc.present? &&
+      receiver_rfc.present? &&
+      consolidator_rfc == receiver_rfc &&
+      consolidator_rfc == target_rfc
+  end
+
+  def normalized_rfc_for_exception(entity)
+    entity&.fiscal_profile&.rfc.to_s.upcase.strip.presence
   end
 end

@@ -231,6 +231,28 @@ RSpec.describe "Services", type: :request do
       expect(response.body).not_to include("Srv Proforma Filter")
       expect(response.body).to include("Fallido")
     end
+
+    it "hides BL services covered by NIPON exception rule" do
+      target_rfc = "NEM901109BC2"
+      allow(Facturador::Config).to receive(:auto_issue_nipon_exception_enabled?).and_return(true)
+      allow(Facturador::Config).to receive(:auto_issue_nipon_rfc).and_return(target_rfc)
+
+      consolidator = create(:entity, :consolidator)
+      create(:fiscal_profile, profileable: consolidator, rfc: target_rfc)
+      client = consolidator
+
+      container = create(:container, consolidator_entity: consolidator)
+      bl_house_line = create(:bl_house_line, container: container, client: client)
+      hidden_service = create(:bl_house_line_service, bl_house_line: bl_house_line, factura: nil)
+
+      visible_service = create(:container_service, factura: nil)
+
+      get services_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("ContainerService:#{visible_service.id}")
+      expect(response.body).not_to include("BlHouseLineService:#{hidden_service.id}")
+    end
   end
 
   describe "POST /services/issue_batch" do
@@ -261,6 +283,27 @@ RSpec.describe "Services", type: :request do
 
     it "returns alert when no valid services are selected" do
       post issue_batch_services_path, params: { service_tokens: [] }
+
+      expect(response).to redirect_to(services_path)
+      expect(flash[:alert]).to include("Selecciona al menos un servicio válido")
+    end
+
+    it "rejects NIPON-exception BL services even when token is submitted" do
+      target_rfc = "NEM901109BC2"
+      allow(Facturador::Config).to receive(:auto_issue_nipon_exception_enabled?).and_return(true)
+      allow(Facturador::Config).to receive(:auto_issue_nipon_rfc).and_return(target_rfc)
+
+      consolidator = create(:entity, :consolidator)
+      create(:fiscal_profile, profileable: consolidator, rfc: target_rfc)
+      client = consolidator
+
+      container = create(:container, consolidator_entity: consolidator)
+      bl_house_line = create(:bl_house_line, container: container, client: client)
+      blocked_service = create(:bl_house_line_service, bl_house_line: bl_house_line, factura: nil)
+
+      expect(Facturador::IssueGroupedServicesService).not_to receive(:call)
+
+      post issue_batch_services_path, params: { service_tokens: [ "BlHouseLineService:#{blocked_service.id}" ] }
 
       expect(response).to redirect_to(services_path)
       expect(flash[:alert]).to include("Selecciona al menos un servicio válido")
