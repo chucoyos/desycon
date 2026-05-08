@@ -14,8 +14,37 @@ RSpec.describe "Services", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Servicios de facturación")
+      expect(response.body).to include("Tipo de servicio")
       expect(response.body).to include("SERV1234567")
       expect(response.body).to include("Proforma")
+    end
+
+    it "filters by service_type container" do
+      container = create(:container, number: "TYPE1234567")
+      bl_house_line = create(:bl_house_line, container: container, blhouse: "BLH-TYPE-001")
+
+      container_service = create(:container_service, container: container, factura: nil)
+      bl_service = create(:bl_house_line_service, bl_house_line: bl_house_line, factura: nil)
+
+      get services_path, params: { service_type: "container" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("ContainerService:#{container_service.id}")
+      expect(response.body).not_to include("BlHouseLineService:#{bl_service.id}")
+    end
+
+    it "filters by service_type partida" do
+      container = create(:container, number: "PART1234001")
+      bl_house_line = create(:bl_house_line, container: container, blhouse: "BLH-TYPE-002")
+
+      container_service = create(:container_service, container: container, factura: nil)
+      bl_service = create(:bl_house_line_service, bl_house_line: bl_house_line, factura: nil)
+
+      get services_path, params: { service_type: "bl_house_line" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("BlHouseLineService:#{bl_service.id}")
+      expect(response.body).not_to include("ContainerService:#{container_service.id}")
     end
 
     it "filters by container and blhouse" do

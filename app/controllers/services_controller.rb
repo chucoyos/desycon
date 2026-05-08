@@ -11,6 +11,12 @@ class ServicesController < ApplicationController
     "facturado" => "Facturado"
   }.freeze
 
+  SERVICE_TYPE_OPTIONS = {
+    "all" => "Todos",
+    "container" => "Contenedor",
+    "bl_house_line" => "Partida"
+  }.freeze
+
   before_action :authenticate_user!
   after_action :verify_authorized
 
@@ -26,14 +32,14 @@ class ServicesController < ApplicationController
     @selected_blhouse = params[:blhouse].to_s.strip.presence
     @selected_customs_agency_id = params[:customs_agency_id].to_s.presence
     @selected_customs_agency = params[:customs_agency].to_s.strip.presence
-    @selected_service_name = params[:service_name].to_s.strip.presence
+    requested_service_type = params[:service_type].to_s.strip
+    @selected_service_type = SERVICE_TYPE_OPTIONS.key?(requested_service_type) ? requested_service_type : "all"
     @selected_consolidator = params[:consolidator].to_s.strip.presence
     requested_billing_status = params[:billing_status].to_s.strip
     @selected_billing_status = BILLING_STATUS_OPTIONS.key?(requested_billing_status) ? requested_billing_status : nil
     requested_destination_port = params[:destination_port].to_s.strip
     @selected_destination_port = DESTINATION_PORT_OPTIONS.key?(requested_destination_port) ? requested_destination_port : nil
 
-    @service_filter_options = global_service_filter_options
     @consolidator_filter_options = global_consolidator_filter_options
     @destination_port_filter_options = DESTINATION_PORT_OPTIONS.map { |value, label| [ label, value ] }
     @billing_status_filter_options = BILLING_STATUS_OPTIONS.map { |value, label| [ label, value ] }
@@ -369,9 +375,13 @@ class ServicesController < ApplicationController
   def apply_unified_filters(rows)
     filtered = rows
 
-    if @selected_service_name.present?
+    if @selected_service_type == "container"
       filtered = filtered.select do |row|
-        normalized_text(row[:service_name]) == normalized_text(@selected_service_name)
+        row[:type] == "ContainerService"
+      end
+    elsif @selected_service_type == "bl_house_line"
+      filtered = filtered.select do |row|
+        row[:type] == "BlHouseLineService"
       end
     end
 
@@ -400,14 +410,6 @@ class ServicesController < ApplicationController
     I18n.transliterate(value.to_s).downcase
   end
 
-  def global_service_filter_options
-    ServiceCatalog
-      .order(:name)
-      .pluck(:name)
-      .filter_map { |name| name.to_s.strip.presence }
-      .uniq
-  end
-
   def global_consolidator_filter_options
     Entity
       .consolidators
@@ -424,7 +426,7 @@ class ServicesController < ApplicationController
     filters << [ "Contenedor", @selected_container_number ] if @selected_container_number.present?
     filters << [ "BL House", @selected_blhouse ] if @selected_blhouse.present?
     filters << [ "Agencia", @selected_customs_agency_label ] if @selected_customs_agency_label.present?
-    filters << [ "Servicio", @selected_service_name ] if @selected_service_name.present?
+    filters << [ "Tipo", SERVICE_TYPE_OPTIONS[@selected_service_type] ] if @selected_service_type != "all"
     filters << [ "Consolidador", @selected_consolidator ] if @selected_consolidator.present?
     filters << [ "Puerto", DESTINATION_PORT_OPTIONS[@selected_destination_port] ] if @selected_destination_port.present?
     filters << [ "Estatus", BILLING_STATUS_OPTIONS[@selected_billing_status] ] if @selected_billing_status.present?
