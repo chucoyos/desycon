@@ -274,13 +274,16 @@ class ServicesController < ApplicationController
   def bl_house_line_services_scope
     scope = BlHouseLineService
       .includes(
-        :billed_to_entity,
         :service_catalog,
-        bl_house_line: [
-          :customs_agent,
-          :customs_broker,
-          :client
-        ]
+        { billed_to_entity: :fiscal_profile },
+        {
+          bl_house_line: [
+            :customs_agent,
+            :customs_broker,
+            :client,
+            { container: { consolidator_entity: :fiscal_profile } }
+          ]
+        }
       )
 
     if @selected_container_number.present?
