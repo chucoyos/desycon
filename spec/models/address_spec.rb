@@ -94,6 +94,22 @@ RSpec.describe Address, type: :model do
     end
 
     describe 'tipo' do
+      it 'forces first saved address as matriz even when tipo is sucursal' do
+        entity = create(:entity, :client)
+        first_address = create(:address, :sucursal, addressable: entity)
+
+        expect(first_address.tipo).to eq('matriz')
+      end
+
+      it 'keeps sucursal for subsequent addresses' do
+        entity = create(:entity, :client)
+        create(:address, tipo: 'matriz', addressable: entity)
+
+        second_address = create(:address, :sucursal, addressable: entity)
+
+        expect(second_address.tipo).to eq('sucursal')
+      end
+
       it 'defaults tipo to matriz when blank' do
         address.tipo = nil
         address.valid?
@@ -121,10 +137,12 @@ RSpec.describe Address, type: :model do
   end
 
   describe 'scopes' do
+    let(:shipping_line) { create(:shipping_line) }
+
     before do
-      create(:address, :sucursal)
-      create(:address, tipo: 'matriz')
-      create(:address, :sucursal)
+      create(:address, tipo: 'matriz', addressable: shipping_line)
+      create(:address, :sucursal, addressable: shipping_line)
+      create(:address, :sucursal, addressable: shipping_line)
     end
 
     it 'filters matriz addresses' do

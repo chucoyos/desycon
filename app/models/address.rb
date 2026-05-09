@@ -117,6 +117,7 @@ class Address < ApplicationRecord
   validates :tipo, inclusion: { in: TIPOS.keys }, allow_blank: true
 
   # Normalización
+  before_validation :force_first_address_as_matriz
   before_validation :set_default_tipo
   before_validation :normalize_codigo_postal
 
@@ -130,6 +131,15 @@ class Address < ApplicationRecord
   def normalize_codigo_postal
     self.codigo_postal = codigo_postal&.strip&.gsub(/\s+/, "")
     self.pais = pais&.upcase&.strip
+  end
+
+  def force_first_address_as_matriz
+    return unless new_record?
+    return if addressable.blank?
+    return unless tipo.blank? || tipo == "sucursal"
+    return unless self.class.where(addressable: addressable).where.not(id: id).none?
+
+    self.tipo = "matriz"
   end
 
   def set_default_tipo
