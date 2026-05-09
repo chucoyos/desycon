@@ -42,7 +42,7 @@ module CustomsAgents
             "invoices.customs_agent_id = :agency_id OR entities.customs_agent_id = :agency_id",
             agency_id: customs_agent.id
           )
-          .where.not(status: "cancelled")
+          .where.not(status: %w[cancelled cancel_pending])
           .where.not(issued_at: nil)
           .distinct
       end
