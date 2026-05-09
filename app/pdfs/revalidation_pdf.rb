@@ -22,7 +22,7 @@ class RevalidationPdf
 
       # Legal text
       pdf.font_size 10
-      pdf.text "De conformidad con los artículos 36-A Fracción I inciso B, 40 y 41 de la Ley Aduanera vigente, declaramos bajo protesta de decir verdad que #{consolidator_name} ha sido designado como el consignatario de las mercancías amparadas bajo el conocimiento de embarque que se detalla a continuación."
+      pdf.text "De conformidad con los artículos 36-A Fracción I inciso B, 40 y 41 de la Ley Aduanera vigente, declaramos bajo protesta de decir verdad que #{consignatario_name_for_letter} ha sido designado como el consignatario de las mercancías amparadas bajo el conocimiento de embarque que se detalla a continuación."
       pdf.move_down 10
       pdf.text "En virtud de lo anterior, y toda vez que diversos Agentes Aduanales o sus representantes debidamente acreditados procederán al retiro de dichas mercancías, por medio de la presente CEDEMOS LOS DERECHOS a la empresa que se menciona al calce, para que proceda con el despacho y el retiro de las mercancías del recinto fiscal autorizado."
       pdf.move_down 20
@@ -77,6 +77,12 @@ class RevalidationPdf
     container.consolidator_entity&.name || container.consolidator&.name || "N/A"
   end
 
+  def consignatario_name_for_letter
+    return "GLOBAL DESYCON CARGO" if manzanillo_destination_port?
+
+    consolidator_name
+  end
+
   def packaging_name
     @bl_house_line.packaging&.nombre || "N/A"
   end
@@ -111,6 +117,10 @@ class RevalidationPdf
 
   def destination_port_name_for_letter
     @bl_house_line.container&.destination_port&.name.to_s.upcase.presence || "N/A"
+  end
+
+  def manzanillo_destination_port?
+    @bl_house_line.container&.destination_port&.name.to_s.strip.casecmp("Manzanillo").zero?
   end
 
   def voyage
