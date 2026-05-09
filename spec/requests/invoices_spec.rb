@@ -107,6 +107,26 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include('ABCD1234567')
     end
 
+    it 'filters by blhouse including grouped invoices linked through invoice_service_links' do
+      matching_bl = create(:bl_house_line, blhouse: 'BLH-GROUPED-001')
+      other_bl = create(:bl_house_line, blhouse: 'BLH-GROUPED-999')
+
+      matching_service = create(:bl_house_line_service, bl_house_line: matching_bl)
+      other_service = create(:bl_house_line_service, bl_house_line: other_bl)
+
+      grouped_match = create(:invoice, invoiceable: nil, sat_uuid: 'UUID-GROUPED-BLH-MATCH')
+      grouped_other = create(:invoice, invoiceable: nil, sat_uuid: 'UUID-GROUPED-BLH-OTHER')
+
+      create(:invoice_service_link, invoice: grouped_match, serviceable: matching_service)
+      create(:invoice_service_link, invoice: grouped_other, serviceable: other_service)
+
+      get invoices_path, params: { blhouse: 'BLH-GROUPED-001' }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(grouped_match.sat_uuid)
+      expect(response.body).not_to include(grouped_other.sat_uuid)
+    end
+
     it 'filters by comprobante type' do
       factura_invoice = create(:invoice, kind: 'ingreso', sat_uuid: 'UUID-KIND-FACTURA')
       pago_invoice = create(:invoice, kind: 'pago', sat_uuid: 'UUID-KIND-PAGO')

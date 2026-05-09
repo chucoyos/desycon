@@ -134,11 +134,23 @@ class InvoicesController < ApplicationController
     if @selected_blhouse.present?
       @invoices = @invoices.where(
         <<~SQL,
-          invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
+          (
+            invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
+              SELECT 1
+              FROM bl_house_line_services
+              INNER JOIN bl_house_lines ON bl_house_lines.id = bl_house_line_services.bl_house_line_id
+              WHERE bl_house_line_services.id = invoices.invoiceable_id
+                AND bl_house_lines.blhouse ILIKE :blhouse
+            )
+          )
+          OR EXISTS (
             SELECT 1
-            FROM bl_house_line_services
+            FROM invoice_service_links
+            INNER JOIN bl_house_line_services
+              ON invoice_service_links.serviceable_type = 'BlHouseLineService'
+             AND invoice_service_links.serviceable_id = bl_house_line_services.id
             INNER JOIN bl_house_lines ON bl_house_lines.id = bl_house_line_services.bl_house_line_id
-            WHERE bl_house_line_services.id = invoices.invoiceable_id
+            WHERE invoice_service_links.invoice_id = invoices.id
               AND bl_house_lines.blhouse ILIKE :blhouse
           )
         SQL
