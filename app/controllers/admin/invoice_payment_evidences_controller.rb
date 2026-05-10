@@ -1,5 +1,9 @@
 module Admin
   class InvoicePaymentEvidencesController < ApplicationController
+    require "caxlsx"
+
+    DATE_FILTER_TYPES = %w[created_at paid_at].freeze
+
     before_action :authenticate_user!
     before_action :set_evidence, only: [ :show, :reject, :register_payment ]
     after_action :verify_authorized
@@ -9,11 +13,34 @@ module Admin
 
       @status_filter = params[:status].to_s.presence
       @start_date, @end_date = resolve_date_filters
-      @invoice_payment_evidences = policy_scope(InvoicePaymentEvidence)
+      @date_filter_type = resolve_date_filter_type
+
+      evidences_scope = policy_scope(InvoicePaymentEvidence)
         .includes(:customs_agent, :invoice)
-        .where(created_at: @start_date.beginning_of_day..@end_date.end_of_day)
-        .order(created_at: :desc)
+
+      @invoice_payment_evidences = apply_date_filter(
+        scope: evidences_scope,
+        start_date: @start_date,
+        end_date: @end_date,
+        date_filter_type: @date_filter_type
+      )
       @invoice_payment_evidences = @invoice_payment_evidences.where(status: @status_filter) if @status_filter.in?(InvoicePaymentEvidence::STATUSES)
+      @invoice_payment_evidences = @invoice_payment_evidences.order(created_at: :desc)
+
+      if params[:format].to_s == "xlsx" || request.format.xlsx?
+        timestamp = Time.current.strftime("%Y%m%d_%H%M%S")
+        preload_payments_application_report_associations!(@invoice_payment_evidences)
+        rows = build_payments_application_report_rows(@invoice_payment_evidences)
+
+        send_data(
+          build_payments_application_report_xlsx(rows),
+          filename: "reporte_aplicacion_pagos_#{timestamp}.xlsx",
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          disposition: "attachment"
+        )
+        return
+      end
+
       @invoice_payment_evidences = @invoice_payment_evidences.page(params[:page]).per(params[:per] || 10)
     end
 
@@ -142,6 +169,101 @@ module Admin
       end
 
       [ start_date, end_date ]
+    end
+
+    def resolve_date_filter_type
+      date_filter_type = params[:date_filter_type].to_s
+      return date_filter_type if DATE_FILTER_TYPES.include?(date_filter_type)
+
+      "created_at"
+    end
+
+    def apply_date_filter(scope:, start_date:, end_date:, date_filter_type:)
+      range = start_date.beginning_of_day..end_date.end_of_day
+
+      case date_filter_type
+      when "paid_at"
+        scope.joins(:invoice_payment).where(invoice_payments: { paid_at: range })
+      else
+        scope.where(created_at: range)
+      end
+    end
+
+    def build_payments_application_report_rows(evidences)
+      evidences.map do |evidence|
+        linked_invoices = evidence.invoices_for_review
+        receiver_names = linked_invoices.map { |invoice| invoice.receiver_entity&.name.to_s.strip.presence }.compact.uniq
+
+        {
+          invoice_label: linked_invoices.map { |invoice| invoice_label_for_report(invoice) }.uniq.join(" | ").presence || "-",
+          paid_at: evidence.invoice_payment&.paid_at,
+          amount: evidence.invoice_payment&.amount,
+          tracking_key: evidence.invoice_payment&.tracking_key.to_s.strip.presence || evidence.tracking_key,
+          customs_agent_name: evidence.customs_agent&.name.to_s.strip.presence || "-",
+          receiver_name: receiver_names.join(" | ").presence || "-"
+        }
+      end
+    end
+
+    def preload_payments_application_report_associations!(evidences)
+      evidence_records = evidences.is_a?(ActiveRecord::Relation) ? evidences.to_a : Array(evidences)
+      return if evidence_records.empty?
+
+      ActiveRecord::Associations::Preloader.new(records: evidence_records, associations: :invoice_payment).call
+      ActiveRecord::Associations::Preloader.new(records: evidence_records, associations: :invoices).call
+
+      linked_invoices = evidence_records.flat_map(&:invoices_for_review).compact.uniq
+      return if linked_invoices.empty?
+
+      ActiveRecord::Associations::Preloader.new(records: linked_invoices, associations: :receiver_entity).call
+    end
+
+    def invoice_label_for_report(invoice)
+      return "-" unless invoice
+
+      serie = invoice.provider_response.to_h["serie"].presence || invoice.payload_snapshot.to_h["serie"].presence
+      folio = invoice.provider_response.to_h["folio"].presence ||
+              invoice.provider_response.to_h["noComprobante"].presence ||
+              invoice.provider_response.to_h["numeroComprobante"].presence ||
+              invoice.facturador_comprobante_id&.to_s
+
+      return "#{serie} #{folio}" if serie.present? && folio.present?
+      return folio.to_s if folio.present?
+      return serie.to_s if serie.present?
+
+      "-"
+    end
+
+    def build_payments_application_report_xlsx(rows)
+      package = Axlsx::Package.new
+      workbook = package.workbook
+      styles = workbook.styles
+      header_style = styles.add_style(b: true, bg_color: "F59E0B", fg_color: "FFFFFF", alignment: { horizontal: :center })
+      date_style = styles.add_style(format_code: "yyyy-mm-dd")
+      amount_style = styles.add_style(format_code: "#,##0.00")
+
+      workbook.add_worksheet(name: "Aplicacion de pagos") do |sheet|
+        sheet.add_row(
+          [ "Factura", "Fecha de Pago", "Monto", "Clave Rastreo", "Agencia Aduanal", "Receptor" ],
+          style: header_style
+        )
+
+        rows.each do |row|
+          sheet.add_row(
+            [
+              row[:invoice_label],
+              row[:paid_at]&.to_date,
+              row[:amount]&.to_d&.to_f,
+              row[:tracking_key].to_s,
+              row[:customs_agent_name],
+              row[:receiver_name]
+            ],
+            style: [ nil, date_style, amount_style, nil, nil, nil ]
+          )
+        end
+      end
+
+      package.to_stream.read
     end
 
     def parse_date_param(value)

@@ -1,5 +1,6 @@
 require "rails_helper"
 require "ostruct"
+require "roo"
 
 RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
   let(:admin_user) { create(:user, :admin) }
@@ -45,22 +46,28 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
       expect(flash[:alert]).to be_present
     end
 
-    it "limits evidences to the last week by default" do
+    it "limits evidences to payment dates from the last week by default" do
       sign_in admin_user, scope: :user
 
+      recent_payment = create(:invoice_payment, invoice: invoice, paid_at: 5.days.ago, amount: 500)
       recent_evidence = create(
         :invoice_payment_evidence,
         invoice: invoice,
+        invoice_payment: recent_payment,
         customs_agent: customs_agent,
         submitted_by: customs_user,
+        status: "linked",
         reference: "REF-RECENT-ONE-MONTH",
         created_at: 5.days.ago
       )
+      old_payment = create(:invoice_payment, invoice: invoice, paid_at: 2.months.ago, amount: 500)
       create(
         :invoice_payment_evidence,
         invoice: invoice,
+        invoice_payment: old_payment,
         customs_agent: customs_agent,
         submitted_by: customs_user,
+        status: "linked",
         reference: "REF-OLD-OUTSIDE-MONTH",
         created_at: 2.months.ago
       )
@@ -72,23 +79,29 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
       expect(response.body).not_to include("REF-OLD-OUTSIDE-MONTH")
     end
 
-    it "filters evidences by the selected date range" do
+    it "filters evidences by the selected payment date range" do
       sign_in admin_user, scope: :user
 
       target_date = 2.months.ago.to_date
+      in_range_payment = create(:invoice_payment, invoice: invoice, paid_at: target_date.noon, amount: 500)
       create(
         :invoice_payment_evidence,
         invoice: invoice,
+        invoice_payment: in_range_payment,
         customs_agent: customs_agent,
         submitted_by: customs_user,
+        status: "linked",
         reference: "REF-IN-RANGE",
         created_at: target_date.noon
       )
+      out_range_payment = create(:invoice_payment, invoice: invoice, paid_at: 5.days.ago, amount: 500)
       create(
         :invoice_payment_evidence,
         invoice: invoice,
+        invoice_payment: out_range_payment,
         customs_agent: customs_agent,
         submitted_by: customs_user,
+        status: "linked",
         reference: "REF-OUT-RANGE",
         created_at: 5.days.ago
       )
@@ -101,6 +114,71 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
       expect(response).to have_http_status(:success)
       expect(response.body).to include("REF-IN-RANGE")
       expect(response.body).not_to include("REF-OUT-RANGE")
+    end
+
+    it "exports payment application report in xlsx format" do
+      sign_in admin_user, scope: :user
+
+      issued_invoice = create(
+        :invoice,
+        status: "issued",
+        receiver_entity: client_entity,
+        provider_response: { "serie" => "A", "folio" => "123" }
+      )
+      payment = create(
+        :invoice_payment,
+        invoice: issued_invoice,
+        paid_at: Date.new(2026, 4, 9),
+        amount: 789.45,
+        tracking_key: "TRACK-EXCEL-001"
+      )
+
+      create(
+        :invoice_payment_evidence,
+        invoice: issued_invoice,
+        invoice_payment: payment,
+        customs_agent: customs_agent,
+        submitted_by: customs_user,
+        status: "linked",
+        reference: "REF-EXCEL-001",
+        created_at: 2.days.ago
+      )
+
+      get admin_invoice_payment_evidences_path(format: :xlsx), params: {
+        start_date: "2026-04-09",
+        end_date: "2026-04-09",
+        date_filter_type: "paid_at"
+      }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.content_type).to include("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+      tempfile = Tempfile.new([ "aplicacion_pagos", ".xlsx" ])
+      tempfile.binmode
+      tempfile.write(response.body)
+      tempfile.rewind
+
+      workbook = Roo::Excelx.new(tempfile.path)
+      sheet = workbook.sheet(0)
+
+      expect(sheet.row(1)).to eq([
+        "Factura",
+        "Fecha de Pago",
+        "Monto",
+        "Clave Rastreo",
+        "Agencia Aduanal",
+        "Receptor"
+      ])
+
+      row = sheet.row(2)
+      expect(row[0]).to eq("A 123")
+      expect(row[1]).to be_present
+      expect(row[2]).to eq(789.45)
+      expect(row[3]).to eq("TRACK-EXCEL-001")
+      expect(row[4]).to eq(customs_agent.name)
+      expect(row[5]).to eq(client_entity.name)
+
+      tempfile.close!
     end
   end
 

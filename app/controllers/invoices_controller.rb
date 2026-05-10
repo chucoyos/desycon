@@ -284,6 +284,7 @@ class InvoicesController < ApplicationController
 
     @invoices = @invoices.page(params[:page]).per(params[:per] || 10)
 
+    preload_receiver_fiscal_profiles_for(@invoices)
     build_invoice_service_context_data(@invoices)
     @collections_report_text = build_collections_report_text(@invoices)
 
@@ -311,6 +312,7 @@ class InvoicesController < ApplicationController
       .includes(:receiver_entity, :customs_agent)
       .order(created_at: :desc)
 
+    preload_receiver_fiscal_profiles_for(invoices)
     build_invoice_service_context_data(invoices)
     rows = build_collections_report_rows(invoices)
 
@@ -625,6 +627,7 @@ class InvoicesController < ApplicationController
   def show
     authorize @invoice
 
+    preload_receiver_fiscal_profiles_for([ @invoice ])
     @invoice_events = @invoice.invoice_events.includes(:created_by).order(created_at: :desc).limit(30)
     @invoice_payments = @invoice.invoice_payments.includes(complement_invoice: [ :xml_file_attachment, :pdf_file_attachment ]).order(paid_at: :desc)
     build_invoice_show_context_data(@invoice)
@@ -1433,6 +1436,20 @@ class InvoicesController < ApplicationController
     Date.iso8601(value)
   rescue ArgumentError
     nil
+  end
+
+  def preload_receiver_fiscal_profiles_for(invoices)
+    invoice_records = Array(invoices)
+    return if invoice_records.empty?
+
+    receiver_entities = invoice_records.filter_map do |invoice|
+      next if invoice.payload_snapshot.to_h["metodoPago"].to_s.strip.present?
+
+      invoice.receiver_entity
+    end.uniq
+    return if receiver_entities.empty?
+
+    ActiveRecord::Associations::Preloader.new(records: receiver_entities, associations: :fiscal_profile).call
   end
 
   def default_start_date
