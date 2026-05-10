@@ -55,7 +55,9 @@ class ServicesController < ApplicationController
     end
     @selected_customs_agency_label ||= @selected_customs_agency
 
-    unified_rows = container_service_rows + bl_house_line_service_rows
+    unified_rows = []
+    unified_rows.concat(container_service_rows) unless @selected_service_type == "bl_house_line"
+    unified_rows.concat(bl_house_line_service_rows) unless @selected_service_type == "container"
     unified_rows = apply_unified_filters(unified_rows)
     unified_rows.sort_by! { |row| [ row[:created_at] || Time.at(0), row[:service_id] ] }
     unified_rows.reverse!
@@ -133,8 +135,11 @@ class ServicesController < ApplicationController
   end
 
   def container_service_rows
-    container_services_scope.map do |service|
-      billing_invoice = latest_non_payment_invoice_for(service)
+    services = container_services_scope.to_a
+    latest_invoices = latest_non_payment_invoices_for(services)
+
+    services.map do |service|
+      billing_invoice = latest_invoices[service.id]
       latest_invoice_id = billing_invoice&.id
       billing_state = billing_state_for_service(service, billing_invoice)
       container = service.container
@@ -170,6 +175,7 @@ class ServicesController < ApplicationController
 
   def bl_house_line_service_rows
     services = bl_house_line_services_scope.to_a.reject { |service| hidden_by_nipon_exception_rule?(service) }
+    latest_invoices = latest_non_payment_invoices_for(services)
     service_ids = services.map(&:id)
     container_details_by_service_id = if service_ids.empty?
       {}
@@ -213,7 +219,7 @@ class ServicesController < ApplicationController
       container_details = container_details_by_service_id[service.id] || {}
       client_name = bl_house_line&.client&.name
       billed_to_name = service.billed_to_entity&.name
-      billing_invoice = latest_non_payment_invoice_for(service)
+      billing_invoice = latest_invoices[service.id]
       latest_invoice_id = billing_invoice&.id
       billing_state = billing_state_for_service(service, billing_invoice)
 
@@ -280,7 +286,7 @@ class ServicesController < ApplicationController
           bl_house_line: [
             :customs_agent,
             :customs_broker,
-            :client,
+            { client: :fiscal_profile },
             { container: { consolidator_entity: :fiscal_profile } }
           ]
         }
@@ -528,6 +534,46 @@ class ServicesController < ApplicationController
       .first
 
     [ direct_invoice, linked_invoice ].compact.max_by(&:created_at)
+  end
+
+  def latest_non_payment_invoices_for(services)
+    return {} if services.blank?
+
+    service_class = services.first.class.name
+    service_ids = services.map(&:id)
+
+    direct_pairs = Invoice
+      .where(invoiceable_type: service_class, invoiceable_id: service_ids)
+      .where.not(kind: "pago")
+      .order(created_at: :desc)
+      .pluck(:invoiceable_id, :id)
+
+    linked_pairs = Invoice
+      .joins(:invoice_service_links)
+      .where(invoice_service_links: { serviceable_type: service_class, serviceable_id: service_ids })
+      .where.not(kind: "pago")
+      .order(created_at: :desc)
+      .pluck("invoice_service_links.serviceable_id", "invoices.id")
+
+    latest_invoice_id_by_service_id = {}
+
+    direct_pairs.each do |service_id, invoice_id|
+      latest_invoice_id_by_service_id[service_id] ||= invoice_id
+    end
+
+    linked_pairs.each do |service_id, invoice_id|
+      latest_invoice_id_by_service_id[service_id] ||= invoice_id
+    end
+
+    invoice_records = Invoice.where(id: latest_invoice_id_by_service_id.values.uniq).index_by(&:id)
+
+    latest_by_id = {}
+
+    latest_invoice_id_by_service_id.each do |service_id, invoice_id|
+      latest_by_id[service_id] = invoice_records[invoice_id]
+    end
+
+    latest_by_id
   end
 
   def hidden_by_nipon_exception_rule?(service)
