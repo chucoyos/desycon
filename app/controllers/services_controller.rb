@@ -401,8 +401,7 @@ class ServicesController < ApplicationController
     scope = scope.where(created_at: @filter_start_date.beginning_of_day..@filter_end_date.end_of_day)
     scope = apply_billing_status_sql_filter(
       scope,
-      service_table: "container_services",
-      service_type: "ContainerService"
+      service_kind: :container
     )
 
     scope.distinct
@@ -454,37 +453,44 @@ class ServicesController < ApplicationController
     scope = apply_bl_house_line_exception_sql_filter(scope)
     scope = apply_billing_status_sql_filter(
       scope,
-      service_table: "bl_house_line_services",
-      service_type: "BlHouseLineService"
+      service_kind: :bl_house_line
     )
 
     scope.distinct
   end
 
-  def apply_billing_status_sql_filter(scope, service_table:, service_type:)
+  def apply_billing_status_sql_filter(scope, service_kind:)
     return scope if @selected_billing_status.blank?
 
-    scope = scope.joins(latest_billing_invoice_lateral_sql(service_table:, service_type:))
+    scope = scope.joins(latest_billing_invoice_lateral_join_sql(service_kind:))
 
+    if service_kind == :container
+      apply_container_billing_status_sql_filter(scope)
+    else
+      apply_bl_house_line_billing_status_sql_filter(scope)
+    end
+  end
+
+  def apply_container_billing_status_sql_filter(scope)
     case @selected_billing_status
     when "facturado"
       scope.where(
-        "#{service_table}.factura IS NOT NULL OR latest_billing_invoice.status IN (?)",
+        "container_services.factura IS NOT NULL OR latest_billing_invoice.status IN (?)",
         %w[issued cancel_pending cancelled]
       )
     when "en_proceso"
       scope.where(
-        "#{service_table}.factura IS NULL AND latest_billing_invoice.status IN (?)",
+        "container_services.factura IS NULL AND latest_billing_invoice.status IN (?)",
         %w[draft queued]
       )
     when "fallido"
       scope.where(
-        "#{service_table}.factura IS NULL AND latest_billing_invoice.status = ?",
+        "container_services.factura IS NULL AND latest_billing_invoice.status = ?",
         "failed"
       )
     when "proforma"
       scope.where(
-        "#{service_table}.factura IS NULL AND (latest_billing_invoice.status IS NULL OR latest_billing_invoice.status NOT IN (?))",
+        "container_services.factura IS NULL AND (latest_billing_invoice.status IS NULL OR latest_billing_invoice.status NOT IN (?))",
         %w[issued cancel_pending cancelled draft queued failed]
       )
     else
@@ -492,30 +498,79 @@ class ServicesController < ApplicationController
     end
   end
 
-  def latest_billing_invoice_lateral_sql(service_table:, service_type:)
-    quoted_service_type = ActiveRecord::Base.connection.quote(service_type)
+  def apply_bl_house_line_billing_status_sql_filter(scope)
+    case @selected_billing_status
+    when "facturado"
+      scope.where(
+        "bl_house_line_services.factura IS NOT NULL OR latest_billing_invoice.status IN (?)",
+        %w[issued cancel_pending cancelled]
+      )
+    when "en_proceso"
+      scope.where(
+        "bl_house_line_services.factura IS NULL AND latest_billing_invoice.status IN (?)",
+        %w[draft queued]
+      )
+    when "fallido"
+      scope.where(
+        "bl_house_line_services.factura IS NULL AND latest_billing_invoice.status = ?",
+        "failed"
+      )
+    when "proforma"
+      scope.where(
+        "bl_house_line_services.factura IS NULL AND (latest_billing_invoice.status IS NULL OR latest_billing_invoice.status NOT IN (?))",
+        %w[issued cancel_pending cancelled draft queued failed]
+      )
+    else
+      scope
+    end
+  end
 
-    <<~SQL.squish
-      LEFT JOIN LATERAL (
-        SELECT latest.status
-        FROM (
-          SELECT invoices.status, invoices.created_at, invoices.id
-          FROM invoices
-          WHERE invoices.kind <> 'pago'
-            AND invoices.invoiceable_type = #{quoted_service_type}
-            AND invoices.invoiceable_id = #{service_table}.id
-          UNION ALL
-          SELECT invoices.status, invoices.created_at, invoices.id
-          FROM invoices
-          INNER JOIN invoice_service_links ON invoice_service_links.invoice_id = invoices.id
-          WHERE invoices.kind <> 'pago'
-            AND invoice_service_links.serviceable_type = #{quoted_service_type}
-            AND invoice_service_links.serviceable_id = #{service_table}.id
-        ) latest
-        ORDER BY latest.created_at DESC, latest.id DESC
-        LIMIT 1
-      ) latest_billing_invoice ON TRUE
-    SQL
+  def latest_billing_invoice_lateral_join_sql(service_kind:)
+    if service_kind == :container
+      <<~SQL.squish
+        LEFT JOIN LATERAL (
+          SELECT latest.status
+          FROM (
+            SELECT invoices.status, invoices.created_at, invoices.id
+            FROM invoices
+            WHERE invoices.kind <> 'pago'
+              AND invoices.invoiceable_type = 'ContainerService'
+              AND invoices.invoiceable_id = container_services.id
+            UNION ALL
+            SELECT invoices.status, invoices.created_at, invoices.id
+            FROM invoices
+            INNER JOIN invoice_service_links ON invoice_service_links.invoice_id = invoices.id
+            WHERE invoices.kind <> 'pago'
+              AND invoice_service_links.serviceable_type = 'ContainerService'
+              AND invoice_service_links.serviceable_id = container_services.id
+          ) latest
+          ORDER BY latest.created_at DESC, latest.id DESC
+          LIMIT 1
+        ) latest_billing_invoice ON TRUE
+      SQL
+    else
+      <<~SQL.squish
+        LEFT JOIN LATERAL (
+          SELECT latest.status
+          FROM (
+            SELECT invoices.status, invoices.created_at, invoices.id
+            FROM invoices
+            WHERE invoices.kind <> 'pago'
+              AND invoices.invoiceable_type = 'BlHouseLineService'
+              AND invoices.invoiceable_id = bl_house_line_services.id
+            UNION ALL
+            SELECT invoices.status, invoices.created_at, invoices.id
+            FROM invoices
+            INNER JOIN invoice_service_links ON invoice_service_links.invoice_id = invoices.id
+            WHERE invoices.kind <> 'pago'
+              AND invoice_service_links.serviceable_type = 'BlHouseLineService'
+              AND invoice_service_links.serviceable_id = bl_house_line_services.id
+          ) latest
+          ORDER BY latest.created_at DESC, latest.id DESC
+          LIMIT 1
+        ) latest_billing_invoice ON TRUE
+      SQL
+    end
   end
 
   def apply_bl_house_line_exception_sql_filter(scope)
@@ -523,8 +578,6 @@ class ServicesController < ApplicationController
 
     exception_rfcs = nipon_exception_rfcs
     return scope if exception_rfcs.empty?
-
-    quoted_exception_rfcs = exception_rfcs.map { |rfc| ActiveRecord::Base.connection.quote(rfc) }.join(", ")
 
     scope
       .joins("LEFT JOIN bl_house_lines blh_rfc_filter ON blh_rfc_filter.id = bl_house_line_services.bl_house_line_id")
@@ -536,16 +589,15 @@ class ServicesController < ApplicationController
       .joins("LEFT JOIN entities client_entity_rfc_filter ON client_entity_rfc_filter.id = blh_rfc_filter.client_id")
       .joins("LEFT JOIN fiscal_profiles client_fp_rfc_filter ON client_fp_rfc_filter.profileable_type = 'Entity' AND client_fp_rfc_filter.profileable_id = client_entity_rfc_filter.id")
       .where(
-        <<~SQL.squish
-          NOT (
-            UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) <> ''
-            AND UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) IN (#{quoted_exception_rfcs})
-            AND (
-              UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) = UPPER(TRIM(COALESCE(billed_to_fp_rfc_filter.rfc, '')))
-              OR UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) = UPPER(TRIM(COALESCE(client_fp_rfc_filter.rfc, '')))
-            )
-          )
-        SQL
+        "NOT (" \
+          "UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) <> '' " \
+          "AND UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) IN (?) " \
+          "AND (" \
+            "UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) = UPPER(TRIM(COALESCE(billed_to_fp_rfc_filter.rfc, ''))) " \
+            "OR UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) = UPPER(TRIM(COALESCE(client_fp_rfc_filter.rfc, '')))" \
+          ")" \
+        ")",
+        exception_rfcs
       )
   end
 
