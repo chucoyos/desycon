@@ -6,7 +6,7 @@ class BlHouseLinesController < ApplicationController
   IMPORT_TEMPLATE_HEADERS = %w[blhouse cantidad embalaje contiene marcas peso volumen clase_imo tipo_imo].freeze
 
   before_action :authenticate_user!
-  before_action :set_bl_house_line, only: %i[show edit update destroy revalidation_approval approve_revalidation documents reassign perform_reassign reassign_brokers dispatch_date update_dispatch_date]
+  before_action :set_bl_house_line, only: %i[show edit update destroy revalidation_approval approve_revalidation documents reassign perform_reassign reassign_brokers dispatch_date update_dispatch_date service_catalogs_search bill_to_clients_search]
   after_action :verify_authorized, except: :index
 
   # GET /bl_house_lines
@@ -120,6 +120,82 @@ class BlHouseLinesController < ApplicationController
       Entity
         .customs_agents
         .search_by_name(query)
+        .limit(limit)
+        .pluck(:id, :name)
+        .map do |id, name|
+          {
+            id:,
+            label: name
+          }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
+  def service_catalogs_search
+    authorize @bl_house_line, :show?
+
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    cache_key = [ "bl_house_lines", "service_catalogs_search", query.downcase, limit ].join(":")
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      term = "%#{query}%"
+      ServiceCatalog
+        .for_bl_house_lines
+        .where("name ILIKE ? OR code ILIKE ?", term, term)
+        .order(:name)
+        .limit(limit)
+        .map do |catalog|
+          {
+            id: catalog.id,
+            label: catalog.display_name,
+            data: {
+              amount: catalog.amount
+            }
+          }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
+  def bill_to_clients_search
+    authorize @bl_house_line, :show?
+
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    cache_key = [
+      "bl_house_lines",
+      "bill_to_clients_search",
+      @bl_house_line.id,
+      query.downcase,
+      limit,
+      @bl_house_line.client_id
+    ].join(":")
+
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      term = "%#{query}%"
+      clients_scope = Entity.clients
+      if @bl_house_line.client_id.present?
+        clients_scope = clients_scope.or(Entity.where(id: @bl_house_line.client_id))
+      end
+
+      clients_scope
+        .where("name ILIKE ?", term)
+        .order(:name)
         .limit(limit)
         .pluck(:id, :name)
         .map do |id, name|

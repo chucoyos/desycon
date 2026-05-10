@@ -8,6 +8,8 @@ class ContainersController < ApplicationController
     edit
     update
     destroy
+    service_catalogs_search
+    bill_to_clients_search
     lifecycle_bl_master_modal
     lifecycle_bl_master_update
     lifecycle_descarga_modal
@@ -299,6 +301,82 @@ class ContainersController < ApplicationController
             data: {
               destination_port: destination_name
             }
+          }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
+  def service_catalogs_search
+    authorize @container, :show?
+
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    cache_key = [ "containers", "service_catalogs_search", query.downcase, limit ].join(":")
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      term = "%#{query}%"
+      ServiceCatalog
+        .for_containers
+        .where("name ILIKE ? OR code ILIKE ?", term, term)
+        .order(:name)
+        .limit(limit)
+        .map do |catalog|
+          {
+            id: catalog.id,
+            label: catalog.display_name,
+            data: {
+              amount: catalog.amount
+            }
+          }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
+  def bill_to_clients_search
+    authorize @container, :show?
+
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    cache_key = [
+      "containers",
+      "bill_to_clients_search",
+      @container.id,
+      query.downcase,
+      limit,
+      @container.consolidator_entity_id
+    ].join(":")
+
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      term = "%#{query}%"
+      clients_scope = Entity.clients
+      if @container.consolidator_entity_id.present?
+        clients_scope = clients_scope.or(Entity.where(id: @container.consolidator_entity_id))
+      end
+
+      clients_scope
+        .where("name ILIKE ?", term)
+        .order(:name)
+        .limit(limit)
+        .pluck(:id, :name)
+        .map do |id, name|
+          {
+            id:,
+            label: name
           }
         end
     end

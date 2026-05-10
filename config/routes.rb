@@ -135,6 +135,8 @@ Rails.application.routes.draw do
     end
 
     member do
+      get :service_catalogs_search
+      get :bill_to_clients_search
       post :photos, to: "photos#create_for_container"
       post :photos_share_link, to: "photos#create_share_link_for_container"
       get :photos_section_frame, to: "photos#section_frame_for_container"
@@ -171,6 +173,8 @@ Rails.application.routes.draw do
     end
 
     member do
+      get :service_catalogs_search
+      get :bill_to_clients_search
       post :photos, to: "photos#create_for_bl_house_line"
       post :photos_share_link, to: "photos#create_share_link_for_bl_house_line"
       get :photos_section_frame, to: "photos#section_frame_for_bl_house_line"

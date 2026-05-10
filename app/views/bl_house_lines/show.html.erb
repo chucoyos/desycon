@@ -905,12 +905,35 @@
           <div class="space-y-4">
             <div>
               <%= sf.label :service_catalog_id, "Servicio *", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-              <% service_catalog_options = @service_catalogs.map { |catalog| [catalog.display_name, catalog.id, { data: { amount: catalog.amount } }] } %>
-              <% service_catalog_options_with_spacer = service_catalog_options + [[" ", "__spacer__", { disabled: true }]] %>
-              <%= sf.select :service_catalog_id,
-                options_for_select(service_catalog_options_with_spacer, sf.object&.service_catalog_id),
-                { prompt: "Selecciona un servicio" },
-                  { required: true, data: { catalog_amounts: @service_catalogs.index_by { |catalog| catalog.id.to_s }.transform_values(&:amount).to_json }, onchange: "window.desyconSyncServiceAmountFromCatalog && window.desyconSyncServiceAmountFromCatalog(this)", class: "js-service-catalog-select w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500" } %>
+              <div
+                data-controller="catalog-autocomplete"
+                data-catalog-autocomplete-url-value="<%= service_catalogs_search_bl_house_line_path(@bl_house_line) %>"
+                data-catalog-autocomplete-min-chars-value="2"
+                data-catalog-autocomplete-debounce-value="300"
+                class="relative"
+              >
+                <%= sf.hidden_field :service_catalog_id,
+                  class: "js-service-catalog-id-input",
+                  data: {
+                    catalog_autocomplete_target: "hiddenInput",
+                    catalog_amounts: @service_catalogs.index_by { |catalog| catalog.id.to_s }.transform_values(&:amount).to_json
+                  },
+                  onchange: "window.desyconSyncServiceAmountFromAutocomplete && window.desyconSyncServiceAmountFromAutocomplete(this)" %>
+
+                <%= text_field_tag "bl_service_catalog_search_#{service_index}",
+                  nil,
+                  autocomplete: "off",
+                  placeholder: "Escribe para buscar un servicio",
+                  required: true,
+                  class: "w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500",
+                  data: {
+                    catalog_autocomplete_target: "input",
+                    action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+                  } %>
+
+                <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+                <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+              </div>
             </div>
 
             <div>
@@ -925,12 +948,28 @@
 
             <div>
               <%= sf.label :billed_to_entity_id, "Facturar a", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-              <%= sf.collection_select :billed_to_entity_id,
-                  @clients,
-                  :id,
-                  :name,
-                  { include_blank: "Selecciona cliente" },
-                  { class: "w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500" } %>
+              <div
+                data-controller="catalog-autocomplete"
+                data-catalog-autocomplete-url-value="<%= bill_to_clients_search_bl_house_line_path(@bl_house_line) %>"
+                data-catalog-autocomplete-min-chars-value="2"
+                data-catalog-autocomplete-debounce-value="300"
+                class="relative"
+              >
+                <%= sf.hidden_field :billed_to_entity_id, data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+                <%= text_field_tag "bl_billed_to_search_#{service_index}",
+                  nil,
+                  autocomplete: "off",
+                  placeholder: "Escribe para buscar un cliente",
+                  class: "w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500",
+                  data: {
+                    catalog_autocomplete_target: "input",
+                    action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+                  } %>
+
+                <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+                <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+              </div>
             </div>
 
             <div>
@@ -1037,6 +1076,37 @@
 <% end %>
 
 <script>
+  window.desyconSyncServiceAmountFromAutocomplete = function(hiddenInput) {
+    if (!hiddenInput) return;
+
+    var wrapper = hiddenInput.closest('.space-y-4') || hiddenInput.closest('.service-card') || hiddenInput.closest('form');
+    if (!wrapper) return;
+
+    var amountInput = wrapper.querySelector('input.js-service-amount-input');
+    if (!amountInput || amountInput.disabled) return;
+
+    var amountRaw = hiddenInput.dataset.amount || null;
+    var selectedValue = hiddenInput.value;
+    var rawMap = hiddenInput.getAttribute('data-catalog-amounts');
+
+    if ((!amountRaw || amountRaw === '') && rawMap && selectedValue) {
+      try {
+        var map = JSON.parse(rawMap);
+        amountRaw = map[selectedValue] || null;
+      } catch (error) {
+        amountRaw = null;
+      }
+    }
+
+    if (amountRaw === null || amountRaw === undefined || amountRaw === '') return;
+
+    var parsed = Number.parseFloat(String(amountRaw).replace(',', '.'));
+    if (!Number.isFinite(parsed)) return;
+
+    amountInput.value = parsed.toFixed(2);
+    amountInput.dataset.autofilledFromCatalog = 'true';
+  };
+
   window.desyconSyncServiceAmountFromCatalog = function(select) {
     if (!select) return;
 

@@ -385,6 +385,44 @@ RSpec.describe "Containers", type: :request do
     end
   end
 
+  describe "GET /containers/:id/service_catalogs_search" do
+    before { sign_in user, scope: :user }
+
+    let(:container) { create(:container) }
+    let!(:matching_catalog) { create(:service_catalog, applies_to: "container", name: "Servicio Extra", code: "SE-01") }
+    let!(:other_catalog) { create(:service_catalog, applies_to: "bl_house_line", name: "Servicio BL", code: "BL-01") }
+
+    it "returns active container service catalogs matching the query" do
+      get service_catalogs_search_container_path(container), params: { q: "extra" }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      labels = payload.fetch("results").map { |row| row.fetch("label") }
+
+      expect(labels.any? { |label| label.include?(matching_catalog.name) }).to eq(true)
+      expect(labels.any? { |label| label.include?(other_catalog.name) }).to eq(false)
+    end
+  end
+
+  describe "GET /containers/:id/bill_to_clients_search" do
+    before { sign_in user, scope: :user }
+
+    let(:consolidator) { create(:entity, :consolidator, name: "Consolidador Especial") }
+    let(:container) { create(:container, consolidator_entity: consolidator) }
+    let!(:matching_client) { create(:entity, :client, name: "Cliente Facturacion") }
+
+    it "returns matching clients and allows consolidator as bill-to option" do
+      get bill_to_clients_search_container_path(container), params: { q: "especial" }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      labels = payload.fetch("results").map { |row| row.fetch("label") }
+
+      expect(labels).to include("Consolidador Especial")
+      expect(labels).not_to include("Cliente Facturacion")
+    end
+  end
+
   describe "GET /containers for consolidator" do
     it "returns only own related containers" do
       consolidator = create(:user, :consolidator)

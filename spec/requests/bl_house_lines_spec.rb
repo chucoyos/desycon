@@ -227,6 +227,44 @@ RSpec.describe "BlHouseLines", type: :request do
     end
   end
 
+  describe "GET /bl_house_lines/:id/service_catalogs_search" do
+    before { sign_in user, scope: :user }
+
+    let(:bl_house_line) { create(:bl_house_line) }
+    let!(:matching_catalog) { create(:service_catalog, applies_to: "bl_house_line", name: "Servicio Partida", code: "SP-01") }
+    let!(:other_catalog) { create(:service_catalog, applies_to: "container", name: "Servicio Contenedor", code: "SC-01") }
+
+    it "returns active BL service catalogs matching query" do
+      get service_catalogs_search_bl_house_line_path(bl_house_line), params: { q: "partida" }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      labels = payload.fetch("results").map { |row| row.fetch("label") }
+
+      expect(labels.any? { |label| label.include?(matching_catalog.name) }).to eq(true)
+      expect(labels.any? { |label| label.include?(other_catalog.name) }).to eq(false)
+    end
+  end
+
+  describe "GET /bl_house_lines/:id/bill_to_clients_search" do
+    before { sign_in user, scope: :user }
+
+    let(:client_entity) { create(:entity, :client, name: "Cliente Principal") }
+    let(:bl_house_line) { create(:bl_house_line, client: client_entity) }
+    let!(:other_client) { create(:entity, :client, name: "Cliente Secundario") }
+
+    it "returns matching bill-to clients" do
+      get bill_to_clients_search_bl_house_line_path(bl_house_line), params: { q: "principal" }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      labels = payload.fetch("results").map { |row| row.fetch("label") }
+
+      expect(labels).to include("Cliente Principal")
+      expect(labels).not_to include("Cliente Secundario")
+    end
+  end
+
   describe "GET /bl_house_lines for consolidator" do
     it "returns only bl house lines from own containers" do
       consolidator = create(:user, :consolidator)
