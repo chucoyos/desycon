@@ -55,14 +55,13 @@ class ServicesController < ApplicationController
     end
     @selected_customs_agency_label ||= @selected_customs_agency
 
-    unified_rows = []
-    unified_rows.concat(container_service_rows) unless @selected_service_type == "bl_house_line"
-    unified_rows.concat(bl_house_line_service_rows) unless @selected_service_type == "container"
-    unified_rows = apply_unified_filters(unified_rows)
-    unified_rows.sort_by! { |row| [ row[:created_at] || Time.at(0), row[:service_id] ] }
-    unified_rows.reverse!
-
-    @services = Kaminari.paginate_array(unified_rows).page(params[:page]).per(per_page)
+    paged_rows, total_count = paginated_service_rows
+    @services = Kaminari.paginate_array(
+      paged_rows,
+      total_count: total_count,
+      limit: per_page,
+      offset: (current_page - 1) * per_page
+    )
     @applied_filters = build_applied_filters
   end
 
@@ -134,8 +133,121 @@ class ServicesController < ApplicationController
     [ requested, 100 ].min
   end
 
-  def container_service_rows
-    services = container_services_scope.to_a
+  def current_page
+    value = params[:page].to_i
+    value.positive? ? value : 1
+  end
+
+  def paginated_service_rows
+    case @selected_service_type
+    when "container"
+      paged_rows_for_single_type(type: "ContainerService")
+    when "bl_house_line"
+      paged_rows_for_single_type(type: "BlHouseLineService")
+    else
+      paged_rows_for_all_types
+    end
+  end
+
+  def paged_rows_for_single_type(type:)
+    scope = type == "ContainerService" ? container_services_scope : bl_house_line_services_scope
+    ordered_scope_sql = scope
+      .reselect("#{scope.model.table_name}.id", "#{scope.model.table_name}.created_at")
+      .reorder(created_at: :desc, id: :desc)
+      .to_sql
+
+    ids = ActiveRecord::Base.connection
+      .select_values("SELECT ordered.id FROM (#{ordered_scope_sql}) ordered")
+      .map(&:to_i)
+    total_count = ids.size
+    offset = (current_page - 1) * per_page
+    page_ids = ids.slice(offset, per_page) || []
+
+    rows = if type == "ContainerService"
+      services = container_service_preload_scope.where(id: page_ids).index_by(&:id)
+      container_service_rows(services: page_ids.filter_map { |id| services[id] })
+    else
+      services = bl_house_line_service_preload_scope.where(id: page_ids).index_by(&:id)
+      bl_house_line_service_rows(services: page_ids.filter_map { |id| services[id] })
+    end
+
+    [ rows, total_count ]
+  end
+
+  def paged_rows_for_all_types
+    container_scope_sql = container_services_scope.reorder(nil).select("container_services.id, container_services.created_at").to_sql
+    bl_scope_sql = bl_house_line_services_scope.reorder(nil).select("bl_house_line_services.id, bl_house_line_services.created_at").to_sql
+
+    rows_sql = <<~SQL
+      SELECT * FROM (
+        SELECT 'ContainerService' AS type, id, created_at FROM (#{container_scope_sql}) container_base
+        UNION ALL
+        SELECT 'BlHouseLineService' AS type, id, created_at FROM (#{bl_scope_sql}) bl_base
+      ) unified
+      ORDER BY created_at DESC, id DESC
+    SQL
+
+    raw_rows = ActiveRecord::Base.connection.exec_query(rows_sql).to_a
+    total_count = raw_rows.size
+    offset = (current_page - 1) * per_page
+    page_rows = raw_rows.slice(offset, per_page) || []
+
+    container_ids = page_rows.select { |row| row["type"] == "ContainerService" }.map { |row| row["id"].to_i }
+    bl_ids = page_rows.select { |row| row["type"] == "BlHouseLineService" }.map { |row| row["id"].to_i }
+
+    container_records = container_service_preload_scope.where(id: container_ids).index_by(&:id)
+    bl_records = bl_house_line_service_preload_scope.where(id: bl_ids).index_by(&:id)
+
+    container_rows = container_service_rows(services: container_ids.filter_map { |id| container_records[id] })
+    bl_rows = bl_house_line_service_rows(services: bl_ids.filter_map { |id| bl_records[id] })
+
+    rows_by_token = (container_rows + bl_rows).index_by { |row| row[:token] }
+    ordered_rows = page_rows.filter_map do |row|
+      token = "#{row['type']}:#{row['id']}"
+      rows_by_token[token]
+    end
+
+    [ ordered_rows, total_count ]
+  end
+
+  def container_service_preload_scope
+    ContainerService.includes(
+      :billed_to_entity,
+      :service_catalog,
+      container: [
+        { voyage: :destination_port },
+        :consolidator_entity,
+        { bl_house_lines: %i[customs_agent customs_broker client] }
+      ]
+    )
+  end
+
+  def bl_house_line_service_preload_scope
+    BlHouseLineService.includes(
+      :billed_to_entity,
+      :service_catalog,
+      bl_house_line: [
+        :customs_agent,
+        :customs_broker,
+        :client
+      ]
+    )
+  end
+
+  def bl_house_line_rule_preload_scope
+    BlHouseLineService.includes(
+      { billed_to_entity: :fiscal_profile },
+      {
+        bl_house_line: [
+          { client: :fiscal_profile },
+          { container: { consolidator_entity: :fiscal_profile } }
+        ]
+      }
+    )
+  end
+
+  def container_service_rows(services: nil)
+    services ||= container_services_scope.to_a
     latest_invoices = latest_non_payment_invoices_for(services)
     services = filter_services_by_billing_status(services, latest_invoices)
 
@@ -174,8 +286,8 @@ class ServicesController < ApplicationController
     end
   end
 
-  def bl_house_line_service_rows
-    services = bl_house_line_services_scope.to_a.reject { |service| hidden_by_nipon_exception_rule?(service) }
+  def bl_house_line_service_rows(services: nil)
+    services ||= bl_house_line_services_scope.to_a
     latest_invoices = latest_non_payment_invoices_for(services)
     services = filter_services_by_billing_status(services, latest_invoices)
     service_ids = services.map(&:id)
@@ -287,6 +399,11 @@ class ServicesController < ApplicationController
     end
 
     scope = scope.where(created_at: @filter_start_date.beginning_of_day..@filter_end_date.end_of_day)
+    scope = apply_billing_status_sql_filter(
+      scope,
+      service_table: "container_services",
+      service_type: "ContainerService"
+    )
 
     scope.distinct
   end
@@ -295,13 +412,13 @@ class ServicesController < ApplicationController
     scope = BlHouseLineService
       .includes(
         :service_catalog,
-        { billed_to_entity: :fiscal_profile },
+        :billed_to_entity,
         {
           bl_house_line: [
             :customs_agent,
             :customs_broker,
-            { client: :fiscal_profile },
-            { container: { consolidator_entity: :fiscal_profile } }
+            :client,
+            { container: :consolidator_entity }
           ]
         }
       )
@@ -334,8 +451,102 @@ class ServicesController < ApplicationController
     end
 
     scope = scope.where(created_at: @filter_start_date.beginning_of_day..@filter_end_date.end_of_day)
+    scope = apply_bl_house_line_exception_sql_filter(scope)
+    scope = apply_billing_status_sql_filter(
+      scope,
+      service_table: "bl_house_line_services",
+      service_type: "BlHouseLineService"
+    )
 
     scope.distinct
+  end
+
+  def apply_billing_status_sql_filter(scope, service_table:, service_type:)
+    return scope if @selected_billing_status.blank?
+
+    scope = scope.joins(latest_billing_invoice_lateral_sql(service_table:, service_type:))
+
+    case @selected_billing_status
+    when "facturado"
+      scope.where(
+        "#{service_table}.factura IS NOT NULL OR latest_billing_invoice.status IN (?)",
+        %w[issued cancel_pending cancelled]
+      )
+    when "en_proceso"
+      scope.where(
+        "#{service_table}.factura IS NULL AND latest_billing_invoice.status IN (?)",
+        %w[draft queued]
+      )
+    when "fallido"
+      scope.where(
+        "#{service_table}.factura IS NULL AND latest_billing_invoice.status = ?",
+        "failed"
+      )
+    when "proforma"
+      scope.where(
+        "#{service_table}.factura IS NULL AND (latest_billing_invoice.status IS NULL OR latest_billing_invoice.status NOT IN (?))",
+        %w[issued cancel_pending cancelled draft queued failed]
+      )
+    else
+      scope
+    end
+  end
+
+  def latest_billing_invoice_lateral_sql(service_table:, service_type:)
+    quoted_service_type = ActiveRecord::Base.connection.quote(service_type)
+
+    <<~SQL.squish
+      LEFT JOIN LATERAL (
+        SELECT latest.status
+        FROM (
+          SELECT invoices.status, invoices.created_at, invoices.id
+          FROM invoices
+          WHERE invoices.kind <> 'pago'
+            AND invoices.invoiceable_type = #{quoted_service_type}
+            AND invoices.invoiceable_id = #{service_table}.id
+          UNION ALL
+          SELECT invoices.status, invoices.created_at, invoices.id
+          FROM invoices
+          INNER JOIN invoice_service_links ON invoice_service_links.invoice_id = invoices.id
+          WHERE invoices.kind <> 'pago'
+            AND invoice_service_links.serviceable_type = #{quoted_service_type}
+            AND invoice_service_links.serviceable_id = #{service_table}.id
+        ) latest
+        ORDER BY latest.created_at DESC, latest.id DESC
+        LIMIT 1
+      ) latest_billing_invoice ON TRUE
+    SQL
+  end
+
+  def apply_bl_house_line_exception_sql_filter(scope)
+    return scope unless Facturador::Config.auto_issue_nipon_exception_enabled?
+
+    exception_rfcs = nipon_exception_rfcs
+    return scope if exception_rfcs.empty?
+
+    quoted_exception_rfcs = exception_rfcs.map { |rfc| ActiveRecord::Base.connection.quote(rfc) }.join(", ")
+
+    scope
+      .joins("LEFT JOIN bl_house_lines blh_rfc_filter ON blh_rfc_filter.id = bl_house_line_services.bl_house_line_id")
+      .joins("LEFT JOIN containers container_rfc_filter ON container_rfc_filter.id = blh_rfc_filter.container_id")
+      .joins("LEFT JOIN entities consolidator_entity_rfc_filter ON consolidator_entity_rfc_filter.id = container_rfc_filter.consolidator_entity_id")
+      .joins("LEFT JOIN fiscal_profiles consolidator_fp_rfc_filter ON consolidator_fp_rfc_filter.profileable_type = 'Entity' AND consolidator_fp_rfc_filter.profileable_id = consolidator_entity_rfc_filter.id")
+      .joins("LEFT JOIN entities billed_to_entity_rfc_filter ON billed_to_entity_rfc_filter.id = bl_house_line_services.billed_to_entity_id")
+      .joins("LEFT JOIN fiscal_profiles billed_to_fp_rfc_filter ON billed_to_fp_rfc_filter.profileable_type = 'Entity' AND billed_to_fp_rfc_filter.profileable_id = billed_to_entity_rfc_filter.id")
+      .joins("LEFT JOIN entities client_entity_rfc_filter ON client_entity_rfc_filter.id = blh_rfc_filter.client_id")
+      .joins("LEFT JOIN fiscal_profiles client_fp_rfc_filter ON client_fp_rfc_filter.profileable_type = 'Entity' AND client_fp_rfc_filter.profileable_id = client_entity_rfc_filter.id")
+      .where(
+        <<~SQL.squish
+          NOT (
+            UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) <> ''
+            AND UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) IN (#{quoted_exception_rfcs})
+            AND (
+              UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) = UPPER(TRIM(COALESCE(billed_to_fp_rfc_filter.rfc, '')))
+              OR UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) = UPPER(TRIM(COALESCE(client_fp_rfc_filter.rfc, '')))
+            )
+          )
+        SQL
+      )
   end
 
   def resolved_start_date
@@ -513,8 +724,22 @@ class ServicesController < ApplicationController
     serviceables = []
 
     grouped_ids.each do |type, ids|
-      model = type == "ContainerService" ? ContainerService : BlHouseLineService
-      records = model.where(id: ids.uniq).to_a
+      records = if type == "ContainerService"
+        ContainerService.where(id: ids.uniq).to_a
+      else
+        BlHouseLineService
+          .includes(
+            { billed_to_entity: :fiscal_profile },
+            {
+              bl_house_line: [
+                { client: :fiscal_profile },
+                { container: { consolidator_entity: :fiscal_profile } }
+              ]
+            }
+          )
+          .where(id: ids.uniq)
+          .to_a
+      end
       return [] unless records.size == ids.uniq.size
       return [] if records.any? { |record| hidden_by_nipon_exception_rule?(record) }
       return [] if records.any? { |record| !service_issuable_for_issue?(record) }
