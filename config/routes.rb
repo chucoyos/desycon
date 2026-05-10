@@ -105,6 +105,11 @@ Rails.application.routes.draw do
       get :countries_search
     end
 
+    member do
+      get :customs_brokers_search
+      get :customs_agencies_search
+    end
+
     get :new_address, on: :collection
     resources :agency_brokers, only: [ :create, :destroy ]
     resources :addresses, controller: "entity_addresses", only: [ :create, :update, :destroy, :edit ] do

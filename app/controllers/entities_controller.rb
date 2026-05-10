@@ -2,7 +2,7 @@ class EntitiesController < ApplicationController
   DUPLICATE_RECIPIENT_EMAIL_MESSAGE = "Este correo electronico ya se encuentra registrado para esta entidad. Por favor, intenta con otro".freeze
 
   before_action :authenticate_user!
-  before_action :set_entity, only: [ :show, :edit, :update, :destroy ]
+  before_action :set_entity, only: [ :show, :edit, :update, :destroy, :customs_brokers_search, :customs_agencies_search ]
   before_action :load_patents, only: [ :show ]
   after_action :verify_authorized, except: :index
 
@@ -65,6 +65,83 @@ class EntitiesController < ApplicationController
     cache_key = [ "entities", "countries_search", query.downcase, limit ].join(":")
     results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
       Address.search_countries(query, limit:)
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
+  def customs_brokers_search
+    authorize @entity, :manage_brokers?
+
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    linked_broker_ids = @entity.customs_brokers.select(:id)
+
+    cache_key = [
+      "entities",
+      "customs_brokers_search",
+      @entity.id,
+      query.downcase,
+      limit,
+      @entity.customs_brokers.maximum(:updated_at)&.to_i
+    ].join(":")
+
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      Entity
+        .customs_brokers
+        .where.not(id: linked_broker_ids)
+        .where("name ILIKE ?", "%#{query}%")
+        .order(:name)
+        .limit(limit)
+        .pluck(:id, :name, :patent_number)
+        .map do |id, name, patent_number|
+          label = patent_number.present? ? "#{name} - Patente #{patent_number}" : name
+          { id:, label: }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
+  def customs_agencies_search
+    authorize @entity, :manage_brokers?
+
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    linked_agency_ids = @entity.customs_agencies.select(:id)
+
+    cache_key = [
+      "entities",
+      "customs_agencies_search",
+      @entity.id,
+      query.downcase,
+      limit,
+      @entity.customs_agencies.maximum(:updated_at)&.to_i
+    ].join(":")
+
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      Entity
+        .customs_agents
+        .where.not(id: linked_agency_ids)
+        .where("name ILIKE ?", "%#{query}%")
+        .order(:name)
+        .limit(limit)
+        .pluck(:id, :name)
+        .map do |id, name|
+          { id:, label: name }
+        end
     end
 
     render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }

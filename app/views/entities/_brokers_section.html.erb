@@ -21,7 +21,7 @@
                 <span>Patente <%= broker.patent_number %></span>
                 <%= button_to entity_agency_broker_path(entity, broker.agency_broker_links_as_broker.find_by(agency_id: entity.id)),
                   method: :delete,
-                  class: "ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-indigo-400 hover:text-indigo-700",
+                  class: "ml-1 inline-flex h-5 w-5 cursor-pointer items-center justify-center rounded-full text-indigo-400 hover:text-indigo-700",
                   title: "Desvincular Agente",
                   data: { turbo_confirm: "¿Deseas desvincular este Agente?" } do %>
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
@@ -39,14 +39,30 @@
       <div>
         <p class="text-sm font-semibold text-gray-700">Vincular agente</p>
         <%= form_with url: entity_agency_brokers_path(entity), method: :post, class: "mt-2 flex flex-col gap-3" do |form| %>
-          <%= form.collection_select :broker_id,
-              Entity.customs_brokers.where.not(id: entity.customs_brokers.select(:id)).order(:name),
-              :id,
-              :name,
-              { include_blank: "Selecciona un Agente" },
-              class: "w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200" %>
+          <div
+            data-controller="catalog-autocomplete"
+            data-catalog-autocomplete-url-value="<%= customs_brokers_search_entity_path(entity) %>"
+            data-catalog-autocomplete-min-chars-value="2"
+            data-catalog-autocomplete-debounce-value="300"
+            class="relative"
+          >
+            <%= hidden_field_tag :broker_id, nil, data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+            <%= text_field_tag :broker_search,
+                  nil,
+                  autocomplete: "off",
+                  placeholder: "Escribe para buscar un agente",
+                  class: "w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200",
+                  data: {
+                    catalog_autocomplete_target: "input",
+                    action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+                  } %>
+
+            <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+            <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+          </div>
           <%= form.submit "Vincular agente",
-              class: "inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" %>
+              class: "inline-flex cursor-pointer items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" %>
         <% end %>
         <div class="mt-2 text-xs text-gray-500">
           <%= link_to "Crear nuevo agente", new_entity_path(role: "customs_broker"), class: "text-indigo-600 hover:text-indigo-800 font-semibold" %>

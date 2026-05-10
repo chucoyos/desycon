@@ -88,6 +88,66 @@ RSpec.describe "Entities", type: :request do
     end
   end
 
+  describe "GET /entities/:id/customs_brokers_search" do
+    let(:agency) { create(:entity, :customs_agent) }
+    let!(:linked_broker) { create(:entity, :customs_broker, name: "Broker Vinculado") }
+    let!(:available_broker) { create(:entity, :customs_broker, name: "Broker Disponible") }
+
+    before do
+      AgencyBroker.create!(agency: agency, broker: linked_broker)
+    end
+
+    it "returns only available brokers matching query" do
+      get customs_brokers_search_entity_path(agency), params: { q: "bro" }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      labels = payload.fetch("results").map { |result| result["label"] }
+
+      expect(labels.any? { |label| label.include?("Broker Disponible") }).to eq(true)
+      expect(labels.any? { |label| label.include?("Broker Vinculado") }).to eq(false)
+    end
+
+    it "returns empty results when query length is below min chars" do
+      get customs_brokers_search_entity_path(agency), params: { q: "b" }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"]).to eq([])
+      expect(payload["meta"]).to include("min_chars" => 2)
+    end
+  end
+
+  describe "GET /entities/:id/customs_agencies_search" do
+    let(:broker) { create(:entity, :customs_broker) }
+    let!(:linked_agency) { create(:entity, :customs_agent, name: "Agencia Vinculada") }
+    let!(:available_agency) { create(:entity, :customs_agent, name: "Agencia Disponible") }
+
+    before do
+      AgencyBroker.create!(agency: linked_agency, broker: broker)
+    end
+
+    it "returns only available agencies matching query" do
+      get customs_agencies_search_entity_path(broker), params: { q: "agen" }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      labels = payload.fetch("results").map { |result| result["label"] }
+
+      expect(labels).to include("Agencia Disponible")
+      expect(labels).not_to include("Agencia Vinculada")
+    end
+
+    it "returns empty results when query length is below min chars" do
+      get customs_agencies_search_entity_path(broker), params: { q: "a" }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"]).to eq([])
+      expect(payload["meta"]).to include("min_chars" => 2)
+    end
+  end
+
   describe "GET /edit" do
     it "returns http success" do
       get edit_entity_path(entity)
