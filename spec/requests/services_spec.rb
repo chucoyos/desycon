@@ -10,7 +10,7 @@ RSpec.describe "Services", type: :request do
       container = create(:container, number: "SERV1234567")
       create(:container_service, container: container, factura: nil, amount: 1450)
 
-      get services_path
+      get services_path, params: { service_type: "container" }
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Servicios de facturación")
@@ -27,7 +27,7 @@ RSpec.describe "Services", type: :request do
       failed_service = create(:container_service, service_catalog: failed_catalog, factura: nil)
       create(:invoice, invoiceable: failed_service, kind: "ingreso", status: "failed")
 
-      get services_path
+      get services_path, params: { service_type: "container" }
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Srv Proforma Default")
@@ -149,7 +149,7 @@ RSpec.describe "Services", type: :request do
       expect(response.body).not_to include("ABCD1234567")
     end
 
-    it "uses one-month date range by default" do
+    it "uses two-week date range by default" do
       recent_catalog = create(:service_catalog, name: "Srv Recent")
       old_catalog = create(:service_catalog, name: "Srv Old")
 
@@ -157,7 +157,7 @@ RSpec.describe "Services", type: :request do
       old_service = create(:container_service, service_catalog: old_catalog, factura: nil)
       old_service.update_column(:created_at, 2.months.ago)
 
-      get services_path
+      get services_path, params: { service_type: "container" }
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Srv Recent")
@@ -176,6 +176,7 @@ RSpec.describe "Services", type: :request do
       old_service.update_column(:created_at, 2.months.ago)
 
       get services_path, params: {
+        service_type: "container",
         start_date: 3.months.ago.to_date.to_s,
         end_date: Date.current.to_s
       }
@@ -189,7 +190,7 @@ RSpec.describe "Services", type: :request do
       service = create(:container_service, service_catalog: catalog, factura: nil)
       create(:invoice, invoiceable: service, kind: "ingreso", status: "failed")
 
-      get services_path, params: { billing_status: "fallido" }
+      get services_path, params: { service_type: "container", billing_status: "fallido" }
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Srv Failed Visible")
@@ -203,7 +204,7 @@ RSpec.describe "Services", type: :request do
       ingreso_invoice = create(:invoice, invoiceable: service, kind: "ingreso", status: "draft")
       rep_invoice = create(:invoice, invoiceable: service, kind: "pago", status: "draft")
 
-      get services_path, params: { billing_status: "en_proceso" }
+      get services_path, params: { service_type: "container", billing_status: "en_proceso" }
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Srv InProcess Link")
@@ -223,7 +224,7 @@ RSpec.describe "Services", type: :request do
       create(:invoice, invoiceable: failed_service, status: "failed")
       create(:invoice, invoiceable: queued_service, status: "queued")
 
-      get services_path, params: { billing_status: "fallido" }
+      get services_path, params: { service_type: "container", billing_status: "fallido" }
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Srv Failed Filter")
@@ -248,7 +249,7 @@ RSpec.describe "Services", type: :request do
 
       visible_service = create(:container_service, factura: nil)
 
-      get services_path
+      get services_path, params: { service_type: "all" }
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("ContainerService:#{visible_service.id}")

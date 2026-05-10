@@ -35,7 +35,7 @@ class ServicesController < ApplicationController
     @selected_customs_agency_id = params[:customs_agency_id].to_s.presence
     @selected_customs_agency = params[:customs_agency].to_s.strip.presence
     requested_service_type = params[:service_type].to_s.strip
-    @selected_service_type = SERVICE_TYPE_OPTIONS.key?(requested_service_type) ? requested_service_type : "all"
+    @selected_service_type = SERVICE_TYPE_OPTIONS.key?(requested_service_type) ? requested_service_type : "bl_house_line"
     @selected_consolidator = params[:consolidator].to_s.strip.presence
     requested_billing_status = if params.key?(:billing_status)
       params[:billing_status].to_s.strip
@@ -137,6 +137,7 @@ class ServicesController < ApplicationController
   def container_service_rows
     services = container_services_scope.to_a
     latest_invoices = latest_non_payment_invoices_for(services)
+    services = filter_services_by_billing_status(services, latest_invoices)
 
     services.map do |service|
       billing_invoice = latest_invoices[service.id]
@@ -176,6 +177,7 @@ class ServicesController < ApplicationController
   def bl_house_line_service_rows
     services = bl_house_line_services_scope.to_a.reject { |service| hidden_by_nipon_exception_rule?(service) }
     latest_invoices = latest_non_payment_invoices_for(services)
+    services = filter_services_by_billing_status(services, latest_invoices)
     service_ids = services.map(&:id)
     container_details_by_service_id = if service_ids.empty?
       {}
@@ -272,6 +274,18 @@ class ServicesController < ApplicationController
       scope = scope.joins(:container).where("containers.number ILIKE ?", "%#{@selected_container_number}%")
     end
 
+    if @selected_consolidator.present?
+      consolidator_ids = selected_consolidator_ids
+      return ContainerService.none if consolidator_ids.empty?
+
+      scope = scope.where(containers: { consolidator_entity_id: consolidator_ids })
+    end
+
+    if @selected_destination_port.present?
+      selected_port_label = DESTINATION_PORT_OPTIONS[@selected_destination_port]
+      scope = scope.joins(container: { voyage: :destination_port }).where("ports.name ILIKE ?", selected_port_label)
+    end
+
     scope = scope.where(created_at: @filter_start_date.beginning_of_day..@filter_end_date.end_of_day)
 
     scope.distinct
@@ -306,6 +320,19 @@ class ServicesController < ApplicationController
       scope = scope.joins(:bl_house_line).where(bl_house_lines: { customs_agent_id: customs_agent_ids_for_filter })
     end
 
+    if @selected_consolidator.present?
+      consolidator_ids = selected_consolidator_ids
+      return BlHouseLineService.none if consolidator_ids.empty?
+
+      scope = scope.joins(bl_house_line: :container).where(containers: { consolidator_entity_id: consolidator_ids })
+    end
+
+    if @selected_destination_port.present?
+      selected_port_label = DESTINATION_PORT_OPTIONS[@selected_destination_port]
+      scope = scope.joins(bl_house_line: { container: { voyage: :destination_port } })
+        .where("ports.name ILIKE ?", selected_port_label)
+    end
+
     scope = scope.where(created_at: @filter_start_date.beginning_of_day..@filter_end_date.end_of_day)
 
     scope.distinct
@@ -328,7 +355,7 @@ class ServicesController < ApplicationController
   end
 
   def default_start_date
-    1.month.ago.to_date
+    2.weeks.ago.to_date
   end
 
   def default_end_date
@@ -339,6 +366,18 @@ class ServicesController < ApplicationController
     @customs_agent_ids_for_filter ||= begin
       query = "%#{@selected_customs_agency}%"
       Entity.customs_agents.where("name ILIKE ?", query).select(:id)
+    end
+  end
+
+  def selected_consolidator_ids
+    @selected_consolidator_ids ||= begin
+      if @selected_consolidator.blank?
+        []
+      else
+        Entity.consolidators
+          .where("LOWER(name) = LOWER(?)", @selected_consolidator)
+          .pluck(:id)
+      end
     end
   end
 
@@ -406,23 +445,6 @@ class ServicesController < ApplicationController
       filtered = filtered.select do |row|
         row[:type] == "BlHouseLineService"
       end
-    end
-
-    if @selected_consolidator.present?
-      filtered = filtered.select do |row|
-        normalized_text(row[:consolidator_name]) == normalized_text(@selected_consolidator)
-      end
-    end
-
-    if @selected_destination_port.present?
-      selected_port_label = DESTINATION_PORT_OPTIONS[@selected_destination_port]
-      filtered = filtered.select do |row|
-        normalized_text(row[:destination_port]).include?(normalized_text(selected_port_label))
-      end
-    end
-
-    if @selected_billing_status.present?
-      filtered = filtered.select { |row| row[:billing_state] == @selected_billing_status }
     end
 
     filtered
@@ -574,6 +596,14 @@ class ServicesController < ApplicationController
     end
 
     latest_by_id
+  end
+
+  def filter_services_by_billing_status(services, latest_invoices)
+    return services if @selected_billing_status.blank?
+
+    services.select do |service|
+      billing_state_for_service(service, latest_invoices[service.id]) == @selected_billing_status
+    end
   end
 
   def hidden_by_nipon_exception_rule?(service)
