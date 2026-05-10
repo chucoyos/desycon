@@ -534,18 +534,27 @@ class ServicesController < ApplicationController
     return false unless service.is_a?(BlHouseLineService)
     return false unless Facturador::Config.auto_issue_nipon_exception_enabled?
 
-    target_rfc = Facturador::Config.auto_issue_nipon_rfc
-    return false if target_rfc.blank?
+    exception_rfcs = nipon_exception_rfcs
+    return false if exception_rfcs.empty?
 
     consolidator = service.bl_house_line&.container&.consolidator_entity
-    receiver = service.billed_to_entity
     consolidator_rfc = normalized_rfc_for_exception(consolidator)
-    receiver_rfc = normalized_rfc_for_exception(receiver)
+    receiver_rfcs = receiver_rfcs_for_nipon_exception(service)
 
     consolidator_rfc.present? &&
-      receiver_rfc.present? &&
-      consolidator_rfc == receiver_rfc &&
-      consolidator_rfc == target_rfc
+      receiver_rfcs.include?(consolidator_rfc) &&
+      exception_rfcs.include?(consolidator_rfc)
+  end
+
+  def nipon_exception_rfcs
+    Facturador::Config.auto_issue_exception_rfcs
+  end
+
+  def receiver_rfcs_for_nipon_exception(service)
+    [
+      service.billed_to_entity,
+      service.bl_house_line&.client
+    ].filter_map { |entity| normalized_rfc_for_exception(entity) }.uniq
   end
 
   def normalized_rfc_for_exception(entity)

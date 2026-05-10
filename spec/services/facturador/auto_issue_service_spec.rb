@@ -23,6 +23,7 @@ RSpec.describe Facturador::AutoIssueService, type: :service do
 
       allow(Facturador::Config).to receive(:auto_issue_nipon_exception_enabled?).and_return(true)
       allow(Facturador::Config).to receive(:auto_issue_nipon_rfc).and_return("EWE1709045U0")
+      allow(Facturador::Config).to receive(:auto_issue_exception_rfcs).and_return([ "EWE1709045U0" ])
 
       expect {
         described_class.call(invoiceable: service)
@@ -41,10 +42,30 @@ RSpec.describe Facturador::AutoIssueService, type: :service do
 
       allow(Facturador::Config).to receive(:auto_issue_nipon_exception_enabled?).and_return(true)
       allow(Facturador::Config).to receive(:auto_issue_nipon_rfc).and_return("EWE1709045U0")
+      allow(Facturador::Config).to receive(:auto_issue_exception_rfcs).and_return([ "EWE1709045U0" ])
 
       expect {
         described_class.call(invoiceable: service)
       }.to change(Invoice, :count).by(1)
+    end
+
+    it "skips auto issue for Master Forwarding RFC" do
+      consolidator = create_entity_with_fiscal_data(:consolidator)
+      receiver = create_entity_with_fiscal_data(:client, :client_of_customs_agent)
+      consolidator.fiscal_profile.update!(rfc: "MFO250717B72")
+      receiver.fiscal_profile.update!(rfc: "MFO250717B72")
+
+      container = create(:container, consolidator_entity: consolidator)
+      bl_house_line = create(:bl_house_line, container: container, client: receiver)
+      service = create(:bl_house_line_service, bl_house_line: bl_house_line, billed_to_entity: receiver, amount: 100)
+
+      allow(Facturador::Config).to receive(:auto_issue_nipon_exception_enabled?).and_return(true)
+      allow(Facturador::Config).to receive(:auto_issue_nipon_rfc).and_return("NEM901109BC2")
+      allow(Facturador::Config).to receive(:auto_issue_exception_rfcs).and_return([ "NEM901109BC2", "MFO250717B72" ])
+
+      expect {
+        described_class.call(invoiceable: service)
+      }.not_to change(Invoice, :count)
     end
 
     it "does not apply Nipon exception to ContainerService" do
@@ -56,6 +77,7 @@ RSpec.describe Facturador::AutoIssueService, type: :service do
 
       allow(Facturador::Config).to receive(:auto_issue_nipon_exception_enabled?).and_return(true)
       allow(Facturador::Config).to receive(:auto_issue_nipon_rfc).and_return("EWE1709045U0")
+      allow(Facturador::Config).to receive(:auto_issue_exception_rfcs).and_return([ "EWE1709045U0" ])
 
       expect {
         described_class.call(invoiceable: service)

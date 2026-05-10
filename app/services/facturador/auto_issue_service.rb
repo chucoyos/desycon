@@ -82,8 +82,8 @@ module Facturador
       return false unless Config.auto_issue_nipon_exception_enabled?
       return false unless invoiceable.is_a?(BlHouseLineService)
 
-      target_rfc = Config.auto_issue_nipon_rfc
-      return false if target_rfc.blank?
+      exception_rfcs = nipon_exception_rfcs
+      return false if exception_rfcs.empty?
 
       consolidator = invoiceable.bl_house_line&.container&.consolidator_entity
       return false if consolidator.blank?
@@ -92,13 +92,17 @@ module Facturador
       receiver_rfc = normalized_rfc(receiver)
       return false if consolidator_rfc.blank? || receiver_rfc.blank?
       return false unless consolidator_rfc == receiver_rfc
-      return false unless consolidator_rfc == target_rfc
+      return false unless exception_rfcs.include?(consolidator_rfc)
 
       Rails.logger.info(
         "Facturador::AutoIssueService skipped by Nipon exception for #{invoiceable.class.name}##{invoiceable.id} " \
-        "(consolidator_id=#{consolidator.id}, receiver_id=#{receiver.id}, rfc=#{target_rfc})"
+        "(consolidator_id=#{consolidator.id}, receiver_id=#{receiver.id}, rfc=#{consolidator_rfc})"
       )
       true
+    end
+
+    def nipon_exception_rfcs
+      Config.auto_issue_exception_rfcs
     end
 
     def normalized_rfc(entity)

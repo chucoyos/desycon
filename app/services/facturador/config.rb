@@ -21,6 +21,19 @@ module Facturador
         ENV.fetch("AUTO_ISSUE_NIPON_RFC", "").to_s.upcase.strip.presence
       end
 
+      def auto_issue_exception_rfcs
+        legacy_rfc = auto_issue_nipon_rfc
+        configured = ENV.fetch("AUTO_ISSUE_EXCEPTION_RFCS", "")
+
+        rfcs = configured
+          .to_s
+          .split(/[\s,;]+/)
+          .filter_map { |rfc| rfc.to_s.upcase.strip.presence }
+
+        rfcs << legacy_rfc if legacy_rfc.present?
+        rfcs.uniq
+      end
+
       def manual_actions_enabled?
         ActiveModel::Type::Boolean.new.cast(env_value(:manual_actions_enabled, false))
       end

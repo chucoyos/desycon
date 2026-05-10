@@ -236,6 +236,7 @@ RSpec.describe "Services", type: :request do
       target_rfc = "NEM901109BC2"
       allow(Facturador::Config).to receive(:auto_issue_nipon_exception_enabled?).and_return(true)
       allow(Facturador::Config).to receive(:auto_issue_nipon_rfc).and_return(target_rfc)
+      allow(Facturador::Config).to receive(:auto_issue_exception_rfcs).and_return([ target_rfc ])
 
       consolidator = create(:entity, :consolidator)
       create(:fiscal_profile, profileable: consolidator, rfc: target_rfc)
@@ -251,6 +252,48 @@ RSpec.describe "Services", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("ContainerService:#{visible_service.id}")
+      expect(response.body).not_to include("BlHouseLineService:#{hidden_service.id}")
+    end
+
+    it "hides BL services for Master Forwarding RFC" do
+      allow(Facturador::Config).to receive(:auto_issue_nipon_exception_enabled?).and_return(true)
+      allow(Facturador::Config).to receive(:auto_issue_nipon_rfc).and_return("NEM901109BC2")
+      allow(Facturador::Config).to receive(:auto_issue_exception_rfcs).and_return([ "NEM901109BC2", "MFO250717B72" ])
+
+      consolidator = create(:entity, :consolidator)
+      create(:fiscal_profile, profileable: consolidator, rfc: "MFO250717B72")
+      client = consolidator
+
+      container = create(:container, consolidator_entity: consolidator)
+      bl_house_line = create(:bl_house_line, container: container, client: client)
+      hidden_service = create(:bl_house_line_service, bl_house_line: bl_house_line, factura: nil)
+
+      get services_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("BlHouseLineService:#{hidden_service.id}")
+    end
+
+    it "hides BL services when client has NIPON RFC on a different entity record" do
+      target_rfc = "NEM901109BC2"
+      allow(Facturador::Config).to receive(:auto_issue_nipon_exception_enabled?).and_return(true)
+      allow(Facturador::Config).to receive(:auto_issue_nipon_rfc).and_return(target_rfc)
+      allow(Facturador::Config).to receive(:auto_issue_exception_rfcs).and_return([ target_rfc ])
+
+      consolidator = create(:entity, :consolidator)
+      create(:fiscal_profile, profileable: consolidator, rfc: target_rfc)
+
+      nippon_client = create(:entity, :client)
+      client_profile = create(:fiscal_profile, profileable: nippon_client)
+      client_profile.update_column(:rfc, target_rfc)
+
+      container = create(:container, consolidator_entity: consolidator)
+      bl_house_line = create(:bl_house_line, container: container, client: nippon_client)
+      hidden_service = create(:bl_house_line_service, bl_house_line: bl_house_line, billed_to_entity: nil, factura: nil)
+
+      get services_path
+
+      expect(response).to have_http_status(:ok)
       expect(response.body).not_to include("BlHouseLineService:#{hidden_service.id}")
     end
   end
@@ -292,9 +335,56 @@ RSpec.describe "Services", type: :request do
       target_rfc = "NEM901109BC2"
       allow(Facturador::Config).to receive(:auto_issue_nipon_exception_enabled?).and_return(true)
       allow(Facturador::Config).to receive(:auto_issue_nipon_rfc).and_return(target_rfc)
+      allow(Facturador::Config).to receive(:auto_issue_exception_rfcs).and_return([ target_rfc ])
 
       consolidator = create(:entity, :consolidator)
       create(:fiscal_profile, profileable: consolidator, rfc: target_rfc)
+      client = consolidator
+
+      container = create(:container, consolidator_entity: consolidator)
+      bl_house_line = create(:bl_house_line, container: container, client: client)
+      blocked_service = create(:bl_house_line_service, bl_house_line: bl_house_line, factura: nil)
+
+      expect(Facturador::IssueGroupedServicesService).not_to receive(:call)
+
+      post issue_batch_services_path, params: { service_tokens: [ "BlHouseLineService:#{blocked_service.id}" ] }
+
+      expect(response).to redirect_to(services_path)
+      expect(flash[:alert]).to include("Selecciona al menos un servicio válido")
+    end
+
+    it "rejects BL service token when NIPON RFC match comes from client entity" do
+      target_rfc = "NEM901109BC2"
+      allow(Facturador::Config).to receive(:auto_issue_nipon_exception_enabled?).and_return(true)
+      allow(Facturador::Config).to receive(:auto_issue_nipon_rfc).and_return(target_rfc)
+      allow(Facturador::Config).to receive(:auto_issue_exception_rfcs).and_return([ target_rfc ])
+
+      consolidator = create(:entity, :consolidator)
+      create(:fiscal_profile, profileable: consolidator, rfc: target_rfc)
+
+      nippon_client = create(:entity, :client)
+      client_profile = create(:fiscal_profile, profileable: nippon_client)
+      client_profile.update_column(:rfc, target_rfc)
+
+      container = create(:container, consolidator_entity: consolidator)
+      bl_house_line = create(:bl_house_line, container: container, client: nippon_client)
+      blocked_service = create(:bl_house_line_service, bl_house_line: bl_house_line, billed_to_entity: nil, factura: nil)
+
+      expect(Facturador::IssueGroupedServicesService).not_to receive(:call)
+
+      post issue_batch_services_path, params: { service_tokens: [ "BlHouseLineService:#{blocked_service.id}" ] }
+
+      expect(response).to redirect_to(services_path)
+      expect(flash[:alert]).to include("Selecciona al menos un servicio válido")
+    end
+
+    it "rejects Master Forwarding BL services even when token is submitted" do
+      allow(Facturador::Config).to receive(:auto_issue_nipon_exception_enabled?).and_return(true)
+      allow(Facturador::Config).to receive(:auto_issue_nipon_rfc).and_return("NEM901109BC2")
+      allow(Facturador::Config).to receive(:auto_issue_exception_rfcs).and_return([ "NEM901109BC2", "MFO250717B72" ])
+
+      consolidator = create(:entity, :consolidator)
+      create(:fiscal_profile, profileable: consolidator, rfc: "MFO250717B72")
       client = consolidator
 
       container = create(:container, consolidator_entity: consolidator)
