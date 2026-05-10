@@ -183,12 +183,18 @@ class BlHouseLinesController < ApplicationController
       @bl_house_line.id,
       query.downcase,
       limit,
+      @bl_house_line.customs_agent_id,
       @bl_house_line.client_id
     ].join(":")
 
     results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
       term = "%#{query}%"
-      clients_scope = Entity.clients
+      clients_scope = if @bl_house_line.customs_agent.present?
+        @bl_house_line.customs_agent.clients
+      else
+        Entity.none
+      end
+
       if @bl_house_line.client_id.present?
         clients_scope = clients_scope.or(Entity.where(id: @bl_house_line.client_id))
       end

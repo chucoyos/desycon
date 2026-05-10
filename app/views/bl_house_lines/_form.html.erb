@@ -270,14 +270,14 @@
 
       <div id="bl-services-container" class="space-y-4">
         <%= form.fields_for :bl_house_line_services do |service_form| %>
-          <%= render 'service_fields', f: service_form, is_customs_agent: is_customs_agent %>
+          <%= render 'service_fields', f: service_form, is_customs_agent: is_customs_agent, bl_house_line: bl_house_line %>
         <% end %>
       </div>
 
       <% unless is_customs_agent %>
         <div id="bl-service-template" class="hidden">
           <%= form.fields_for :bl_house_line_services, BlHouseLineService.new(billed_to_entity_id: bl_house_line.client_id), child_index: 'NEW_RECORD' do |service_form| %>
-            <%= render 'service_fields', f: service_form, is_customs_agent: is_customs_agent %>
+            <%= render 'service_fields', f: service_form, is_customs_agent: is_customs_agent, bl_house_line: bl_house_line %>
           <% end %>
         </div>
       <% end %>
@@ -403,10 +403,10 @@
     return Number.isFinite(parsed) ? parsed.toFixed(2) : null;
   }
 
-  function getCatalogAmountFromSelect(serviceCatalogSelect) {
+  function getCatalogAmountFromField(serviceCatalogField) {
     let amountFromMap = null;
-    const selectedValue = serviceCatalogSelect.value;
-    const rawMap = serviceCatalogSelect.getAttribute('data-catalog-amounts');
+    const selectedValue = serviceCatalogField.value;
+    const rawMap = serviceCatalogField.getAttribute('data-catalog-amounts');
 
     if (rawMap && selectedValue) {
       try {
@@ -417,22 +417,27 @@
       }
     }
 
-    const selectedOption = serviceCatalogSelect.selectedOptions[0];
-    const amountFromOption = selectedOption?.dataset?.amount;
+    let amountFromOption = null;
+    if (serviceCatalogField.tagName === 'SELECT') {
+      const selectedOption = serviceCatalogField.selectedOptions[0];
+      amountFromOption = selectedOption?.dataset?.amount;
+    }
 
-    return normalizeCatalogAmountValue(amountFromMap ?? amountFromOption);
+    const amountFromAutocomplete = serviceCatalogField.dataset?.amount;
+
+    return normalizeCatalogAmountValue(amountFromAutocomplete ?? amountFromMap ?? amountFromOption);
   }
 
-  function syncBlServiceAmountField(serviceCatalogSelect) {
-    if (!serviceCatalogSelect) return;
+  function syncBlServiceAmountField(serviceCatalogField) {
+    if (!serviceCatalogField) return;
 
-    const amountInput = serviceCatalogSelect
+    const amountInput = serviceCatalogField
       .closest('.service-card')
       ?.querySelector('.js-service-amount-input');
 
     if (!amountInput || amountInput.disabled) return;
 
-    const catalogAmount = getCatalogAmountFromSelect(serviceCatalogSelect);
+    const catalogAmount = getCatalogAmountFromField(serviceCatalogField);
     if (!catalogAmount) return;
 
     if (amountInput.value.trim() === '' || amountInput.dataset.autofilledFromCatalog === 'true') {
@@ -442,16 +447,16 @@
   }
 
   function initBlServiceAmountSync(root = document) {
-    root.querySelectorAll('.js-service-catalog-select').forEach((select) => {
-      syncBlServiceAmountField(select);
+    root.querySelectorAll('.js-service-catalog-select, .js-service-catalog-id-input').forEach((field) => {
+      syncBlServiceAmountField(field);
 
-      if (select.dataset.amountSyncInitialized === 'true') return;
-      select.dataset.amountSyncInitialized = 'true';
+      if (field.dataset.amountSyncInitialized === 'true') return;
+      field.dataset.amountSyncInitialized = 'true';
 
-      select.addEventListener('change', () => {
-        const amountInput = select.closest('.service-card')?.querySelector('.js-service-amount-input');
+      field.addEventListener('change', () => {
+        const amountInput = field.closest('.service-card')?.querySelector('.js-service-amount-input');
         if (amountInput) amountInput.dataset.autofilledFromCatalog = 'true';
-        syncBlServiceAmountField(select);
+        syncBlServiceAmountField(field);
       });
     });
 
@@ -512,12 +517,12 @@
   document.addEventListener('DOMContentLoaded', initBlServices);
 
   document.addEventListener('change', (event) => {
-    const select = event.target.closest('.js-service-catalog-select');
-    if (!select) return;
-    const amountInput = select.closest('.service-card')?.querySelector('.js-service-amount-input');
+    const field = event.target.closest('.js-service-catalog-select, .js-service-catalog-id-input');
+    if (!field) return;
+    const amountInput = field.closest('.service-card')?.querySelector('.js-service-amount-input');
     if (!amountInput || amountInput.disabled) return;
 
-    const catalogAmount = getCatalogAmountFromSelect(select);
+    const catalogAmount = getCatalogAmountFromField(field);
     if (!catalogAmount) return;
 
     amountInput.value = catalogAmount;

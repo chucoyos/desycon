@@ -1,6 +1,8 @@
 <% is_new = !(f.object && f.object.respond_to?(:persisted?) && f.object.persisted?) %>
 <% is_invoiced = f.object&.persisted? && f.object.respond_to?(:facturado?) && f.object.facturado? %>
 <% disable_inputs = local_assigns[:is_customs_agent] == true || is_invoiced %>
+<% use_autocomplete = local_assigns[:bl_house_line]&.persisted? && !disable_inputs %>
+<% default_bill_to_entity = f.object&.billed_to_entity || local_assigns[:bl_house_line]&.client %>
 <div class="service-card rounded-lg p-3 sm:p-4 border shadow-sm hover:shadow-md transition-all duration-200 <%= is_new ? 'bg-amber-50/50 border-amber-300 ring-2 ring-amber-200' : 'bg-white border-slate-200' %>"
   data-service-persisted="<%= is_new ? 'false' : 'true' %>"
   data-service-locked="<%= is_invoiced ? 'true' : 'false' %>">
@@ -33,13 +35,44 @@
     <div>
       <%= f.label :service_catalog_id, "Servicio *", class: "block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider" %>
       <% service_catalog_options = @service_catalogs.map { |catalog| [catalog.display_name, catalog.id, { data: { amount: catalog.amount } }] } %>
-      <%= f.select :service_catalog_id,
-            options_for_select(service_catalog_options, f.object&.service_catalog_id),
-            { prompt: "Selecciona un servicio" },
-            disabled: disable_inputs,
-        data: { catalog_amounts: @service_catalogs.index_by { |catalog| catalog.id.to_s }.transform_values(&:amount).to_json },
-        onchange: "window.desyconSyncServiceAmountFromCatalog && window.desyconSyncServiceAmountFromCatalog(this)",
-            class: "js-service-catalog-select w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 #{disable_inputs ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}" %>
+      <% if use_autocomplete %>
+        <div
+          data-controller="catalog-autocomplete"
+          data-catalog-autocomplete-url-value="<%= service_catalogs_search_bl_house_line_path(local_assigns[:bl_house_line]) %>"
+          data-catalog-autocomplete-min-chars-value="2"
+          data-catalog-autocomplete-debounce-value="300"
+          class="relative"
+        >
+          <%= f.hidden_field :service_catalog_id,
+                class: "js-service-catalog-id-input",
+                data: {
+                  catalog_autocomplete_target: "hiddenInput",
+                  catalog_amounts: @service_catalogs.index_by { |catalog| catalog.id.to_s }.transform_values(&:amount).to_json
+                } %>
+
+          <%= text_field_tag "#{f.object_name}_service_catalog_search",
+                f.object&.service_catalog&.display_name,
+                autocomplete: "off",
+                placeholder: "Escribe para buscar un servicio",
+                required: true,
+                class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200",
+                data: {
+                  catalog_autocomplete_target: "input",
+                  action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+                } %>
+
+          <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+          <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+        </div>
+      <% else %>
+        <%= f.select :service_catalog_id,
+              options_for_select(service_catalog_options, f.object&.service_catalog_id),
+              { prompt: "Selecciona un servicio" },
+              disabled: disable_inputs,
+          data: { catalog_amounts: @service_catalogs.index_by { |catalog| catalog.id.to_s }.transform_values(&:amount).to_json },
+          onchange: "window.desyconSyncServiceAmountFromCatalog && window.desyconSyncServiceAmountFromCatalog(this)",
+              class: "js-service-catalog-select w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 #{disable_inputs ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}" %>
+      <% end %>
     </div>
 
     <div>
@@ -54,13 +87,40 @@
 
     <div>
       <%= f.label :billed_to_entity_id, "Facturar a", class: "block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider" %>
-      <% billed_client_options = @clients.map { |client| [client.name, client.id, { data: { group: client.customs_agent_id.present? ? client.customs_agent_id.to_s : "" } }] } %>
-      <%= f.select :billed_to_entity_id,
-            options_for_select(billed_client_options, f.object&.billed_to_entity_id),
-            { include_blank: "Selecciona cliente" },
-            disabled: disable_inputs,
-            class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 #{disable_inputs ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}",
-            data: { dependent_select_target: "target" } %>
+      <% if use_autocomplete %>
+        <div
+          data-controller="catalog-autocomplete"
+          data-catalog-autocomplete-url-value="<%= bill_to_clients_search_bl_house_line_path(local_assigns[:bl_house_line]) %>"
+          data-catalog-autocomplete-min-chars-value="2"
+          data-catalog-autocomplete-debounce-value="300"
+          class="relative"
+        >
+          <%= f.hidden_field :billed_to_entity_id,
+                class: "js-billed-to-entity-input",
+                data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+          <%= text_field_tag "#{f.object_name}_billed_to_search",
+                default_bill_to_entity&.name,
+                autocomplete: "off",
+                placeholder: "Escribe para buscar un cliente",
+                class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200",
+                data: {
+                  catalog_autocomplete_target: "input",
+                  action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+                } %>
+
+          <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+          <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+        </div>
+      <% else %>
+        <% billed_client_options = @clients.map { |client| [client.name, client.id, { data: { group: client.customs_agent_id.present? ? client.customs_agent_id.to_s : "" } }] } %>
+        <%= f.select :billed_to_entity_id,
+              options_for_select(billed_client_options, f.object&.billed_to_entity_id),
+              { include_blank: "Selecciona cliente" },
+              disabled: disable_inputs,
+              class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 #{disable_inputs ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}",
+              data: { dependent_select_target: "target" } %>
+      <% end %>
     </div>
 
     <div>

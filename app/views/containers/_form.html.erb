@@ -483,13 +483,13 @@
 
     <div id="services-container" class="space-y-4">
       <%= form.fields_for :container_services do |service_form| %>
-        <%= render 'service_fields', f: service_form %>
+        <%= render 'service_fields', f: service_form, container: container %>
       <% end %>
     </div>
 
     <div id="service-template" class="hidden">
       <%= form.fields_for :container_services, ContainerService.new(billed_to_entity_id: container.consolidator_entity_id || container.consolidator_id), child_index: 'NEW_RECORD' do |service_form| %>
-        <%= render 'service_fields', f: service_form %>
+        <%= render 'service_fields', f: service_form, container: container %>
       <% end %>
     </div>
   </div>
@@ -653,10 +653,10 @@
     return Number.isFinite(parsed) ? parsed.toFixed(2) : null;
   }
 
-  function getCatalogAmountFromSelect(serviceCatalogSelect) {
+  function getCatalogAmountFromField(serviceCatalogField) {
     let amountFromMap = null;
-    const selectedValue = serviceCatalogSelect.value;
-    const rawMap = serviceCatalogSelect.getAttribute('data-catalog-amounts');
+    const selectedValue = serviceCatalogField.value;
+    const rawMap = serviceCatalogField.getAttribute('data-catalog-amounts');
 
     if (rawMap && selectedValue) {
       try {
@@ -667,22 +667,27 @@
       }
     }
 
-    const selectedOption = serviceCatalogSelect.selectedOptions[0];
-    const amountFromOption = selectedOption?.dataset?.amount;
+    let amountFromOption = null;
+    if (serviceCatalogField.tagName === 'SELECT') {
+      const selectedOption = serviceCatalogField.selectedOptions[0];
+      amountFromOption = selectedOption?.dataset?.amount;
+    }
 
-    return normalizeCatalogAmountValue(amountFromMap ?? amountFromOption);
+    const amountFromAutocomplete = serviceCatalogField.dataset?.amount;
+
+    return normalizeCatalogAmountValue(amountFromAutocomplete ?? amountFromMap ?? amountFromOption);
   }
 
-  function syncServiceAmountField(serviceCatalogSelect) {
-    if (!serviceCatalogSelect) return;
+  function syncServiceAmountField(serviceCatalogField) {
+    if (!serviceCatalogField) return;
 
-    const amountInput = serviceCatalogSelect
+    const amountInput = serviceCatalogField
       .closest('.service-card')
       ?.querySelector('.js-service-amount-input');
 
     if (!amountInput || amountInput.disabled) return;
 
-    const catalogAmount = getCatalogAmountFromSelect(serviceCatalogSelect);
+    const catalogAmount = getCatalogAmountFromField(serviceCatalogField);
     if (!catalogAmount) return;
 
     if (amountInput.value.trim() === '' || amountInput.dataset.autofilledFromCatalog === 'true') {
@@ -692,16 +697,16 @@
   }
 
   function initServiceAmountSync(root = document) {
-    root.querySelectorAll('.js-service-catalog-select').forEach((select) => {
-      syncServiceAmountField(select);
+    root.querySelectorAll('.js-service-catalog-select, .js-service-catalog-id-input').forEach((field) => {
+      syncServiceAmountField(field);
 
-      if (select.dataset.amountSyncInitialized === 'true') return;
-      select.dataset.amountSyncInitialized = 'true';
+      if (field.dataset.amountSyncInitialized === 'true') return;
+      field.dataset.amountSyncInitialized = 'true';
 
-      select.addEventListener('change', () => {
-        const amountInput = select.closest('.service-card')?.querySelector('.js-service-amount-input');
+      field.addEventListener('change', () => {
+        const amountInput = field.closest('.service-card')?.querySelector('.js-service-amount-input');
         if (amountInput) amountInput.dataset.autofilledFromCatalog = 'true';
-        syncServiceAmountField(select);
+        syncServiceAmountField(field);
       });
     });
 
@@ -757,6 +762,25 @@
       select.dataset.autofilledByConsolidator = 'true';
       select.dispatchEvent(new Event('change', { bubbles: true }));
     });
+
+    root.querySelectorAll('.js-billed-to-entity-input').forEach((input) => {
+      if (!input || input.disabled) return;
+
+      const isBlank = !input.value;
+      const wasAutofilled = input.dataset.autofilledByConsolidator === 'true';
+      if (onlyIfBlank && !isBlank && !wasAutofilled) return;
+
+      input.value = String(id);
+      input.dataset.autofilledByConsolidator = 'true';
+
+      const autocompleteRoot = input.closest('[data-controller~="catalog-autocomplete"]');
+      const autocompleteInput = autocompleteRoot?.querySelector('[data-catalog-autocomplete-target="input"]');
+      if (autocompleteInput && (autocompleteInput.value.trim() === '' || wasAutofilled || !onlyIfBlank)) {
+        autocompleteInput.value = name;
+      }
+
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
   }
 
   function initBilledToSync(root = document) {
@@ -767,6 +791,16 @@
       select.addEventListener('change', () => {
         const { id } = getCurrentConsolidatorSelection();
         select.dataset.autofilledByConsolidator = id && select.value === String(id) ? 'true' : 'false';
+      });
+    });
+
+    root.querySelectorAll('.js-billed-to-entity-input').forEach((input) => {
+      if (input.dataset.billedToSyncInitialized === 'true') return;
+      input.dataset.billedToSyncInitialized = 'true';
+
+      input.addEventListener('change', () => {
+        const { id } = getCurrentConsolidatorSelection();
+        input.dataset.autofilledByConsolidator = id && input.value === String(id) ? 'true' : 'false';
       });
     });
   }
@@ -832,12 +866,12 @@
       return;
     }
 
-    const select = event.target.closest('.js-service-catalog-select');
-    if (!select) return;
-    const amountInput = select.closest('.service-card')?.querySelector('.js-service-amount-input');
+    const field = event.target.closest('.js-service-catalog-select, .js-service-catalog-id-input');
+    if (!field) return;
+    const amountInput = field.closest('.service-card')?.querySelector('.js-service-amount-input');
     if (!amountInput || amountInput.disabled) return;
 
-    const catalogAmount = getCatalogAmountFromSelect(select);
+    const catalogAmount = getCatalogAmountFromField(field);
     if (!catalogAmount) return;
 
     amountInput.value = catalogAmount;

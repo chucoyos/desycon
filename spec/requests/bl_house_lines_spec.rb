@@ -249,19 +249,22 @@ RSpec.describe "BlHouseLines", type: :request do
   describe "GET /bl_house_lines/:id/bill_to_clients_search" do
     before { sign_in user, scope: :user }
 
-    let(:client_entity) { create(:entity, :client, name: "Cliente Principal") }
-    let(:bl_house_line) { create(:bl_house_line, client: client_entity) }
-    let!(:other_client) { create(:entity, :client, name: "Cliente Secundario") }
+    let(:customs_agent) { create(:entity, :customs_agent) }
+    let(:client_entity) { create(:entity, :client, name: "Cliente Principal", customs_agent: customs_agent) }
+    let(:bl_house_line) { create(:bl_house_line, client: client_entity, customs_agent: customs_agent) }
+    let!(:same_agency_other_client) { create(:entity, :client, name: "Cliente Secundario", customs_agent: customs_agent) }
+    let!(:different_agency_client) { create(:entity, :client, name: "Cliente Externo") }
 
     it "returns matching bill-to clients" do
-      get bill_to_clients_search_bl_house_line_path(bl_house_line), params: { q: "principal" }
+      get bill_to_clients_search_bl_house_line_path(bl_house_line), params: { q: "cliente" }
 
       expect(response).to have_http_status(:ok)
       payload = JSON.parse(response.body)
       labels = payload.fetch("results").map { |row| row.fetch("label") }
 
       expect(labels).to include("Cliente Principal")
-      expect(labels).not_to include("Cliente Secundario")
+      expect(labels).to include("Cliente Secundario")
+      expect(labels).not_to include("Cliente Externo")
     end
   end
 

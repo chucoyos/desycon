@@ -902,6 +902,7 @@
         <%= hidden_field_tag :service_action, "create" %>
         <% service_index = "new_service_#{Time.current.to_i}" %>
         <%= f.fields_for :bl_house_line_services, BlHouseLineService.new(billed_to_entity_id: @bl_house_line.client_id), child_index: service_index do |sf| %>
+          <% default_bill_to_entity = @bl_house_line.client %>
           <div class="space-y-4">
             <div>
               <%= sf.label :service_catalog_id, "Servicio *", class: "block text-sm font-semibold text-gray-700 mb-2" %>
@@ -958,7 +959,7 @@
                 <%= sf.hidden_field :billed_to_entity_id, data: { catalog_autocomplete_target: "hiddenInput" } %>
 
                 <%= text_field_tag "bl_billed_to_search_#{service_index}",
-                  nil,
+                  default_bill_to_entity&.name,
                   autocomplete: "off",
                   placeholder: "Escribe para buscar un cliente",
                   class: "w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500",
