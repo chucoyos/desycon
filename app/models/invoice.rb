@@ -64,16 +64,17 @@ class Invoice < ApplicationRecord
     next all unless PAYMENT_STATUSES.include?(payment_status)
 
     paid_total_sql = "COALESCE((SELECT SUM(invoice_payments.amount) FROM invoice_payments WHERE invoice_payments.invoice_id = invoices.id), 0)"
+    non_rep_condition = "COALESCE(invoices.kind, '') <> 'pago'"
 
     case payment_status
     when "pending"
-      where("#{paid_total_sql} <= 0")
+      where(non_rep_condition).where("#{paid_total_sql} <= 0")
     when "partial"
-      where("#{paid_total_sql} > 0 AND #{paid_total_sql} < invoices.total")
+      where(non_rep_condition).where("#{paid_total_sql} > 0 AND #{paid_total_sql} < invoices.total")
     when "paid"
-      where("#{paid_total_sql} >= invoices.total")
+      where("(COALESCE(invoices.kind, '') = 'pago') OR (#{paid_total_sql} >= invoices.total)")
     when "unpaid"
-      where("#{paid_total_sql} < invoices.total")
+      where(non_rep_condition).where("#{paid_total_sql} < invoices.total")
     else
       all
     end
@@ -110,6 +111,7 @@ class Invoice < ApplicationRecord
   end
 
   def outstanding_amount
+    return 0.to_d if kind == "pago"
     return 0.to_d unless issued?
 
     paid_total = if has_attribute?(:paid_total_for_index)
@@ -128,6 +130,8 @@ class Invoice < ApplicationRecord
   end
 
   def payment_status
+    return "paid" if kind == "pago"
+
     paid_total = invoice_payments.sum(:amount).to_d
     return "pending" unless paid_total.positive?
     return "paid" if paid_total >= total.to_d

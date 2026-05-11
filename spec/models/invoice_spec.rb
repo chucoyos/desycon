@@ -108,6 +108,21 @@ RSpec.describe Invoice, type: :model do
       expect(invoice.payment_status).to eq('paid')
       expect(invoice.payment_status_label).to eq('Pagado')
     end
+
+    it 'returns paid for REP invoices even without invoice_payments' do
+      rep_invoice = create(:invoice, kind: 'pago', status: 'issued', total: 1000)
+
+      expect(rep_invoice.payment_status).to eq('paid')
+      expect(rep_invoice.payment_status_label).to eq('Pagado')
+    end
+  end
+
+  describe '#outstanding_amount' do
+    it 'returns zero for REP invoices' do
+      rep_invoice = create(:invoice, kind: 'pago', status: 'issued', total: 1234.56)
+
+      expect(rep_invoice.outstanding_amount).to eq(0.to_d)
+    end
   end
 
   describe '#email_delivery_recipients' do

@@ -28,6 +28,7 @@ module PaymentEvidences
 
       eligible_invoices = Invoice
         .where(receiver_entity_id: @actor.entity_id)
+        .where.not(kind: "pago")
         .where(status: ELIGIBLE_STATUSES)
         .where(id: @invoice_ids)
         .includes(:invoice_payments)

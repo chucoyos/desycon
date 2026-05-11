@@ -92,5 +92,11 @@ RSpec.describe InvoicePolicy, type: :policy do
       expect(resolved).to include(own_invoice)
       expect(resolved).not_to include(other_invoice)
     end
+
+    it 'rejects attaching payment evidence for REP invoices' do
+      rep_invoice = create(:invoice, receiver_entity: entity, kind: 'pago', status: 'issued', total: 1500)
+
+      expect(described_class.new(user, rep_invoice).attach_payment_evidence?).to eq(false)
+    end
   end
 end

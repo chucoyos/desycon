@@ -76,6 +76,7 @@ class ConsolidatorPaymentEvidencesController < ApplicationController
     Invoice
       .left_joins(:invoice_payments)
       .where(receiver_entity_id: current_user.entity_id)
+      .where.not(kind: "pago")
       .where(status: %w[issued cancel_pending])
       .group("invoices.id")
       .having("COALESCE(SUM(invoice_payments.amount), 0) < invoices.total")

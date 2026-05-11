@@ -66,5 +66,23 @@ RSpec.describe "ConsolidatorPaymentEvidences", type: :request do
       expect(response).to redirect_to(invoices_path)
       expect(flash[:alert]).to include("no son válidas")
     end
+
+    it "rejects REP invoices from consolidator payment evidence flow" do
+      sign_in consolidator_user, scope: :user
+      rep_invoice = create(:invoice, status: "issued", kind: "pago", receiver_entity: consolidator_entity)
+
+      expect do
+        post consolidators_payment_evidences_path, params: {
+          payment_evidence: {
+            invoice_ids: [ invoice_one.id, rep_invoice.id ],
+            reference: "BLH-MULTI-REP",
+            receipt_file: uploaded_receipt
+          }
+        }
+      end.not_to change(InvoicePaymentEvidence, :count)
+
+      expect(response).to redirect_to(invoices_path)
+      expect(flash[:alert]).to include("no son válidas")
+    end
   end
 end

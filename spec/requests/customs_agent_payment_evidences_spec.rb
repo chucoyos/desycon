@@ -89,4 +89,22 @@ RSpec.describe "CustomsAgentPaymentEvidences", type: :request do
     expect(response).to redirect_to(new_customs_agents_payment_evidence_path)
     expect(flash[:alert]).to include("Factura no valida")
   end
+
+  it "rejects REP invoices for payment evidence submission" do
+    sign_in customs_user, scope: :user
+    rep_invoice = create(:invoice, status: "issued", kind: "pago", receiver_entity: client_entity)
+
+    expect do
+      post customs_agents_payment_evidences_path, params: {
+        payment_evidence: {
+          invoice_id: rep_invoice.id,
+          reference: "BLH-REP-001",
+          receipt_file: uploaded_receipt
+        }
+      }
+    end.not_to change(InvoicePaymentEvidence, :count)
+
+    expect(response).to redirect_to(new_customs_agents_payment_evidence_path)
+    expect(flash[:alert]).to include("Factura no valida")
+  end
 end

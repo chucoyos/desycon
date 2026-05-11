@@ -35,10 +35,7 @@
           "Sin serie/folio"
         end
 
-        paid_amount = invoice.invoice_payments.sum { |payment| payment.amount.to_d }
-        outstanding_amount = invoice.total.to_d - paid_amount
-        outstanding_amount = 0.to_d if outstanding_amount.negative?
-        "#{invoice_label} - #{invoice.receiver_entity&.name} - Saldo pendiente: #{number_to_currency(outstanding_amount)}"
+        "#{invoice_label} - #{invoice.receiver_entity&.name} - Saldo pendiente: #{number_to_currency(invoice.outstanding_amount)}"
       }, @selected_invoice_id || @payment_evidence&.invoice_id),
       { include_blank: "Selecciona una factura" },
       { name: "payment_evidence[invoice_id]", required: true, class: "w-full rounded-xl border border-slate-300 bg-white h-11 px-3 text-sm shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" } %>
