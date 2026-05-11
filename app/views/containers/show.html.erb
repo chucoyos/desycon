@@ -446,10 +446,12 @@
                       <% end %>
                     </div>
                   <% end %>
-                  <div>
-                    <span class="text-gray-500">Fecha programada:</span>
-                    <span class="font-medium"><%= service.fecha_programada ? l(service.fecha_programada, format: :short) : '-' %></span>
-                  </div>
+                  <% unless is_consolidator %>
+                    <div>
+                      <span class="text-gray-500">Fecha programada:</span>
+                      <span class="font-medium"><%= service.fecha_programada ? l(service.fecha_programada, format: :short) : '-' %></span>
+                    </div>
+                  <% end %>
                   <% if service.factura.present? %>
                     <div>
                       <span class="text-gray-500">Factura:</span>

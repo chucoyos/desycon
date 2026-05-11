@@ -84,12 +84,14 @@ RSpec.describe "Entities", type: :system do
     end
 
     it "updates the patent number" do
+      patent_number = "PAT-#{SecureRandom.hex(6)}"
+
       select "Agente Aduanal", from: "entity_role_kind"
-      fill_in "entity_patent_number", with: "123456789"
+      fill_in "entity_patent_number", with: patent_number
       click_button "Actualizar Entidad"
 
-      expect(page).to have_text("123456789")
-      expect(entity.reload.patent_number).to eq("123456789")
+      expect(page).to have_text(patent_number)
+      expect(entity.reload.patent_number).to eq(patent_number)
     end
   end
 

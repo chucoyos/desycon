@@ -629,6 +629,7 @@ class InvoicesController < ApplicationController
 
     preload_receiver_fiscal_profiles_for([ @invoice ])
     @invoice_events = @invoice.invoice_events.includes(:created_by).order(created_at: :desc).limit(30)
+    preload_invoice_event_actor_roles!(@invoice_events)
     @invoice_payments = @invoice.invoice_payments.includes(complement_invoice: [ :xml_file_attachment, :pdf_file_attachment ]).order(paid_at: :desc)
     build_invoice_show_context_data(@invoice)
   end
@@ -1450,6 +1451,16 @@ class InvoicesController < ApplicationController
     return if receiver_entities.empty?
 
     ActiveRecord::Associations::Preloader.new(records: receiver_entities, associations: :fiscal_profile).call
+  end
+
+  def preload_invoice_event_actor_roles!(events)
+    user_actors = Array(events).filter_map do |event|
+      actor = event.created_by
+      actor if actor.is_a?(User)
+    end.uniq
+    return if user_actors.empty?
+
+    ActiveRecord::Associations::Preloader.new(records: user_actors, associations: :role).call
   end
 
   def default_start_date
