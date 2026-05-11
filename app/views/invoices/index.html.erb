@@ -361,6 +361,7 @@
                        invoice.provider_response.to_h["numeroComprobante"].presence ||
                        invoice.facturador_comprobante_id&.to_s %>
             <% hbl = @invoice_hbl_by_id[invoice.id].presence || "-" %>
+            <% hbl_path = @invoice_hbl_path_by_id[invoice.id] %>
             <% agency_name = @invoice_agency_by_id[invoice.id].presence || "-" %>
             <tr class="hover:bg-gray-50 transition-colors duration-150">
               <% if @consolidator_portal_user %>
@@ -413,7 +414,11 @@
                 <span class="block truncate"><%= truncate(invoice.receiver_entity&.name || '-', length: 20) %></span>
               </td>
               <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700" title="<%= hbl %>">
-                <span class="block truncate"><%= truncate(hbl, length: 14) %></span>
+                <% if hbl_path.present? %>
+                  <%= link_to truncate(hbl, length: 14), hbl_path, class: "block truncate text-indigo-700 hover:text-indigo-900" %>
+                <% else %>
+                  <span class="block truncate"><%= truncate(hbl, length: 14) %></span>
+                <% end %>
               </td>
               <td class="px-4 py-4 text-sm text-gray-700" title="<%= agency_name %>">
                 <span class="block truncate"><%= truncate(agency_name, length: 16) %></span>

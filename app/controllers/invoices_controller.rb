@@ -885,6 +885,7 @@ class InvoicesController < ApplicationController
 
   def build_invoice_service_context_data(invoices)
     @invoice_hbl_by_id = {}
+    @invoice_hbl_path_by_id = {}
     @invoice_agency_by_id = {}
     @invoice_internal_reference_by_id = {}
     @invoice_recinto_by_id = {}
@@ -923,12 +924,14 @@ class InvoicesController < ApplicationController
         services = service_ids.uniq.map { |service_id| bl_service_data[service_id] }.compact
         next if services.empty?
 
+        bl_house_line_ids = services.map { |service| service.bl_house_line&.id }.compact.uniq
         hbl_values = services.map { |service| service.bl_house_line&.blhouse.to_s.strip }.reject(&:blank?).uniq
         agency_values = services.map { |service| service.bl_house_line&.customs_agent&.name.to_s.strip }.reject(&:blank?).uniq
         internal_reference_values = services.map { |service| service.bl_house_line&.internal_reference.to_s.strip }.reject(&:blank?).uniq
         recinto_values = services.map { |service| service.bl_house_line&.container&.recinto.to_s.strip }.reject(&:blank?).uniq
 
         @invoice_hbl_by_id[invoice_id] = hbl_values.join(", ").presence
+        @invoice_hbl_path_by_id[invoice_id] = bl_house_line_path(bl_house_line_ids.first) if bl_house_line_ids.one?
         @invoice_agency_by_id[invoice_id] = agency_values.join(", ").presence || @invoice_agency_by_id[invoice_id]
         @invoice_internal_reference_by_id[invoice_id] = internal_reference_values.join(", ").presence
         @invoice_recinto_by_id[invoice_id] = recinto_values.join(", ").presence
