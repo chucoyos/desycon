@@ -52,6 +52,17 @@ RSpec.describe "Entities", type: :request do
       expect(response).to have_http_status(:success)
       expect(response.body).to include("Client Company")
     end
+
+    it "shows customs agency name in parentheses for client entities" do
+      agency = create(:entity, :customs_agent, name: "Agencia Aduanal Del Pacifico")
+      client_with_agency = create(:entity, :client, name: "Cliente Importaciones", customs_agent: agency)
+
+      get entities_path
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include(client_with_agency.name)
+      expect(response.body).to include("(#{agency.name})")
+    end
   end
 
   describe "GET /show" do

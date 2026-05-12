@@ -12,7 +12,7 @@ class EntitiesController < ApplicationController
     per = 10 unless allowed.include?(per)
     @per_page = per
 
-    @entities = policy_scope(Entity).includes(:fiscal_profile, :addresses)
+    @entities = policy_scope(Entity).includes(:fiscal_profile, :addresses, :customs_agent)
 
     # Aplicar filtros de búsqueda
     @entities = @entities.where("name ILIKE ?", "%#{params[:name]}%") if params[:name].present?

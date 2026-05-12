@@ -213,9 +213,15 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           <% @entities.each do |entity| %>
+            <% client_agency_name = entity.role_client? ? entity.customs_agent&.name : nil %>
             <tr class="hover:bg-gray-50 transition-colors duration-150">
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900"><%= entity.name %></div>
+                <div class="text-sm font-medium text-gray-900 flex items-center gap-1 max-w-md min-w-0">
+                  <span class="truncate"><%= entity.name %></span>
+                  <% if client_agency_name.present? %>
+                    <span class="text-gray-500 truncate max-w-52" title="(<%= client_agency_name %>)">(<%= client_agency_name %>)</span>
+                  <% end %>
+                </div>
               </td>
               <td class="px-6 py-4">
                 <div class="flex flex-wrap gap-1">
@@ -304,11 +310,17 @@
   <!-- Mobile Cards -->
   <div class="md:hidden space-y-4">
     <% @entities.each do |entity| %>
+      <% client_agency_name = entity.role_client? ? entity.customs_agent&.name : nil %>
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-visible">
         <div class="p-4">
           <div class="flex items-start justify-between mb-3">
             <div class="flex-1 min-w-0">
-              <h3 class="text-base font-semibold text-gray-900 truncate"><%= entity.name %></h3>
+              <h3 class="text-base font-semibold text-gray-900 flex items-center gap-1 min-w-0">
+                <span class="truncate"><%= entity.name %></span>
+                <% if client_agency_name.present? %>
+                  <span class="text-gray-500 text-sm truncate max-w-44" title="(<%= client_agency_name %>)">(<%= client_agency_name %>)</span>
+                <% end %>
+              </h3>
               <% if entity.fiscal_profile&.rfc.present? %>
                 <p class="text-sm text-gray-500 mt-1"><%= entity.fiscal_profile.rfc %></p>
               <% end %>
