@@ -567,6 +567,26 @@ RSpec.describe "Containers", type: :request do
       expect(response.body).not_to include(other_container.number)
       expect(response.body).to include("Viaje: #{selected_voyage.viaje}")
     end
+
+    it "filters by destination port for admin users" do
+      sign_in user, scope: :user
+
+      selected_port = create(:port, :veracruz)
+      other_port = create(:port, :manzanillo)
+
+      selected_voyage = create(:voyage, destination_port: selected_port)
+      other_voyage = create(:voyage, destination_port: other_port)
+
+      selected_container = create(:container, number: "PORT1234501", voyage: selected_voyage, recinto: "ICAVE", almacen: "CICE")
+      other_container = create(:container, number: "PORT1234502", voyage: other_voyage, recinto: "CONTECON", almacen: "SSA")
+
+      get containers_url, params: { destination_port_id: selected_port.id }
+
+      expect(response).to be_successful
+      expect(response.body).to include(selected_container.number)
+      expect(response.body).not_to include(other_container.number)
+      expect(response.body).to include("Puerto destino: #{selected_port.display_name}")
+    end
   end
 
   describe "GET /containers/shipping_lines_search" do

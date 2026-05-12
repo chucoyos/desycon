@@ -1,6 +1,7 @@
 class ContainersController < ApplicationController
   require "caxlsx"
   DATE_FILTER_TYPES = %w[created_at fecha_desconsolidacion].freeze
+  DESYCON_OPERATION_DESTINATION_PORT_CODES = %w[MXATM MXLZC MXZLO MXVER].freeze
 
   before_action :authenticate_user!
   after_action :verify_authorized, except: :index
@@ -44,6 +45,10 @@ class ContainersController < ApplicationController
     @selected_voyage = @selected_voyage_id.present? ? Voyage.includes(:destination_port).find_by(id: @selected_voyage_id) : nil
     @selected_vessel_id = params[:vessel_id].presence
     @selected_vessel = @selected_vessel_id.present? ? Vessel.find_by(id: @selected_vessel_id) : nil
+    @destination_ports = destination_port_filter_options
+    @selected_destination_port_id = if @destination_ports.map { |port| port.id.to_s }.include?(params[:destination_port_id].to_s)
+      params[:destination_port_id].presence
+    end
 
     start_date = [ @selected_start_date, @selected_end_date ].min
     end_date = [ @selected_start_date, @selected_end_date ].max
@@ -67,6 +72,7 @@ class ContainersController < ApplicationController
     end
     @containers = @containers.where(vessel_id: @selected_vessel_id) if @selected_vessel_id.present?
     @containers = @containers.where(voyage_id: @selected_voyage_id) if @selected_voyage_id.present?
+    @containers = @containers.joins(:voyage).where(voyages: { destination_port_id: @selected_destination_port_id }) if @selected_destination_port_id.present?
     @containers = @containers.where("bl_master ILIKE ?", "%#{params[:bl_master]}%") if params[:bl_master].present?
 
     # Búsqueda por número
@@ -105,6 +111,7 @@ class ContainersController < ApplicationController
     selected_consolidator_id = current_user&.consolidator? ? current_user.entity_id : params[:consolidator_id].presence
     selected_vessel_id = params[:vessel_id].presence
     selected_voyage_id = params[:voyage_id].presence
+    selected_destination_port_id = resolve_destination_port_filter_id(params[:destination_port_id])
 
     start_date = [ selected_start_date, selected_end_date ].min
     end_date = [ selected_start_date, selected_end_date ].max
@@ -127,6 +134,7 @@ class ContainersController < ApplicationController
     end
     scope = scope.where(vessel_id: selected_vessel_id) if selected_vessel_id.present?
     scope = scope.where(voyage_id: selected_voyage_id) if selected_voyage_id.present?
+    scope = scope.joins(:voyage).where(voyages: { destination_port_id: selected_destination_port_id }) if selected_destination_port_id.present?
 
     scope = scope.where("bl_master ILIKE ?", "%#{params[:bl_master]}%") if params[:bl_master].present?
     scope = scope.where("number ILIKE ?", "%#{params[:search]}%") if params[:search].present?
@@ -872,6 +880,16 @@ class ContainersController < ApplicationController
 
   def default_end_date
     Date.current
+  end
+
+  def destination_port_filter_options
+    Port.where(code: DESYCON_OPERATION_DESTINATION_PORT_CODES).order(:name)
+  end
+
+  def resolve_destination_port_filter_id(value)
+    return nil if value.blank?
+
+    destination_port_filter_options.find_by(id: value)&.id
   end
 
   def lifecycle_bl_master_params
