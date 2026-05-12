@@ -85,11 +85,11 @@ class BlHouseLinePolicy < ApplicationPolicy
   end
 
   def revalidations_report?
-    user.present? && user.admin_or_executive?
+    user.present? && (user.admin_or_executive? || user.consolidator?)
   end
 
   def inventory_report?
-    user.present? && user.admin_or_executive?
+    user.present? && (user.admin_or_executive? || user.consolidator?)
   end
 
   class Scope < Scope

@@ -254,7 +254,7 @@
     <%= render 'shared/tailwind_pagination', paginated: @bl_house_lines %>
   </div>
 
-  <% if current_user.admin_or_executive? %>
+  <% if current_user.admin_or_executive? || current_user.consolidator? %>
     <div class="mb-3 flex justify-end gap-2">
       <%= link_to inventory_report_bl_house_lines_path(format: :xlsx),
         class: "cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-md border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-sm font-semibold" do %>

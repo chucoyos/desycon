@@ -315,6 +315,17 @@ RSpec.describe "BlHouseLines", type: :request do
       expect(response.body).to include("Referencia: MATCH")
       expect(response.body).to include("Master BL: MASTER-MATCH")
     end
+
+    it "shows inventory and revalidations report buttons" do
+      consolidator = create(:user, :consolidator)
+      sign_in consolidator, scope: :user
+
+      get bl_house_lines_url
+
+      expect(response).to be_successful
+      expect(response.body).to include("Reporte Inventario")
+      expect(response.body).to include("Reporte Revalidaciones")
+    end
   end
 
   describe "GET /bl_house_lines filters for executive" do
@@ -425,13 +436,34 @@ RSpec.describe "BlHouseLines", type: :request do
       tempfile.close!
     end
 
-    it "denies access for consolidator users" do
+    it "allows consolidator users and exports only own rows" do
       consolidator_user = create(:user, :consolidator)
+      own_container = create(:container, consolidator_entity: consolidator_user.entity, archivo_nr: "REF-CONS-REPV-001")
+      other_container = create(:container, archivo_nr: "REF-CONS-REPV-999")
+
+      create(:bl_house_line, container: own_container, status: "validar_documentos", blhouse: "HBL-CONS-REPV-001")
+      create(:bl_house_line, container: other_container, status: "validar_documentos", blhouse: "HBL-CONS-REPV-999")
+
       sign_in consolidator_user, scope: :user
 
       get revalidations_report_bl_house_lines_url
 
-      expect(response).to have_http_status(:found)
+      expect(response).to have_http_status(:ok)
+      expect(response.headers["Content-Type"]).to include("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+      tempfile = Tempfile.new([ "revalidaciones_consolidator", ".xlsx" ])
+      tempfile.binmode
+      tempfile.write(response.body)
+      tempfile.rewind
+
+      workbook = Roo::Excelx.new(tempfile.path)
+      sheet = workbook.sheet(0)
+      references = (8..sheet.last_row).map { |row| sheet.row(row)[0] }.compact
+
+      expect(references).to include("REF-CONS-REPV-001")
+      expect(references).not_to include("REF-CONS-REPV-999")
+
+      tempfile.close!
     end
   end
 
@@ -569,13 +601,37 @@ RSpec.describe "BlHouseLines", type: :request do
       tempfile.close!
     end
 
-    it "denies access for consolidator users" do
+    it "allows consolidator users and exports only own rows" do
       consolidator_user = create(:user, :consolidator)
+      own_container = create(:container, consolidator_entity: consolidator_user.entity, archivo_nr: "REF-CONS-INV-001", fecha_desconsolidacion: Date.new(2026, 4, 10))
+      own_container.update_column(:status, "desconsolidado")
+
+      other_container = create(:container, archivo_nr: "REF-CONS-INV-999", fecha_desconsolidacion: Date.new(2026, 4, 10))
+      other_container.update_column(:status, "desconsolidado")
+
+      create(:bl_house_line, container: own_container, fecha_despacho: nil, status: "validar_documentos", blhouse: "HBL-CONS-INV-001")
+      create(:bl_house_line, container: other_container, fecha_despacho: nil, status: "validar_documentos", blhouse: "HBL-CONS-INV-999")
+
       sign_in consolidator_user, scope: :user
 
       get inventory_report_bl_house_lines_url
 
-      expect(response).to have_http_status(:found)
+      expect(response).to have_http_status(:ok)
+      expect(response.headers["Content-Type"]).to include("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+      tempfile = Tempfile.new([ "inventario_consolidator", ".xlsx" ])
+      tempfile.binmode
+      tempfile.write(response.body)
+      tempfile.rewind
+
+      workbook = Roo::Excelx.new(tempfile.path)
+      sheet = workbook.sheet(0)
+      hbls = (7..sheet.last_row).map { |row| sheet.row(row)[4] }.compact
+
+      expect(hbls).to include("HBL-CONS-INV-001")
+      expect(hbls).not_to include("HBL-CONS-INV-999")
+
+      tempfile.close!
     end
   end
 

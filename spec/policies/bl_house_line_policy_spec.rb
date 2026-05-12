@@ -126,6 +126,8 @@ RSpec.describe BlHouseLinePolicy, type: :policy do
     it { is_expected.to permit_action(:index) }
     it { is_expected.to permit_action(:show) }
     it { is_expected.to permit_action(:documents) }
+    it { is_expected.to permit_action(:revalidations_report) }
+    it { is_expected.to permit_action(:inventory_report) }
     it { is_expected.not_to permit_action(:create) }
     it { is_expected.not_to permit_action(:new) }
     it { is_expected.not_to permit_action(:update) }
