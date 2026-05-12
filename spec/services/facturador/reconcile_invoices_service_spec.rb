@@ -73,7 +73,7 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('reconcile_synced')
     end
 
-    it 'keeps cancel_pending when provider does not confirm cancellation status yet' do
+    it 'moves cancel_pending back to issued when provider reports emitido without cancellation in progress' do
       invoice = create(:invoice, status: 'cancel_pending', sat_uuid: 'UUID-EMITIDO-001', facturador_comprobante_id: nil)
       allow(client_double).to receive(:buscar_comprobantes).and_return(
         {
@@ -94,8 +94,34 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
       expect { described_class.call(limit: 10) }.not_to raise_error
 
       invoice.reload
-      expect(invoice.status).to eq('cancel_pending')
+      expect(invoice.status).to eq('issued')
       expect(invoice.facturador_comprobante_id).to be_nil
+      expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('reconcile_synced')
+    end
+
+    it 'moves cancel_pending back to issued when provider reports cancellation rejected by receiver' do
+      invoice = create(:invoice, status: 'cancel_pending', sat_uuid: 'UUID-REJECTED-001')
+      allow(client_double).to receive(:buscar_comprobantes).and_return(
+        {
+          'numeroComprobantes' => 1,
+          'resumenComprobante' => [
+            {
+              'uuid' => 'UUID-REJECTED-001',
+              'subestatus' => 'Emitido',
+              'descripcion' => 'El receptor ha rechazado tu solicitud de cancelacion.',
+              'subestatusId' => 2,
+              'idComprobante' => 12345,
+              'fecha' => Time.current.iso8601
+            }
+          ]
+        }
+      )
+
+      described_class.call(limit: 10)
+
+      invoice.reload
+      expect(invoice.status).to eq('issued')
+      expect(invoice.facturador_comprobante_id).to eq(12345)
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('reconcile_synced')
     end
 
