@@ -105,6 +105,41 @@ class CustomsAgentsController < ApplicationController
     end
   end
 
+  def revalidation_clients_search
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    cache_key = [
+      "customs_agents",
+      "revalidation_clients_search",
+      current_user.entity_id,
+      query.downcase,
+      limit
+    ].join(":")
+
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      term = "%#{query}%"
+
+      revalidation_clients
+        .where("name ILIKE ?", term)
+        .limit(limit)
+        .pluck(:id, :name)
+        .map do |id, name|
+          {
+            id:,
+            label: name
+          }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
   def revalidation_update
     unless turbo_frame_request?
       redirect_to customs_agents_dashboard_path, alert: "No se pudo procesar la solicitud en modal." and return

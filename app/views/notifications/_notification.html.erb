@@ -137,8 +137,8 @@
         <% elsif notification.action == "Correcciones Solicitadas" || notification.action == "Documentación Aprobada" %>
             <% 
                # Prefer a formatted message for approval; fall back to latest history observation.
-               latest_history = notification.notifiable.bl_house_line_status_histories.order(created_at: :desc).first
-               observation_text = latest_history&.observations
+               latest_observations = local_assigns[:latest_observations_by_bl_house_line_id] || @latest_observations_by_bl_house_line_id || {}
+               observation_text = latest_observations[notification.notifiable_id]
 
                if notification.action == "Documentación Aprobada"
                  container = notification.notifiable.container

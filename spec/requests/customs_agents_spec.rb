@@ -223,6 +223,44 @@ RSpec.describe "CustomsAgents", type: :request do
     end
   end
 
+  describe "GET /customs_agents/revalidations/clients_search" do
+    it "returns matching clients for the logged customs agent" do
+      matching_client = create(:entity, :client, customs_agent: customs_user.entity, name: "Cliente Alpha Logistics")
+      create(:entity, :client, customs_agent: customs_user.entity, name: "Otro Cliente")
+
+      sign_in customs_user, scope: :user
+      get customs_agents_revalidation_clients_search_path, params: { q: "alpha" }
+
+      expect(response).to have_http_status(:success)
+      payload = JSON.parse(response.body)
+      labels = payload.fetch("results").map { |entry| entry.fetch("label") }
+      expect(labels).to include(matching_client.name)
+      expect(labels).not_to include("Otro Cliente")
+    end
+
+    it "does not include clients from other customs agents" do
+      other_customs_agent = create(:entity, :customs_agent, name: "Agencia Externa #{SecureRandom.hex(4)}")
+      create(:entity, :client, customs_agent: other_customs_agent, name: "Cliente Compartido")
+
+      sign_in customs_user, scope: :user
+      get customs_agents_revalidation_clients_search_path, params: { q: "compartido" }
+
+      expect(response).to have_http_status(:success)
+      payload = JSON.parse(response.body)
+      expect(payload.fetch("results")).to be_empty
+    end
+
+    it "returns empty results when query is shorter than minimum chars" do
+      sign_in customs_user, scope: :user
+      get customs_agents_revalidation_clients_search_path, params: { q: "a" }
+
+      expect(response).to have_http_status(:success)
+      payload = JSON.parse(response.body)
+      expect(payload.fetch("results")).to eq([])
+      expect(payload.fetch("meta").fetch("min_chars")).to eq(2)
+    end
+  end
+
   describe "PATCH /revalidations/:id" do
     let(:headers) { { "Turbo-Frame" => "revalidation_modal" } }
     let(:customs_agent) { customs_user.entity }

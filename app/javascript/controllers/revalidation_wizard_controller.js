@@ -60,22 +60,33 @@ export default class extends Controller {
   clientValid() {
     if (!this.hasClientSelectTarget) return true
 
-    const select = this.clientSelectTarget
-    const disabled = select.disabled
-    const valid = disabled || (select.value && select.value.trim() !== "")
+    const clientField = this.clientSelectTarget
+    const visibleField = this.resolveVisibleClientField(clientField)
+    const fieldForFeedback = visibleField || clientField
+    const disabled = clientField.disabled
+    const valid = disabled || (clientField.value && clientField.value.trim() !== "")
 
     if (this.hasClientErrorTarget) {
       this.clientErrorTarget.classList.toggle("hidden", valid)
     }
 
-    select.classList.toggle("border-red-300", !valid)
-    select.classList.toggle("focus:border-red-500", !valid)
-    select.classList.toggle("focus:ring-red-500", !valid)
+    fieldForFeedback.classList.toggle("border-red-300", !valid)
+    fieldForFeedback.classList.toggle("focus:border-red-500", !valid)
+    fieldForFeedback.classList.toggle("focus:ring-red-500", !valid)
 
     if (!valid) {
-      select.focus()
+      fieldForFeedback.focus()
     }
 
     return valid
+  }
+
+  resolveVisibleClientField(clientField) {
+    if (!clientField || clientField.type !== "hidden") return clientField
+
+    const visibleTargetId = clientField.dataset.revalidationWizardVisibleTargetId
+    if (!visibleTargetId) return null
+
+    return document.getElementById(visibleTargetId)
   }
 }

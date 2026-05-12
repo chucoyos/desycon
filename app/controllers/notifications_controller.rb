@@ -14,11 +14,13 @@ class NotificationsController < ApplicationController
 
     @notifications = @notifications.recent.page(params[:page]).per(per)
     preload_notification_relations(@notifications)
+    preload_latest_observations(@notifications)
   end
 
   def mark_as_read
     @notification = current_user.notifications.includes(:notifiable, actor: :entity).find(params[:id])
     preload_notification_relations([ @notification ])
+    preload_latest_observations([ @notification ])
     @notification.mark_as_read!
 
     respond_to do |format|
@@ -64,6 +66,17 @@ class NotificationsController < ApplicationController
     records = Array(notifications)
     return if records.empty?
 
+    bl_house_line_notifications = records.select { |notification| notification.notifiable_type == "BlHouseLine" }
+
+    notifications_requiring_container = bl_house_line_notifications.select do |notification|
+      notification.action == "Documentación Aprobada"
+    end
+
+    if notifications_requiring_container.any?
+      bl_house_lines_for_container = notifications_requiring_container.filter_map(&:notifiable)
+      ActiveRecord::Associations::Preloader.new(records: bl_house_lines_for_container, associations: :container).call if bl_house_lines_for_container.any?
+    end
+
     evidences = records.filter_map do |notification|
       notification.notifiable if notification.notifiable_type == "InvoicePaymentEvidence"
     end
@@ -77,6 +90,30 @@ class NotificationsController < ApplicationController
     return if evidences_without_links.empty?
 
     ActiveRecord::Associations::Preloader.new(records: evidences_without_links, associations: :invoice).call
+  end
+
+  def preload_latest_observations(notifications)
+    records = Array(notifications)
+    @latest_observations_by_bl_house_line_id = {}
+    return if records.empty?
+
+    relevant_bl_house_line_ids = records.filter_map do |notification|
+      next unless notification.notifiable_type == "BlHouseLine"
+      next unless [ "Correcciones Solicitadas", "Documentación Aprobada" ].include?(notification.action)
+
+      notification.notifiable_id
+    end.uniq
+
+    return if relevant_bl_house_line_ids.empty?
+
+    latest_rows = BlHouseLineStatusHistory
+      .where(bl_house_line_id: relevant_bl_house_line_ids)
+      .select(:bl_house_line_id, :observations, :created_at, :id)
+      .order(bl_house_line_id: :asc, created_at: :desc, id: :desc)
+
+    latest_rows.each do |row|
+      @latest_observations_by_bl_house_line_id[row.bl_house_line_id] ||= row.observations
+    end
   end
 
   def apply_filters

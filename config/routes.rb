@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   get "consolidators/payment_evidences/new", to: "consolidator_payment_evidences#new", as: :new_consolidators_payment_evidence
   post "consolidators/payment_evidences", to: "consolidator_payment_evidences#create", as: :consolidators_payment_evidences
   get "customs_agents/revalidations", to: "customs_agents#revalidation_modal", as: :customs_agents_revalidation
+  get "customs_agents/revalidations/clients_search", to: "customs_agents#revalidation_clients_search", as: :customs_agents_revalidation_clients_search
   patch "customs_agents/revalidations/:id", to: "customs_agents#revalidation_update", as: :customs_agents_revalidation_update
 
   devise_for :users, skip: :all
