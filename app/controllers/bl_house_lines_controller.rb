@@ -1002,6 +1002,8 @@ class BlHouseLinesController < ApplicationController
       includes_associations << { bl_house_line_services: [ :service_catalog, :billed_to_entity ] } unless current_user&.consolidator?
 
       @bl_house_line = BlHouseLine.includes(includes_associations).find(params[:id])
+    elsif action_name == "edit"
+      @bl_house_line = BlHouseLine.includes(bl_house_line_services: :billed_to_entity).find(params[:id])
     else
       @bl_house_line = BlHouseLine.find(params[:id])
     end

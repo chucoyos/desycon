@@ -12,7 +12,7 @@ class EntitiesController < ApplicationController
     per = 10 unless allowed.include?(per)
     @per_page = per
 
-    @entities = policy_scope(Entity).includes(:fiscal_profile, :addresses, :customs_agent)
+    @entities = policy_scope(Entity).includes(:fiscal_profile, :addresses)
 
     # Aplicar filtros de búsqueda
     @entities = @entities.where("name ILIKE ?", "%#{params[:name]}%") if params[:name].present?
@@ -23,6 +23,8 @@ class EntitiesController < ApplicationController
     when "unrestricted"
       @entities = @entities.where(restricted_access_enabled: [ false, nil ])
     end
+
+    @entities = @entities.includes(:customs_agent) if @entities.where(role_kind: Entity.role_kinds[:client]).exists?
 
     @entities = @entities.order(:name).page(params[:page]).per(per)
     authorize Entity

@@ -3,6 +3,7 @@
 <% disable_inputs = local_assigns[:is_customs_agent] == true || is_invoiced %>
 <% use_autocomplete = local_assigns[:bl_house_line]&.persisted? && !disable_inputs %>
 <% default_bill_to_entity = f.object&.billed_to_entity || local_assigns[:bl_house_line]&.client %>
+<% template_record = f.object_name.to_s.include?("NEW_RECORD") %>
 <div class="service-card rounded-lg p-3 sm:p-4 border shadow-sm hover:shadow-md transition-all duration-200 <%= is_new ? 'bg-amber-50/50 border-amber-300 ring-2 ring-amber-200' : 'bg-white border-slate-200' %>"
   data-service-persisted="<%= is_new ? 'false' : 'true' %>"
   data-service-locked="<%= is_invoiced ? 'true' : 'false' %>">
@@ -54,7 +55,7 @@
                 f.object&.service_catalog&.display_name,
                 autocomplete: "off",
                 placeholder: "Escribe para buscar un servicio",
-                required: true,
+                required: !template_record,
                 class: "w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200",
                 data: {
                   catalog_autocomplete_target: "input",
