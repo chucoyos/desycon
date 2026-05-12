@@ -118,8 +118,13 @@
         </div>
 
         <div class="relative w-full sm:w-auto xl:col-span-2">
-          <%= f.label :start_date, "Rango de fechas", class: "sr-only" %>
-          <div class="grid grid-cols-2 gap-2">
+          <%= f.label :date_filter_type, "Tipo de fecha", class: "sr-only" %>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <%= f.select :date_filter_type,
+              options_for_select([["Creación", "created_at"], ["Desconsolidación", "fecha_desconsolidacion"]], @selected_date_filter_type),
+              {},
+              class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
+
             <%= f.date_field :start_date, value: @selected_start_date, class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
             <%= f.date_field :end_date, value: @selected_end_date, class: "block w-full px-3 py-3.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-150 ease-in-out text-sm" %>
           </div>
@@ -224,7 +229,7 @@
 
               <% if @selected_start_date.present? || @selected_end_date.present? %>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                  Fecha: <%= [@selected_start_date, @selected_end_date].compact.join(" - ") %>
+                  <%= @selected_date_filter_type == "fecha_desconsolidacion" ? "Desconsolidación" : "Creación" %>: <%= [@selected_start_date, @selected_end_date].compact.join(" - ") %>
                 </span>
               <% end %>
 

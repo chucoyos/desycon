@@ -106,6 +106,27 @@ RSpec.describe "BlHouseLines", type: :request do
       expect(response.body).to include(old_line.blhouse)
     end
 
+    it "filters by fecha_desconsolidacion when selected in date filter type" do
+      sign_in user, scope: :user
+
+      selected_container = create(:container, fecha_desconsolidacion: Date.new(2026, 5, 10))
+      other_container = create(:container, fecha_desconsolidacion: Date.new(2026, 5, 12))
+
+      selected_line = create(:bl_house_line, container: selected_container, status: "validar_documentos", blhouse: "FDS-BLH-001")
+      create(:bl_house_line, container: other_container, status: "validar_documentos", blhouse: "FDS-BLH-002")
+
+      get bl_house_lines_url, params: {
+        date_filter_type: "fecha_desconsolidacion",
+        start_date: "2026-05-10",
+        end_date: "2026-05-10"
+      }
+
+      expect(response).to be_successful
+      expect(response.body).to include(selected_line.blhouse)
+      expect(response.body).not_to include("FDS-BLH-002")
+      expect(response.body).to include("Desconsolidación: 2026-05-10 - 2026-05-10")
+    end
+
     it "orders records by most recent first" do
       sign_in user, scope: :user
       older = create(:bl_house_line, status: "validar_documentos", blhouse: "ORDER-OLD")

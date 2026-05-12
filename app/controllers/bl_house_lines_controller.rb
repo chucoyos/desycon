@@ -4,6 +4,7 @@ class BlHouseLinesController < ApplicationController
   IMPORT_ROW_LIMIT = 500
   IMPORT_SIZE_LIMIT = 2.megabytes
   IMPORT_TEMPLATE_HEADERS = %w[blhouse cantidad embalaje contiene marcas peso volumen clase_imo tipo_imo].freeze
+  DATE_FILTER_TYPES = %w[created_at fecha_desconsolidacion].freeze
 
   before_action :authenticate_user!
   before_action :set_bl_house_line, only: %i[show edit update destroy revalidation_approval approve_revalidation documents reassign perform_reassign reassign_brokers dispatch_date update_dispatch_date service_catalogs_search bill_to_clients_search]
@@ -665,9 +666,15 @@ class BlHouseLinesController < ApplicationController
 
     @selected_start_date = resolved_start_date
     @selected_end_date = resolved_end_date
+    @selected_date_filter_type = resolved_date_filter_type
     start_date = [ @selected_start_date, @selected_end_date ].min
     end_date = [ @selected_start_date, @selected_end_date ].max
-    scope = scope.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+
+    scope = if @selected_date_filter_type == "fecha_desconsolidacion"
+      scope.joins(:container).where(containers: { fecha_desconsolidacion: start_date..end_date })
+    else
+      scope.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+    end
 
     @selected_status_filter = selected_status_filter
     if @selected_status_filter.present? && @status_filter_options.include?(@selected_status_filter)
@@ -963,6 +970,11 @@ class BlHouseLinesController < ApplicationController
 
   def resolved_end_date
     parse_filter_date(params[:end_date]) || default_end_date
+  end
+
+  def resolved_date_filter_type
+    requested = params[:date_filter_type].to_s
+    DATE_FILTER_TYPES.include?(requested) ? requested : "created_at"
   end
 
   def parse_filter_date(value)
