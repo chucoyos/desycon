@@ -6,6 +6,16 @@ RSpec.describe "Services", type: :request do
   describe "GET /services" do
     before { sign_in admin_user, scope: :user }
 
+    it "includes BL services with blank factura in proforma filter" do
+      service = create(:bl_house_line_service, factura: nil)
+      service.update_column(:factura, "")
+
+      get services_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("BlHouseLineService:#{service.id}")
+    end
+
     it "renders index successfully with service rows" do
       container = create(:container, number: "SERV1234567")
       create(:container_service, container: container, factura: nil, amount: 1450)
@@ -297,6 +307,32 @@ RSpec.describe "Services", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).not_to include("BlHouseLineService:#{hidden_service.id}")
     end
+
+    it "keeps BL service visible when billed_to RFC is different even if client RFC matches exception" do
+      target_rfc = "NEM901109BC2"
+      allow(Facturador::Config).to receive(:auto_issue_nipon_exception_enabled?).and_return(true)
+      allow(Facturador::Config).to receive(:auto_issue_nipon_rfc).and_return(target_rfc)
+      allow(Facturador::Config).to receive(:auto_issue_exception_rfcs).and_return([ target_rfc ])
+
+      consolidator = create(:entity, :consolidator)
+      create(:fiscal_profile, profileable: consolidator, rfc: target_rfc)
+
+      nippon_client = create(:entity, :client)
+      client_profile = create(:fiscal_profile, profileable: nippon_client)
+      client_profile.update_column(:rfc, target_rfc)
+
+      other_billed_to = create(:entity, :client)
+      create(:fiscal_profile, profileable: other_billed_to, rfc: "ABC010203ZZA")
+
+      container = create(:container, consolidator_entity: consolidator)
+      bl_house_line = create(:bl_house_line, container: container, client: nippon_client)
+      visible_service = create(:bl_house_line_service, bl_house_line: bl_house_line, billed_to_entity: other_billed_to, factura: nil)
+
+      get services_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("BlHouseLineService:#{visible_service.id}")
+    end
   end
 
   describe "POST /services/issue_batch" do
@@ -377,6 +413,40 @@ RSpec.describe "Services", type: :request do
 
       expect(response).to redirect_to(services_path)
       expect(flash[:alert]).to include("Selecciona al menos un servicio válido")
+    end
+
+    it "allows BL service token when billed_to RFC differs even if client RFC matches exception" do
+      target_rfc = "NEM901109BC2"
+      allow(Facturador::Config).to receive(:auto_issue_nipon_exception_enabled?).and_return(true)
+      allow(Facturador::Config).to receive(:auto_issue_nipon_rfc).and_return(target_rfc)
+      allow(Facturador::Config).to receive(:auto_issue_exception_rfcs).and_return([ target_rfc ])
+
+      consolidator = create(:entity, :consolidator)
+      create(:fiscal_profile, profileable: consolidator, rfc: target_rfc)
+
+      nippon_client = create(:entity, :client)
+      client_profile = create(:fiscal_profile, profileable: nippon_client)
+      client_profile.update_column(:rfc, target_rfc)
+
+      other_billed_to = create(:entity, :client)
+      create(:fiscal_profile, profileable: other_billed_to, rfc: "ABC010203ZZB")
+
+      container = create(:container, consolidator_entity: consolidator)
+      bl_house_line = create(:bl_house_line, container: container, client: nippon_client)
+      allowed_service = create(:bl_house_line_service, bl_house_line: bl_house_line, billed_to_entity: other_billed_to, factura: nil)
+
+      grouped_invoice = create(:invoice, invoiceable: nil)
+      service_result = Facturador::IssueGroupedServicesService::Result.new(invoice: grouped_invoice)
+
+      expect(Facturador::IssueGroupedServicesService).to receive(:call) do |args|
+        expect(args[:serviceables]).to match_array([ allowed_service ])
+        service_result
+      end
+
+      post issue_batch_services_path, params: { service_tokens: [ "BlHouseLineService:#{allowed_service.id}" ] }
+
+      expect(response).to redirect_to(invoice_path(grouped_invoice))
+      expect(flash[:notice]).to include("Emisión agrupada")
     end
 
     it "rejects Master Forwarding BL services even when token is submitted" do

@@ -40,8 +40,13 @@ module BlHouseLines
 
     def add_reassign_service!
       catalog = ServiceCatalog.find_by(code: "BL-ASIG", applies_to: "bl_house_line")
+      catalog ||= ServiceCatalog.find_by(code: "BL-ASIG")
       catalog ||= ServiceCatalog.find_by(name: "Asignación electrónica de carga", applies_to: "bl_house_line")
-      return unless catalog
+      catalog ||= ServiceCatalog.find_by(name: "Asignacion electronica de carga", applies_to: "bl_house_line")
+      catalog ||= ServiceCatalog.find_by(name: "Asignación electrónica de carga")
+      catalog ||= ServiceCatalog.find_by(name: "Asignacion electronica de carga")
+
+      raise Error, "No existe el catálogo de servicio BL-ASIG para registrar la reasignación." if catalog.blank?
 
       bl_house_line.bl_house_line_services.create!(
         service_catalog_id: catalog.id,

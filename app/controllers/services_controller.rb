@@ -475,22 +475,22 @@ class ServicesController < ApplicationController
     case @selected_billing_status
     when "facturado"
       scope.where(
-        "container_services.factura IS NOT NULL OR latest_billing_invoice.status IN (?)",
+        "NULLIF(BTRIM(COALESCE(container_services.factura, '')), '') IS NOT NULL OR latest_billing_invoice.status IN (?)",
         %w[issued cancel_pending cancelled]
       )
     when "en_proceso"
       scope.where(
-        "container_services.factura IS NULL AND latest_billing_invoice.status IN (?)",
+        "NULLIF(BTRIM(COALESCE(container_services.factura, '')), '') IS NULL AND latest_billing_invoice.status IN (?)",
         %w[draft queued]
       )
     when "fallido"
       scope.where(
-        "container_services.factura IS NULL AND latest_billing_invoice.status = ?",
+        "NULLIF(BTRIM(COALESCE(container_services.factura, '')), '') IS NULL AND latest_billing_invoice.status = ?",
         "failed"
       )
     when "proforma"
       scope.where(
-        "container_services.factura IS NULL AND (latest_billing_invoice.status IS NULL OR latest_billing_invoice.status NOT IN (?))",
+        "NULLIF(BTRIM(COALESCE(container_services.factura, '')), '') IS NULL AND (latest_billing_invoice.status IS NULL OR latest_billing_invoice.status NOT IN (?))",
         %w[issued cancel_pending cancelled draft queued failed]
       )
     else
@@ -502,22 +502,22 @@ class ServicesController < ApplicationController
     case @selected_billing_status
     when "facturado"
       scope.where(
-        "bl_house_line_services.factura IS NOT NULL OR latest_billing_invoice.status IN (?)",
+        "NULLIF(BTRIM(COALESCE(bl_house_line_services.factura, '')), '') IS NOT NULL OR latest_billing_invoice.status IN (?)",
         %w[issued cancel_pending cancelled]
       )
     when "en_proceso"
       scope.where(
-        "bl_house_line_services.factura IS NULL AND latest_billing_invoice.status IN (?)",
+        "NULLIF(BTRIM(COALESCE(bl_house_line_services.factura, '')), '') IS NULL AND latest_billing_invoice.status IN (?)",
         %w[draft queued]
       )
     when "fallido"
       scope.where(
-        "bl_house_line_services.factura IS NULL AND latest_billing_invoice.status = ?",
+        "NULLIF(BTRIM(COALESCE(bl_house_line_services.factura, '')), '') IS NULL AND latest_billing_invoice.status = ?",
         "failed"
       )
     when "proforma"
       scope.where(
-        "bl_house_line_services.factura IS NULL AND (latest_billing_invoice.status IS NULL OR latest_billing_invoice.status NOT IN (?))",
+        "NULLIF(BTRIM(COALESCE(bl_house_line_services.factura, '')), '') IS NULL AND (latest_billing_invoice.status IS NULL OR latest_billing_invoice.status NOT IN (?))",
         %w[issued cancel_pending cancelled draft queued failed]
       )
     else
@@ -593,8 +593,10 @@ class ServicesController < ApplicationController
           "UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) <> '' " \
           "AND UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) IN (?) " \
           "AND (" \
-            "UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) = UPPER(TRIM(COALESCE(billed_to_fp_rfc_filter.rfc, ''))) " \
-            "OR UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) = UPPER(TRIM(COALESCE(client_fp_rfc_filter.rfc, '')))" \
+            "(UPPER(TRIM(COALESCE(billed_to_fp_rfc_filter.rfc, ''))) <> '' " \
+              "AND UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) = UPPER(TRIM(COALESCE(billed_to_fp_rfc_filter.rfc, '')))) " \
+            "OR (UPPER(TRIM(COALESCE(billed_to_fp_rfc_filter.rfc, ''))) = '' " \
+              "AND UPPER(TRIM(COALESCE(consolidator_fp_rfc_filter.rfc, ''))) = UPPER(TRIM(COALESCE(client_fp_rfc_filter.rfc, ''))))" \
           ")" \
         ")",
         exception_rfcs
@@ -904,10 +906,11 @@ class ServicesController < ApplicationController
   end
 
   def receiver_rfcs_for_nipon_exception(service)
-    [
-      service.billed_to_entity,
-      service.bl_house_line&.client
-    ].filter_map { |entity| normalized_rfc_for_exception(entity) }.uniq
+    billed_to_rfc = normalized_rfc_for_exception(service.billed_to_entity)
+    return [ billed_to_rfc ] if billed_to_rfc.present?
+
+    client_rfc = normalized_rfc_for_exception(service.bl_house_line&.client)
+    client_rfc.present? ? [ client_rfc ] : []
   end
 
   def normalized_rfc_for_exception(entity)

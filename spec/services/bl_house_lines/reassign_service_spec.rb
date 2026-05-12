@@ -68,4 +68,20 @@ RSpec.describe BlHouseLines::ReassignService do
       ).call
     }.to raise_error(BlHouseLines::ReassignService::Error, "Debes seleccionar un broker.")
   end
+
+  it "raises when reassignment service catalog is missing" do
+    ServiceCatalog.where(code: "BL-ASIG").delete_all
+    ServiceCatalog.where(name: "Asignación electrónica de carga").delete_all
+    ServiceCatalog.where(name: "Asignacion electronica de carga").delete_all
+
+    expect {
+      described_class.new(
+        bl_house_line: bl_house_line,
+        new_customs_agent_id: new_agent.id,
+        new_customs_broker_id: new_broker.id,
+        new_client_id: new_client.id,
+        current_user: current_user
+      ).call
+    }.to raise_error(BlHouseLines::ReassignService::Error, "No existe el catálogo de servicio BL-ASIG para registrar la reasignación.")
+  end
 end
