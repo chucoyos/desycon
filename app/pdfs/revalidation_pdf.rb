@@ -9,20 +9,20 @@ class RevalidationPdf
       pdf.font_size 14
       pdf.text "REVALIDACIÓN ELECTRÓNICA", align: :center, style: :bold
       pdf.move_down 10
-      pdf.text "FOLIO NÚMERO: #{@bl_house_line.id}", align: :center, style: :bold
+      pdf.text pdf_safe("FOLIO NÚMERO: #{@bl_house_line.id}"), align: :center, style: :bold
       pdf.move_down 10
 
       # Customs office info
       pdf.font_size 12
-      pdf.text "ADUANA DE #{destination_port_name_for_letter}", align: :center, style: :bold
+      pdf.text pdf_safe("ADUANA DE #{destination_port_name_for_letter}"), align: :center, style: :bold
       pdf.move_down 10
-      pdf.text "C. ADMINISTRADOR DE LA ADUANA MARITIMA DE #{destination_port_name_for_letter}", align: :center
+      pdf.text pdf_safe("C. ADMINISTRADOR DE LA ADUANA MARITIMA DE #{destination_port_name_for_letter}"), align: :center
       pdf.text "P R E S E N T E.", align: :center
       pdf.move_down 20
 
       # Legal text
       pdf.font_size 10
-      pdf.text "De conformidad con los artículos 36-A Fracción I inciso B, 40 y 41 de la Ley Aduanera vigente, declaramos bajo protesta de decir verdad que #{consignatario_name_for_letter} ha sido designado como el consignatario de las mercancías amparadas bajo el conocimiento de embarque que se detalla a continuación."
+      pdf.text pdf_safe("De conformidad con los artículos 36-A Fracción I inciso B, 40 y 41 de la Ley Aduanera vigente, declaramos bajo protesta de decir verdad que #{consignatario_name_for_letter} ha sido designado como el consignatario de las mercancías amparadas bajo el conocimiento de embarque que se detalla a continuación.")
       pdf.move_down 10
       pdf.text "En virtud de lo anterior, y toda vez que diversos Agentes Aduanales o sus representantes debidamente acreditados procederán al retiro de dichas mercancías, por medio de la presente CEDEMOS LOS DERECHOS a la empresa que se menciona al calce, para que proceda con el despacho y el retiro de las mercancías del recinto fiscal autorizado."
       pdf.move_down 20
@@ -33,21 +33,21 @@ class RevalidationPdf
       pdf.move_down 10
 
       data = [
-        [ "BL House:", @bl_house_line.blhouse ],
-        [ "Cantidad:", @bl_house_line.cantidad ],
-        [ "Embalaje:", packaging_name ],
-        [ "Contiene:", @bl_house_line.contiene ],
-        [ "Peso:", "#{@bl_house_line.peso} KG" ],
-        [ "Volumen:", "#{@bl_house_line.volumen} M³" ],
-        [ "Agente Aduanal:", customs_broker_name ],
-        [ "Patente:", patent_number ],
-        [ "Consolidador:", consolidator_name ],
-        [ "Estatus:", status_name ],
-        [ "Master BL:", master_bl ],
-        [ "Linea:", shipping_line_name ],
-        [ "Buque:", vessel_name ],
-        [ "Viaje:", voyage ],
-        [ "Almacén:", location_name ]
+        [ "BL House:", pdf_safe(@bl_house_line.blhouse) ],
+        [ "Cantidad:", pdf_safe(@bl_house_line.cantidad) ],
+        [ "Embalaje:", pdf_safe(packaging_name) ],
+        [ "Contiene:", pdf_safe(@bl_house_line.contiene) ],
+        [ "Peso:", pdf_safe("#{@bl_house_line.peso} KG") ],
+        [ "Volumen:", pdf_safe("#{@bl_house_line.volumen} M³") ],
+        [ "Agente Aduanal:", pdf_safe(customs_broker_name) ],
+        [ "Patente:", pdf_safe(patent_number) ],
+        [ "Consolidador:", pdf_safe(consolidator_name) ],
+        [ "Estatus:", pdf_safe(status_name) ],
+        [ "Master BL:", pdf_safe(master_bl) ],
+        [ "Linea:", pdf_safe(shipping_line_name) ],
+        [ "Buque:", pdf_safe(vessel_name) ],
+        [ "Viaje:", pdf_safe(voyage) ],
+        [ "Almacén:", pdf_safe(location_name) ]
       ]
 
       pdf.table(data, width: pdf.bounds.width) do |table|
@@ -137,5 +137,12 @@ class RevalidationPdf
 
   def location_name
     almacen_name.presence || terminal_name.presence || "N/A"
+  end
+
+  def pdf_safe(value)
+    value
+      .to_s
+      .unicode_normalize(:nfkc)
+      .encode("Windows-1252", invalid: :replace, undef: :replace, replace: "")
   end
 end
