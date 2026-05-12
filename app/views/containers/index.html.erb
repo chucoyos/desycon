@@ -316,7 +316,7 @@
     <%= render 'shared/tailwind_pagination', paginated: @containers %>
   </div>
 
-  <% if current_user.admin_or_executive? %>
+  <% if current_user.admin_or_executive? || current_user.consolidator? %>
     <div class="mb-3 flex justify-end">
       <%= link_to operations_report_containers_path(request.query_parameters.except("page", "per", "format").merge(format: :xlsx)),
         class: "cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-sm font-semibold" do %>

@@ -476,6 +476,48 @@ RSpec.describe "Containers", type: :request do
       expect(response.body).to include("ETA:")
       expect(response.body).not_to include("Sin línea")
     end
+
+    it "shows operations report button for consolidator users" do
+      consolidator = create(:user, :consolidator)
+      sign_in consolidator, scope: :user
+
+      get containers_url
+
+      expect(response).to be_successful
+      expect(response.body).to include("Reporte Operaciones")
+    end
+  end
+
+  describe "GET /containers/operations_report for consolidator" do
+    it "exports only own consolidator containers" do
+      consolidator = create(:user, :consolidator)
+      own_entity = consolidator.entity
+      other_entity = create(:entity, :consolidator)
+
+      own_container = create(:container, consolidator_entity: own_entity, archivo_nr: "REF-CONS-001")
+      other_container = create(:container, consolidator_entity: other_entity, archivo_nr: "REF-CONS-999")
+
+      sign_in consolidator, scope: :user
+
+      get operations_report_containers_url, params: { consolidator_id: other_entity.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.headers["Content-Type"]).to include("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+      tempfile = Tempfile.new([ "operaciones_consolidator", ".xlsx" ])
+      tempfile.binmode
+      tempfile.write(response.body)
+      tempfile.rewind
+
+      workbook = Roo::Excelx.new(tempfile.path)
+      sheet = workbook.sheet(0)
+      references = (2..sheet.last_row).map { |row| sheet.row(row)[1] }.compact
+
+      expect(references).to include(own_container.archivo_nr)
+      expect(references).not_to include(other_container.archivo_nr)
+
+      tempfile.close!
+    end
   end
 
   describe "GET /containers shipping line filter for non-consolidator" do
