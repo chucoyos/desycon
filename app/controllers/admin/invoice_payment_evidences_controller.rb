@@ -258,7 +258,8 @@ module Admin
               row[:customs_agent_name],
               row[:receiver_name]
             ],
-            style: [ nil, date_style, amount_style, nil, nil, nil ]
+            style: [ nil, date_style, amount_style, nil, nil, nil ],
+            types: [ :string, :date, :float, :string, :string, :string ]
           )
         end
       end

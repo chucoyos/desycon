@@ -130,7 +130,7 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
         invoice: issued_invoice,
         paid_at: Date.new(2026, 4, 9),
         amount: 789.45,
-        tracking_key: "TRACK-EXCEL-001"
+        tracking_key: "00012345678901234567"
       )
 
       create(
@@ -174,7 +174,7 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
       expect(row[0]).to eq("A 123")
       expect(row[1]).to be_present
       expect(row[2]).to eq(789.45)
-      expect(row[3]).to eq("TRACK-EXCEL-001")
+      expect(row[3]).to eq("00012345678901234567")
       expect(row[4]).to eq(customs_agent.name)
       expect(row[5]).to eq(client_entity.name)
 
