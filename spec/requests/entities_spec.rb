@@ -99,6 +99,31 @@ RSpec.describe "Entities", type: :request do
     end
   end
 
+  describe "GET /entities/customs_agents_search" do
+    let!(:matching_agency) { create(:entity, :customs_agent, name: "Agencia Pacifico") }
+    let!(:non_matching_agency) { create(:entity, :customs_agent, name: "Aduana Norte") }
+
+    it "returns matching customs agencies" do
+      get customs_agents_search_entities_path, params: { q: "paci" }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      labels = payload.fetch("results").map { |result| result["label"] }
+
+      expect(labels).to include(matching_agency.name)
+      expect(labels).not_to include(non_matching_agency.name)
+    end
+
+    it "returns empty results when query length is below min chars" do
+      get customs_agents_search_entities_path, params: { q: "a" }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload["results"]).to eq([])
+      expect(payload["meta"]).to include("min_chars" => 2)
+    end
+  end
+
   describe "GET /entities/:id/customs_brokers_search" do
     let(:agency) { create(:entity, :customs_agent) }
     let!(:linked_broker) { create(:entity, :customs_broker, name: "Broker Vinculado") }

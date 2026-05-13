@@ -72,6 +72,33 @@ class EntitiesController < ApplicationController
     render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
   end
 
+  def customs_agents_search
+    authorize Entity, :create?
+
+    query = params[:q].to_s.strip
+    min_chars = 2
+    limit = 20
+
+    if query.length < min_chars
+      return render json: { results: [], meta: { query:, min_chars:, limit:, count: 0 } }
+    end
+
+    cache_key = [ "entities", "customs_agents_search", query.downcase, limit ].join(":")
+    results = Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      Entity
+        .customs_agents
+        .where("name ILIKE ?", "%#{query}%")
+        .order(:name)
+        .limit(limit)
+        .pluck(:id, :name)
+        .map do |id, name|
+          { id:, label: name }
+        end
+    end
+
+    render json: { results:, meta: { query:, min_chars:, limit:, count: results.size } }
+  end
+
   def customs_brokers_search
     authorize @entity, :manage_brokers?
 

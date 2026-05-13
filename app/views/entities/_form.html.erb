@@ -106,12 +106,28 @@
     <div class="px-4 sm:px-6 py-4">
       <div>
         <%= form.label :customs_agent_id, "Agencia Aduanal", class: "block text-sm font-semibold text-gray-700 mb-2" %>
-        <%= form.collection_select :customs_agent_id, 
-          Entity.customs_agents.order(:name), 
-            :id, 
-            :name, 
-            { include_blank: "Sin asignar" }, 
-            class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900" %>
+        <div
+          data-controller="catalog-autocomplete"
+          data-catalog-autocomplete-url-value="<%= customs_agents_search_entities_path %>"
+          data-catalog-autocomplete-min-chars-value="2"
+          data-catalog-autocomplete-debounce-value="300"
+          class="relative"
+        >
+          <%= form.hidden_field :customs_agent_id, data: { catalog_autocomplete_target: "hiddenInput" } %>
+
+          <%= text_field_tag :customs_agent_search,
+                entity.customs_agent&.name,
+                autocomplete: "off",
+                placeholder: "Escribe para buscar una agencia aduanal",
+                class: "block w-full px-3 py-3 border-2 border-gray-200 focus:border-teal-500 focus:ring-teal-500 rounded-lg focus:ring-2 transition-all duration-200 text-gray-900",
+                data: {
+                  catalog_autocomplete_target: "input",
+                  action: "input->catalog-autocomplete#onInput keydown->catalog-autocomplete#onKeydown focus->catalog-autocomplete#onFocus blur->catalog-autocomplete#onBlur"
+                } %>
+
+          <div data-catalog-autocomplete-target="status" class="mt-1 text-xs text-gray-500"></div>
+          <div data-catalog-autocomplete-target="results" class="absolute z-30 mt-2 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-72 overflow-auto"></div>
+        </div>
         <p class="mt-1 text-sm text-gray-500">Asigna el cliente a una agencia aduanal (opcional)</p>
       </div>
     </div>

@@ -104,6 +104,7 @@ Rails.application.routes.draw do
   resources :entities do
     collection do
       get :countries_search
+      get :customs_agents_search
     end
 
     member do
