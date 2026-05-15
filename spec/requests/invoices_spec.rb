@@ -233,6 +233,73 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include('BLH-GRP-001')
       expect(response.body).to include('Agencia Agrupada Centro')
     end
+
+    it 'exports filtered invoices to xlsx including records beyond current page and totals' do
+      customs_agent = create(:entity, :customs_agent, name: 'Agencia Premium')
+      consolidator = create(:entity, :consolidator, name: 'Consolidador Uno')
+      receiver = create(:entity, :client, customs_agent: customs_agent, name: 'Cliente Receptor')
+      container = create(:container, number: 'ABCD1234567', consolidator_entity: consolidator)
+      bl_house_line = create(:bl_house_line, blhouse: 'BLH-EXPORT-001', customs_agent: customs_agent, container: container, client: receiver)
+      service_catalog = create(:service_catalog, applies_to: 'bl_house_line', amount: 100)
+
+      service_one = create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: service_catalog)
+      service_two = create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: service_catalog)
+
+      create(:invoice,
+        invoiceable: service_one,
+        receiver_entity: receiver,
+        customs_agent: customs_agent,
+        status: 'issued',
+        subtotal: 100,
+        tax_total: 16,
+        total: 116,
+        provider_response: { 'serie' => 'A', 'folio' => '100' })
+
+      create(:invoice,
+        invoiceable: service_two,
+        receiver_entity: receiver,
+        customs_agent: customs_agent,
+        status: 'issued',
+        subtotal: 200,
+        tax_total: 32,
+        total: 232,
+        provider_response: { 'serie' => 'A', 'folio' => '101' })
+
+      get export_excel_invoices_path(format: :xlsx), params: {
+        start_date: 30.days.ago.to_date.to_s,
+        end_date: Date.current.to_s,
+        per: 1,
+        page: 1
+      }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.content_type).to include('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+      tempfile = Tempfile.new([ 'invoices_report', '.xlsx' ])
+      tempfile.binmode
+      tempfile.write(response.body)
+      tempfile.rewind
+
+      workbook = Roo::Excelx.new(tempfile.path)
+      sheet = workbook.sheet(0)
+
+      expect(sheet.row(1)).to eq([
+        'Fecha', 'Factura', 'Consolidador', 'Agencia Aduanal', 'Receptor', 'Blhouse', 'Contenedor', 'Puerto', 'Emision', 'Pago', 'Subtotal', 'IVA', 'Total', 'Saldo'
+      ])
+
+      exported_facts = [ sheet.row(2)[1], sheet.row(3)[1] ]
+      expect(exported_facts).to include('A 100')
+      expect(exported_facts).to include('A 101')
+
+      totals_row = sheet.row(4)
+      expect(totals_row[9]).to eq('Totales')
+      expect(totals_row[10]).to eq(300.0)
+      expect(totals_row[11]).to eq(48.0)
+      expect(totals_row[12]).to eq(348.0)
+      expect(totals_row[13]).to eq(348.0)
+
+      tempfile.close!
+    end
   end
 
   describe 'GET /invoices/new' do

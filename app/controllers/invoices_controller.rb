@@ -14,273 +14,10 @@ class InvoicesController < ApplicationController
     authorize Invoice
 
     admin_or_executive = current_user.admin_or_executive?
-
-    @selected_start_date = resolved_start_date
-    @selected_end_date = resolved_end_date
-    @selected_status = params[:status].to_s.presence
-    @selected_kind = params[:kind].to_s.presence
-    @selected_payment_status = params[:payment_status].to_s.presence
-    @selected_client_id = params[:client_id].to_s.presence
-    @selected_customs_agent_id = admin_or_executive ? params[:customs_agent_id].to_s.presence : nil
-    @selected_consolidator_id = admin_or_executive ? params[:consolidator_id].to_s.presence : nil
-    @selected_container_number = params[:container_number].to_s.strip.first(11).presence
-    @selected_blhouse = params[:blhouse].to_s.strip.presence
-    @selected_serie = params[:serie].to_s.strip.presence
-    @selected_folio = params[:folio].to_s.strip.presence
-    @selected_service_catalog_id = params[:service_catalog_id].to_s.presence
-    @selected_service_query = params[:service].to_s.strip.presence
-    @selected_service = resolved_selected_service_label
-    @selected_uuid = params[:uuid].to_s.strip.presence
+    initialize_invoice_filters(admin_or_executive: admin_or_executive)
     @applied_filters = build_applied_filters(admin_or_executive: admin_or_executive)
-
-    start_date = [ @selected_start_date, @selected_end_date ].min
-    end_date = [ @selected_start_date, @selected_end_date ].max
-    paid_total_sql = "COALESCE((SELECT SUM(invoice_payments.amount) FROM invoice_payments WHERE invoice_payments.invoice_id = invoices.id), 0)"
-    last_email_event_type_sql = <<~SQL.squish
-      (
-        SELECT invoice_events.event_type
-        FROM invoice_events
-        WHERE invoice_events.invoice_id = invoices.id
-          AND invoice_events.event_type IN ('email_requested', 'email_sent', 'email_failed')
-        ORDER BY invoice_events.created_at DESC, invoice_events.id DESC
-        LIMIT 1
-      )
-    SQL
-    last_email_event_at_sql = <<~SQL.squish
-      (
-        SELECT invoice_events.created_at
-        FROM invoice_events
-        WHERE invoice_events.invoice_id = invoices.id
-          AND invoice_events.event_type IN ('email_requested', 'email_sent', 'email_failed')
-        ORDER BY invoice_events.created_at DESC, invoice_events.id DESC
-        LIMIT 1
-      )
-    SQL
-
     scoped_invoices = policy_scope(Invoice)
-            @invoices = scoped_invoices
-              .includes(:receiver_entity, :customs_agent)
-          .select(
-        "invoices.*",
-        "#{paid_total_sql} AS paid_total_for_index",
-        "#{last_email_event_type_sql} AS last_email_event_type_for_index",
-        "#{last_email_event_at_sql} AS last_email_event_at_for_index"
-          )
-                .where(created_at: start_date.beginning_of_day..end_date.end_of_day)
-                .order(created_at: :desc)
-
-    @invoices = @invoices.where(status: @selected_status) if @selected_status.present? && Invoice::STATUSES.include?(@selected_status)
-    @invoices = @invoices.where(kind: @selected_kind) if @selected_kind.present? && Invoice::KINDS.include?(@selected_kind)
-    valid_payment_filter = Invoice::PAYMENT_STATUSES.include?(@selected_payment_status)
-    @invoices = @invoices.with_payment_status(@selected_payment_status) if @selected_payment_status.present? && valid_payment_filter
-    @invoices = @invoices.where(receiver_entity_id: @selected_client_id) if @selected_client_id.present?
-    if @selected_customs_agent_id.present?
-      @invoices = @invoices.joins(:receiver_entity).where(entities: { customs_agent_id: @selected_customs_agent_id })
-    end
-    if @selected_consolidator_id.present?
-      @invoices = @invoices.where(
-        <<~SQL,
-          (
-            invoices.invoiceable_type = 'ContainerService' AND EXISTS (
-              SELECT 1
-              FROM container_services
-              INNER JOIN containers ON containers.id = container_services.container_id
-              WHERE container_services.id = invoices.invoiceable_id
-                AND containers.consolidator_entity_id = :consolidator_id
-            )
-          )
-          OR
-          (
-            invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
-              SELECT 1
-              FROM bl_house_line_services
-              INNER JOIN bl_house_lines ON bl_house_lines.id = bl_house_line_services.bl_house_line_id
-              INNER JOIN containers ON containers.id = bl_house_lines.container_id
-              WHERE bl_house_line_services.id = invoices.invoiceable_id
-                AND containers.consolidator_entity_id = :consolidator_id
-            )
-          )
-        SQL
-        consolidator_id: @selected_consolidator_id
-      )
-    end
-    if @selected_container_number.present?
-      @invoices = @invoices.where(
-        <<~SQL,
-          (
-            invoices.invoiceable_type = 'ContainerService' AND EXISTS (
-              SELECT 1
-              FROM container_services
-              INNER JOIN containers ON containers.id = container_services.container_id
-              WHERE container_services.id = invoices.invoiceable_id
-                AND containers.number ILIKE :container_number
-            )
-          )
-          OR
-          (
-            invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
-              SELECT 1
-              FROM bl_house_line_services
-              INNER JOIN bl_house_lines ON bl_house_lines.id = bl_house_line_services.bl_house_line_id
-              INNER JOIN containers ON containers.id = bl_house_lines.container_id
-              WHERE bl_house_line_services.id = invoices.invoiceable_id
-                AND containers.number ILIKE :container_number
-            )
-          )
-        SQL
-        container_number: "%#{@selected_container_number}%"
-      )
-    end
-    if @selected_blhouse.present?
-      @invoices = @invoices.where(
-        <<~SQL,
-          (
-            invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
-              SELECT 1
-              FROM bl_house_line_services
-              INNER JOIN bl_house_lines ON bl_house_lines.id = bl_house_line_services.bl_house_line_id
-              WHERE bl_house_line_services.id = invoices.invoiceable_id
-                AND bl_house_lines.blhouse ILIKE :blhouse
-            )
-          )
-          OR EXISTS (
-            SELECT 1
-            FROM invoice_service_links
-            INNER JOIN bl_house_line_services
-              ON invoice_service_links.serviceable_type = 'BlHouseLineService'
-             AND invoice_service_links.serviceable_id = bl_house_line_services.id
-            INNER JOIN bl_house_lines ON bl_house_lines.id = bl_house_line_services.bl_house_line_id
-            WHERE invoice_service_links.invoice_id = invoices.id
-              AND bl_house_lines.blhouse ILIKE :blhouse
-          )
-        SQL
-        blhouse: "%#{@selected_blhouse}%"
-      )
-    end
-    if @selected_serie.present?
-      @invoices = @invoices.where(
-        "COALESCE(invoices.provider_response->>'serie', invoices.payload_snapshot->>'serie', invoices.payload_snapshot->>'serie_override', '') ILIKE ?",
-        "%#{@selected_serie}%"
-      )
-    end
-    if @selected_folio.present?
-      @invoices = @invoices.where(
-        "LOWER(COALESCE(invoices.provider_response->>'folio', invoices.provider_response->>'noComprobante', invoices.provider_response->>'numeroComprobante', invoices.facturador_comprobante_id::text, '')) = LOWER(?)",
-        @selected_folio
-      )
-    end
-    if @selected_service_catalog_id.present?
-      @invoices = @invoices.where(
-        <<~SQL,
-          (
-            invoices.invoiceable_type = 'ContainerService' AND EXISTS (
-              SELECT 1
-              FROM container_services
-              WHERE container_services.id = invoices.invoiceable_id
-                AND container_services.service_catalog_id = :service_catalog_id
-            )
-          )
-          OR
-          (
-            invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
-              SELECT 1
-              FROM bl_house_line_services
-              WHERE bl_house_line_services.id = invoices.invoiceable_id
-                AND bl_house_line_services.service_catalog_id = :service_catalog_id
-            )
-          )
-          OR EXISTS (
-            SELECT 1
-            FROM invoice_service_links
-            INNER JOIN container_services
-              ON invoice_service_links.serviceable_type = 'ContainerService'
-             AND invoice_service_links.serviceable_id = container_services.id
-            WHERE invoice_service_links.invoice_id = invoices.id
-              AND container_services.service_catalog_id = :service_catalog_id
-          )
-          OR EXISTS (
-            SELECT 1
-            FROM invoice_service_links
-            INNER JOIN bl_house_line_services
-              ON invoice_service_links.serviceable_type = 'BlHouseLineService'
-             AND invoice_service_links.serviceable_id = bl_house_line_services.id
-            WHERE invoice_service_links.invoice_id = invoices.id
-              AND bl_house_line_services.service_catalog_id = :service_catalog_id
-          )
-          OR EXISTS (
-            SELECT 1
-            FROM invoice_line_items
-            WHERE invoice_line_items.invoice_id = invoices.id
-              AND invoice_line_items.service_catalog_id = :service_catalog_id
-          )
-        SQL
-        service_catalog_id: @selected_service_catalog_id
-      )
-    elsif @selected_service_query.present?
-      @invoices = @invoices.where(
-        <<~SQL,
-          (
-            invoices.invoiceable_type = 'ContainerService' AND EXISTS (
-              SELECT 1
-              FROM container_services
-              INNER JOIN service_catalogs ON service_catalogs.id = container_services.service_catalog_id
-              WHERE container_services.id = invoices.invoiceable_id
-                AND (
-                  service_catalogs.name ILIKE :service_query
-                  OR service_catalogs.code ILIKE :service_query
-                )
-            )
-          )
-          OR
-          (
-            invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
-              SELECT 1
-              FROM bl_house_line_services
-              INNER JOIN service_catalogs ON service_catalogs.id = bl_house_line_services.service_catalog_id
-              WHERE bl_house_line_services.id = invoices.invoiceable_id
-                AND (
-                  service_catalogs.name ILIKE :service_query
-                  OR service_catalogs.code ILIKE :service_query
-                )
-            )
-          )
-          OR EXISTS (
-            SELECT 1
-            FROM invoice_service_links
-            INNER JOIN container_services
-              ON invoice_service_links.serviceable_type = 'ContainerService'
-             AND invoice_service_links.serviceable_id = container_services.id
-            INNER JOIN service_catalogs ON service_catalogs.id = container_services.service_catalog_id
-            WHERE invoice_service_links.invoice_id = invoices.id
-              AND (
-                service_catalogs.name ILIKE :service_query
-                OR service_catalogs.code ILIKE :service_query
-              )
-          )
-          OR EXISTS (
-            SELECT 1
-            FROM invoice_service_links
-            INNER JOIN bl_house_line_services
-              ON invoice_service_links.serviceable_type = 'BlHouseLineService'
-             AND invoice_service_links.serviceable_id = bl_house_line_services.id
-            INNER JOIN service_catalogs ON service_catalogs.id = bl_house_line_services.service_catalog_id
-            WHERE invoice_service_links.invoice_id = invoices.id
-              AND (
-                service_catalogs.name ILIKE :service_query
-                OR service_catalogs.code ILIKE :service_query
-              )
-          )
-          OR EXISTS (
-            SELECT 1
-            FROM invoice_line_items
-            WHERE invoice_line_items.invoice_id = invoices.id
-              AND invoice_line_items.description ILIKE :service_query
-          )
-        SQL
-        service_query: "%#{@selected_service_query}%"
-      )
-    end
-    @invoices = @invoices.where("sat_uuid ILIKE ?", "%#{@selected_uuid}%") if @selected_uuid.present?
+    @invoices = filtered_invoices_scope(base_scope: scoped_invoices)
 
     @invoices = @invoices.page(params[:page]).per(params[:per] || 10)
 
@@ -297,6 +34,28 @@ class InvoicesController < ApplicationController
     @admin_or_executive = admin_or_executive
     @consolidator_portal_user = current_user.consolidator? && current_user.entity&.role_consolidator?
     @series_filter_options = build_series_filter_options
+  end
+
+  def export_excel
+    authorize Invoice, :index?
+
+    admin_or_executive = current_user.admin_or_executive?
+    initialize_invoice_filters(admin_or_executive: admin_or_executive)
+
+    invoices = filtered_invoices_scope(base_scope: policy_scope(Invoice))
+
+    preload_receiver_fiscal_profiles_for(invoices)
+    build_invoice_service_context_data(invoices)
+    rows = build_invoices_excel_rows(invoices)
+
+    timestamp = Time.current.strftime("%Y%m%d_%H%M")
+
+    send_data(
+      build_invoices_export_xlsx(rows),
+      filename: "reporte_facturas_#{timestamp}.xlsx",
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      disposition: "attachment"
+    )
   end
 
   def collections_report
@@ -883,12 +642,491 @@ class InvoicesController < ApplicationController
 
   private
 
+  def initialize_invoice_filters(admin_or_executive:)
+    @selected_start_date = resolved_start_date
+    @selected_end_date = resolved_end_date
+    @selected_status = params[:status].to_s.presence
+    @selected_kind = params[:kind].to_s.presence
+    @selected_payment_status = params[:payment_status].to_s.presence
+    @selected_client_id = params[:client_id].to_s.presence
+    @selected_customs_agent_id = admin_or_executive ? params[:customs_agent_id].to_s.presence : nil
+    @selected_consolidator_id = admin_or_executive ? params[:consolidator_id].to_s.presence : nil
+    @selected_container_number = params[:container_number].to_s.strip.first(11).presence
+    @selected_blhouse = params[:blhouse].to_s.strip.presence
+    @selected_serie = params[:serie].to_s.strip.presence
+    @selected_folio = params[:folio].to_s.strip.presence
+    @selected_service_catalog_id = params[:service_catalog_id].to_s.presence
+    @selected_service_query = params[:service].to_s.strip.presence
+    @selected_service = resolved_selected_service_label
+    @selected_uuid = params[:uuid].to_s.strip.presence
+  end
+
+  def filtered_invoices_scope(base_scope:)
+    start_date = [ @selected_start_date, @selected_end_date ].min
+    end_date = [ @selected_start_date, @selected_end_date ].max
+    paid_total_sql = "COALESCE((SELECT SUM(invoice_payments.amount) FROM invoice_payments WHERE invoice_payments.invoice_id = invoices.id), 0)"
+    last_email_event_type_sql = <<~SQL.squish
+      (
+        SELECT invoice_events.event_type
+        FROM invoice_events
+        WHERE invoice_events.invoice_id = invoices.id
+          AND invoice_events.event_type IN ('email_requested', 'email_sent', 'email_failed')
+        ORDER BY invoice_events.created_at DESC, invoice_events.id DESC
+        LIMIT 1
+      )
+    SQL
+    last_email_event_at_sql = <<~SQL.squish
+      (
+        SELECT invoice_events.created_at
+        FROM invoice_events
+        WHERE invoice_events.invoice_id = invoices.id
+          AND invoice_events.event_type IN ('email_requested', 'email_sent', 'email_failed')
+        ORDER BY invoice_events.created_at DESC, invoice_events.id DESC
+        LIMIT 1
+      )
+    SQL
+
+    scope = base_scope
+      .includes(:receiver_entity, :customs_agent)
+      .select(
+        "invoices.*",
+        "#{paid_total_sql} AS paid_total_for_index",
+        "#{last_email_event_type_sql} AS last_email_event_type_for_index",
+        "#{last_email_event_at_sql} AS last_email_event_at_for_index"
+      )
+      .where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+      .order(created_at: :desc)
+
+    scope = scope.where(status: @selected_status) if @selected_status.present? && Invoice::STATUSES.include?(@selected_status)
+    scope = scope.where(kind: @selected_kind) if @selected_kind.present? && Invoice::KINDS.include?(@selected_kind)
+    valid_payment_filter = Invoice::PAYMENT_STATUSES.include?(@selected_payment_status)
+    scope = scope.with_payment_status(@selected_payment_status) if @selected_payment_status.present? && valid_payment_filter
+    scope = scope.where(receiver_entity_id: @selected_client_id) if @selected_client_id.present?
+
+    if @selected_customs_agent_id.present?
+      scope = scope.joins(:receiver_entity).where(entities: { customs_agent_id: @selected_customs_agent_id })
+    end
+
+    if @selected_consolidator_id.present?
+      scope = scope.where(
+        <<~SQL,
+          (
+            invoices.invoiceable_type = 'ContainerService' AND EXISTS (
+              SELECT 1
+              FROM container_services
+              INNER JOIN containers ON containers.id = container_services.container_id
+              WHERE container_services.id = invoices.invoiceable_id
+                AND containers.consolidator_entity_id = :consolidator_id
+            )
+          )
+          OR
+          (
+            invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
+              SELECT 1
+              FROM bl_house_line_services
+              INNER JOIN bl_house_lines ON bl_house_lines.id = bl_house_line_services.bl_house_line_id
+              INNER JOIN containers ON containers.id = bl_house_lines.container_id
+              WHERE bl_house_line_services.id = invoices.invoiceable_id
+                AND containers.consolidator_entity_id = :consolidator_id
+            )
+          )
+        SQL
+        consolidator_id: @selected_consolidator_id
+      )
+    end
+
+    if @selected_container_number.present?
+      scope = scope.where(
+        <<~SQL,
+          (
+            invoices.invoiceable_type = 'ContainerService' AND EXISTS (
+              SELECT 1
+              FROM container_services
+              INNER JOIN containers ON containers.id = container_services.container_id
+              WHERE container_services.id = invoices.invoiceable_id
+                AND containers.number ILIKE :container_number
+            )
+          )
+          OR
+          (
+            invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
+              SELECT 1
+              FROM bl_house_line_services
+              INNER JOIN bl_house_lines ON bl_house_lines.id = bl_house_line_services.bl_house_line_id
+              INNER JOIN containers ON containers.id = bl_house_lines.container_id
+              WHERE bl_house_line_services.id = invoices.invoiceable_id
+                AND containers.number ILIKE :container_number
+            )
+          )
+        SQL
+        container_number: "%#{@selected_container_number}%"
+      )
+    end
+
+    if @selected_blhouse.present?
+      scope = scope.where(
+        <<~SQL,
+          (
+            invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
+              SELECT 1
+              FROM bl_house_line_services
+              INNER JOIN bl_house_lines ON bl_house_lines.id = bl_house_line_services.bl_house_line_id
+              WHERE bl_house_line_services.id = invoices.invoiceable_id
+                AND bl_house_lines.blhouse ILIKE :blhouse
+            )
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM invoice_service_links
+            INNER JOIN bl_house_line_services
+              ON invoice_service_links.serviceable_type = 'BlHouseLineService'
+             AND invoice_service_links.serviceable_id = bl_house_line_services.id
+            INNER JOIN bl_house_lines ON bl_house_lines.id = bl_house_line_services.bl_house_line_id
+            WHERE invoice_service_links.invoice_id = invoices.id
+              AND bl_house_lines.blhouse ILIKE :blhouse
+          )
+        SQL
+        blhouse: "%#{@selected_blhouse}%"
+      )
+    end
+
+    if @selected_serie.present?
+      scope = scope.where(
+        "COALESCE(invoices.provider_response->>'serie', invoices.payload_snapshot->>'serie', invoices.payload_snapshot->>'serie_override', '') ILIKE ?",
+        "%#{@selected_serie}%"
+      )
+    end
+
+    if @selected_folio.present?
+      scope = scope.where(
+        "LOWER(COALESCE(invoices.provider_response->>'folio', invoices.provider_response->>'noComprobante', invoices.provider_response->>'numeroComprobante', invoices.facturador_comprobante_id::text, '')) = LOWER(?)",
+        @selected_folio
+      )
+    end
+
+    if @selected_service_catalog_id.present?
+      scope = scope.where(
+        <<~SQL,
+          (
+            invoices.invoiceable_type = 'ContainerService' AND EXISTS (
+              SELECT 1
+              FROM container_services
+              WHERE container_services.id = invoices.invoiceable_id
+                AND container_services.service_catalog_id = :service_catalog_id
+            )
+          )
+          OR
+          (
+            invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
+              SELECT 1
+              FROM bl_house_line_services
+              WHERE bl_house_line_services.id = invoices.invoiceable_id
+                AND bl_house_line_services.service_catalog_id = :service_catalog_id
+            )
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM invoice_service_links
+            INNER JOIN container_services
+              ON invoice_service_links.serviceable_type = 'ContainerService'
+             AND invoice_service_links.serviceable_id = container_services.id
+            WHERE invoice_service_links.invoice_id = invoices.id
+              AND container_services.service_catalog_id = :service_catalog_id
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM invoice_service_links
+            INNER JOIN bl_house_line_services
+              ON invoice_service_links.serviceable_type = 'BlHouseLineService'
+             AND invoice_service_links.serviceable_id = bl_house_line_services.id
+            WHERE invoice_service_links.invoice_id = invoices.id
+              AND bl_house_line_services.service_catalog_id = :service_catalog_id
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM invoice_line_items
+            WHERE invoice_line_items.invoice_id = invoices.id
+              AND invoice_line_items.service_catalog_id = :service_catalog_id
+          )
+        SQL
+        service_catalog_id: @selected_service_catalog_id
+      )
+    elsif @selected_service_query.present?
+      scope = scope.where(
+        <<~SQL,
+          (
+            invoices.invoiceable_type = 'ContainerService' AND EXISTS (
+              SELECT 1
+              FROM container_services
+              INNER JOIN service_catalogs ON service_catalogs.id = container_services.service_catalog_id
+              WHERE container_services.id = invoices.invoiceable_id
+                AND (
+                  service_catalogs.name ILIKE :service_query
+                  OR service_catalogs.code ILIKE :service_query
+                )
+            )
+          )
+          OR
+          (
+            invoices.invoiceable_type = 'BlHouseLineService' AND EXISTS (
+              SELECT 1
+              FROM bl_house_line_services
+              INNER JOIN service_catalogs ON service_catalogs.id = bl_house_line_services.service_catalog_id
+              WHERE bl_house_line_services.id = invoices.invoiceable_id
+                AND (
+                  service_catalogs.name ILIKE :service_query
+                  OR service_catalogs.code ILIKE :service_query
+                )
+            )
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM invoice_service_links
+            INNER JOIN container_services
+              ON invoice_service_links.serviceable_type = 'ContainerService'
+             AND invoice_service_links.serviceable_id = container_services.id
+            INNER JOIN service_catalogs ON service_catalogs.id = container_services.service_catalog_id
+            WHERE invoice_service_links.invoice_id = invoices.id
+              AND (
+                service_catalogs.name ILIKE :service_query
+                OR service_catalogs.code ILIKE :service_query
+              )
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM invoice_service_links
+            INNER JOIN bl_house_line_services
+              ON invoice_service_links.serviceable_type = 'BlHouseLineService'
+             AND invoice_service_links.serviceable_id = bl_house_line_services.id
+            INNER JOIN service_catalogs ON service_catalogs.id = bl_house_line_services.service_catalog_id
+            WHERE invoice_service_links.invoice_id = invoices.id
+              AND (
+                service_catalogs.name ILIKE :service_query
+                OR service_catalogs.code ILIKE :service_query
+              )
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM invoice_line_items
+            WHERE invoice_line_items.invoice_id = invoices.id
+              AND invoice_line_items.description ILIKE :service_query
+          )
+        SQL
+        service_query: "%#{@selected_service_query}%"
+      )
+    end
+
+    scope = scope.where("sat_uuid ILIKE ?", "%#{@selected_uuid}%") if @selected_uuid.present?
+    scope
+  end
+
+  def build_invoices_excel_rows(invoices)
+    invoices.map do |invoice|
+      serie = invoice.provider_response.to_h["serie"].presence || invoice.payload_snapshot.to_h["serie"].presence
+      folio = invoice.provider_response.to_h["folio"].presence ||
+              invoice.provider_response.to_h["noComprobante"].presence ||
+              invoice.provider_response.to_h["numeroComprobante"].presence ||
+              invoice.facturador_comprobante_id&.to_s
+
+      effective_status = invoice.effective_status.to_s
+
+      {
+        fecha: invoice.issued_at || invoice.created_at,
+        factura: [ serie, folio ].compact.join(" ").presence || "-",
+        consolidador: @invoice_consolidator_by_id[invoice.id].presence || "-",
+        agencia_aduanal: @invoice_agency_by_id[invoice.id].presence || "-",
+        receptor: invoice.receiver_entity&.name.to_s.strip.presence || "-",
+        blhouse: @invoice_hbl_by_id[invoice.id].presence || "-",
+        contenedor: @invoice_container_by_id[invoice.id].presence || "-",
+        puerto: @invoice_port_by_id[invoice.id].presence || "-",
+        estatus_emision: I18n.t("activerecord.attributes.invoice.statuses.#{effective_status}", default: effective_status.humanize),
+        estatus_pago: invoice.payment_status_label,
+        subtotal: invoice.subtotal.to_d,
+        iva: invoice.tax_total.to_d,
+        total: invoice.total.to_d,
+        saldo: invoice.outstanding_amount.to_d
+      }
+    end
+  end
+
+  def build_invoices_export_xlsx(rows)
+    package = Axlsx::Package.new
+    package.workbook.add_worksheet(name: "Facturas") do |sheet|
+      styles = sheet.styles
+
+      header_style = styles.add_style(
+        b: true,
+        sz: 10,
+        fg_color: "FFFFFF",
+        bg_color: "0F766E",
+        alignment: { horizontal: :center, vertical: :center, wrap_text: true },
+        border: { style: :thin, color: "D1D5DB", edges: %i[left right top bottom] }
+      )
+      row_style_even = styles.add_style(
+        sz: 10,
+        fg_color: "111827",
+        bg_color: "FFFFFF",
+        alignment: { vertical: :center, wrap_text: true },
+        border: { style: :thin, color: "E5E7EB", edges: %i[left right top bottom] }
+      )
+      row_style_odd = styles.add_style(
+        sz: 10,
+        fg_color: "111827",
+        bg_color: "F8FAFC",
+        alignment: { vertical: :center, wrap_text: true },
+        border: { style: :thin, color: "E5E7EB", edges: %i[left right top bottom] }
+      )
+      date_style = styles.add_style(
+        sz: 10,
+        format_code: "yyyy-mm-dd",
+        alignment: { horizontal: :center, vertical: :center },
+        border: { style: :thin, color: "E5E7EB", edges: %i[left right top bottom] }
+      )
+      currency_style_even = styles.add_style(
+        sz: 10,
+        fg_color: "111827",
+        bg_color: "FFFFFF",
+        format_code: "$#,##0.00",
+        alignment: { horizontal: :right, vertical: :center },
+        border: { style: :thin, color: "E5E7EB", edges: %i[left right top bottom] }
+      )
+      currency_style_odd = styles.add_style(
+        sz: 10,
+        fg_color: "111827",
+        bg_color: "F8FAFC",
+        format_code: "$#,##0.00",
+        alignment: { horizontal: :right, vertical: :center },
+        border: { style: :thin, color: "E5E7EB", edges: %i[left right top bottom] }
+      )
+      summary_label_style = styles.add_style(
+        sz: 10,
+        b: true,
+        fg_color: "0F172A",
+        bg_color: "E2E8F0",
+        alignment: { horizontal: :right, vertical: :center },
+        border: { style: :thin, color: "CBD5E1", edges: %i[left right top bottom] }
+      )
+      summary_currency_style = styles.add_style(
+        sz: 10,
+        b: true,
+        fg_color: "0F172A",
+        bg_color: "E2E8F0",
+        format_code: "$#,##0.00",
+        alignment: { horizontal: :right, vertical: :center },
+        border: { style: :thin, color: "CBD5E1", edges: %i[left right top bottom] }
+      )
+
+      headers = [
+        "Fecha",
+        "Factura",
+        "Consolidador",
+        "Agencia Aduanal",
+        "Receptor",
+        "Blhouse",
+        "Contenedor",
+        "Puerto",
+        "Emision",
+        "Pago",
+        "Subtotal",
+        "IVA",
+        "Total",
+        "Saldo"
+      ]
+
+      sheet.add_row(headers, style: Array.new(headers.size, header_style), height: 24)
+      sheet.sheet_view.pane do |pane|
+        pane.top_left_cell = "A2"
+        pane.state = :frozen
+        pane.y_split = 1
+        pane.active_pane = :bottom_left
+      end
+
+      subtotal_sum = 0.to_d
+      iva_sum = 0.to_d
+      total_sum = 0.to_d
+      saldo_sum = 0.to_d
+
+      rows.each_with_index do |row, index|
+        base_style = index.even? ? row_style_even : row_style_odd
+        currency_style = index.even? ? currency_style_even : currency_style_odd
+
+        subtotal_sum += row[:subtotal]
+        iva_sum += row[:iva]
+        total_sum += row[:total]
+        saldo_sum += row[:saldo]
+
+        sheet.add_row(
+          [
+            row[:fecha]&.to_date,
+            row[:factura],
+            row[:consolidador],
+            row[:agencia_aduanal],
+            row[:receptor],
+            row[:blhouse],
+            row[:contenedor],
+            row[:puerto],
+            row[:estatus_emision],
+            row[:estatus_pago],
+            row[:subtotal].to_f,
+            row[:iva].to_f,
+            row[:total].to_f,
+            row[:saldo].to_f
+          ],
+          style: [
+            date_style,
+            base_style,
+            base_style,
+            base_style,
+            base_style,
+            base_style,
+            base_style,
+            base_style,
+            base_style,
+            base_style,
+            currency_style,
+            currency_style,
+            currency_style,
+            currency_style
+          ]
+        )
+      end
+
+      sheet.add_row(
+        [ "", "", "", "", "", "", "", "", "", "Totales", subtotal_sum.to_f, iva_sum.to_f, total_sum.to_f, saldo_sum.to_f ],
+        style: [
+          summary_label_style,
+          summary_label_style,
+          summary_label_style,
+          summary_label_style,
+          summary_label_style,
+          summary_label_style,
+          summary_label_style,
+          summary_label_style,
+          summary_label_style,
+          summary_label_style,
+          summary_currency_style,
+          summary_currency_style,
+          summary_currency_style,
+          summary_currency_style
+        ]
+      )
+
+      sheet.column_widths 12, 20, 24, 24, 24, 16, 14, 16, 20, 16, 14, 14, 14, 14
+      sheet.auto_filter = "A1:N1"
+    end
+
+    package.to_stream.read
+  end
+
   def build_invoice_service_context_data(invoices)
     @invoice_hbl_by_id = {}
     @invoice_hbl_path_by_id = {}
     @invoice_agency_by_id = {}
     @invoice_internal_reference_by_id = {}
     @invoice_recinto_by_id = {}
+    @invoice_container_by_id = {}
+    @invoice_port_by_id = {}
+    @invoice_consolidator_by_id = {}
 
     invoice_ids = invoices.map(&:id)
     return if invoice_ids.empty?
@@ -916,7 +1154,7 @@ class InvoicesController < ApplicationController
     bl_service_ids = bl_service_ids_by_invoice_id.values.flatten.uniq
     if bl_service_ids.any?
       bl_service_data = BlHouseLineService
-        .includes(bl_house_line: [ :customs_agent, :container ])
+        .includes(bl_house_line: [ :customs_agent, { container: [ :consolidator_entity, { voyage: :destination_port } ] } ])
         .where(id: bl_service_ids)
         .index_by(&:id)
 
@@ -929,12 +1167,18 @@ class InvoicesController < ApplicationController
         agency_values = services.map { |service| service.bl_house_line&.customs_agent&.name.to_s.strip }.reject(&:blank?).uniq
         internal_reference_values = services.map { |service| service.bl_house_line&.internal_reference.to_s.strip }.reject(&:blank?).uniq
         recinto_values = services.map { |service| service.bl_house_line&.container&.recinto.to_s.strip }.reject(&:blank?).uniq
+        container_values = services.map { |service| service.bl_house_line&.container&.number.to_s.strip }.reject(&:blank?).uniq
+        port_values = services.map { |service| port_label_for_container(service.bl_house_line&.container) }.reject(&:blank?).uniq
+        consolidator_values = services.map { |service| service.bl_house_line&.container&.consolidator_entity&.name.to_s.strip }.reject(&:blank?).uniq
 
         @invoice_hbl_by_id[invoice_id] = hbl_values.join(", ").presence
         @invoice_hbl_path_by_id[invoice_id] = bl_house_line_path(bl_house_line_ids.first) if bl_house_line_ids.one?
         @invoice_agency_by_id[invoice_id] = agency_values.join(", ").presence || @invoice_agency_by_id[invoice_id]
         @invoice_internal_reference_by_id[invoice_id] = internal_reference_values.join(", ").presence
         @invoice_recinto_by_id[invoice_id] = recinto_values.join(", ").presence
+        @invoice_container_by_id[invoice_id] = container_values.join(", ").presence
+        @invoice_port_by_id[invoice_id] = port_values.join(", ").presence
+        @invoice_consolidator_by_id[invoice_id] = consolidator_values.join(", ").presence
       end
     end
 
@@ -958,19 +1202,36 @@ class InvoicesController < ApplicationController
     return if container_service_ids.empty?
 
     container_service_data = ContainerService
-      .includes(:container)
+      .includes(container: [ :consolidator_entity, { voyage: :destination_port } ])
       .where(id: container_service_ids)
       .index_by(&:id)
 
     container_service_ids_by_invoice_id.each do |invoice_id, service_ids|
-      next if @invoice_recinto_by_id[invoice_id].present?
-
       services = service_ids.uniq.map { |service_id| container_service_data[service_id] }.compact
       next if services.empty?
 
       recinto_values = services.map { |service| service.container&.recinto.to_s.strip }.reject(&:blank?).uniq
-      @invoice_recinto_by_id[invoice_id] = recinto_values.join(", ").presence
+      container_values = services.map { |service| service.container&.number.to_s.strip }.reject(&:blank?).uniq
+      port_values = services.map { |service| port_label_for_container(service.container) }.reject(&:blank?).uniq
+      consolidator_values = services.map { |service| service.container&.consolidator_entity&.name.to_s.strip }.reject(&:blank?).uniq
+
+      @invoice_recinto_by_id[invoice_id] = recinto_values.join(", ").presence if @invoice_recinto_by_id[invoice_id].blank?
+      @invoice_container_by_id[invoice_id] = container_values.join(", ").presence if @invoice_container_by_id[invoice_id].blank?
+      @invoice_port_by_id[invoice_id] = port_values.join(", ").presence if @invoice_port_by_id[invoice_id].blank?
+      @invoice_consolidator_by_id[invoice_id] = consolidator_values.join(", ").presence if @invoice_consolidator_by_id[invoice_id].blank?
     end
+  end
+
+  def port_label_for_container(container)
+    destination_port = container&.voyage&.destination_port
+    return nil if destination_port.blank?
+
+    name = destination_port.name.to_s.strip
+    code = destination_port.code.to_s.strip
+
+    return name if name.present?
+
+    code.presence
   end
 
   def build_collections_report_text(invoices)
