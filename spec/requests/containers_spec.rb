@@ -1112,6 +1112,42 @@ RSpec.describe "Containers", type: :request do
     end
   end
 
+  describe "DELETE /containers/:id/destroy_document" do
+    let(:container) { create(:container) }
+
+    it "purges the requested document for admin users" do
+      sign_in create(:user, :admin), scope: :user
+      container.bl_master_documento.attach(
+        io: StringIO.new("bl master"),
+        filename: "bl_master.pdf",
+        content_type: "application/pdf"
+      )
+
+      expect(container.bl_master_documento).to be_attached
+
+      delete destroy_document_container_path(container), params: { document: "bl_master_documento" }
+
+      expect(response).to redirect_to(container_path(container))
+      expect(flash[:notice]).to eq("Documento eliminado correctamente.")
+      expect(container.reload.bl_master_documento).not_to be_attached
+    end
+
+    it "rejects users without admin/executive permissions" do
+      unauthorized_user = create(:user, :customs_broker)
+      sign_in unauthorized_user, scope: :user
+      container.bl_master_documento.attach(
+        io: StringIO.new("bl master"),
+        filename: "bl_master.pdf",
+        content_type: "application/pdf"
+      )
+
+      delete destroy_document_container_path(container), params: { document: "bl_master_documento" }
+
+      expect(response).to redirect_to(customs_agents_dashboard_path)
+      expect(container.reload.bl_master_documento).to be_attached
+    end
+  end
+
   describe "container lifecycle modals" do
     before { sign_in user, scope: :user }
 

@@ -35,6 +35,10 @@ class ContainerPolicy < ApplicationPolicy
     destroy?
   end
 
+  def destroy_document?
+    destroy?
+  end
+
   class Scope < Scope
     def resolve
       if user.nil? || user.customs_broker?

@@ -2,6 +2,7 @@ class ContainersController < ApplicationController
   require "caxlsx"
   DATE_FILTER_TYPES = %w[created_at fecha_desconsolidacion].freeze
   DESYCON_OPERATION_DESTINATION_PORT_CODES = %w[MXATM MXLZC MXZLO MXVER].freeze
+  DELETABLE_DOCUMENTS = %w[bl_master_documento tarja_documento eir_documento corte_demoras_documento].freeze
 
   before_action :authenticate_user!
   after_action :verify_authorized, except: :index
@@ -9,6 +10,7 @@ class ContainersController < ApplicationController
     edit
     update
     destroy
+    destroy_document
     service_catalogs_search
     bill_to_clients_search
     lifecycle_bl_master_modal
@@ -425,6 +427,23 @@ class ContainersController < ApplicationController
     else
       redirect_to containers_url, alert: "No se puede eliminar el contenedor porque tiene partidas asociadas."
     end
+  end
+
+  def destroy_document
+    authorize @container, :destroy_document?
+
+    document_name = params[:document].to_s
+    unless DELETABLE_DOCUMENTS.include?(document_name)
+      return redirect_to container_path(@container), alert: "Documento inválido."
+    end
+
+    attachment = @container.public_send(document_name)
+    unless attachment.attached?
+      return redirect_to container_path(@container), alert: "No hay documento adjunto para eliminar."
+    end
+
+    attachment.purge
+    redirect_to container_path(@container), notice: "Documento eliminado correctamente."
   end
 
   def destroy_all_bl_house_lines

@@ -5,9 +5,10 @@ class BlHouseLinesController < ApplicationController
   IMPORT_SIZE_LIMIT = 2.megabytes
   IMPORT_TEMPLATE_HEADERS = %w[blhouse cantidad embalaje contiene marcas peso volumen clase_imo tipo_imo].freeze
   DATE_FILTER_TYPES = %w[created_at fecha_desconsolidacion].freeze
+  DELETABLE_DOCUMENTS = %w[bl_endosado_documento liberacion_documento encomienda_documento pago_documento].freeze
 
   before_action :authenticate_user!
-  before_action :set_bl_house_line, only: %i[show edit update destroy revalidation_approval approve_revalidation documents reassign perform_reassign reassign_brokers dispatch_date update_dispatch_date service_catalogs_search bill_to_clients_search]
+  before_action :set_bl_house_line, only: %i[show edit update destroy destroy_document revalidation_approval approve_revalidation documents reassign perform_reassign reassign_brokers dispatch_date update_dispatch_date service_catalogs_search bill_to_clients_search]
   after_action :verify_authorized, except: :index
 
   # GET /bl_house_lines
@@ -334,6 +335,23 @@ class BlHouseLinesController < ApplicationController
 
     @bl_house_line.destroy
     redirect_to bl_house_lines_url, notice: "Partida eliminada correctamente."
+  end
+
+  def destroy_document
+    authorize @bl_house_line, :destroy_document?
+
+    document_name = params[:document].to_s
+    unless DELETABLE_DOCUMENTS.include?(document_name)
+      return redirect_to bl_house_line_path(@bl_house_line), alert: "Documento inválido."
+    end
+
+    attachment = @bl_house_line.public_send(document_name)
+    unless attachment.attached?
+      return redirect_to bl_house_line_path(@bl_house_line), alert: "No hay documento adjunto para eliminar."
+    end
+
+    attachment.purge
+    redirect_to bl_house_line_path(@bl_house_line), notice: "Documento eliminado correctamente."
   end
 
   # GET /bl_house_lines/1/revalidation_approval

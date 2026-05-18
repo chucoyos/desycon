@@ -612,12 +612,21 @@
               </div>
             </div>
             <% if @container.bl_master_documento.attached? %>
-              <%= link_to rails_blob_path(@container.bl_master_documento, disposition: "inline"), target: "_blank", class: "p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors", title: "Ver documento" do %>
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-              <% end %>
+              <div class="flex items-center gap-1">
+                <%= link_to rails_blob_path(@container.bl_master_documento, disposition: "inline"), target: "_blank", class: "p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors", title: "Ver documento" do %>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                <% end %>
+                <% if current_user&.admin_or_executive? %>
+                  <%= button_to destroy_document_container_path(@container, document: "bl_master_documento"), method: :delete, class: "p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors", title: "Eliminar documento", data: { turbo_confirm: "¿Estás seguro de eliminar este documento?" } do %>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7h12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-7 0l.867 12.142A2 2 0 0010.862 21h2.276a2 2 0 001.995-1.858L16 7"/>
+                    </svg>
+                  <% end %>
+                <% end %>
+              </div>
             <% end %>
           </div>
 
@@ -639,12 +648,21 @@
               </div>
             </div>
             <% if @container.tarja_documento.attached? %>
-              <%= link_to rails_blob_path(@container.tarja_documento, disposition: "inline"), target: "_blank", class: "p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors", title: "Ver documento" do %>
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-              <% end %>
+              <div class="flex items-center gap-1">
+                <%= link_to rails_blob_path(@container.tarja_documento, disposition: "inline"), target: "_blank", class: "p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors", title: "Ver documento" do %>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                <% end %>
+                <% if current_user&.admin_or_executive? %>
+                  <%= button_to destroy_document_container_path(@container, document: "tarja_documento"), method: :delete, class: "p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors", title: "Eliminar documento", data: { turbo_confirm: "¿Estás seguro de eliminar este documento?" } do %>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7h12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-7 0l.867 12.142A2 2 0 0010.862 21h2.276a2 2 0 001.995-1.858L16 7"/>
+                    </svg>
+                  <% end %>
+                <% end %>
+              </div>
             <% end %>
           </div>
 
@@ -666,12 +684,21 @@
               </div>
             </div>
             <% if @container.eir_documento.attached? %>
-              <%= link_to rails_blob_path(@container.eir_documento, disposition: "inline"), target: "_blank", class: "p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors", title: "Ver documento" do %>
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-              <% end %>
+              <div class="flex items-center gap-1">
+                <%= link_to rails_blob_path(@container.eir_documento, disposition: "inline"), target: "_blank", class: "p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors", title: "Ver documento" do %>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                <% end %>
+                <% if current_user&.admin_or_executive? %>
+                  <%= button_to destroy_document_container_path(@container, document: "eir_documento"), method: :delete, class: "p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors", title: "Eliminar documento", data: { turbo_confirm: "¿Estás seguro de eliminar este documento?" } do %>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7h12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-7 0l.867 12.142A2 2 0 0010.862 21h2.276a2 2 0 001.995-1.858L16 7"/>
+                    </svg>
+                  <% end %>
+                <% end %>
+              </div>
             <% end %>
           </div>
 
@@ -693,12 +720,21 @@
               </div>
             </div>
             <% if @container.corte_demoras_documento.attached? %>
-              <%= link_to rails_blob_path(@container.corte_demoras_documento, disposition: "inline"), target: "_blank", class: "p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors", title: "Ver documento" do %>
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-              <% end %>
+              <div class="flex items-center gap-1">
+                <%= link_to rails_blob_path(@container.corte_demoras_documento, disposition: "inline"), target: "_blank", class: "p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors", title: "Ver documento" do %>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                <% end %>
+                <% if current_user&.admin_or_executive? %>
+                  <%= button_to destroy_document_container_path(@container, document: "corte_demoras_documento"), method: :delete, class: "p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors", title: "Eliminar documento", data: { turbo_confirm: "¿Estás seguro de eliminar este documento?" } do %>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7h12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-7 0l.867 12.142A2 2 0 0010.862 21h2.276a2 2 0 001.995-1.858L16 7"/>
+                    </svg>
+                  <% end %>
+                <% end %>
+              </div>
             <% end %>
           </div>
 

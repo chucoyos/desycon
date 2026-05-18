@@ -76,6 +76,10 @@ class BlHouseLinePolicy < ApplicationPolicy
     user.present? && user.admin_or_executive?
   end
 
+  def destroy_document?
+    user.present? && user.admin_or_executive?
+  end
+
   def reassign?
     user.present? && user.admin_or_executive?
   end

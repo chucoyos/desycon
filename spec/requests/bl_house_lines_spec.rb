@@ -1239,6 +1239,42 @@ RSpec.describe "BlHouseLines", type: :request do
     end
   end
 
+  describe "DELETE /bl_house_lines/:id/destroy_document" do
+    let(:bl_house_line) { create(:bl_house_line) }
+
+    it "purges the requested document for executive users" do
+      sign_in create(:user, :executive), scope: :user
+      bl_house_line.bl_endosado_documento.attach(
+        io: StringIO.new("bl endosado"),
+        filename: "bl_endosado.pdf",
+        content_type: "application/pdf"
+      )
+
+      expect(bl_house_line.bl_endosado_documento).to be_attached
+
+      delete destroy_document_bl_house_line_path(bl_house_line), params: { document: "bl_endosado_documento" }
+
+      expect(response).to redirect_to(bl_house_line_path(bl_house_line))
+      expect(flash[:notice]).to eq("Documento eliminado correctamente.")
+      expect(bl_house_line.reload.bl_endosado_documento).not_to be_attached
+    end
+
+    it "rejects users without admin/executive permissions" do
+      unauthorized_user = create(:user, :customs_broker)
+      sign_in unauthorized_user, scope: :user
+      bl_house_line.bl_endosado_documento.attach(
+        io: StringIO.new("bl endosado"),
+        filename: "bl_endosado.pdf",
+        content_type: "application/pdf"
+      )
+
+      delete destroy_document_bl_house_line_path(bl_house_line), params: { document: "bl_endosado_documento" }
+
+      expect(response).to redirect_to(customs_agents_dashboard_path)
+      expect(bl_house_line.reload.bl_endosado_documento).to be_attached
+    end
+  end
+
   describe "PATCH /bl_house_lines/:id/perform_reassign" do
     let(:new_agent) { create(:entity, :customs_agent) }
     let(:new_broker) { create(:entity, :customs_broker) }
