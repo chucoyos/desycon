@@ -785,7 +785,8 @@ class BlHouseLinesController < ApplicationController
         bl_house_line.volumen,
         customs_broker_label,
         bl_house_line.telex? ? "Si" : "No",
-        bl_house_line.revalidated_at || container&.fecha_revalidacion_bl_master,
+        container&.fecha_desconsolidacion,
+        bl_house_line.revalidated_at,
         bl_house_line.fecha_despacho
       ]
     end
@@ -840,6 +841,7 @@ class BlHouseLinesController < ApplicationController
         "M3",
         "Agente Aduanal",
         "Telex",
+        "Fecha Desconsolidacion",
         "Fecha Revalidacion",
         "Fecha Despacho"
       ]
@@ -873,6 +875,7 @@ class BlHouseLinesController < ApplicationController
         number_style,
         nil,
         nil,
+        date_style,
         datetime_style,
         date_style
       ]
@@ -885,7 +888,7 @@ class BlHouseLinesController < ApplicationController
 
       header_row_index = 7
       last_row_index = [ header_row_index + rows.size, header_row_index ].max
-      sheet.auto_filter = "A#{header_row_index}:M#{last_row_index}"
+      sheet.auto_filter = "A#{header_row_index}:N#{last_row_index}"
       sheet.sheet_view.pane do |pane|
         pane.top_left_cell = "A#{header_row_index + 1}"
         pane.state = :frozen_split
@@ -893,7 +896,7 @@ class BlHouseLinesController < ApplicationController
         pane.active_pane = :bottom_left
       end
 
-      sheet.column_widths 20, 20, 18, 18, 18, 18, 10, 12, 10, 28, 18, 20, 18
+      sheet.column_widths 20, 20, 18, 18, 18, 18, 10, 12, 10, 28, 18, 20, 20, 18
     end
 
     package.to_stream.read

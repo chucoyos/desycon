@@ -443,6 +443,7 @@ RSpec.describe "BlHouseLines", type: :request do
         "M3",
         "Agente Aduanal",
         "Telex",
+        "Fecha Desconsolidacion",
         "Fecha Revalidacion",
         "Fecha Despacho"
       ])
