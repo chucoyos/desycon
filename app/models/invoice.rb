@@ -135,6 +135,19 @@ class Invoice < ApplicationRecord
     payload_snapshot.to_h["metodoPago"].to_s.presence || receiver_entity&.fiscal_profile&.metodo_pago.to_s.presence || "PPD"
   end
 
+  def receiver_name_for_list
+    entity_name = receiver_entity&.name.to_s.strip.presence
+    payload_name = external_receiver_name_from_payload
+
+    return entity_name || payload_name || "Sin receptor" unless source_origin == "facturador_external"
+
+    if payload_name.present? && receiver_points_to_issuer?(entity_name: entity_name)
+      return payload_name
+    end
+
+    entity_name || payload_name || "Sin receptor"
+  end
+
   def payment_status
     return "paid" if kind == "pago"
 
@@ -316,6 +329,22 @@ class Invoice < ApplicationRecord
   end
 
   private
+
+  def external_receiver_name_from_payload
+    payload_snapshot.to_h.dig("receptor", "nombre").to_s.strip.presence ||
+      payload_snapshot.to_h["receptorNombre"].to_s.strip.presence ||
+      provider_response.to_h["receptorNombre"].to_s.strip.presence
+  end
+
+  def receiver_points_to_issuer?(entity_name:)
+    return true if entity_name.blank?
+    return true if receiver_entity_id.present? && issuer_entity_id.present? && receiver_entity_id == issuer_entity_id
+
+    issuer_name = issuer_entity&.name.to_s.strip
+    return false if issuer_name.blank?
+
+    entity_name.casecmp(issuer_name).zero?
+  end
 
   def latest_email_delivery_event
     @latest_email_delivery_event ||= invoice_events

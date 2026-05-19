@@ -49,6 +49,14 @@
         </div>
 
         <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Origen</label>
+          <%= f.select :source_origin,
+            options_for_select([["Todos", ""], ["Locales", "local"], ["Externas", "facturador_external"]], @selected_source_origin),
+              {},
+              class: "w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all" %>
+        </div>
+
+        <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">Pago</label>
           <% payment_status_filter_options = [["Todos", ""], [Invoice::PAYMENT_STATUS_LABELS["unpaid"], "unpaid"]] + @payment_statuses.reject { |status| status == "unpaid" }.map { |status| [Invoice::PAYMENT_STATUS_LABELS[status], status] } %>
           <%= f.select :payment_status,
@@ -379,6 +387,7 @@
             <% hbl = @invoice_hbl_by_id[invoice.id].presence || "-" %>
             <% hbl_path = @invoice_hbl_path_by_id[invoice.id] %>
             <% agency_name = @invoice_agency_by_id[invoice.id].presence || "-" %>
+            <% receiver_name = invoice.receiver_name_for_list %>
             <tr class="hover:bg-gray-50 transition-colors duration-150">
               <% if @consolidator_portal_user %>
                 <td class="px-4 py-4 align-top">
@@ -426,8 +435,8 @@
                   <span class="sr-only"><%= invoice.sat_uuid %></span>
                 <% end %>
               </td>
-              <td class="px-4 py-4 text-sm text-gray-700" title="<%= invoice.receiver_entity&.name || '-' %>">
-                <span class="block truncate"><%= truncate(invoice.receiver_entity&.name || '-', length: 20) %></span>
+              <td class="px-4 py-4 text-sm text-gray-700" title="<%= receiver_name %>">
+                <span class="block truncate"><%= truncate(receiver_name, length: 20) %></span>
               </td>
               <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700" title="<%= hbl %>">
                 <% if hbl_path.present? %>
@@ -440,6 +449,14 @@
                 <span class="block truncate"><%= truncate(agency_name, length: 16) %></span>
               </td>
               <% status_for_display = invoice.effective_status %>
+              <% status_label_for_list = case status_for_display
+                when "cancel_pending" then "Cancel. pendiente"
+                when "cancelled" then "Cancelada"
+                when "issued" then "Emitida"
+                when "queued" then "En cola"
+                when "failed" then "Fallida"
+                else t("activerecord.attributes.invoice.statuses.#{status_for_display}", default: status_for_display.humanize)
+              end %>
               <% issue_status_badge_class = case status_for_display
                 when "issued" then "bg-emerald-100 text-emerald-800 border-emerald-200"
                 when "queued" then "bg-blue-100 text-blue-800 border-blue-200"
@@ -449,11 +466,11 @@
                 else "bg-gray-100 text-gray-700 border-gray-200"
               end %>
               <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border <%= issue_status_badge_class %>">
+                <span class="inline-flex max-w-[7rem] items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border <%= issue_status_badge_class %>" title="<%= t("activerecord.attributes.invoice.statuses.#{status_for_display}", default: status_for_display.humanize) %>">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <%= t("activerecord.attributes.invoice.statuses.#{status_for_display}", default: status_for_display.humanize) %>
+                  <span class="truncate"><%= status_label_for_list %></span>
                 </span>
               </td>
               <% payment_status_badge_class = case invoice.payment_status

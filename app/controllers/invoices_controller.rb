@@ -677,6 +677,7 @@ class InvoicesController < ApplicationController
     @selected_status = params[:status].to_s.presence
     @selected_kind = params[:kind].to_s.presence
     @selected_payment_status = params[:payment_status].to_s.presence
+    @selected_source_origin = params[:source_origin].to_s.presence
     @selected_client_id = params[:client_id].to_s.presence
     @selected_customs_agent_id = admin_or_executive ? params[:customs_agent_id].to_s.presence : nil
     @selected_consolidator_id = admin_or_executive ? params[:consolidator_id].to_s.presence : nil
@@ -728,6 +729,9 @@ class InvoicesController < ApplicationController
 
     scope = scope.where(status: @selected_status) if @selected_status.present? && Invoice::STATUSES.include?(@selected_status)
     scope = scope.where(kind: @selected_kind) if @selected_kind.present? && Invoice::KINDS.include?(@selected_kind)
+    if @selected_source_origin.present? && Invoice::SOURCE_ORIGINS.include?(@selected_source_origin)
+      scope = scope.where(source_origin: @selected_source_origin)
+    end
     valid_payment_filter = Invoice::PAYMENT_STATUSES.include?(@selected_payment_status)
     scope = scope.with_payment_status(@selected_payment_status) if @selected_payment_status.present? && valid_payment_filter
     scope = scope.where(receiver_entity_id: @selected_client_id) if @selected_client_id.present?
@@ -1786,6 +1790,11 @@ class InvoicesController < ApplicationController
     if @selected_kind.present? && Invoice::KINDS.include?(@selected_kind)
       kind_label = @selected_kind == "ingreso" ? "Factura" : "Pago"
       filters << { key: "kind", label: "Tipo comprobante", value: kind_label }
+    end
+
+    if @selected_source_origin.present? && Invoice::SOURCE_ORIGINS.include?(@selected_source_origin)
+      source_label = @selected_source_origin == "facturador_external" ? "Externa" : "Local"
+      filters << { key: "source_origin", label: "Origen", value: source_label }
     end
 
     if @selected_payment_status.present? && Invoice::PAYMENT_STATUSES.include?(@selected_payment_status)

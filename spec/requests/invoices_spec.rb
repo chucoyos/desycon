@@ -141,6 +141,20 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).not_to include(factura_invoice.sat_uuid)
     end
 
+    it 'filters by source origin' do
+      external_invoice = create(:invoice, source_origin: 'facturador_external', sat_uuid: 'UUID-SOURCE-EXTERNAL-001')
+      local_invoice = create(:invoice, source_origin: 'local', sat_uuid: 'UUID-SOURCE-LOCAL-001')
+
+      get invoices_path, params: { source_origin: 'facturador_external' }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(external_invoice.sat_uuid)
+      expect(response.body).not_to include(local_invoice.sat_uuid)
+      expect(response.body).to include('data-filter-key="source_origin"')
+      expect(response.body).to include('Origen')
+      expect(response.body).to include('Externa')
+    end
+
     it 'filters by client' do
       client = create(:entity, :client)
       other_client = create(:entity, :client)
@@ -235,6 +249,28 @@ RSpec.describe 'Invoices', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('BLH-GRP-001')
       expect(response.body).to include('Agencia Agrupada Centro')
+    end
+
+    it 'shows payload receptor name for external invoices pending assignment' do
+      issuer = create(:entity, :customs_agent, name: 'EMISOR DESYCON')
+      create(
+        :invoice,
+        source_origin: 'facturador_external',
+        external_visibility_state: 'pending_assignment',
+        issuer_entity: issuer,
+        receiver_entity: issuer,
+        sat_uuid: 'UUID-EXT-LIST-RECEPTOR-001',
+        payload_snapshot: {
+          'receptor' => {
+            'nombre' => 'CLIENTE REAL IMPORTADO'
+          }
+        }
+      )
+
+      get invoices_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('CLIENTE REAL IMPORTADO')
     end
 
     it 'exports filtered invoices to xlsx including records beyond current page and totals' do
