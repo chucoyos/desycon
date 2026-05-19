@@ -5,7 +5,10 @@ RSpec.describe 'Invoices', type: :request do
   let(:consolidator_user) { create(:user, :consolidator) }
 
   describe 'GET /invoices' do
-    before { sign_in admin_user, scope: :user }
+    before do
+      sign_in admin_user, scope: :user
+      allow(Facturador::Config).to receive(:external_invoices_runtime_enabled?).and_return(false)
+    end
 
     it 'renders index successfully' do
       create(:invoice)
@@ -328,13 +331,62 @@ RSpec.describe 'Invoices', type: :request do
     it 'returns only invoices where consolidator is receiver' do
       own_invoice = create(:invoice, receiver_entity: consolidator_user.entity, sat_uuid: 'UUID-CONS-OWN-001')
       other_invoice = create(:invoice, sat_uuid: 'UUID-CONS-OTHER-001')
+      hidden_pending_assignment = create(
+        :invoice,
+        receiver_entity: consolidator_user.entity,
+        sat_uuid: 'UUID-CONS-HIDDEN-PENDING',
+        source_origin: 'facturador_external',
+        external_visibility_state: 'pending_assignment'
+      )
 
       get invoices_path
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(own_invoice.sat_uuid)
       expect(response.body).not_to include(other_invoice.sat_uuid)
+      expect(response.body).not_to include(hidden_pending_assignment.sat_uuid)
       expect(response.body).not_to include('Nuevo CFDI')
+    end
+  end
+
+  describe 'POST /invoices/sync_external' do
+    it 'enqueues external sync for admin users' do
+      sign_in admin_user, scope: :user
+      allow(Facturador::Config).to receive(:external_invoices_runtime_enabled?).and_return(true)
+
+      expect(Facturador::ImportExternalInvoicesJob).to receive(:perform_later) do |args|
+        expect(args[:window_start_iso8601]).to be_present
+        expect(args[:window_end_iso8601]).to be_present
+        expect(args[:actor_id]).to eq(admin_user.id)
+        expect(args[:source]).to eq('manual')
+      end
+
+      post sync_external_invoices_path, params: { days: 60 }
+
+      expect(response).to redirect_to(invoices_path)
+      expect(flash[:notice]).to include('Sincronización externa de CFDIs encolada')
+    end
+
+    it 'shows disabled message when runtime gate is off' do
+      sign_in admin_user, scope: :user
+      allow(Facturador::Config).to receive(:external_invoices_runtime_enabled?).and_return(false)
+
+      expect(Facturador::ImportExternalInvoicesJob).not_to receive(:perform_later)
+
+      post sync_external_invoices_path
+
+      expect(response).to redirect_to(invoices_path)
+      expect(flash[:alert]).to include('deshabilitada para este entorno')
+    end
+
+    it 'denies customs broker users' do
+      broker_user = create(:user, :customs_broker)
+      sign_in broker_user, scope: :user
+
+      post sync_external_invoices_path
+
+      expect(response).to redirect_to(customs_agents_dashboard_path)
+      expect(flash[:alert]).to be_present
     end
   end
 

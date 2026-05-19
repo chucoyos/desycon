@@ -21,6 +21,11 @@ class InvoiceEvent < ApplicationRecord
     reconcile_synced
     reconcile_not_found
     reconcile_failed
+    external_import_created
+    external_import_updated
+    external_import_skipped_duplicate
+    external_import_pending_assignment
+    external_import_failed
     email_requested
     email_sent
     email_failed

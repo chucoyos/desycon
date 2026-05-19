@@ -47,6 +47,7 @@ Rails.application.routes.draw do
     collection do
       get :collections_report
       get :export_excel
+      post :sync_external
       get :consolidators_search
       get :customs_agents_search
       get :manual_customs_agents_search

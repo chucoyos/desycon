@@ -11,6 +11,10 @@ class InvoicePolicy < ApplicationPolicy
     user.present? && user.admin_or_executive?
   end
 
+  def sync_external?
+    issue_manual?
+  end
+
   def new?
     issue_manual?
   end
@@ -62,6 +66,7 @@ class InvoicePolicy < ApplicationPolicy
 
       if user.customs_broker? && user.entity&.role_customs_agent?
         return scope
+               .where.not(external_visibility_state: "pending_assignment")
                .joins(:receiver_entity)
                .where(
                  "invoices.customs_agent_id = :agency_id OR entities.customs_agent_id = :agency_id",
@@ -71,7 +76,9 @@ class InvoicePolicy < ApplicationPolicy
       end
 
       if user.consolidator? && user.entity_id.present?
-        return scope.where(receiver_entity_id: user.entity_id)
+        return scope
+               .where.not(external_visibility_state: "pending_assignment")
+               .where(receiver_entity_id: user.entity_id)
       end
 
       scope.none

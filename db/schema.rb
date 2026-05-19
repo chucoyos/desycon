@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_28_123000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_18_173000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -404,8 +404,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_28_123000) do
     t.datetime "created_at", null: false
     t.string "currency", default: "MXN", null: false
     t.bigint "customs_agent_id"
+    t.string "external_dedup_fingerprint"
+    t.jsonb "external_raw_snapshot", default: {}, null: false
+    t.string "external_visibility_state", default: "mapped", null: false
     t.bigint "facturador_comprobante_id"
     t.string "idempotency_key", null: false
+    t.datetime "imported_from_facturador_at"
     t.bigint "invoiceable_id"
     t.string "invoiceable_type"
     t.datetime "issued_at"
@@ -413,24 +417,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_28_123000) do
     t.string "kind", default: "ingreso", null: false
     t.string "last_error_code"
     t.text "last_error_message"
+    t.datetime "last_external_sync_at"
     t.jsonb "payload_snapshot", default: {}, null: false
     t.jsonb "provider_response", default: {}, null: false
     t.bigint "receiver_entity_id", null: false
     t.string "replacement_uuid"
     t.string "sat_uuid"
+    t.string "source_origin", default: "local", null: false
     t.string "status", default: "draft", null: false
     t.decimal "subtotal", precision: 12, scale: 2, default: "0.0", null: false
     t.decimal "tax_total", precision: 12, scale: 2, default: "0.0", null: false
     t.decimal "total", precision: 12, scale: 2, default: "0.0", null: false
     t.datetime "updated_at", null: false
     t.index ["customs_agent_id"], name: "index_invoices_on_customs_agent_id"
+    t.index ["external_dedup_fingerprint"], name: "index_invoices_on_external_fingerprint_unique", unique: true, where: "((external_dedup_fingerprint IS NOT NULL) AND ((source_origin)::text = 'facturador_external'::text))"
+    t.index ["external_visibility_state", "created_at"], name: "index_invoices_on_visibility_state_and_created_at"
+    t.index ["external_visibility_state"], name: "index_invoices_on_external_visibility_state"
     t.index ["facturador_comprobante_id"], name: "index_invoices_on_facturador_comprobante_id", unique: true
     t.index ["idempotency_key"], name: "index_invoices_on_idempotency_key", unique: true
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"
     t.index ["issuer_entity_id"], name: "index_invoices_on_issuer_entity_id"
+    t.index ["last_external_sync_at"], name: "index_invoices_on_last_external_sync_at"
     t.index ["receiver_entity_id"], name: "index_invoices_on_receiver_entity_id"
     t.index ["sat_uuid"], name: "index_invoices_on_sat_uuid", unique: true
+    t.index ["source_origin"], name: "index_invoices_on_source_origin"
+    t.check_constraint "external_visibility_state::text = ANY (ARRAY['mapped'::character varying, 'pending_assignment'::character varying]::text[])", name: "check_invoices_external_visibility_state"
     t.check_constraint "kind::text = ANY (ARRAY['ingreso'::character varying, 'egreso'::character varying, 'pago'::character varying]::text[])", name: "check_invoices_kind"
+    t.check_constraint "source_origin::text = ANY (ARRAY['local'::character varying, 'facturador_external'::character varying]::text[])", name: "check_invoices_source_origin"
     t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'queued'::character varying, 'issued'::character varying, 'cancel_pending'::character varying, 'cancelled'::character varying, 'failed'::character varying]::text[])", name: "check_invoices_status"
   end
 

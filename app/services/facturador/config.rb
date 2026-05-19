@@ -46,6 +46,55 @@ module Facturador
         ActiveModel::Type::Boolean.new.cast(env_value(:auto_sync_documents_on_reconcile_enabled, false))
       end
 
+      def external_invoices_sync_enabled?
+        ActiveModel::Type::Boolean.new.cast(env_value(:external_invoices_sync_enabled, false))
+      end
+
+      def external_invoices_allowed_environment
+        env_value(:external_invoices_allowed_environment, "production").to_s
+      end
+
+      def external_invoices_runtime_enabled?
+        return false unless enabled?
+        return false unless external_invoices_sync_enabled?
+        return false unless external_sync_environment_allowed?
+        return false if external_sync_stage_endpoint_in_production?
+
+        true
+      end
+
+      def external_sync_initial_backfill_days
+        value = env_value(:external_sync_initial_backfill_days, 60)
+        days = value.to_i
+        days.positive? ? days : 60
+      end
+
+      def external_sync_window_hours
+        value = env_value(:external_sync_window_hours, 24)
+        hours = value.to_i
+        hours.positive? ? hours : 24
+      end
+
+      def external_sync_overlap_minutes
+        value = env_value(:external_sync_overlap_minutes, 120)
+        minutes = value.to_i
+        minutes.positive? ? minutes : 120
+      end
+
+      def external_sync_take
+        value = env_value(:external_sync_take, 100)
+        take = value.to_i
+        take.positive? ? [ take, 200 ].min : 100
+      end
+
+      def external_sync_max_pages
+        value = env_value(:external_sync_max_pages)
+        return nil if value.blank?
+
+        pages = value.to_i
+        pages.positive? ? pages : nil
+      end
+
       def reconciliation_max_age_days
         value = env_value(:reconciliation_max_age_days, 60)
         days = value.to_i
@@ -136,6 +185,19 @@ module Facturador
       end
 
       private
+
+      def external_sync_environment_allowed?
+        allowed = external_invoices_allowed_environment.to_s.strip
+        return Rails.env.production? if allowed.blank?
+
+        Rails.env.to_s == allowed
+      end
+
+      def external_sync_stage_endpoint_in_production?
+        return false unless Rails.env.production?
+
+        business_base_url.to_s.downcase.include?("stagefacturador")
+      end
 
       def normalized_serie_id(value)
         raw = value.to_s.strip

@@ -3,6 +3,8 @@ require "digest"
 class Invoice < ApplicationRecord
   KINDS = %w[ingreso egreso pago].freeze
   STATUSES = %w[draft queued issued cancel_pending cancelled failed].freeze
+  SOURCE_ORIGINS = %w[local facturador_external].freeze
+  EXTERNAL_VISIBILITY_STATES = %w[mapped pending_assignment].freeze
   PAYMENT_STATUSES = %w[pending partial paid unpaid].freeze
   PAYMENT_STATUS_LABELS = {
     "pending" => "Pendiente",
@@ -38,6 +40,8 @@ class Invoice < ApplicationRecord
 
   validates :kind, inclusion: { in: KINDS }
   validates :status, inclusion: { in: STATUSES }
+  validates :source_origin, inclusion: { in: SOURCE_ORIGINS }
+  validates :external_visibility_state, inclusion: { in: EXTERNAL_VISIBILITY_STATES }
   validates :currency, presence: true, inclusion: { in: [ "MXN" ] }
   validates :subtotal, :tax_total, :total, numericality: { greater_than_or_equal_to: 0 }
   validates :idempotency_key, presence: true, uniqueness: true
@@ -49,6 +53,8 @@ class Invoice < ApplicationRecord
   scope :recent_first, -> { order(created_at: :desc) }
   scope :issued, -> { where(status: "issued") }
   scope :cancelled, -> { where(status: "cancelled") }
+  scope :external_imported, -> { where(source_origin: "facturador_external") }
+  scope :pending_assignment, -> { where(external_visibility_state: "pending_assignment") }
   scope :pending_reconciliation, -> { where(status: "cancel_pending").where.not(sat_uuid: [ nil, "" ]) }
   scope :reconciliation_candidates, -> {
     where(status: %w[cancel_pending issued failed])

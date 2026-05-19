@@ -480,6 +480,35 @@ class InvoicesController < ApplicationController
     redirect_back fallback_location: containers_path, alert: "Error al emitir CFDI agrupado: #{e.message}"
   end
 
+  def sync_external
+    authorize Invoice, :sync_external?
+
+    unless Facturador::Config.external_invoices_runtime_enabled?
+      return redirect_back(
+        fallback_location: invoices_path,
+        alert: "La sincronización externa de CFDIs está deshabilitada para este entorno."
+      )
+    end
+
+    days = params[:days].to_i
+    days = Facturador::Config.external_sync_initial_backfill_days if days <= 0
+
+    window_start = days.days.ago
+    window_end = Time.current
+
+    Facturador::ImportExternalInvoicesJob.perform_later(
+      window_start_iso8601: window_start.iso8601,
+      window_end_iso8601: window_end.iso8601,
+      actor_id: current_user.id,
+      source: "manual"
+    )
+
+    redirect_back(
+      fallback_location: invoices_path,
+      notice: "Sincronización externa de CFDIs encolada (ventana: últimos #{days} días)."
+    )
+  end
+
   def retry_issue
     authorize @invoice, :retry_issue?
 
