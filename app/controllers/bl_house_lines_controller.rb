@@ -849,7 +849,7 @@ class BlHouseLinesController < ApplicationController
       summary_label_style = styles.add_style(b: true, bg_color: "E2E8F0", fg_color: "0F172A")
       datetime_style = styles.add_style(format_code: "yyyy-mm-dd hh:mm")
       date_style = styles.add_style(format_code: "yyyy-mm-dd")
-      number_style = styles.add_style(format_code: "0.00")
+      number_style = styles.add_style(format_code: "0.000")
       integer_style = styles.add_style(format_code: "0")
       alternate_row_style = styles.add_style(bg_color: "F8FAFC")
 
@@ -934,7 +934,7 @@ class BlHouseLinesController < ApplicationController
       date_style = styles.add_style(format_code: "yyyy-mm-dd")
       datetime_style = styles.add_style(format_code: "yyyy-mm-dd hh:mm")
       integer_style = styles.add_style(format_code: "0")
-      decimal_style = styles.add_style(format_code: "0.00")
+      decimal_style = styles.add_style(format_code: "0.000")
       alternate_row_style = styles.add_style(bg_color: "F8FAFC")
 
       total_bultos = rows.sum { |row| row[13].to_i }

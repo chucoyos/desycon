@@ -278,13 +278,13 @@
             <div>
               <div class="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 h-full">
                 <p class="text-[11px] text-slate-500 uppercase tracking-wide">Peso</p>
-                <p class="font-medium text-slate-900"><%= service[:peso].present? ? number_with_precision(service[:peso], precision: 2) : "-" %></p>
+                <p class="font-medium text-slate-900"><%= service[:peso].present? ? number_with_precision(service[:peso], precision: 3) : "-" %></p>
               </div>
             </div>
             <div>
               <div class="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 h-full">
                 <p class="text-[11px] text-slate-500 uppercase tracking-wide">Volumen</p>
-                <p class="font-medium text-slate-900"><%= service[:volumen].present? ? number_with_precision(service[:volumen], precision: 2) : "-" %></p>
+                <p class="font-medium text-slate-900"><%= service[:volumen].present? ? number_with_precision(service[:volumen], precision: 3) : "-" %></p>
               </div>
             </div>
             <div>

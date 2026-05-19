@@ -33,8 +33,8 @@
     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600"><%= bl_house_line.partida %></td>
     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600 max-w-[11rem] truncate"><%= bl_house_line.contiene %></td>
     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600"><%= bl_house_line.cantidad %></td>
-    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600"><%= number_with_precision(bl_house_line.peso, precision: 2) if bl_house_line.peso %></td>
-    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600"><%= number_with_precision(bl_house_line.volumen, precision: 2) if bl_house_line.volumen %></td>
+    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600"><%= number_with_precision(bl_house_line.peso, precision: 3) if bl_house_line.peso %></td>
+    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600"><%= number_with_precision(bl_house_line.volumen, precision: 3) if bl_house_line.volumen %></td>
     <td class="px-4 py-3 whitespace-nowrap">
       <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= bl_house_line_status_badge_class(bl_house_line.status) %>">
         <%= bl_house_line_status_icon(bl_house_line.status) %>
