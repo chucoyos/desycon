@@ -19,7 +19,7 @@ RSpec.describe Facturador::ImportExternalInvoicesService, type: :service do
 
     it 'creates missing external invoices with mapped visibility' do
       receiver = create(:entity, :client, customs_agent: create(:entity, :customs_agent))
-      create(
+      receiver_fiscal_profile = create(
         :fiscal_profile,
         profileable: receiver,
         rfc: 'AAA010101AAA',
@@ -57,6 +57,11 @@ RSpec.describe Facturador::ImportExternalInvoicesService, type: :service do
       expect(invoice.source_origin).to eq('facturador_external')
       expect(invoice.external_visibility_state).to eq('mapped')
       expect(invoice.receiver_entity_id).to eq(receiver.id)
+      expect(invoice.payload_snapshot.dig('receptor', 'rfc')).to eq('AAA010101AAA')
+      expect(invoice.payload_snapshot.dig('receptor', 'nombre')).to eq(receiver.name)
+      expect(invoice.payload_snapshot['formaPago']).to eq(receiver_fiscal_profile.forma_pago)
+      expect(invoice.payload_snapshot['metodoPago']).to eq(receiver_fiscal_profile.metodo_pago)
+      expect(invoice.payload_snapshot['conceptos']).to be_present
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('external_import_created')
     end
 

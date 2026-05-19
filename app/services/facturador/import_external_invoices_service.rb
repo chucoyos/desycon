@@ -198,11 +198,13 @@ module Facturador
     end
 
     def build_invoice_attributes(payload:, issuer_entity:, receiver_entity:, customs_agent:, visibility_state:, external_fingerprint:)
+      kind = external_kind(payload)
+
       {
         issuer_entity: issuer_entity,
         receiver_entity: receiver_entity,
         customs_agent: customs_agent,
-        kind: external_kind(payload),
+        kind: kind,
         status: external_status(payload),
         currency: payload["moneda"].to_s.presence || "MXN",
         subtotal: decimal_value(payload["subtotal"]),
@@ -211,6 +213,12 @@ module Facturador
         sat_uuid: normalized_uuid(payload["uuid"]),
         facturador_comprobante_id: normalized_comprobante_id(payload["idComprobante"]),
         issued_at: parse_provider_datetime(payload["fecha"]) || synced_at,
+        payload_snapshot: build_payload_snapshot(
+          payload: payload,
+          issuer_entity: issuer_entity,
+          receiver_entity: receiver_entity,
+          kind: kind
+        ),
         provider_response: payload,
         source_origin: "facturador_external",
         external_visibility_state: visibility_state,
@@ -240,6 +248,7 @@ module Facturador
         }
       else
         attributes.merge(
+          payload_snapshot: merge_payload_snapshot(existing: existing, imported_payload_snapshot: attributes[:payload_snapshot]),
           provider_response: existing.provider_response.to_h.deep_stringify_keys.merge(payload),
           last_external_sync_at: synced_at,
           external_raw_snapshot: payload
@@ -387,6 +396,103 @@ module Facturador
       BigDecimal(value.to_s)
     rescue ArgumentError
       0.to_d
+    end
+
+    def build_payload_snapshot(payload:, issuer_entity:, receiver_entity:, kind:)
+      receiver_profile = receiver_entity.fiscal_profile
+      receiver_address = receiver_entity.fiscal_address
+      issuer_profile = issuer_entity.fiscal_profile
+
+      forma_pago = payload["satFormaPagoClave"].to_s.presence || receiver_profile&.forma_pago
+      metodo_pago = payload["satMetodoPagoClave"].to_s.presence || receiver_profile&.metodo_pago
+
+      serie = normalized_present_string(payload["serie"])
+      folio = normalized_present_string(payload["folio"]) ||
+              normalized_present_string(payload["noComprobante"]) ||
+              normalized_present_string(payload["numeroComprobante"]) ||
+              normalized_comprobante_id(payload["idComprobante"])&.to_s
+
+      concept_amount = decimal_value(payload["subtotal"])
+      tax_amount = decimal_value(payload["impuestos"])
+      tax_rate = if concept_amount.positive? && tax_amount.positive?
+        (tax_amount / concept_amount).round(6).to_s("F")
+      else
+        "0.160000"
+      end
+
+      {
+        "version" => payload["version"].to_s.presence || "4.0",
+        "tipoDeComprobante" => cfdi_type_code(kind),
+        "moneda" => payload["moneda"].to_s.presence || "MXN",
+        "serie" => serie,
+        "folio" => folio,
+        "fecha" => (parse_provider_datetime(payload["fecha"]) || synced_at).iso8601,
+        "formaPago" => forma_pago,
+        "metodoPago" => metodo_pago,
+        "emisor" => {
+          "nombre" => issuer_profile&.razon_social.to_s.presence || issuer_entity.name,
+          "rfc" => issuer_profile&.rfc.to_s.presence,
+          "regimenFiscal" => issuer_profile&.regimen.to_s.presence
+        },
+        "receptor" => {
+          "nombre" => normalized_present_string(payload["receptorNombre"]) || receiver_entity.name,
+          "rfc" => normalized_rfc(payload["receptorRfc"]) || receiver_profile&.rfc.to_s.presence,
+          "usoCFDI" => receiver_profile&.uso_cfdi.to_s.presence,
+          "regimenFiscalReceptor" => receiver_profile&.regimen.to_s.presence,
+          "domicilioFiscalReceptor" => receiver_address&.codigo_postal.to_s.presence
+        },
+        "conceptos" => [
+          {
+            "cantidad" => "1",
+            "claveProdServ" => "80151600",
+            "claveUnidad" => "E48",
+            "descripcion" => normalized_present_string(payload["tipoComprobante"]) || "CFDI importado desde Facturador",
+            "importe" => concept_amount.to_s("F"),
+            "impuestos" => {
+              "traslados" => [
+                {
+                  "base" => concept_amount.to_s("F"),
+                  "impuesto" => "002",
+                  "tipoFactor" => "Tasa",
+                  "tasaOCuota" => tax_rate,
+                  "importe" => tax_amount.to_s("F")
+                }
+              ]
+            }
+          }
+        ]
+      }.deep_stringify_keys
+    end
+
+    def merge_payload_snapshot(existing:, imported_payload_snapshot:)
+      existing_snapshot = existing.payload_snapshot.to_h.deep_stringify_keys
+      incoming_snapshot = imported_payload_snapshot.to_h.deep_stringify_keys
+
+      merged = existing_snapshot.merge(incoming_snapshot)
+      merged["receptor"] = existing_snapshot.fetch("receptor", {}).to_h.deep_stringify_keys.merge(incoming_snapshot.fetch("receptor", {}).to_h.deep_stringify_keys)
+      merged["emisor"] = existing_snapshot.fetch("emisor", {}).to_h.deep_stringify_keys.merge(incoming_snapshot.fetch("emisor", {}).to_h.deep_stringify_keys)
+
+      if Array(existing_snapshot["conceptos"]).any?
+        merged["conceptos"] = existing_snapshot["conceptos"]
+      end
+
+      merged
+    end
+
+    def cfdi_type_code(kind)
+      case kind
+      when "egreso" then "E"
+      when "pago" then "P"
+      else "I"
+      end
+    end
+
+    def normalized_present_string(value)
+      token = value.to_s.strip
+      return nil if token.blank?
+      return nil if %w[undefined null sin serie].include?(token.downcase)
+
+      token
     end
 
     def external_fingerprint(payload)
