@@ -98,5 +98,11 @@ RSpec.describe InvoicePolicy, type: :policy do
 
       expect(described_class.new(user, rep_invoice).attach_payment_evidence?).to eq(false)
     end
+
+    it 'rejects attaching payment evidence for egreso invoices' do
+      egreso_invoice = create(:invoice, receiver_entity: entity, kind: 'egreso', status: 'issued', total: 1500)
+
+      expect(described_class.new(user, egreso_invoice).attach_payment_evidence?).to eq(false)
+    end
   end
 end

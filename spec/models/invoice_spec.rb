@@ -115,6 +115,13 @@ RSpec.describe Invoice, type: :model do
       expect(rep_invoice.payment_status).to eq('paid')
       expect(rep_invoice.payment_status_label).to eq('Pagado')
     end
+
+    it 'returns paid for egreso invoices even without invoice_payments' do
+      egreso_invoice = create(:invoice, kind: 'egreso', status: 'issued', total: 1000)
+
+      expect(egreso_invoice.payment_status).to eq('paid')
+      expect(egreso_invoice.payment_status_label).to eq('Pagado')
+    end
   end
 
   describe '#outstanding_amount' do
@@ -122,6 +129,12 @@ RSpec.describe Invoice, type: :model do
       rep_invoice = create(:invoice, kind: 'pago', status: 'issued', total: 1234.56)
 
       expect(rep_invoice.outstanding_amount).to eq(0.to_d)
+    end
+
+    it 'returns zero for egreso invoices' do
+      egreso_invoice = create(:invoice, kind: 'egreso', status: 'issued', total: 1234.56)
+
+      expect(egreso_invoice.outstanding_amount).to eq(0.to_d)
     end
   end
 

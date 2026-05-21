@@ -144,6 +144,7 @@ class ApplicationController < ActionController::Base
         "invoices.customs_agent_id = :agency_id OR entities.customs_agent_id = :agency_id",
         agency_id: current_user.entity_id
       )
+      .where(kind: "ingreso")
       .where.not(status: "cancelled")
       .where.not(issued_at: nil)
       .distinct

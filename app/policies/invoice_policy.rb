@@ -53,7 +53,7 @@ class InvoicePolicy < ApplicationPolicy
 
   def attach_payment_evidence?
     return false unless customs_related_invoice? || consolidator_related_invoice?
-    return false if record.kind == "pago"
+    return false unless record.kind == "ingreso"
     return false unless record.status.in?(%w[issued cancel_pending])
 
     record.outstanding_amount.positive?
