@@ -1022,6 +1022,36 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include('$2,320.00')
     end
 
+    it 'shows related CFDIs section for egreso invoices using provider related UUID' do
+      source_invoice = create(
+        :invoice,
+        kind: 'ingreso',
+        status: 'issued',
+        sat_uuid: 'EBB87144-03C7-4C58-ACB8-2A9612177B52',
+        provider_response: { 'serie' => 'GMZO', 'folio' => '244' },
+        total: 580
+      )
+
+      egreso_invoice = create(
+        :invoice,
+        kind: 'egreso',
+        status: 'issued',
+        sat_uuid: 'UUID-EGRESO-001',
+        provider_response: {
+          'comprobanteRelacionadoUUID' => source_invoice.sat_uuid
+        }
+      )
+
+      get invoice_path(egreso_invoice)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('CFDIs relacionados de este egreso')
+      expect(response.body).to include(source_invoice.sat_uuid)
+      expect(response.body).to include(invoice_path(source_invoice))
+      expect(response.body).to include('GMZO')
+      expect(response.body).to include('244')
+    end
+
     it 'shows hbl and customs agency in invoice detail when available' do
       customs_agent = create(:entity, :customs_agent, name: 'Agencia Aduanal Norte')
       bl_house_line = create(:bl_house_line, blhouse: 'HBL-DET-001', customs_agent: customs_agent)

@@ -215,6 +215,18 @@
         <% related_payment_documents = payment_entries.flat_map { |entry| Array(entry["doctoRelacionado"]).map { |doc| doc.to_h.deep_stringify_keys } } %>
         <% related_uuids = related_payment_documents.map { |doc| doc["idDocumento"].to_s }.reject(&:blank?).uniq %>
         <% source_invoices_by_uuid = Invoice.includes(:receiver_entity).where(sat_uuid: related_uuids).index_by(&:sat_uuid) %>
+        <% related_credit_uuids = [] %>
+        <% related_credit_uuids.concat(Array(provider["comprobanteRelacionadoUUID"])) %>
+        <% related_credit_uuids.concat(Array(provider["comprobantesRelacionadosUUID"])) %>
+        <% related_credit_uuids.concat(Array(payload.dig("CfdiRelacionados", "UUID"))) %>
+        <% related_credit_uuids.concat(Array(payload.dig("cfdiRelacionados", "UUID"))) %>
+        <% related_credit_uuids.concat(Array(payload.dig("cfdiRelacionados", "uuids"))) %>
+        <% related_credit_uuids = related_credit_uuids.flat_map { |item| item.to_s.split(/[\s,;]+/) }
+                      .map(&:strip)
+                      .reject(&:blank?)
+                      .map(&:upcase)
+                      .uniq %>
+        <% related_credit_invoices_by_uuid = Invoice.includes(:receiver_entity).where(sat_uuid: related_credit_uuids).index_by { |inv| inv.sat_uuid.to_s.upcase } %>
         <% uso_cfdi_code = receptor["usoCFDI"].presence %>
         <% regimen_receptor_code = receptor["regimenFiscalReceptor"].presence %>
         <% forma_pago_code = payload["formaPago"].presence %>
@@ -346,6 +358,53 @@
                 </div>
               <% else %>
                 <p class="text-sm text-gray-500">No hay CFDIs relacionados registrados en el complemento de pago.</p>
+              <% end %>
+            </div>
+          <% end %>
+
+          <% if @invoice.kind == "egreso" %>
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <h3 class="text-sm font-bold text-gray-900 mb-3">CFDIs relacionados de este egreso</h3>
+
+              <% if related_credit_uuids.any? %>
+                <div class="overflow-x-auto">
+                  <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-white">
+                      <tr>
+                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Serie</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Folio</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Receptor</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">UUID</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 bg-white">
+                      <% related_credit_uuids.each do |related_uuid| %>
+                        <% related_invoice = related_credit_invoices_by_uuid[related_uuid] %>
+                        <% related_provider = related_invoice&.provider_response.to_h.deep_stringify_keys || {} %>
+                        <% related_snapshot = related_invoice&.payload_snapshot.to_h.deep_stringify_keys || {} %>
+                        <% related_serie = related_provider["serie"].presence || related_snapshot["serie"].presence %>
+                        <% related_folio = related_provider["folio"].presence || related_provider["noComprobante"].presence || related_provider["numeroComprobante"].presence || related_invoice&.facturador_comprobante_id&.to_s %>
+                        <% related_receiver_name = related_invoice&.receiver_entity&.name.presence || related_snapshot.dig("receptor", "nombre").presence %>
+                        <tr>
+                          <td class="px-3 py-2 text-gray-700"><%= related_serie.presence || '-' %></td>
+                          <td class="px-3 py-2 text-gray-700"><%= related_folio.presence || '-' %></td>
+                          <td class="px-3 py-2 text-gray-700" title="<%= related_receiver_name.presence || '' %>"><%= related_receiver_name.present? ? truncate(related_receiver_name, length: 38) : '-' %></td>
+                          <td class="px-3 py-2 text-gray-900 font-mono">
+                            <% if related_invoice.present? %>
+                              <%= link_to related_uuid, invoice_path(related_invoice), class: "text-indigo-700 hover:text-indigo-900" %>
+                            <% else %>
+                              <%= related_uuid %>
+                            <% end %>
+                          </td>
+                          <td class="px-3 py-2 text-gray-700"><%= related_invoice.present? ? number_to_currency(related_invoice.total) : '-' %></td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              <% else %>
+                <p class="text-sm text-gray-500">No hay CFDIs relacionados registrados para este egreso.</p>
               <% end %>
             </div>
           <% end %>
