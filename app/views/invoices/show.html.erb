@@ -218,6 +218,15 @@
         <% related_credit_uuids = [] %>
         <% related_credit_uuids.concat(Array(provider["comprobanteRelacionadoUUID"])) %>
         <% related_credit_uuids.concat(Array(provider["comprobantesRelacionadosUUID"])) %>
+        <% related_credit_uuids.concat(Array(provider["detalleNotasCredito"]).map { |item| item.to_h.deep_stringify_keys["comprobanteRelacionadoUUID"] }) %>
+        <% related_credit_uuids.concat(Array(provider["comprobantesRelacionados"]).flat_map { |item|
+             relation = item.to_h.deep_stringify_keys
+             [
+               relation["comprobanteRelacionadoUUID"],
+               relation["uuid"],
+               relation["UUID"]
+             ]
+           }) %>
         <% related_credit_uuids.concat(Array(payload.dig("CfdiRelacionados", "UUID"))) %>
         <% related_credit_uuids.concat(Array(payload.dig("cfdiRelacionados", "UUID"))) %>
         <% related_credit_uuids.concat(Array(payload.dig("cfdiRelacionados", "uuids"))) %>
