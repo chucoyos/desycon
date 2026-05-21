@@ -1788,7 +1788,12 @@ class InvoicesController < ApplicationController
     end
 
     if @selected_kind.present? && Invoice::KINDS.include?(@selected_kind)
-      kind_label = @selected_kind == "ingreso" ? "Factura" : "Pago"
+      kind_label = case @selected_kind
+      when "ingreso" then "Factura"
+      when "egreso" then "Egreso"
+      when "pago" then "Pago"
+      else @selected_kind.humanize
+      end
       filters << { key: "kind", label: "Tipo comprobante", value: kind_label }
     end
 

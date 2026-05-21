@@ -132,6 +132,7 @@ RSpec.describe 'Invoices', type: :request do
 
     it 'filters by comprobante type' do
       factura_invoice = create(:invoice, kind: 'ingreso', sat_uuid: 'UUID-KIND-FACTURA')
+      egreso_invoice = create(:invoice, kind: 'egreso', sat_uuid: 'UUID-KIND-EGRESO')
       pago_invoice = create(:invoice, kind: 'pago', sat_uuid: 'UUID-KIND-PAGO')
 
       get invoices_path, params: { kind: 'pago' }
@@ -139,6 +140,7 @@ RSpec.describe 'Invoices', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(pago_invoice.sat_uuid)
       expect(response.body).not_to include(factura_invoice.sat_uuid)
+      expect(response.body).not_to include(egreso_invoice.sat_uuid)
     end
 
     it 'filters by source origin' do
