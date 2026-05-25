@@ -47,6 +47,8 @@ module Facturador
       xml_body = client.descargar_xml(emisor_id: emisor_id, uuid: invoice.sat_uuid)
       raise RequestError, "XML response is empty" if xml_body.blank?
 
+      sync_payload_snapshot_from_xml!(xml_body)
+
       invoice.xml_file.attach(
         io: StringIO.new(xml_body),
         filename: xml_filename_from_content(xml_body),
@@ -168,6 +170,45 @@ module Facturador
       return nil if token.blank?
 
       token.gsub(/[^0-9A-Za-z_-]/, "")
+    end
+
+    def sync_payload_snapshot_from_xml!(xml_body)
+      xml_header = cfdi_header_from_xml(xml_body)
+      return if xml_header.blank?
+
+      current_snapshot = invoice.payload_snapshot.to_h.deep_stringify_keys
+      merged_snapshot = current_snapshot.merge(xml_header)
+      return if merged_snapshot == current_snapshot
+
+      invoice.update!(payload_snapshot: merged_snapshot)
+    rescue StandardError => e
+      Rails.logger.warn("Facturador XML payload snapshot sync skipped for invoice=#{invoice.id}: #{e.message}")
+    end
+
+    def cfdi_header_from_xml(xml_body)
+      document = Nokogiri::XML(xml_body.to_s) { |config| config.nonet }
+      comprobante = document.at_xpath("//*[local-name()='Comprobante']")
+      return {} if comprobante.blank?
+
+      {
+        "version" => xml_attr(comprobante, "Version", "version"),
+        "fecha" => xml_attr(comprobante, "Fecha", "fecha"),
+        "serie" => xml_attr(comprobante, "Serie", "serie"),
+        "folio" => xml_attr(comprobante, "Folio", "folio"),
+        "moneda" => xml_attr(comprobante, "Moneda", "moneda"),
+        "tipoDeComprobante" => xml_attr(comprobante, "TipoDeComprobante", "tipoDeComprobante"),
+        "formaPago" => xml_attr(comprobante, "FormaPago", "formaPago"),
+        "metodoPago" => xml_attr(comprobante, "MetodoPago", "metodoPago")
+      }.compact
+    end
+
+    def xml_attr(node, *candidates)
+      candidates.each do |name|
+        value = node[name].to_s.strip
+        return value if value.present?
+      end
+
+      nil
     end
   end
 end

@@ -19,7 +19,7 @@ RSpec.describe Facturador::ImportExternalInvoicesService, type: :service do
 
     it 'creates missing external invoices with mapped visibility' do
       receiver = create(:entity, :client, customs_agent: create(:entity, :customs_agent))
-      receiver_fiscal_profile = create(
+      create(
         :fiscal_profile,
         profileable: receiver,
         rfc: 'AAA010101AAA',
@@ -41,7 +41,9 @@ RSpec.describe Facturador::ImportExternalInvoicesService, type: :service do
               'subtotal' => '100.00',
               'impuestos' => '16.00',
               'total' => '116.00',
-              'moneda' => 'MXN'
+              'moneda' => 'MXN',
+              'satFormaPagoClave' => '99',
+              'satMetodoPagoClave' => 'PPD'
             }
           ],
           []
@@ -59,8 +61,8 @@ RSpec.describe Facturador::ImportExternalInvoicesService, type: :service do
       expect(invoice.receiver_entity_id).to eq(receiver.id)
       expect(invoice.payload_snapshot.dig('receptor', 'rfc')).to eq('AAA010101AAA')
       expect(invoice.payload_snapshot.dig('receptor', 'nombre')).to eq(receiver.name)
-      expect(invoice.payload_snapshot['formaPago']).to eq(receiver_fiscal_profile.forma_pago)
-      expect(invoice.payload_snapshot['metodoPago']).to eq(receiver_fiscal_profile.metodo_pago)
+      expect(invoice.payload_snapshot['formaPago']).to eq('99')
+      expect(invoice.payload_snapshot['metodoPago']).to eq('PPD')
       expect(invoice.payload_snapshot['conceptos']).to be_present
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('external_import_created')
     end
@@ -133,6 +135,57 @@ RSpec.describe Facturador::ImportExternalInvoicesService, type: :service do
       expect(summary.created_count).to eq(0)
       expect(summary.duplicate_count + summary.updated_count).to eq(1)
       expect(Invoice.where(sat_uuid: 'UUID-EXT-EXISTING-001').count).to eq(1)
+    end
+
+    it 'preserves existing metodoPago and formaPago when provider payload omits those fields' do
+      receiver = create(:entity, :client, customs_agent: create(:entity, :customs_agent))
+      create(
+        :fiscal_profile,
+        profileable: receiver,
+        rfc: 'BBB010101BBB',
+        razon_social: 'Cliente Sin Metodo En Provider'
+      )
+
+      existing = create(
+        :invoice,
+        sat_uuid: 'UUID-EXT-KEEP-001',
+        source_origin: 'facturador_external',
+        external_visibility_state: 'mapped',
+        receiver_entity: receiver,
+        payload_snapshot: {
+          'metodoPago' => 'PPD',
+          'formaPago' => '99'
+        }
+      )
+
+      allow(client_double).to receive(:buscar_comprobantes)
+        .and_return(
+          [
+            {
+              'uuid' => 'UUID-EXT-KEEP-001',
+              'idComprobante' => existing.facturador_comprobante_id || 556677,
+              'receptorRfc' => 'BBB010101BBB',
+              'fecha' => Time.current.iso8601,
+              'estatus' => 'Emitido',
+              'subestatus' => 'Emitido',
+              'serie' => 'D',
+              'folio' => '400',
+              'subtotal' => '100.00',
+              'impuestos' => '16.00',
+              'total' => '116.00',
+              'moneda' => 'MXN'
+            }
+          ],
+          []
+        )
+
+      summary = described_class.call(window_start: 1.day.ago, window_end: Time.current, source: 'test')
+
+      expect(summary.updated_count + summary.duplicate_count).to eq(1)
+
+      existing.reload
+      expect(existing.payload_snapshot['metodoPago']).to eq('PPD')
+      expect(existing.payload_snapshot['formaPago']).to eq('99')
     end
   end
 end

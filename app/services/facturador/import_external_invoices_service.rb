@@ -403,8 +403,10 @@ module Facturador
       receiver_address = receiver_entity.fiscal_address
       issuer_profile = issuer_entity.fiscal_profile
 
-      forma_pago = payload["satFormaPagoClave"].to_s.presence || receiver_profile&.forma_pago
-      metodo_pago = payload["satMetodoPagoClave"].to_s.presence || receiver_profile&.metodo_pago
+      forma_pago = normalized_present_string(payload["satFormaPagoClave"]) ||
+           normalized_present_string(payload["formaPago"])
+      metodo_pago = normalized_present_string(payload["satMetodoPagoClave"]) ||
+            normalized_present_string(payload["metodoPago"])
 
       serie = normalized_present_string(payload["serie"])
       folio = normalized_present_string(payload["folio"]) ||
@@ -469,6 +471,8 @@ module Facturador
       incoming_snapshot = imported_payload_snapshot.to_h.deep_stringify_keys
 
       merged = existing_snapshot.merge(incoming_snapshot)
+      preserve_if_blank!(merged, existing_snapshot, "formaPago")
+      preserve_if_blank!(merged, existing_snapshot, "metodoPago")
       merged["receptor"] = existing_snapshot.fetch("receptor", {}).to_h.deep_stringify_keys.merge(incoming_snapshot.fetch("receptor", {}).to_h.deep_stringify_keys)
       merged["emisor"] = existing_snapshot.fetch("emisor", {}).to_h.deep_stringify_keys.merge(incoming_snapshot.fetch("emisor", {}).to_h.deep_stringify_keys)
 
@@ -493,6 +497,13 @@ module Facturador
       return nil if %w[undefined null sin serie].include?(token.downcase)
 
       token
+    end
+
+    def preserve_if_blank!(target, source, key)
+      return if target[key].to_s.strip.present?
+      return if source[key].to_s.strip.blank?
+
+      target[key] = source[key]
     end
 
     def external_fingerprint(payload)
