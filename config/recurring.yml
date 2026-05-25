@@ -93,4 +93,12 @@ staging:
       - true
     schedule: "0 14 * * *"
 
+  nightly_facturador_external_invoices_import:
+    class: "Facturador::ImportExternalInvoicesJob"
+    queue: default
+    args:
+      -
+        source: "nightly"
+    schedule: <%= ENV.fetch("NIGHTLY_FACTURADOR_EXTERNAL_IMPORT_CRON", "0 20 * * *") %>
+
 
