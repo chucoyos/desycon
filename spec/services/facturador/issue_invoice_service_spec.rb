@@ -142,15 +142,18 @@ RSpec.describe Facturador::IssueInvoiceService, type: :service do
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('issue_failed')
     end
 
-    it 'raises transient issue error for DNS/network transport errors so job can retry' do
+    it 'does not raise transient retry for ingreso on DNS/network transport errors and enqueues reconcile' do
       allow(client_double).to receive(:emitir_comprobante).and_raise(
         Facturador::RequestError,
         'Failed to open TCP connection to authcli.stagefacturador.com:443 (getaddrinfo(3): Temporary failure in name resolution)'
       )
 
+      expect(Facturador::ReconcileAndSyncInvoiceJob).to receive(:perform_later)
+        .with(invoice_id: invoice.id, actor_id: nil)
+
       expect {
         described_class.call(invoice_id: invoice.id)
-      }.to raise_error(Facturador::TransientIssueError, /Temporary failure in name resolution/)
+      }.not_to raise_error
 
       invoice.reload
       expect(invoice.status).to eq('failed')

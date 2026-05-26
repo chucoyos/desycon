@@ -64,7 +64,12 @@ module Facturador
       end
 
       if is_transient_transport
-        raise TransientIssueError, e.message
+        if invoice.kind == "pago"
+          raise TransientIssueError, e.message
+        end
+
+        enqueue_reconcile_and_sync_non_blocking
+        return invoice
       end
 
       raise

@@ -24,6 +24,12 @@ module Facturador
       return Result.new(error_message: "Las acciones manuales de Facturador están deshabilitadas") unless Config.manual_actions_enabled?
       return Result.new(error_message: "Debes seleccionar al menos un servicio") if serviceables.empty?
 
+      existing_invoice = existing_grouped_invoice_for_selected_services
+      if existing_invoice.present?
+        queue_grouped_issue_if_needed(existing_invoice)
+        return Result.new(invoice: existing_invoice)
+      end
+
       invalid_service = serviceables.find(&:facturado?)
       if invalid_service.present?
         return Result.new(error_message: "No se puede facturar en bloque un servicio que ya está facturado")
@@ -41,43 +47,52 @@ module Facturador
       line_items = build_line_items
       return Result.new(error_message: "No hay conceptos válidos para facturar") if line_items.empty?
 
+      grouped_services_snapshot = grouped_services_snapshot_payload
+      grouped_key = grouped_idempotency_key(issuer_id: issuer.id, receiver_id: receiver.id, line_items: line_items)
+
       invoice = nil
 
       ActiveRecord::Base.transaction do
+        lock_selected_services!
+
         subtotal = line_items.sum { |item| item[:subtotal] }
         tax_total = line_items.sum { |item| item[:tax_amount] }
         total = line_items.sum { |item| item[:total] }
 
-        invoice = Invoice.create!(
-          invoiceable: nil,
-          issuer_entity: issuer,
-          receiver_entity: receiver,
-          customs_agent: receiver.customs_agent,
-          kind: "ingreso",
-          status: "draft",
-          currency: "MXN",
+        invoice = find_or_build_grouped_invoice(
+          grouped_key: grouped_key,
+          issuer: issuer,
+          receiver: receiver,
           subtotal: subtotal,
           tax_total: tax_total,
           total: total,
-          idempotency_key: grouped_idempotency_key(issuer_id: issuer.id, receiver_id: receiver.id, line_items: line_items),
-          payload_snapshot: {
-            grouped_issue: true,
-            grouped_services: serviceables.map { |service| { type: service.class.name, id: service.id } }
-          },
-          provider_response: {}
+          grouped_services_snapshot: grouped_services_snapshot
         )
 
-        line_items.each_with_index do |item, idx|
-          invoice.invoice_line_items.create!(item.merge(position: idx))
-        end
+        if invoice.new_record?
+          invoice.save!
 
-        serviceables.each do |service|
-          invoice.invoice_service_links.create!(serviceable: service)
+          line_items.each_with_index do |item, idx|
+            invoice.invoice_line_items.create!(item.merge(position: idx))
+          end
+
+          serviceables.each do |service|
+            invoice.invoice_service_links.create!(serviceable: service)
+          end
         end
       end
 
-      invoice.queue_issue!(actor: actor)
+      queue_grouped_issue_if_needed(invoice)
       Result.new(invoice: invoice)
+    rescue ActiveRecord::RecordNotUnique
+      # Handles concurrent clicks that race while creating the same grouped invoice key.
+      invoice = Invoice.find_by(idempotency_key: grouped_idempotency_key(
+        issuer_id: issuer.id,
+        receiver_id: receiver.id,
+        line_items: line_items
+      ))
+      queue_grouped_issue_if_needed(invoice) if invoice.present?
+      Result.new(invoice: invoice, error_message: invoice.blank? ? "No fue posible recuperar la factura agrupada" : nil)
     rescue Facturador::Error => e
       Result.new(error_message: e.message)
     rescue ActiveRecord::RecordInvalid => e
@@ -177,18 +192,90 @@ module Facturador
           line[:quantity].to_s,
           line[:unit_price].to_s("F")
         ].join("|")
-      end
+      end.sort
+
+      canonical_services = serviceables
+        .map { |service| [ service.class.name, service.id ].join(":") }
+        .sort
 
       raw = [
         "grouped",
         issuer_id,
         receiver_id,
+        canonical_services.join(";"),
         canonical_lines.join(";"),
-        Time.current.to_f,
-        actor&.id
+        "v2"
       ].join(":")
 
       Digest::SHA256.hexdigest(raw)
+    end
+
+    def lock_selected_services!
+      serviceables.group_by(&:class).each do |klass, records|
+        ids = records.map(&:id)
+        klass.where(id: ids).lock.load
+      end
+    end
+
+    def grouped_services_snapshot_payload
+      serviceables
+        .map { |service| { type: service.class.name, id: service.id } }
+        .sort_by { |item| [ item[:type], item[:id] ] }
+    end
+
+    def find_or_build_grouped_invoice(grouped_key:, issuer:, receiver:, subtotal:, tax_total:, total:, grouped_services_snapshot:)
+      Invoice.find_or_initialize_by(idempotency_key: grouped_key).tap do |candidate|
+        if candidate.new_record?
+          candidate.assign_attributes(
+            invoiceable: nil,
+            issuer_entity: issuer,
+            receiver_entity: receiver,
+            customs_agent: receiver.customs_agent,
+            kind: "ingreso",
+            status: "draft",
+            currency: "MXN",
+            subtotal: subtotal,
+            tax_total: tax_total,
+            total: total,
+            payload_snapshot: {
+              grouped_issue: true,
+              grouped_services: grouped_services_snapshot
+            },
+            provider_response: {}
+          )
+        end
+      end
+    end
+
+    def queue_grouped_issue_if_needed(invoice)
+      return if invoice.blank?
+
+      invoice.with_lock do
+        return if invoice.issued?
+        return if invoice.status == "queued"
+        return if invoice.invoice_events.where(event_type: "issue_requested").exists?
+
+        invoice.queue_issue!(actor: actor)
+      end
+    end
+
+    def existing_grouped_invoice_for_selected_services
+      return nil if serviceables.empty?
+
+      candidate_ids = nil
+
+      serviceables.each do |service|
+        invoice_ids = InvoiceServiceLink
+          .joins(:invoice)
+          .where(serviceable: service)
+          .where(invoices: { kind: "ingreso", status: %w[draft queued issued cancel_pending failed] })
+          .pluck(:invoice_id)
+
+        candidate_ids = candidate_ids.nil? ? invoice_ids : (candidate_ids & invoice_ids)
+        return nil if candidate_ids.blank?
+      end
+
+      Invoice.where(id: candidate_ids).order(created_at: :desc, id: :desc).first
     end
   end
 end

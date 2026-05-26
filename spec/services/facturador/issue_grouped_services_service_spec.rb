@@ -85,5 +85,29 @@ RSpec.describe Facturador::IssueGroupedServicesService, type: :service do
       expect(line_item.description).to include("\nContenedor:")
       expect(line_item.description).to include("\nBlHouse:")
     end
+
+    it 'reuses the same grouped invoice for repeated requests on identical services' do
+      destination_port = create(:port, :veracruz)
+      voyage = create(:voyage, destination_port: destination_port)
+      container = create(
+        :container,
+        consolidator_entity: receiver,
+        tipo_maniobra: 'importacion',
+        voyage: voyage,
+        recinto: 'ICAVE',
+        almacen: 'CICE'
+      )
+      service = create(:container_service, container: container, factura: nil)
+      service.update!(billed_to_entity: receiver)
+
+      first_result = described_class.call(serviceables: [ service ], actor: actor)
+      second_result = described_class.call(serviceables: [ service ], actor: actor)
+
+      expect(first_result.success?).to be(true), first_result.error_message
+      expect(second_result.success?).to be(true), second_result.error_message
+      expect(second_result.invoice.id).to eq(first_result.invoice.id)
+      expect(Invoice.where(idempotency_key: first_result.invoice.idempotency_key).count).to eq(1)
+      expect(first_result.invoice.invoice_events.where(event_type: 'issue_requested').count).to eq(1)
+    end
   end
 end
