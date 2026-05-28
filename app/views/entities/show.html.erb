@@ -53,6 +53,10 @@
 
   <!-- Addresses -->
   <%= render "entities/addresses_section", entity: @entity %>
+
+  <% if current_user.admin_or_executive? %>
+    <%= render "entities/history_section", entity_events: @entity_events %>
+  <% end %>
 </div>
 
 <!-- Modals -->

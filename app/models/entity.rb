@@ -24,6 +24,7 @@ class Entity < ApplicationRecord
   has_many :entity_email_recipients, dependent: :destroy
   has_one :fiscal_profile, as: :profileable, dependent: :destroy
   has_many :users, dependent: :restrict_with_error
+  has_many :entity_events, dependent: :destroy
 
   # Relación Agencia Aduanal - Clientes
   belongs_to :customs_agent, class_name: "Entity", optional: true

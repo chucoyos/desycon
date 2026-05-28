@@ -32,6 +32,11 @@ class EntitiesController < ApplicationController
 
   def show
     @entity.build_fiscal_profile unless @entity.fiscal_profile.present?
+    @entity_events = if current_user.admin_or_executive?
+      @entity.entity_events.includes(:user).order(created_at: :desc).limit(30)
+    else
+      []
+    end
     authorize @entity
   end
 
@@ -208,6 +213,7 @@ class EntitiesController < ApplicationController
     end
 
     if persisted
+      Entities::EventLogger.log_created(entity: @entity, user: current_user)
       redirect_to @entity, notice: "Entidad creada exitosamente."
     else
       # Rebuild associated objects for form display when validation fails
@@ -225,6 +231,7 @@ class EntitiesController < ApplicationController
     modal_context = params[:modal].present?
 
     respond_to do |format|
+      before_snapshot = Entities::EventLogger.snapshot(@entity)
       updated = false
       begin
         updated = @entity.update(entity_params)
@@ -234,6 +241,7 @@ class EntitiesController < ApplicationController
 
       if updated
         @entity.reload # Reload to ensure associations are fresh
+        Entities::EventLogger.log_updated(entity: @entity, user: current_user, before_snapshot: before_snapshot)
         enqueue_customs_agency_access_recalculation(@entity)
 
         if modal_context

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_18_173000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_28_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -275,6 +275,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_18_173000) do
     t.index ["entity_id", "email"], name: "index_entity_email_recipients_on_entity_id_and_email", unique: true
     t.index ["entity_id", "primary_recipient"], name: "idx_on_entity_id_primary_recipient_2475f48de5"
     t.index ["entity_id"], name: "index_entity_email_recipients_on_entity_id"
+  end
+
+  create_table "entity_events", force: :cascade do |t|
+    t.jsonb "changed_fields_json", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.bigint "entity_id", null: false
+    t.string "event_type", null: false
+    t.jsonb "snapshot_json", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["entity_id", "created_at"], name: "index_entity_events_on_entity_id_and_created_at"
+    t.index ["entity_id"], name: "index_entity_events_on_entity_id"
+    t.index ["event_type"], name: "index_entity_events_on_event_type"
+    t.index ["user_id"], name: "index_entity_events_on_user_id"
   end
 
   create_table "fiscal_profiles", force: :cascade do |t|
@@ -648,6 +662,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_18_173000) do
   add_foreign_key "containers", "voyages"
   add_foreign_key "entities", "entities", column: "customs_agent_id"
   add_foreign_key "entity_email_recipients", "entities"
+  add_foreign_key "entity_events", "entities"
+  add_foreign_key "entity_events", "users"
   add_foreign_key "forwarders", "entities"
   add_foreign_key "invoice_events", "invoices"
   add_foreign_key "invoice_line_items", "invoices"

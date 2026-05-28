@@ -70,6 +70,28 @@ RSpec.describe "Entities", type: :request do
       get entity_path(entity)
       expect(response).to have_http_status(:success)
     end
+
+    it "shows history section for admin users" do
+      entity.entity_events.create!(event_type: "entity_created", user: user, changed_fields_json: {}, snapshot_json: {})
+
+      get entity_path(entity)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("Historial de cambios")
+    end
+
+    it "hides history section for non admin/executive users" do
+      sign_out user
+      customs_agent = create(:entity, :customs_agent)
+      manageable_client = create(:entity, :client, customs_agent: customs_agent)
+      customs_broker_user = create(:user, :customs_broker, entity: customs_agent)
+      sign_in customs_broker_user, scope: :user
+
+      get entity_path(manageable_client)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).not_to include("Historial de cambios")
+    end
   end
 
   describe "GET /new" do
@@ -201,12 +223,15 @@ RSpec.describe "Entities", type: :request do
           }
         }
       }.to change(Entity, :count).by(1)
+       .and change(EntityEvent, :count).by(1)
 
       created = Entity.order(:id).last
       expect(response).to redirect_to(entity_path(created))
       expect(flash[:notice]).to eq("Entidad creada exitosamente.")
       expect(created.name).to eq("Nueva Entidad")
       expect(created.role_kind).to eq("client")
+      expect(created.entity_events.last.event_type).to eq("entity_created")
+      expect(created.entity_events.last.user_id).to eq(user.id)
     end
 
     it "returns unprocessable_content with invalid params" do
@@ -264,15 +289,21 @@ RSpec.describe "Entities", type: :request do
     let!(:fiscal_profile) { create(:fiscal_profile, profileable: entity, razon_social: "Razon Original") }
 
     it "updates entity name" do
+      expect {
       patch entity_path(entity), params: {
         entity: {
           name: "Entidad Renombrada"
         }
       }
+      }.to change { entity.entity_events.count }.by(1)
 
       expect(response).to redirect_to(entity_path(entity))
       expect(flash[:notice]).to eq("Entidad actualizada exitosamente.")
       expect(entity.reload.name).to eq("Entidad Renombrada")
+      last_event = entity.entity_events.order(:created_at).last
+      expect(last_event.event_type).to eq("entity_updated")
+      expect(last_event.user_id).to eq(user.id)
+      expect(last_event.changed_fields_json.keys).to include("entity.name")
     end
 
     it "allows admin to update overdue-rule toggle" do

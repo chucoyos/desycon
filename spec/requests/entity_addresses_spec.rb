@@ -23,6 +23,23 @@ RSpec.describe 'EntityAddresses', type: :request do
 
       expect(entity.reload.addresses.last.tipo).to eq('matriz')
     end
+
+    it 'creates an entity history event when address is created' do
+      expect {
+        post entity_addresses_path(entity), params: {
+          address: {
+            pais: 'MX',
+            codigo_postal: '01010',
+            estado: 'Ciudad de Mexico',
+            email: 'fiscal@example.com'
+          }
+        }
+      }.to change { entity.reload.entity_events.count }.by(1)
+
+      event = entity.reload.entity_events.order(:created_at).last
+      expect(event.event_type).to eq('entity_updated')
+      expect(event.changed_fields_json).to have_key('addresses')
+    end
   end
 
   describe 'GET /entities/:entity_id/addresses/:id/edit' do
@@ -109,6 +126,26 @@ RSpec.describe 'EntityAddresses', type: :request do
       expect(response).to have_http_status(:unprocessable_content)
       expect(address.reload.codigo_postal).to eq(original_codigo_postal)
     end
+
+    it 'creates an entity history event when address is updated' do
+      address = create(:address, addressable: entity, tipo: 'sucursal', calle: 'Calle Original')
+
+      expect {
+        patch entity_address_path(entity, address), params: {
+          address: {
+            calle: 'Calle Actualizada',
+            pais: 'MX',
+            codigo_postal: '01010',
+            estado: 'Ciudad de Mexico',
+            email: 'actualizado@example.com'
+          }
+        }
+      }.to change { entity.reload.entity_events.count }.by(1)
+
+      event = entity.reload.entity_events.order(:created_at).last
+      expect(event.event_type).to eq('entity_updated')
+      expect(event.changed_fields_json).to have_key('addresses')
+    end
   end
 
   describe 'DELETE /entities/:entity_id/addresses/:id' do
@@ -135,6 +172,20 @@ RSpec.describe 'EntityAddresses', type: :request do
 
       expect(response).to redirect_to(edit_entity_path(entity))
       expect(flash[:notice]).to include('eliminada exitosamente')
+    end
+
+    it 'creates an entity history event when address is deleted' do
+      create(:fiscal_profile, profileable: entity)
+      delete_candidate = create(:address, addressable: entity, tipo: 'matriz')
+      create(:address, addressable: entity, tipo: 'matriz')
+
+      expect {
+        delete entity_address_path(entity, delete_candidate)
+      }.to change { entity.reload.entity_events.count }.by(1)
+
+      event = entity.reload.entity_events.order(:created_at).last
+      expect(event.event_type).to eq('entity_updated')
+      expect(event.changed_fields_json).to have_key('addresses')
     end
   end
 

@@ -3,10 +3,12 @@ class EntityAddressesController < ApplicationController
   before_action :authorize_entity_management
 
   def create
+    before_snapshot = Entities::EventLogger.snapshot(@entity)
     @address = @entity.addresses.build(address_params)
     @address.tipo = "matriz" if @address.tipo.blank?
 
     if @address.save
+      Entities::EventLogger.log_updated(entity: @entity, user: current_user, before_snapshot: before_snapshot)
       flash[:notice] = "Dirección agregada exitosamente."
       @entity.reload # Reload to ensure addresses association is fresh
       respond_to do |format|
@@ -23,8 +25,10 @@ class EntityAddressesController < ApplicationController
 
   def update
     @address = @entity.addresses.find(params[:id])
+    before_snapshot = Entities::EventLogger.snapshot(@entity)
 
     if @address.update(address_params)
+      Entities::EventLogger.log_updated(entity: @entity, user: current_user, before_snapshot: before_snapshot)
       flash.now[:notice] = "Dirección actualizada exitosamente."
       success_path = edit_context_request? ? edit_entity_path(@entity) : @entity
       respond_to do |format|
@@ -48,6 +52,7 @@ class EntityAddressesController < ApplicationController
 
   def destroy
     @address = @entity.addresses.find(params[:id])
+    before_snapshot = Entities::EventLogger.snapshot(@entity)
 
     if prevent_fiscal_address_removal?(@address)
       error_message = "No se puede eliminar el único domicilio fiscal de la entidad."
@@ -63,6 +68,7 @@ class EntityAddressesController < ApplicationController
     end
 
     @address.destroy
+    Entities::EventLogger.log_updated(entity: @entity, user: current_user, before_snapshot: before_snapshot)
 
     respond_to do |format|
       format.turbo_stream
