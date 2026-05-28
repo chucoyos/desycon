@@ -689,11 +689,28 @@ class ContainersController < ApplicationController
   end
 
   def apply_autocomplete_fallbacks!(attrs)
-    attrs[:consolidator_entity_id] = resolve_consolidator_entity_id(params[:consolidator_search]) if attrs[:consolidator_entity_id].blank?
+    reconcile_consolidator_entity_id!(attrs)
     attrs[:shipping_line_id] = resolve_shipping_line_id(params[:shipping_line_search]) if attrs[:shipping_line_id].blank?
     attrs[:vessel_id] = resolve_vessel_id(params[:vessel_search]) if attrs[:vessel_id].blank?
     attrs[:voyage_id] = resolve_voyage_id(params[:voyage_search], vessel_id: attrs[:vessel_id]) if attrs[:voyage_id].blank?
     attrs[:origin_port_id] = resolve_origin_port_id(params[:origin_port_search]) if attrs[:origin_port_id].blank?
+  end
+
+  def reconcile_consolidator_entity_id!(attrs)
+    query = params[:consolidator_search].to_s.strip
+    return if query.blank?
+
+    if attrs[:consolidator_entity_id].blank?
+      attrs[:consolidator_entity_id] = resolve_consolidator_entity_id(query)
+      return
+    end
+
+    current_id = attrs[:consolidator_entity_id]
+    current_name = Entity.where(id: current_id).pick(:name).to_s.strip
+    return if current_name.casecmp?(query)
+
+    resolved_id = resolve_consolidator_entity_id(query)
+    attrs[:consolidator_entity_id] = resolved_id if resolved_id.present?
   end
 
   def resolve_consolidator_entity_id(raw_query)

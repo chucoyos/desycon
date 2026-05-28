@@ -936,6 +936,30 @@ RSpec.describe "Containers", type: :request do
   describe "PATCH /containers/:id" do
     before { sign_in user, scope: :user }
 
+    it "updates consolidator using consolidator_search when hidden id is stale" do
+      original_consolidator = create(:entity, :consolidator, name: "VISA FREIGHT SOLUTIONS")
+      new_consolidator = create(:entity, :consolidator, name: "MASTER FORWARDING")
+      container = create(:container, consolidator_entity: original_consolidator)
+
+      patch container_url(container), params: {
+        container: {
+          number: container.number,
+          consolidator_entity_id: original_consolidator.id,
+          status: container.status,
+          tipo_maniobra: container.tipo_maniobra,
+          type_size: container.type_size,
+          shipping_line_id: container.shipping_line_id,
+          vessel_id: container.vessel_id,
+          voyage_id: container.voyage_id,
+          origin_port_id: container.origin_port_id
+        },
+        consolidator_search: new_consolidator.name
+      }
+
+      expect(response).to redirect_to(container_url(container))
+      expect(container.reload.consolidator_entity_id).to eq(new_consolidator.id)
+    end
+
     it "creates a service from show flow" do
       container = create(:container)
       service_catalog = create(:service_catalog, applies_to: "container", active: true)
