@@ -78,9 +78,7 @@ class RevalidationPdf
   end
 
   def consignatario_name_for_letter
-    return "GLOBAL DESYCON CARGO" if manzanillo_destination_port?
-
-    consolidator_name
+    "GLOBAL DESYCON CARGO"
   end
 
   def packaging_name
@@ -117,10 +115,6 @@ class RevalidationPdf
 
   def destination_port_name_for_letter
     @bl_house_line.container&.destination_port&.name.to_s.upcase.presence || "N/A"
-  end
-
-  def manzanillo_destination_port?
-    @bl_house_line.container&.destination_port&.name.to_s.strip.casecmp("Manzanillo").zero?
   end
 
   def voyage
