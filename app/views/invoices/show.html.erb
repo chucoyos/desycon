@@ -750,11 +750,25 @@
                 else
                   "text-gray-600"
                 end %>
+                <% cancellation_motive = event.request_payload.to_h["motive"].to_s.presence %>
+                <% cancellation_motive_label = case cancellation_motive
+                when "01" then "01 Comprobante emitido con errores con relación"
+                when "02" then "02 Comprobante emitido con errores sin relación"
+                when "03" then "03 No se llevó a cabo la operación"
+                when "04" then "04 Operación nominativa relacionada con una factura global"
+                end %>
+                <% replacement_uuid = event.request_payload.to_h["replacement_uuid"].to_s.presence %>
 
                 <div class="pb-3 border-b border-gray-100 last:border-0">
                   <p class="text-sm font-semibold <%= event_title_class %>"><%= event.event_type.humanize %></p>
                   <p class="text-xs text-gray-500 mt-0.5"><%= l(event.created_at, format: :short) %></p>
                   <p class="text-xs text-gray-500 mt-1">Actor: <span class="font-medium text-gray-700"><%= actor_label %></span><% if actor_meta.present? %> · <%= actor_meta %><% end %></p>
+                  <% if event_type.start_with?("cancel_") && cancellation_motive_label.present? %>
+                    <p class="text-xs text-gray-500 mt-1">Motivo de cancelación: <span class="font-medium text-gray-700"><%= cancellation_motive_label %></span></p>
+                  <% end %>
+                  <% if event_type.start_with?("cancel_") && replacement_uuid.present? %>
+                    <p class="text-xs text-gray-500 mt-1">Folio sustitución: <span class="font-mono text-gray-700"><%= replacement_uuid %></span></p>
+                  <% end %>
                   <% if event.provider_error_message.present? %>
                     <p class="text-xs mt-1 <%= event_message_class %>"><%= event.provider_error_message %></p>
                   <% end %>

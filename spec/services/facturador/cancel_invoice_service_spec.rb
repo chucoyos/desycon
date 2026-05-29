@@ -31,6 +31,7 @@ RSpec.describe Facturador::CancelInvoiceService, type: :service do
       expect(invoice.cancellation_motive).to be_blank
       expect(invoice.cancelled_at).to be_present
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('cancel_succeeded')
+      expect(invoice.invoice_events.where(event_type: 'cancel_requested')).to exist
     end
 
     it 'marks invoice as cancel_pending when PAC accepts but does not confirm final cancellation' do

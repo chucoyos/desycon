@@ -42,31 +42,35 @@ module Facturador
         folio_sustitucion: (motive == "01" ? replacement_uuid : nil)
       )
       message = nil
+      events_to_log = []
 
       if response["esValido"]
+        events_to_log << "cancel_requested"
+
         if response["descripcion"].to_s.downcase.include?("cancelado") || response["subEstatusId"].to_i == 3
           invoice.mark_cancelled!(cancelled_at: Time.current, provider_response: response)
-          event_type = "cancel_succeeded"
+          events_to_log << "cancel_succeeded"
           send_email_non_blocking(trigger: "auto_cancel")
         else
           invoice.mark_cancel_pending!(motive: motive, replacement_uuid: replacement_uuid, provider_response: response)
-          event_type = "cancel_requested"
         end
       else
         message = enrich_error_message(extract_error_message(response), provider_context)
         error_code = ErrorCodeResolver.call(context: :cancel, provider_payload: response, message: message)
         invoice.mark_cancel_failed_attempt!(error_code: error_code, error_message: message, provider_response: response)
-        event_type = "cancel_failed"
+        events_to_log << "cancel_failed"
       end
 
-      invoice.invoice_events.create!(
-        event_type: event_type,
-        created_by: actor,
-        request_payload: { motive: motive, replacement_uuid: replacement_uuid },
-        response_payload: response,
-        provider_status: response["subEstatusId"]&.to_s,
-        provider_error_message: (event_type == "cancel_failed" ? message : response["descripcion"])
-      )
+      events_to_log.each do |event_type|
+        invoice.invoice_events.create!(
+          event_type: event_type,
+          created_by: actor,
+          request_payload: { motive: motive, replacement_uuid: replacement_uuid },
+          response_payload: response,
+          provider_status: response["subEstatusId"]&.to_s,
+          provider_error_message: (event_type == "cancel_failed" ? message : response["descripcion"])
+        )
+      end
 
       invoice
     rescue Error => e
