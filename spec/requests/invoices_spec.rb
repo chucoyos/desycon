@@ -1318,6 +1318,38 @@ RSpec.describe 'Invoices', type: :request do
       expect(flash[:alert]).to include('Error al cancelar CFDI')
     end
 
+    it 'enqueues cancellation with motive 01 and replacement uuid' do
+      sign_in admin_user, scope: :user
+      replacement_uuid = '11111111-1111-1111-1111-111111111111'
+
+      expect(Facturador::CancelInvoiceJob).to receive(:perform_later).with(
+        invoice_id: invoice.id,
+        motive: '01',
+        replacement_uuid: replacement_uuid,
+        actor_id: admin_user.id
+      )
+
+      patch cancel_invoice_path(invoice), params: {
+        cancellation_motive: '01',
+        replacement_uuid: replacement_uuid
+      }
+
+      expect(response).to redirect_to(containers_path)
+      expect(flash[:notice]).to include('Cancelación de CFDI en proceso')
+    end
+
+    it 'shows alert for motive 01 without replacement uuid' do
+      sign_in admin_user, scope: :user
+
+      patch cancel_invoice_path(invoice), params: {
+        cancellation_motive: '01',
+        replacement_uuid: ''
+      }
+
+      expect(response).to redirect_to(containers_path)
+      expect(flash[:alert]).to include('Error al cancelar CFDI')
+    end
+
     it 'denies customs broker users' do
       broker_user = create(:user, :customs_broker)
       sign_in broker_user, scope: :user

@@ -8,8 +8,12 @@ module Facturador
       def validate_cancel_request!(invoice:, motive:, replacement_uuid: nil)
         raise RequestError, "Invoice is not in a cancellable state" unless invoice.cancel_retryable?
         raise RequestError, "Invoice UUID is missing" if invoice.sat_uuid.blank?
-        raise RequestError, "Only cancellation motive 02 is allowed" unless motive == "02"
-        raise RequestError, "Replacement UUID is not allowed for motive 02" if replacement_uuid.present?
+        raise RequestError, "Invalid cancellation motive" unless Invoice::CANCELLATION_MOTIVES.include?(motive)
+        if motive == "01"
+          raise RequestError, "Replacement UUID is required for motive 01" if replacement_uuid.blank?
+        else
+          raise RequestError, "Replacement UUID is only allowed for motive 01" if replacement_uuid.present?
+        end
       end
     end
 
@@ -35,7 +39,7 @@ module Facturador
         emisor_id: emisor_id,
         uuid: invoice.sat_uuid,
         motivo: motive,
-        folio_sustitucion: nil
+        folio_sustitucion: (motive == "01" ? replacement_uuid : nil)
       )
       message = nil
 

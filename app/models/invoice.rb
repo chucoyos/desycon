@@ -19,7 +19,7 @@ class Invoice < ApplicationRecord
     "sent" => "Enviado",
     "failed" => "Fallido"
   }.freeze
-  CANCELLATION_MOTIVES = %w[02].freeze
+  CANCELLATION_MOTIVES = %w[01 02 03 04].freeze
 
   belongs_to :invoiceable, polymorphic: true, optional: true
   belongs_to :issuer_entity, class_name: "Entity"

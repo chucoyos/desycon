@@ -803,17 +803,43 @@
         <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 space-y-2">
           <p class="font-semibold">Esta acción solicitará la cancelación del CFDI en PAC/SAT.</p>
           <p>Si el PAC no confirma de inmediato, la factura quedará en <span class="font-semibold">pendiente de cancelación</span> hasta que conciliación confirme el estado final.</p>
-          <p>Motivo aplicado en esta fase: <span class="font-semibold">02 - Sin relación</span>.</p>
         </div>
 
-        <div class="mt-5 flex justify-end gap-3">
-          <button type="button" data-action="click->modal#close" class="cursor-pointer px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancelar</button>
-              <%= button_to "Confirmar cancelación",
-                cancel_invoice_path(@invoice),
-                method: :patch,
-                form: { data: { action: "submit->modal#closeAndSubmit" } },
-                class: "px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold" %>
-        </div>
+        <%= form_with url: cancel_invoice_path(@invoice), method: :patch, data: { action: "submit->modal#closeAndSubmit" }, class: "mt-4 space-y-4" do %>
+          <div>
+            <label for="invoice_cancel_motive" class="block text-sm font-semibold text-gray-700 mb-1">Motivo de cancelación</label>
+            <select
+              id="invoice_cancel_motive"
+              name="cancellation_motive"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              data-action="change->modal#toggleCancellationReplacement"
+              data-cancel-replacement-target-id="invoice-cancel-replacement-wrapper"
+            >
+              <option value="01">01 Comprobante emitido con errores con relación</option>
+              <option value="02" selected>02 Comprobante emitido con errores sin relación</option>
+              <option value="03">03 No se llevó a cabo la operación</option>
+              <option value="04">04 Operación nominativa relacionada con una factura global</option>
+            </select>
+          </div>
+
+          <div id="invoice-cancel-replacement-wrapper" class="hidden">
+            <label for="invoice_cancel_replacement_uuid" class="block text-sm font-semibold text-gray-700 mb-1">Folio sustitución</label>
+            <input
+              id="invoice_cancel_replacement_uuid"
+              name="replacement_uuid"
+              type="text"
+              autocomplete="off"
+              placeholder="UUID del CFDI sustituto"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            >
+            <p class="mt-1 text-xs text-gray-500">Solo aplica para motivo 01.</p>
+          </div>
+
+          <div class="mt-5 flex justify-end gap-3">
+            <button type="button" data-action="click->modal#close" class="cursor-pointer px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Cancelar</button>
+            <button type="submit" class="cursor-pointer px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold">Confirmar cancelación</button>
+          </div>
+        <% end %>
       </div>
     </div>
   </div>

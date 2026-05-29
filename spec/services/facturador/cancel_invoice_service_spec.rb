@@ -90,13 +90,41 @@ RSpec.describe Facturador::CancelInvoiceService, type: :service do
 
     it 'raises for invalid motive and records a failed event' do
       expect {
-        described_class.call(invoice: invoice, motive: '01', replacement_uuid: nil, actor: actor)
-      }.to raise_error(Facturador::RequestError, /Only cancellation motive 02 is allowed/)
+        described_class.call(invoice: invoice, motive: '99', replacement_uuid: nil, actor: actor)
+      }.to raise_error(Facturador::RequestError, /Invalid cancellation motive/)
 
       invoice.reload
       expect(invoice.status).to eq('issued')
       expect(invoice.last_error_code).to start_with('FACTURADOR_CANCEL_')
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('cancel_failed')
+    end
+
+    it 'requires replacement UUID for motive 01' do
+      expect {
+        described_class.call(invoice: invoice, motive: '01', replacement_uuid: nil, actor: actor)
+      }.to raise_error(Facturador::RequestError, /Replacement UUID is required for motive 01/)
+    end
+
+    it 'sends folio_sustitucion for motive 01' do
+      replacement_uuid = '11111111-1111-1111-1111-111111111111'
+      allow(client_double).to receive(:cancelar_comprobante).and_return(
+        {
+          'esValido' => true,
+          'descripcion' => 'Emitido (Espera Cancelación)',
+          'subEstatusId' => 4
+        }
+      )
+
+      described_class.call(invoice: invoice, motive: '01', replacement_uuid: replacement_uuid, actor: actor)
+
+      expect(client_double).to have_received(:cancelar_comprobante).with(
+        emisor_id: 208,
+        uuid: invoice.sat_uuid,
+        motivo: '01',
+        folio_sustitucion: replacement_uuid
+      )
+      expect(invoice.reload.cancellation_motive).to eq('01')
+      expect(invoice.replacement_uuid).to eq(replacement_uuid)
     end
 
     it 'allows cancellation retry for failed invoices caused by previous cancellation attempts' do

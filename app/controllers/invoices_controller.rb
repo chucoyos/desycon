@@ -530,8 +530,8 @@ class InvoicesController < ApplicationController
   def cancel
     authorize @invoice, :cancel?
 
-    motive = "02"
-    replacement_uuid = nil
+    motive = cancel_params[:cancellation_motive].to_s.presence || "02"
+    replacement_uuid = cancel_params[:replacement_uuid].to_s.strip.presence
 
     Facturador::CancelInvoiceService.validate_cancel_request!(
       invoice: @invoice,
@@ -1848,6 +1848,10 @@ class InvoicesController < ApplicationController
     else
       "No se pudo cancelar el CFDI en este intento: #{normalized}"
     end
+  end
+
+  def cancel_params
+    params.permit(:cancellation_motive, :replacement_uuid)
   end
 
   def payment_registration_error_alert(error)

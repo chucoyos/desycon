@@ -44,6 +44,10 @@ export default class extends Controller {
 
       modal.classList.remove('hidden')
 
+      if (modalId === 'invoice-cancel-modal') {
+        this.syncCancellationReplacementVisibility(modal)
+      }
+
       // Handle dynamic form loading for edit modals
       if (modalId === 'address-modal') {
         const addressId = event.currentTarget.dataset.addressId
@@ -107,8 +111,47 @@ export default class extends Controller {
     }
   }
 
+  toggleCancellationReplacement(event) {
+    const select = event.currentTarget
+    const wrapperId = select.dataset.cancelReplacementTargetId
+    if (!wrapperId) return
+
+    const wrapper = document.getElementById(wrapperId)
+    if (!wrapper) return
+
+    this.applyCancellationReplacementVisibility(select, wrapper)
+  }
+
   disconnect() {
     document.removeEventListener('keydown', this.escapeHandler)
+  }
+
+  syncCancellationReplacementVisibility(modal) {
+    if (!modal) return
+
+    const select = modal.querySelector('select[name="cancellation_motive"]')
+    if (!select) return
+
+    const wrapperId = select.dataset.cancelReplacementTargetId
+    if (!wrapperId) return
+
+    const wrapper = document.getElementById(wrapperId)
+    if (!wrapper) return
+
+    this.applyCancellationReplacementVisibility(select, wrapper)
+  }
+
+  applyCancellationReplacementVisibility(select, wrapper) {
+    const input = wrapper.querySelector('input[name="replacement_uuid"]')
+    const requiresReplacement = select.value === '01'
+
+    wrapper.classList.toggle('hidden', !requiresReplacement)
+    if (input) {
+      input.required = requiresReplacement
+      if (!requiresReplacement) {
+        input.value = ''
+      }
+    }
   }
 
   injectAddressFormFromTemplate(addressId, context = null) {
