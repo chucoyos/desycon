@@ -546,6 +546,12 @@ class InvoicesController < ApplicationController
       actor_id: current_user.id
     )
 
+    @invoice.mark_cancel_pending!(
+      motive: motive,
+      replacement_uuid: replacement_uuid,
+      provider_response: @invoice.provider_response
+    )
+
     redirect_back fallback_location: containers_path,
       notice: "Cancelación de CFDI en proceso. Te notificaremos cuando PAC/SAT confirme el resultado."
   rescue Facturador::Error => e

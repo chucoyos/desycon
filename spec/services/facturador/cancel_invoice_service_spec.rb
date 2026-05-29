@@ -150,6 +150,23 @@ RSpec.describe Facturador::CancelInvoiceService, type: :service do
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('cancel_succeeded')
     end
 
+    it 'allows processing cancellation when invoice is already cancel_pending' do
+      invoice.update!(status: 'cancel_pending', cancellation_motive: '02')
+      allow(client_double).to receive(:cancelar_comprobante).and_return(
+        {
+          'esValido' => true,
+          'descripcion' => 'Cancelado (Directo)',
+          'subEstatusId' => 3
+        }
+      )
+
+      expect {
+        described_class.call(invoice: invoice, motive: '02', replacement_uuid: nil, actor: actor)
+      }.not_to raise_error
+
+      expect(invoice.reload.status).to eq('cancelled')
+    end
+
     it 'returns invoice unchanged when manual actions are disabled' do
       allow(Facturador::Config).to receive(:manual_actions_enabled?).and_return(false)
 

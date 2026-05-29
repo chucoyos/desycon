@@ -1306,6 +1306,8 @@ RSpec.describe 'Invoices', type: :request do
 
       expect(response).to redirect_to(containers_path)
       expect(flash[:notice]).to include('Cancelación de CFDI en proceso')
+      expect(invoice.reload.status).to eq('cancel_pending')
+      expect(invoice.cancellation_motive).to eq('02')
     end
 
     it 'shows alert when invoice is not cancellable before enqueuing' do
@@ -1336,6 +1338,9 @@ RSpec.describe 'Invoices', type: :request do
 
       expect(response).to redirect_to(containers_path)
       expect(flash[:notice]).to include('Cancelación de CFDI en proceso')
+      expect(invoice.reload.status).to eq('cancel_pending')
+      expect(invoice.cancellation_motive).to eq('01')
+      expect(invoice.replacement_uuid).to eq(replacement_uuid)
     end
 
     it 'shows alert for motive 01 without replacement uuid' do
