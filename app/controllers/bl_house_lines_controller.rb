@@ -1101,7 +1101,7 @@ class BlHouseLinesController < ApplicationController
     service = @bl_house_line.bl_house_line_services.find_by(id: attrs[:id])
     return redirect_to(bl_house_line_path(@bl_house_line, anchor: "servicios"), alert: "Servicio no encontrado.") if service.blank?
 
-    if service.facturado?
+    if service.facturado? && service.latest_invoice&.status != "cancelled"
       redirect_to bl_house_line_path(@bl_house_line, anchor: "servicios"), alert: "No se puede eliminar un servicio facturado."
     elsif service.destroy
       redirect_to bl_house_line_path(@bl_house_line, anchor: "servicios"), notice: "Servicio eliminado correctamente."
@@ -1114,7 +1114,7 @@ class BlHouseLinesController < ApplicationController
     service = @bl_house_line.bl_house_line_services.find_by(id: attrs[:id])
     return redirect_to(bl_house_line_path(@bl_house_line, anchor: "servicios"), alert: "Servicio no encontrado.") if service.blank?
 
-    if service.facturado?
+    if service.facturado? && service.latest_invoice&.status != "cancelled"
       redirect_to bl_house_line_path(@bl_house_line, anchor: "servicios"), alert: "No se puede editar un servicio facturado."
     elsif service.update(attrs.except(:id, :_destroy))
       redirect_to bl_house_line_path(@bl_house_line, anchor: "servicios"), notice: "Servicio actualizado correctamente."

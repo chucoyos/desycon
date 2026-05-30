@@ -1128,6 +1128,66 @@ RSpec.describe "BlHouseLines", type: :request do
         expect(service.observaciones).to eq("Editado desde modal")
       end
 
+      it "deletes a service when latest invoice is cancelled" do
+        sign_in user, scope: :user
+        bl_house_line = create(:bl_house_line)
+        service = create(:bl_house_line_service, bl_house_line: bl_house_line, factura: nil)
+        create(:invoice, invoiceable: service, status: "cancelled")
+
+        expect {
+          patch bl_house_line_url(bl_house_line), params: {
+            source: "show_services",
+            service_action: "destroy",
+            bl_house_line: {
+              bl_house_line_services_attributes: {
+                "0" => {
+                  id: service.id,
+                  _destroy: "1"
+                }
+              }
+            }
+          }
+        }.to change(bl_house_line.bl_house_line_services, :count).by(-1)
+
+        expect(response).to redirect_to(bl_house_line_url(bl_house_line, anchor: "servicios"))
+        expect(flash[:alert]).to be_blank
+      end
+
+      it "updates a service when latest invoice is cancelled" do
+        sign_in user, scope: :user
+        bl_house_line = create(:bl_house_line, client: client)
+        old_service_catalog = create(:service_catalog, applies_to: "bl_house_line", active: true)
+        new_service_catalog = create(:service_catalog, applies_to: "bl_house_line", active: true)
+        service = create(:bl_house_line_service,
+          bl_house_line: bl_house_line,
+          service_catalog: old_service_catalog,
+          factura: nil,
+          observaciones: "Antes")
+        create(:invoice, invoiceable: service, status: "cancelled")
+
+        patch bl_house_line_url(bl_house_line), params: {
+          source: "show_services",
+          service_action: "update",
+          bl_house_line: {
+            bl_house_line_services_attributes: {
+              "0" => {
+                id: service.id,
+                service_catalog_id: new_service_catalog.id,
+                amount: "555.55",
+                billed_to_entity_id: client.id,
+                observaciones: "Editado cancelada"
+              }
+            }
+          }
+        }
+
+        expect(response).to redirect_to(bl_house_line_url(bl_house_line, anchor: "servicios"))
+        expect(service.reload.service_catalog_id).to eq(new_service_catalog.id)
+        expect(service.amount).to eq(555.55)
+        expect(service.observaciones).to eq("Editado cancelada")
+        expect(flash[:alert]).to be_blank
+      end
+
       it "recalculates BL-PREVIO amount from formula on show flow update" do
         sign_in user, scope: :user
         bl_house_line = create(:bl_house_line, client: client, peso: 13_200, volumen: 8.1)

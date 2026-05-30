@@ -142,7 +142,7 @@ class BlHouseLineService < ApplicationRecord
   end
 
   def prevent_changes_if_facturado
-    return unless factura_in_database.present? || billed_by_invoice?
+    return unless locked_for_modification?
     return if changes.except("updated_at").blank?
 
     errors.add(:base, "No se puede editar un servicio facturado.")
@@ -150,10 +150,16 @@ class BlHouseLineService < ApplicationRecord
   end
 
   def prevent_destroy_if_facturado
-    return unless facturado?
+    return unless locked_for_modification?
 
     errors.add(:base, "No se puede eliminar un servicio facturado.")
     throw :abort
+  end
+
+  def locked_for_modification?
+    return false if latest_invoice&.status == "cancelled"
+
+    factura_in_database.present? || billed_by_invoice?
   end
 
   def billed_by_invoice?

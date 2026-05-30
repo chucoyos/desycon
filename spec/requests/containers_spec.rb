@@ -1038,6 +1038,64 @@ RSpec.describe "Containers", type: :request do
       expect(service.amount).to eq(999.99)
       expect(service.observaciones).to eq("Editado desde modal")
     end
+
+    it "deletes a service when latest invoice is cancelled" do
+      container = create(:container)
+      service = create(:container_service, container: container, factura: nil)
+      create(:invoice, invoiceable: service, status: "cancelled")
+
+      expect {
+        patch container_url(container), params: {
+          source: "show_services",
+          service_action: "destroy",
+          container: {
+            container_services_attributes: {
+              "0" => {
+                id: service.id,
+                _destroy: "1"
+              }
+            }
+          }
+        }
+      }.to change(container.container_services, :count).by(-1)
+
+      expect(response).to redirect_to(container_url(container, anchor: "servicios"))
+      expect(flash[:alert]).to be_blank
+    end
+
+    it "updates a service when latest invoice is cancelled" do
+      container = create(:container)
+      old_service_catalog = create(:service_catalog, applies_to: "container", active: true)
+      new_service_catalog = create(:service_catalog, applies_to: "container", active: true)
+      service = create(:container_service,
+        container: container,
+        service_catalog: old_service_catalog,
+        factura: nil,
+        observaciones: "Antes")
+      create(:invoice, invoiceable: service, status: "cancelled")
+
+      patch container_url(container), params: {
+        source: "show_services",
+        service_action: "update",
+        container: {
+          container_services_attributes: {
+            "0" => {
+              id: service.id,
+              service_catalog_id: new_service_catalog.id,
+              amount: "111.11",
+              billed_to_entity_id: container.consolidator_entity_id,
+              observaciones: "Editado cancelada"
+            }
+          }
+        }
+      }
+
+      expect(response).to redirect_to(container_url(container, anchor: "servicios"))
+      expect(service.reload.service_catalog_id).to eq(new_service_catalog.id)
+      expect(service.amount).to eq(111.11)
+      expect(service.observaciones).to eq("Editado cancelada")
+      expect(flash[:alert]).to be_blank
+    end
   end
 
   describe "DELETE /containers/:id" do

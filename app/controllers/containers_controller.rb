@@ -814,7 +814,7 @@ class ContainersController < ApplicationController
     service = @container.container_services.find_by(id: attrs[:id])
     return redirect_to(container_path(@container, anchor: "servicios"), alert: "Servicio no encontrado.") if service.blank?
 
-    if service.facturado?
+    if service.facturado? && service.latest_invoice&.status != "cancelled"
       redirect_to container_path(@container, anchor: "servicios"), alert: "No se puede eliminar un servicio facturado."
     elsif service.destroy
       redirect_to container_path(@container, anchor: "servicios"), notice: "Servicio eliminado correctamente."
@@ -827,7 +827,7 @@ class ContainersController < ApplicationController
     service = @container.container_services.find_by(id: attrs[:id])
     return redirect_to(container_path(@container, anchor: "servicios"), alert: "Servicio no encontrado.") if service.blank?
 
-    if service.facturado?
+    if service.facturado? && service.latest_invoice&.status != "cancelled"
       redirect_to container_path(@container, anchor: "servicios"), alert: "No se puede editar un servicio facturado."
     elsif service.update(attrs.except(:id, :_destroy))
       redirect_to container_path(@container, anchor: "servicios"), notice: "Servicio actualizado correctamente."
