@@ -44,7 +44,7 @@ export default class extends Controller {
 
       modal.classList.remove('hidden')
 
-      if (modalId === 'invoice-cancel-modal') {
+      if (modal.querySelector('select[name="cancellation_motive"]')) {
         this.syncCancellationReplacementVisibility(modal)
       }
 

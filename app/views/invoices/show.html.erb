@@ -88,7 +88,7 @@
             <% end %>
 
             <% if can_cancel_invoice && @invoice.cancel_retryable? %>
-              <% cancel_button_label = @invoice.last_error_code.to_s.start_with?("FACTURADOR_CANCEL_") ? "Reintentar cancelación CFDI" : "Cancelar CFDI" %>
+              <% cancel_button_label = @invoice.last_error_code.to_s.start_with?("FACTURADOR_CANCEL_") ? "Reintentar cancelación" : "Cancelar CFDI" %>
               <button type="button"
                       data-action="click->modal#open"
                       data-modal-id="invoice-cancel-modal"
