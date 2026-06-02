@@ -74,14 +74,19 @@ export default class extends Controller {
 
     const startDate = `${year}-${String(month).padStart(2, "0")}-01`
     const endDate = this.endOfMonth(year, month)
-    const paymentStatus = seriesName === "Por cobrar" ? "unpaid" : "paid"
+    const isOutstandingSeries = seriesName === "Por cobrar"
 
     const params = new URLSearchParams({
       kind: "ingreso",
-      payment_status: paymentStatus,
+      status_scope: "management_revenue",
+      date_field: isOutstandingSeries ? "issued_at" : "paid_at",
       start_date: startDate,
       end_date: endDate
     })
+
+    if (isOutstandingSeries) {
+      params.set("payment_status", "unpaid")
+    }
 
     return `${this.invoicesPathValue}?${params.toString()}`
   }

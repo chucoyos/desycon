@@ -4,7 +4,7 @@
   month_labels = @revenue_metrics[:month_labels]
   facturado_series = @revenue_metrics[:emitted]
   cobrado_series = @revenue_metrics[:collected]
-  por_cobrar_series = facturado_series.zip(cobrado_series).map { |facturado, cobrado| [(facturado - cobrado), 0.to_d].max }
+  por_cobrar_series = @revenue_metrics[:outstanding]
 
   month_over_month = lambda do |current_value, previous_value|
     change = current_value - previous_value

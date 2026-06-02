@@ -2,6 +2,8 @@ module Admin
   module ManagementDashboard
     class RevenueMonthlyService
       MONTH_LABELS = %w[Ene Feb Mar Abr May Jun Jul Ago Sep Oct Nov Dic].freeze
+      EMITTED_ELIGIBLE_STATUSES = %w[issued cancel_pending].freeze
+      COLLECTED_ELIGIBLE_STATUSES = %w[issued cancel_pending].freeze
       DESTINATION_PORT_LABELS_BY_CODE = {
         "MXZLO" => "Manzanillo",
         "MXLZC" => "Lazaro Cardenas",
@@ -23,7 +25,7 @@ module Admin
       def call
         emitted_total = emitted_series.sum
         collected_total = collected_series.sum
-        outstanding_total = [ emitted_total - collected_total, 0.to_d ].max
+        outstanding_total = outstanding_series.sum
 
         {
           year: year,
@@ -31,6 +33,7 @@ module Admin
           month_labels: month_labels,
           emitted: emitted_series,
           collected: collected_series,
+          outstanding: outstanding_series,
           emitted_by_destination_port: emitted_by_destination_port_series,
           totals: {
             emitted: emitted_total,
@@ -68,7 +71,7 @@ module Admin
         rows = Invoice
           .where(kind: "ingreso")
           .where(issued_at: range_start..range_end)
-          .where(status: %w[issued cancel_pending failed])
+          .where(status: EMITTED_ELIGIBLE_STATUSES)
           .group(month_extract_sql("invoices.issued_at"))
           .sum(:total)
 
@@ -80,11 +83,31 @@ module Admin
           .joins(:invoice)
           .where(paid_at: range_start..range_end)
           .where(invoices: { kind: "ingreso" })
-          .where.not(invoices: { status: "cancelled" })
+          .where(invoices: { status: COLLECTED_ELIGIBLE_STATUSES })
           .group(month_extract_sql("invoice_payments.paid_at"))
           .sum("invoice_payments.amount")
 
         normalize_month_hash(rows)
+      end
+
+      def outstanding_by_month
+        @outstanding_by_month ||= begin
+          rows = Invoice
+            .where(kind: "ingreso")
+            .where(issued_at: range_start..range_end)
+            .where(status: EMITTED_ELIGIBLE_STATUSES)
+            .left_joins(:invoice_payments)
+            .where("invoice_payments.id IS NULL OR invoice_payments.paid_at <= ?", range_end)
+            .group(month_extract_sql("invoices.issued_at"), "invoices.id", "invoices.total")
+            .sum("COALESCE(invoice_payments.amount, 0)")
+
+          rows.each_with_object(Hash.new(0.to_d)) do |((month, _invoice_id, total), paid_amount), acc|
+            outstanding_amount = total.to_d - paid_amount.to_d
+            next unless outstanding_amount.positive?
+
+            acc[month.to_i] += outstanding_amount
+          end
+        end
       end
 
       def emitted_series
@@ -93,6 +116,10 @@ module Admin
 
       def collected_series
         month_numbers.map { |month| collected_by_month.fetch(month, 0.to_d) }
+      end
+
+      def outstanding_series
+        month_numbers.map { |month| outstanding_by_month.fetch(month, 0.to_d) }
       end
 
       def emitted_by_destination_port_series
@@ -108,7 +135,7 @@ module Admin
           rows = Invoice
             .where(kind: "ingreso")
             .where(issued_at: range_start..range_end)
-            .where(status: %w[issued cancel_pending failed])
+            .where(status: EMITTED_ELIGIBLE_STATUSES)
             .group(month_extract_sql("invoices.issued_at"), emitted_serie_sql)
             .sum(:total)
 

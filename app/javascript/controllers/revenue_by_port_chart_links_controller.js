@@ -79,6 +79,8 @@ export default class extends Controller {
 
 		const params = new URLSearchParams({
 			kind: "ingreso",
+			status_scope: "management_revenue",
+			date_field: "issued_at",
 			serie,
 			start_date: startDate,
 			end_date: endDate

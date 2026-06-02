@@ -4,6 +4,7 @@ require "prawn/table"
 
 class InvoicesController < ApplicationController
   DESTROY_ISSUE_REQUESTED_GUARD_WINDOW = 60.minutes
+  MANAGEMENT_REVENUE_ELIGIBLE_STATUSES = %w[issued cancel_pending].freeze
 
   before_action :authenticate_user!
   before_action :set_invoice, only: %i[show retry_issue cancel sync_documents sync_files register_payment send_email destroy]
@@ -680,6 +681,8 @@ class InvoicesController < ApplicationController
   def initialize_invoice_filters(admin_or_executive:)
     @selected_start_date = resolved_start_date
     @selected_end_date = resolved_end_date
+    @selected_date_field = resolved_date_field
+    @selected_status_scope = resolved_status_scope
     @selected_status = params[:status].to_s.presence
     @selected_kind = params[:kind].to_s.presence
     @selected_payment_status = params[:payment_status].to_s.presence
@@ -730,8 +733,10 @@ class InvoicesController < ApplicationController
         "#{last_email_event_type_sql} AS last_email_event_type_for_index",
         "#{last_email_event_at_sql} AS last_email_event_at_for_index"
       )
-      .where(created_at: start_date.beginning_of_day..end_date.end_of_day)
       .order(created_at: :desc)
+
+    scope = apply_status_scope(scope)
+    scope = apply_date_scope(scope, start_date:, end_date:)
 
     scope = scope.where(status: @selected_status) if @selected_status.present? && Invoice::STATUSES.include?(@selected_status)
     scope = scope.where(kind: @selected_kind) if @selected_kind.present? && Invoice::KINDS.include?(@selected_kind)
@@ -957,6 +962,29 @@ class InvoicesController < ApplicationController
 
     scope = scope.where("sat_uuid ILIKE ?", "%#{@selected_uuid}%") if @selected_uuid.present?
     scope
+  end
+
+  def apply_status_scope(scope)
+    case @selected_status_scope
+    when "management_revenue"
+      scope.where(status: MANAGEMENT_REVENUE_ELIGIBLE_STATUSES)
+    else
+      scope
+    end
+  end
+
+  def apply_date_scope(scope, start_date:, end_date:)
+    range = start_date.beginning_of_day..end_date.end_of_day
+
+    case @selected_date_field
+    when "issued_at"
+      scope.where(issued_at: range)
+    when "paid_at"
+      payment_invoice_ids = InvoicePayment.where(paid_at: range).select(:invoice_id)
+      scope.where(id: payment_invoice_ids)
+    else
+      scope.where(created_at: range)
+    end
   end
 
   def build_invoices_excel_rows(invoices)
@@ -1723,6 +1751,20 @@ class InvoicesController < ApplicationController
 
   def resolved_end_date
     parse_filter_date(params[:end_date]) || default_end_date
+  end
+
+  def resolved_date_field
+    value = params[:date_field].to_s
+    return value if %w[created_at issued_at paid_at].include?(value)
+
+    "created_at"
+  end
+
+  def resolved_status_scope
+    value = params[:status_scope].to_s
+    return value if value == "management_revenue"
+
+    nil
   end
 
   def resolved_selected_service_label
