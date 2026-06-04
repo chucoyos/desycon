@@ -391,3 +391,49 @@ MIT License - ver el archivo [LICENSE](LICENSE) para más detalles.
 
 Proyecto desarrollado para la gestión de operaciones aduanales LCL.
 
+## Escalado horario de dynos en recurring.yml
+
+El escalado horario se ejecuta por jobs recurrentes en `config/recurring.yml` (solo `production`), mediante `Heroku::ScaleFormationJob`.
+
+Regla implementada:
+
+- `07:30` -> perfil `day` -> `standard-2x`
+- `19:00` -> perfil `night` -> `standard-1x`
+
+Procesos afectados:
+
+- `web`
+- `worker_active_storage`
+
+El proceso `worker` no se modifica.
+
+Archivo de job:
+
+- `app/jobs/heroku/scale_formation_job.rb`
+
+Config vars requeridas en producción:
+
+- `SCALE_APP_NAME` (ejemplo: `desycon`)
+- `SCALE_HEROKU_API_KEY` (token API de Heroku con permisos sobre la app)
+
+Comandos sugeridos:
+
+```bash
+heroku config:set SCALE_APP_NAME=desycon -a desycon
+heroku config:set SCALE_HEROKU_API_KEY=TU_TOKEN -a desycon
+```
+
+Migración recomendada si ya creaste variables legacy `HEROKU_*`:
+
+```bash
+heroku config:set SCALE_APP_NAME=desycon -a desycon
+heroku config:set SCALE_HEROKU_API_KEY=TU_TOKEN -a desycon
+heroku config:unset HEROKU_SCALE_APP -a desycon
+heroku config:unset HEROKU_API_KEY -a desycon
+```
+
+Notas:
+
+- El job aborta fuera de `production`.
+- Si el tamaño ya coincide, no envía actualización (idempotente).
+

@@ -59,6 +59,20 @@ production:
         source: "nightly"
     schedule: <%= ENV.fetch("NIGHTLY_FACTURADOR_EXTERNAL_IMPORT_CRON", "0 20 * * *") %>
 
+  heroku_scale_formation_day:
+    class: "Heroku::ScaleFormationJob"
+    queue: default
+    args:
+      - "day"
+    schedule: "30 7 * * *"
+
+  heroku_scale_formation_night:
+    class: "Heroku::ScaleFormationJob"
+    queue: default
+    args:
+      - "night"
+    schedule: "0 19 * * *"
+
 staging:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
