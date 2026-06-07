@@ -18,6 +18,24 @@ RSpec.describe "Containers autocomplete", type: :system do
     field.find(:xpath, "ancestor::div[@data-controller='catalog-autocomplete'][1]")
   end
 
+  def with_fresh_autocomplete(field_name, attempts: 3)
+    tries = 0
+
+    begin
+      yield autocomplete_results_for(field_name), find_field(field_name)
+    rescue Selenium::WebDriver::Error::StaleElementReferenceError,
+           Selenium::WebDriver::Error::UnknownError => e
+      stale_node_error = e.message.to_s.include?("Node with given id does not belong to the document")
+      raise unless stale_node_error || e.is_a?(Selenium::WebDriver::Error::StaleElementReferenceError)
+
+      tries += 1
+      raise if tries >= attempts
+
+      sleep 0.1
+      retry
+    end
+  end
+
   def expect_autocomplete_option(field_name:, label:, index: 0)
     within(autocomplete_results_for(field_name)) do
       if index.zero?
@@ -29,35 +47,37 @@ RSpec.describe "Containers autocomplete", type: :system do
   end
 
   def force_autocomplete_selection(field_name:, expected_label:, expected_id:)
-    field = find_field(field_name)
-    container = autocomplete_results_for(field_name)
-    hidden_input = container.find("input[type='hidden'][data-catalog-autocomplete-target='hiddenInput']", visible: :all)
+    with_fresh_autocomplete(field_name) do |container, field|
+      hidden_input = container.find("input[type='hidden'][data-catalog-autocomplete-target='hiddenInput']", visible: :all)
 
-    page.execute_script(
-      "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
-      hidden_input.native,
-      expected_id.to_s
-    )
-    page.execute_script(
-      "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('input', { bubbles: true }));",
-      field.native,
-      expected_label
-    )
+      page.execute_script(
+        "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+        hidden_input.native,
+        expected_id.to_s
+      )
+      page.execute_script(
+        "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('input', { bubbles: true }));",
+        field.native,
+        expected_label
+      )
+    end
   end
 
   def select_from_autocomplete(field_name:, query:, expected_label:, expected_id: nil)
-    field = find_field(field_name)
-    field.click
-    field.set(query)
+    with_fresh_autocomplete(field_name) do |_container, field|
+      field.click
+      field.set(query)
+    end
 
     if expected_id
-      container = autocomplete_results_for(field_name)
-      if container.has_css?("button", text: expected_label, wait: 8)
-        within(container) do
-          find("button", text: expected_label, match: :first).click
+      with_fresh_autocomplete(field_name) do |container, _field|
+        if container.has_css?("button", text: expected_label, wait: 8)
+          within(container) do
+            find("button", text: expected_label, match: :first).click
+          end
+        else
+          force_autocomplete_selection(field_name: field_name, expected_label: expected_label, expected_id: expected_id)
         end
-      else
-        force_autocomplete_selection(field_name: field_name, expected_label: expected_label, expected_id: expected_id)
       end
     else
       expect_autocomplete_option(field_name: field_name, label: expected_label)
@@ -66,7 +86,7 @@ RSpec.describe "Containers autocomplete", type: :system do
       end
     end
 
-    expect(field.value).to include(expected_label)
+    expect(find_field(field_name).value).to include(expected_label)
   end
 
   it "autoloads voyage after selecting vessel from autocomplete" do
