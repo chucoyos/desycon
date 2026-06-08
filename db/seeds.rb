@@ -1034,7 +1034,7 @@ if seed_demo_data
     bl_house_lines_data = [
       { blhouse: "ABC123456789", status: "activo", cantidad: 100, partida: 1 },
       { blhouse: "DEF987654321", status: "documentos_ok", cantidad: 200, partida: 2 },
-      { blhouse: "GHI456789123", status: "listo", cantidad: 150, partida: 3 },
+      { blhouse: "GHI456789123", status: "despachado", cantidad: 150, partida: 3 },
       { blhouse: "JKL789123456", status: "revalidado", cantidad: 80, partida: 4 }
     ]
 

@@ -260,7 +260,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_120000) do
     t.index ["restricted_access_enabled"], name: "index_entities_on_restricted_access_enabled"
     t.index ["restricted_access_enabled_at"], name: "index_entities_on_restricted_access_enabled_at"
     t.index ["role_kind"], name: "index_entities_on_role_kind"
-    t.check_constraint "role_kind IS NULL OR (role_kind::text = ANY (ARRAY['customs_agent'::character varying, 'consolidator'::character varying, 'customs_broker'::character varying, 'client'::character varying, 'forwarder'::character varying]::text[]))", name: "check_entities_role_kind"
+    t.check_constraint "role_kind IS NULL OR (role_kind::text = ANY (ARRAY['customs_agent'::character varying::text, 'consolidator'::character varying::text, 'customs_broker'::character varying::text, 'client'::character varying::text, 'forwarder'::character varying::text]))", name: "check_entities_role_kind"
   end
 
   create_table "entity_email_recipients", force: :cascade do |t|
@@ -378,7 +378,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_120000) do
     t.index ["invoice_payment_id"], name: "index_invoice_payment_evidences_on_invoice_payment_id"
     t.index ["status"], name: "index_invoice_payment_evidences_on_status"
     t.index ["submitted_by_id"], name: "index_invoice_payment_evidences_on_submitted_by_id"
-    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'linked'::character varying, 'rejected'::character varying]::text[])", name: "check_invoice_payment_evidences_status"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying::text, 'linked'::character varying::text, 'rejected'::character varying::text])", name: "check_invoice_payment_evidences_status"
   end
 
   create_table "invoice_payments", force: :cascade do |t|
@@ -398,7 +398,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_120000) do
     t.index ["invoice_id"], name: "index_invoice_payments_on_invoice_id"
     t.index ["status"], name: "index_invoice_payments_on_status"
     t.index ["tracking_key"], name: "index_invoice_payments_on_tracking_key"
-    t.check_constraint "status::text = ANY (ARRAY['registered'::character varying, 'complement_queued'::character varying, 'complement_issued'::character varying, 'failed'::character varying]::text[])", name: "check_invoice_payments_status"
+    t.check_constraint "status::text = ANY (ARRAY['registered'::character varying::text, 'complement_queued'::character varying::text, 'complement_issued'::character varying::text, 'failed'::character varying::text])", name: "check_invoice_payments_status"
   end
 
   create_table "invoice_service_links", force: :cascade do |t|
@@ -455,10 +455,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_120000) do
     t.index ["receiver_entity_id"], name: "index_invoices_on_receiver_entity_id"
     t.index ["sat_uuid"], name: "index_invoices_on_sat_uuid", unique: true
     t.index ["source_origin"], name: "index_invoices_on_source_origin"
-    t.check_constraint "external_visibility_state::text = ANY (ARRAY['mapped'::character varying, 'pending_assignment'::character varying]::text[])", name: "check_invoices_external_visibility_state"
-    t.check_constraint "kind::text = ANY (ARRAY['ingreso'::character varying, 'egreso'::character varying, 'pago'::character varying]::text[])", name: "check_invoices_kind"
-    t.check_constraint "source_origin::text = ANY (ARRAY['local'::character varying, 'facturador_external'::character varying]::text[])", name: "check_invoices_source_origin"
-    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'queued'::character varying, 'issued'::character varying, 'cancel_pending'::character varying, 'cancelled'::character varying, 'failed'::character varying]::text[])", name: "check_invoices_status"
+    t.check_constraint "external_visibility_state::text = ANY (ARRAY['mapped'::character varying::text, 'pending_assignment'::character varying::text])", name: "check_invoices_external_visibility_state"
+    t.check_constraint "kind::text = ANY (ARRAY['ingreso'::character varying::text, 'egreso'::character varying::text, 'pago'::character varying::text])", name: "check_invoices_kind"
+    t.check_constraint "source_origin::text = ANY (ARRAY['local'::character varying::text, 'facturador_external'::character varying::text])", name: "check_invoices_source_origin"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'queued'::character varying::text, 'issued'::character varying::text, 'cancel_pending'::character varying::text, 'cancelled'::character varying::text, 'failed'::character varying::text])", name: "check_invoices_status"
   end
 
   create_table "notifications", force: :cascade do |t|
