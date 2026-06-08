@@ -2,7 +2,7 @@ source "https://rubygems.org"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 
-ruby "3.4.6"
+ruby "3.4.9"
 gem "rails", "~> 8.1.1"
 gem "rdoc", "~> 6.16.1"
 gem "judoscale-rails"
