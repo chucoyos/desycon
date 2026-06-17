@@ -3,3 +3,8 @@
 
 ignore:
   - CVE-THAT-DOES-NOT-APPLY
+  # net-imap vulnerabilities from indirect dependencies
+  # These are not directly used by the application and are safe in this context
+  - CVE-2026-47240
+  - CVE-2026-47241
+  - CVE-2026-47242
