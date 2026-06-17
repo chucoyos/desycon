@@ -37,9 +37,9 @@ module CustomsAgents
 
       def base_invoices_for(customs_agent)
         Invoice
-          .joins(:receiver_entity)
+          .joins("LEFT OUTER JOIN entities ON invoices.receiver_entity_id = entities.id")
           .where(
-            "invoices.customs_agent_id = :agency_id OR entities.customs_agent_id = :agency_id",
+            "(invoices.customs_agent_id = :agency_id OR entities.customs_agent_id = :agency_id)",
             agency_id: customs_agent.id
           )
           .where(kind: "ingreso")

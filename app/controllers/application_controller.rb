@@ -139,13 +139,13 @@ class ApplicationController < ActionController::Base
 
   def overdue_unpaid_invoices_for_restricted_notice
     Invoice
-      .joins(:receiver_entity)
+      .joins("LEFT OUTER JOIN entities ON invoices.receiver_entity_id = entities.id")
       .where(
-        "invoices.customs_agent_id = :agency_id OR entities.customs_agent_id = :agency_id",
+        "(invoices.customs_agent_id = :agency_id OR entities.customs_agent_id = :agency_id)",
         agency_id: current_user.entity_id
       )
       .where(kind: "ingreso")
-      .where.not(status: "cancelled")
+      .where.not(status: %w[cancelled cancel_pending])
       .where.not(issued_at: nil)
       .distinct
       .sort_by(&:issued_at)
