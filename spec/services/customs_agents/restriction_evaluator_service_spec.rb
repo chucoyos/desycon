@@ -55,5 +55,22 @@ RSpec.describe CustomsAgents::RestrictionEvaluatorService, type: :service do
       expect(result.overdue_unpaid_count).to eq(0)
       expect(agency.reload.restricted_access_for_overdue_rule?).to eq(false)
     end
+
+    it "restricts for overdue unpaid invoices where agency is the receiver's customs_agent (indirect)" do
+      client = create(:entity, :client, customs_agent: agency)
+      create(
+        :invoice,
+        status: "issued",
+        issued_at: 10.days.ago,
+        total: 1_000,
+        receiver_entity: client
+      )
+
+      result = described_class.call(customs_agent: agency)
+
+      expect(result.restricted).to eq(true)
+      expect(result.overdue_unpaid_count).to eq(1)
+      expect(agency.reload.restricted_access_for_overdue_rule?).to eq(true)
+    end
   end
 end
