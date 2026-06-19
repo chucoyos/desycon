@@ -144,7 +144,7 @@ class Entity < ApplicationRecord
       attrs[:restricted_access_unlocked_at] = changed_at
     end
 
-    update!(attrs)
+    update_columns(attrs)
   end
 
   def restricted_access_for_overdue_rule?
