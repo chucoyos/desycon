@@ -366,7 +366,8 @@
                 <span title="<%= almacen_value %>"><%= almacen_value.present? ? truncate(almacen_value, length: 17) : '-' %></span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                <%= container.vessel&.name || '-' %>
+                <% vessel_name = container.vessel&.name.to_s %>
+                <span title="<%= vessel_name %>"><%= vessel_name.present? ? truncate(vessel_name, length: 18) : '-' %></span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 <%= container.voyage&.viaje || '-' %>
@@ -482,7 +483,8 @@
               <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17l4 4 4-4m0-5l-4-4-4 4"/>
               </svg>
-              <span>Buque: <%= container.vessel&.name || '-' %></span>
+              <% vessel_name = container.vessel&.name.to_s %>
+              <span title="<%= vessel_name %>">Buque: <%= vessel_name.present? ? truncate(vessel_name, length: 18) : '-' %></span>
             </div>
             <div class="flex items-center text-gray-600">
               <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
