@@ -275,7 +275,7 @@ class CustomsAgentsController < ApplicationController
   end
 
   def default_start_date
-    Date.current - 60.days
+    Date.current - 180.days
   end
 
   def default_end_date
