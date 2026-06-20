@@ -911,7 +911,11 @@ class ContainersController < ApplicationController
   end
 
   def default_start_date
-    Date.current - 60.days
+    if current_user&.consolidator?
+      Date.current - 180.days
+    else
+      Date.current - 60.days
+    end
   end
 
   def default_end_date
