@@ -126,9 +126,9 @@ RSpec.describe "CustomsAgents", type: :request do
     end
 
     context "date range filters" do
-      it "applies default last 60 days filter" do
+      it "applies default last 180 days filter" do
         recent_bl = create(:bl_house_line, customs_agent: customs_user.entity, blhouse: "RECENT-DASH", created_at: 5.days.ago)
-        old_bl = create(:bl_house_line, customs_agent: customs_user.entity, blhouse: "OLD-DASH", created_at: 90.days.ago)
+        old_bl = create(:bl_house_line, customs_agent: customs_user.entity, blhouse: "OLD-DASH", created_at: 200.days.ago)
 
         sign_in customs_user, scope: :user
         get customs_agents_dashboard_path
@@ -138,12 +138,12 @@ RSpec.describe "CustomsAgents", type: :request do
       end
 
       it "includes historical records when explicit date range is provided" do
-        historical_bl = create(:bl_house_line, customs_agent: customs_user.entity, blhouse: "HIST-DASH", created_at: 90.days.ago)
+        historical_bl = create(:bl_house_line, customs_agent: customs_user.entity, blhouse: "HIST-DASH", created_at: 200.days.ago)
 
         sign_in customs_user, scope: :user
         get customs_agents_dashboard_path, params: {
-          start_date: 120.days.ago.to_date.iso8601,
-          end_date: 60.days.ago.to_date.iso8601
+          start_date: 250.days.ago.to_date.iso8601,
+          end_date: 190.days.ago.to_date.iso8601
         }
 
         expect(response.body).to include(historical_bl.blhouse)
