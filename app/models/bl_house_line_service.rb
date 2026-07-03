@@ -2,7 +2,7 @@ class BlHouseLineService < ApplicationRecord
   BILLING_LOCK_STATUSES = %w[queued issued cancel_pending cancelled].freeze
   AUTO_ISSUE_ORIGIN_STATUS_TRANSITION = "status_transition".freeze
   LABEL_TAGGING_SERVICE_CODES = %w[BL-ETIADH BL-ETICOS].freeze
-  FORMULA_AMOUNT_SERVICE_CODES = %w[BL-ENTCAM BL-PREVIO BL-RECASU BL-ALMA].freeze
+  FORMULA_AMOUNT_SERVICE_CODES = %w[BL-ENTCAM BL-PREVIO BL-RECASU BL-ALMA BL-MOVETI].freeze
 
   belongs_to :bl_house_line
   belongs_to :service_catalog
@@ -98,6 +98,11 @@ class BlHouseLineService < ApplicationRecord
       return if result.blank? || result.billable_days <= 0
 
       self.amount = result.total
+    when "BL-MOVETI"
+      result = movement_for_labeling_charge_result
+      return if result.blank?
+
+      self.amount = result.total
     when *LABEL_TAGGING_SERVICE_CODES
       result = label_tagging_charge_result
       return if result.blank?
@@ -185,6 +190,12 @@ class BlHouseLineService < ApplicationRecord
       desconsolidation_date: bl_house_line.container&.fecha_desconsolidacion,
       dispatch_date: bl_house_line.fecha_despacho,
       unit_price: service_catalog.amount
+    )
+  end
+
+  def movement_for_labeling_charge_result
+    BlHouseLines::MovementForLabelingCalculator.call(
+      bl_house_line: bl_house_line
     )
   end
 

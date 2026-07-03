@@ -21,6 +21,10 @@ module BlHouseLinesHelper
         dispatch_date: service.bl_house_line.fecha_despacho,
         unit_price: service.service_catalog.amount
       )
+    when "BL-MOVETI"
+      BlHouseLines::MovementForLabelingCalculator.call(
+        bl_house_line: service.bl_house_line
+      )
     when "BL-ETIADH", "BL-ETICOS"
       BlHouseLines::LabelTaggingChargeCalculator.call(
         service_code: code,
