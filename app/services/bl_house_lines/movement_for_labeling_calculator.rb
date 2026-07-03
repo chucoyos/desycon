@@ -12,6 +12,7 @@ module BlHouseLines
       :billable_units,
       :destination_port_code,
       :unit_price,
+      :imo_multiplier,
       :total,
       :breakdown,
       keyword_init: true
@@ -35,7 +36,8 @@ module BlHouseLines
       billable_units = [ weight_units, volume_units, MINIMUM_UNITS ].max
       port_code = destination_port_code
       price = unit_price_for_port(port_code)
-      total = (billable_units * price).round(2)
+      multiplier = imo_charge_multiplier
+      total = (billable_units * price * multiplier).round(2)
 
       Result.new(
         weight_units: weight_units,
@@ -43,6 +45,7 @@ module BlHouseLines
         billable_units: billable_units,
         destination_port_code: port_code,
         unit_price: price,
+        imo_multiplier: multiplier,
         total: total,
         breakdown: {
           peso_kg_input: peso_kg,
@@ -54,7 +57,8 @@ module BlHouseLines
           billable_units: billable_units,
           destination_port_code: port_code,
           unit_price: price,
-          formula: "unidades_cobrables * precio_unitario_por_puerto",
+          imo_multiplier: multiplier,
+          formula: "unidades_cobrables * precio_unitario_por_puerto * multiplicador_imo",
           total: total
         }
       )
@@ -79,6 +83,12 @@ module BlHouseLines
 
     def unit_price_for_port(port_code)
       UNIT_PRICES[port_code] || UNIT_PRICES["MXVER"]
+    end
+
+    def imo_charge_multiplier
+      return 1.to_d unless bl_house_line.respond_to?(:imo_charge_multiplier)
+
+      bl_house_line.imo_charge_multiplier.to_d
     end
   end
 end

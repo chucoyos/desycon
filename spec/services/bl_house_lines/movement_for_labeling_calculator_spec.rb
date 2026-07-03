@@ -12,12 +12,13 @@ RSpec.describe BlHouseLines::MovementForLabelingCalculator do
       let(:peso) { 15_500 }
       let(:volumen) { 8.1 }
 
-      it "charges 33 units at $365/unit for MXATM" do
+      it "charges weight units at $365/unit for MXATM with IMO multiplier" do
         expect(result.weight_units).to eq(16)
         expect(result.volume_units).to eq(9)
         expect(result.destination_port_code).to eq("MXATM")
         expect(result.unit_price).to eq(BigDecimal("365"))
         expect(result.billable_units).to eq(16)
+        expect(result.imo_multiplier).to eq(BigDecimal("1"))
         expect(result.total).to eq(BigDecimal("5840"))
         expect(result.breakdown).to include(
           weight_units: 16,
@@ -26,7 +27,8 @@ RSpec.describe BlHouseLines::MovementForLabelingCalculator do
           billable_units: 16,
           destination_port_code: "MXATM",
           unit_price: BigDecimal("365"),
-          formula: "unidades_cobrables * precio_unitario_por_puerto",
+          imo_multiplier: BigDecimal("1"),
+          formula: "unidades_cobrables * precio_unitario_por_puerto * multiplicador_imo",
           total: BigDecimal("5840")
         )
       end
@@ -38,12 +40,13 @@ RSpec.describe BlHouseLines::MovementForLabelingCalculator do
       let(:peso) { 5_000 }
       let(:volumen) { 32.5 }
 
-      it "charges 33 units at $240/unit for MXVER" do
+      it "charges volume units at $240/unit for MXVER with IMO multiplier" do
         expect(result.weight_units).to eq(5)
         expect(result.volume_units).to eq(33)
         expect(result.destination_port_code).to eq("MXVER")
         expect(result.unit_price).to eq(BigDecimal("240"))
         expect(result.billable_units).to eq(33)
+        expect(result.imo_multiplier).to eq(BigDecimal("1"))
         expect(result.total).to eq(BigDecimal("7920"))
       end
     end
@@ -52,12 +55,25 @@ RSpec.describe BlHouseLines::MovementForLabelingCalculator do
       let(:peso) { 5_000 }
       let(:volumen) { 8.5 }
 
-      it "applies minimum of 12 units at MXATM price" do
+      it "applies minimum of 12 units at MXATM price with IMO multiplier" do
         expect(result.weight_units).to eq(5)
         expect(result.volume_units).to eq(9)
         expect(result.billable_units).to eq(12)
         expect(result.unit_price).to eq(BigDecimal("365"))
+        expect(result.imo_multiplier).to eq(BigDecimal("1"))
         expect(result.total).to eq(BigDecimal("4380"))
+      end
+    end
+
+    context "when IMO applies with clase and tipo different from 0" do
+      let(:peso) { 15_500 }
+      let(:volumen) { 8.1 }
+      let(:bl_house_line) { build(:bl_house_line, peso: peso, volumen: volumen, container: container, clase_imo: "1", tipo_imo: "2") }
+
+      it "doubles the total charge with IMO multiplier" do
+        expect(result.billable_units).to eq(16)
+        expect(result.imo_multiplier).to eq(BigDecimal("2"))
+        expect(result.total).to eq(BigDecimal("11680"))
       end
     end
 
@@ -66,10 +82,11 @@ RSpec.describe BlHouseLines::MovementForLabelingCalculator do
       let(:peso) { 15_500 }
       let(:volumen) { 8.1 }
 
-      it "defaults to MXVER price of $240" do
+      it "defaults to MXVER price of $240 with IMO multiplier" do
         expect(result.destination_port_code).to eq("MXVER")
         expect(result.unit_price).to eq(BigDecimal("240"))
         expect(result.billable_units).to eq(16)
+        expect(result.imo_multiplier).to eq(BigDecimal("1"))
         expect(result.total).to eq(BigDecimal("3840"))
       end
     end
@@ -79,10 +96,11 @@ RSpec.describe BlHouseLines::MovementForLabelingCalculator do
       let(:peso) { 15_500 }
       let(:volumen) { 8.1 }
 
-      it "defaults to MXVER price of $240" do
+      it "defaults to MXVER price of $240 with IMO multiplier" do
         expect(result.destination_port_code).to eq("MXVER")
         expect(result.unit_price).to eq(BigDecimal("240"))
         expect(result.billable_units).to eq(16)
+        expect(result.imo_multiplier).to eq(BigDecimal("1"))
         expect(result.total).to eq(BigDecimal("3840"))
       end
     end
@@ -91,24 +109,27 @@ RSpec.describe BlHouseLines::MovementForLabelingCalculator do
       let(:peso) { 16_800 }
       let(:volumen) { 10.4 }
 
-      it "rounds up both values and uses maximum" do
+      it "rounds up both values and uses maximum with IMO multiplier" do
         expect(result.weight_units).to eq(17)
         expect(result.volume_units).to eq(11)
         expect(result.billable_units).to eq(17)
         expect(result.unit_price).to eq(BigDecimal("365"))
+        expect(result.imo_multiplier).to eq(BigDecimal("1"))
         expect(result.total).to eq(BigDecimal("6205"))
       end
     end
 
-    context "when all values equal minimum" do
+    context "when all values equal minimum with IMO multiplier" do
       let(:peso) { 12_000 }
       let(:volumen) { 12 }
+      let(:bl_house_line) { build(:bl_house_line, peso: peso, volumen: volumen, container: container, clase_imo: "1", tipo_imo: "1") }
 
-      it "charges exactly 12 units" do
+      it "charges exactly 12 units with IMO multiplier" do
         expect(result.weight_units).to eq(12)
         expect(result.volume_units).to eq(12)
         expect(result.billable_units).to eq(12)
-        expect(result.total).to eq(BigDecimal("4380"))
+        expect(result.imo_multiplier).to eq(BigDecimal("2"))
+        expect(result.total).to eq(BigDecimal("8760"))
       end
     end
   end
