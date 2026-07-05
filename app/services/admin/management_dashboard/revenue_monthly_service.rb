@@ -81,10 +81,10 @@ module Admin
       def collected_by_month
         rows = InvoicePayment
           .joins(:invoice)
-          .where(paid_at: range_start..range_end)
           .where(invoices: { kind: "ingreso" })
           .where(invoices: { status: COLLECTED_ELIGIBLE_STATUSES })
-          .group(month_extract_sql("invoice_payments.paid_at"))
+          .where(invoices: { issued_at: range_start..range_end })
+          .group(month_extract_sql("invoices.issued_at"))
           .sum("invoice_payments.amount")
 
         normalize_month_hash(rows)

@@ -69,7 +69,12 @@ RSpec.describe Admin::ManagementDashboard::RevenueMonthlyService do
       expect(result[:month_numbers]).to eq((1..12).to_a)
       expect(result[:month_labels]).to eq(%w[Ene Feb Mar Abr May Jun Jul Ago Sep Oct Nov Dic])
       expect(result[:emitted]).to eq([ 1000.to_d, 400.to_d, 150.to_d, 200.to_d ] + Array.new(8, 0.to_d))
-      expect(result[:collected]).to eq([ 0.to_d, 300.to_d, 0.to_d, 250.to_d ] + Array.new(8, 0.to_d))
+      # Collected now grouped by issued_at (month invoice was emitted, not when payment was made)
+      # Jan invoice: $300 + $200 = $500
+      # Feb invoice: $0 (not paid yet in this test scope)
+      # Mar invoice: $0 (not paid)
+      # Apr invoice: $50
+      expect(result[:collected]).to eq([ 500.to_d, 0.to_d, 0.to_d, 50.to_d ] + Array.new(8, 0.to_d))
       expect(result[:outstanding]).to eq([ 500.to_d, 400.to_d, 150.to_d, 150.to_d ] + Array.new(8, 0.to_d))
       expect(result.dig(:totals, :emitted)).to eq(1750.to_d)
       expect(result.dig(:totals, :collected)).to eq(550.to_d)
