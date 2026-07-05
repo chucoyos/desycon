@@ -733,7 +733,7 @@ class InvoicesController < ApplicationController
         "#{last_email_event_type_sql} AS last_email_event_type_for_index",
         "#{last_email_event_at_sql} AS last_email_event_at_for_index"
       )
-      .order(created_at: :desc)
+      .order(issued_at: :desc)
 
     scope = apply_status_scope(scope)
     scope = apply_date_scope(scope, start_date:, end_date:)
@@ -1757,7 +1757,7 @@ class InvoicesController < ApplicationController
     value = params[:date_field].to_s
     return value if %w[created_at issued_at paid_at].include?(value)
 
-    "created_at"
+    "issued_at"
   end
 
   def resolved_status_scope

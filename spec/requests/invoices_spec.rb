@@ -210,7 +210,7 @@ RSpec.describe 'Invoices', type: :request do
     it 'filters by date range' do
       recent_invoice = create(:invoice, sat_uuid: 'UUID-DATE-RECENT')
       old_invoice = create(:invoice, sat_uuid: 'UUID-DATE-OLD')
-      old_invoice.update_column(:created_at, 120.days.ago)
+      old_invoice.update_columns(created_at: 120.days.ago, issued_at: 120.days.ago)
 
       get invoices_path, params: {
         start_date: 90.days.ago.to_date.to_s,

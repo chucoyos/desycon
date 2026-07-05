@@ -10,6 +10,7 @@ FactoryBot.define do
     subtotal { 1000 }
     tax_total { 160 }
     total { 1160 }
+    issued_at { Time.current }
     payload_snapshot { {} }
     provider_response { {} }
   end

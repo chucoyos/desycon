@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_28_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_05_000017) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -450,8 +450,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_28_120000) do
     t.index ["facturador_comprobante_id"], name: "index_invoices_on_facturador_comprobante_id", unique: true
     t.index ["idempotency_key"], name: "index_invoices_on_idempotency_key", unique: true
     t.index ["invoiceable_type", "invoiceable_id"], name: "index_invoices_on_invoiceable"
+    t.index ["issued_at", "status"], name: "index_invoices_on_issued_at_and_status"
+    t.index ["issued_at"], name: "index_invoices_on_issued_at"
     t.index ["issuer_entity_id"], name: "index_invoices_on_issuer_entity_id"
     t.index ["last_external_sync_at"], name: "index_invoices_on_last_external_sync_at"
+    t.index ["receiver_entity_id", "issued_at"], name: "index_invoices_on_receiver_entity_id_and_issued_at"
     t.index ["receiver_entity_id"], name: "index_invoices_on_receiver_entity_id"
     t.index ["sat_uuid"], name: "index_invoices_on_sat_uuid", unique: true
     t.index ["source_origin"], name: "index_invoices_on_source_origin"
