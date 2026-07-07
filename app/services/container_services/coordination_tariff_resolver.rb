@@ -23,17 +23,20 @@ module ContainerServices
       { rfc: "LIF221027CK7", terminal: [ "TIMSA" ], warehouse: %w[SSA FRIMAN OCUPA], amount: nil },
       { rfc: "LIF221027CK7", terminal: [ "OCUPA" ], warehouse: %w[SSA FRIMAN OCUPA], amount: nil },
       { rfc: "LIF221027CK7", terminal: [ "CONTECON" ], warehouse: %w[HAZESA SSA FRIMAN OCUPA], amount: BigDecimal("4800") },
-      { rfc: "VFS150518BT0", terminal: :all, warehouse: :all, amount: BigDecimal("3000") }
+      { rfc: "VFS150518BT0", terminal: :all, warehouse: :all, amount: BigDecimal("3000") },
+      { rfc: "AGN2405224U9", terminal: :all, warehouse: :all, amount: BigDecimal("0") }
     ].freeze
 
     VERACRUZ_RATES = {
       "PTM0701119T6" => BigDecimal("3800"),
       "SBM0601253SA" => BigDecimal("3800"),
-      "VFS150518BT0" => BigDecimal("3800")
+      "VFS150518BT0" => BigDecimal("3800"),
+      "AGN2405224U9" => BigDecimal("3800")
     }.freeze
 
     ALTAMIRA_RATES = {
-      "PTM0701119T6" => BigDecimal("3800")
+      "PTM0701119T6" => BigDecimal("3800"),
+      "AGN2405224U9" => BigDecimal("3800")
     }.freeze
 
     class << self
