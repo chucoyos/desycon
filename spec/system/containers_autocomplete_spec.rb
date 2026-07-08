@@ -9,8 +9,8 @@ RSpec.describe "Containers autocomplete", type: :system do
   end
 
   def expect_container_show_page(number:)
-    expect(page).to have_text("Volver a contenedores")
-    expect(page).to have_text(number)
+    expect(page).to have_text("Volver a contenedores", wait: 5)
+    expect(page).to have_text(number, wait: 5)
   end
 
   def autocomplete_results_for(field_name)

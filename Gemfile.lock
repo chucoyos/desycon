@@ -197,7 +197,7 @@ GEM
       actionview (>= 7.0.0)
       activesupport (>= 7.0.0)
     jmespath (1.6.2)
-    json (2.19.8)
+    json (2.20.0)
     judoscale-rails (1.13.3)
       judoscale-ruby (= 1.13.3)
       railties
