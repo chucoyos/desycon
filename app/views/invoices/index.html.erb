@@ -403,11 +403,12 @@
                 </td>
               <% end %>
               <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
-                <% created_at_compact = l(invoice.created_at, format: "%d/%m/%y") %>
+                <% invoice_date = invoice.issued_at.presence || invoice.created_at %>
+                <% invoice_date_compact = l(invoice_date, format: "%d/%m/%y") %>
                 <% if can_view_details %>
-                  <%= link_to created_at_compact, invoice_path(invoice), class: "inline-block max-w-[4.5rem] truncate text-indigo-700 hover:text-indigo-900 font-medium", title: l(invoice.created_at, format: :short) %>
+                  <%= link_to invoice_date_compact, invoice_path(invoice), class: "inline-block max-w-[4.5rem] truncate text-indigo-700 hover:text-indigo-900 font-medium", title: l(invoice_date, format: :short) %>
                 <% else %>
-                  <span class="inline-block max-w-[4.5rem] truncate" title="<%= l(invoice.created_at, format: :short) %>"><%= created_at_compact %></span>
+                  <span class="inline-block max-w-[4.5rem] truncate" title="<%= l(invoice_date, format: :short) %>"><%= invoice_date_compact %></span>
                 <% end %>
               </td>
               <td class="px-4 py-4 whitespace-nowrap text-xs font-mono text-gray-700">

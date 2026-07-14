@@ -731,9 +731,12 @@ class InvoicesController < ApplicationController
         "invoices.*",
         "#{paid_total_sql} AS paid_total_for_index",
         "#{last_email_event_type_sql} AS last_email_event_type_for_index",
-        "#{last_email_event_at_sql} AS last_email_event_at_for_index"
+        "#{last_email_event_at_sql} AS last_email_event_at_for_index",
+        "COALESCE(invoices.issued_at, invoices.created_at) AS invoice_date_for_order"
       )
-      .order(issued_at: :desc)
+      .order(
+        Arel.sql("COALESCE(invoices.issued_at, invoices.created_at) DESC")
+      )
 
     scope = apply_status_scope(scope)
     scope = apply_date_scope(scope, start_date:, end_date:)
