@@ -981,7 +981,9 @@ class InvoicesController < ApplicationController
 
     case @selected_date_field
     when "issued_at"
-      scope.where(issued_at: range)
+      # Use COALESCE to include invoices without issued_at (failed, pending, etc.)
+      # They will be ordered by created_at instead
+      scope.where("COALESCE(invoices.issued_at, invoices.created_at) BETWEEN ? AND ?", range.begin, range.end)
     when "paid_at"
       payment_invoice_ids = InvoicePayment.where(paid_at: range).select(:invoice_id)
       scope.where(id: payment_invoice_ids)
