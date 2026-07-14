@@ -190,10 +190,8 @@ module Facturador
     end
 
     def resolve_customs_agent(receiver_entity:, visibility_state:)
-      return nil if visibility_state == "pending_assignment"
-      return receiver_entity if receiver_entity&.role_customs_agent?
-      return receiver_entity.customs_agent if receiver_entity&.role_client?
-
+      # External invoices are NOT automatically linked to customs agents
+      # They require manual assignment to prevent incorrect associations
       nil
     end
 
