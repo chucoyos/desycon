@@ -76,9 +76,9 @@ module Facturador
       end
 
       def external_sync_overlap_minutes
-        value = env_value(:external_sync_overlap_minutes, 120)
+        value = env_value(:external_sync_overlap_minutes, 1440)
         minutes = value.to_i
-        minutes.positive? ? minutes : 120
+        minutes.positive? ? minutes : 1440
       end
 
       def external_sync_take
