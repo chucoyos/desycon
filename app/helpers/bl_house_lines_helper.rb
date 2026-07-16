@@ -107,6 +107,8 @@ module BlHouseLinesHelper
       "bg-yellow-100 text-yellow-800"
     when "revalidado"
       "bg-cyan-100 text-cyan-800"
+    when "abandono"
+      "bg-red-100 text-red-800"
     else
       "bg-gray-100 text-gray-800"
     end
@@ -161,7 +163,8 @@ module BlHouseLinesHelper
       "pendiente_pagos_locales" => "Pendiente Pagos Locales",
       "validar_documentos" => "Validar Documentos",
       "listo" => "Listo",
-      "revalidado" => "Revalidado"
+      "revalidado" => "Revalidado",
+      "abandono" => "No lleva automatización de proceso de ABANDONO"
     }[status] || status.humanize
   end
 end

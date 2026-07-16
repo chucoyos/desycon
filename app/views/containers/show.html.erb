@@ -291,8 +291,8 @@
                   </div>
                   <div class="text-right">
                     <p class="text-sm font-medium text-gray-900"><%= bl_house_line.cantidad %> unidades</p>
-                    <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium <%= bl_house_line.status == 'finalizado' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800' %>">
-                      <%= bl_house_line.status.humanize %>
+                    <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium <%= bl_house_line_status_badge_class(bl_house_line.status) %>">
+                      <%= bl_house_line_status_nombre(bl_house_line.status) %>
                     </span>
                   </div>
                 </div>

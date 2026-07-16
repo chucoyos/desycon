@@ -34,7 +34,8 @@ class BlHouseLine < ApplicationRecord
     instrucciones_pendientes: "instrucciones_pendientes",
     documentos_ok: "documentos_ok",
     revalidado: "revalidado",
-    despachado: "despachado"
+    despachado: "despachado",
+    abandono: "abandono"
   }
 
   # Validations
