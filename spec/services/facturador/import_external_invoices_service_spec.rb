@@ -58,9 +58,9 @@ RSpec.describe Facturador::ImportExternalInvoicesService, type: :service do
       expect(invoice).to be_present
       expect(invoice.source_origin).to eq('facturador_external')
       expect(invoice.external_visibility_state).to eq('mapped')
-      expect(invoice.receiver_entity_id).to eq(receiver.id)
+      expect(invoice.receiver_entity_id).to be_nil
+      expect(invoice.customs_agent_id).to be_nil
       expect(invoice.payload_snapshot.dig('receptor', 'rfc')).to eq('AAA010101AAA')
-      expect(invoice.payload_snapshot.dig('receptor', 'nombre')).to eq(receiver.name)
       expect(invoice.payload_snapshot['formaPago']).to eq('99')
       expect(invoice.payload_snapshot['metodoPago']).to eq('PPD')
       expect(invoice.payload_snapshot['conceptos']).to be_present
@@ -97,7 +97,8 @@ RSpec.describe Facturador::ImportExternalInvoicesService, type: :service do
       invoice = Invoice.find_by(sat_uuid: 'UUID-EXT-PENDING-001')
       expect(invoice).to be_present
       expect(invoice.external_visibility_state).to eq('pending_assignment')
-      expect(invoice.receiver_entity_id).to eq(issuer_entity.id)
+      expect(invoice.receiver_entity_id).to be_nil
+      expect(invoice.customs_agent_id).to be_nil
       expect(invoice.invoice_events.order(:created_at).last.event_type).to eq('external_import_pending_assignment')
     end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_05_000017) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_16_201142) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -434,7 +434,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_05_000017) do
     t.datetime "last_external_sync_at"
     t.jsonb "payload_snapshot", default: {}, null: false
     t.jsonb "provider_response", default: {}, null: false
-    t.bigint "receiver_entity_id", null: false
+    t.bigint "receiver_entity_id"
     t.string "replacement_uuid"
     t.string "sat_uuid"
     t.string "source_origin", default: "local", null: false

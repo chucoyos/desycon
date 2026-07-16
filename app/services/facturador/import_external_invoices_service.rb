@@ -165,18 +165,24 @@ module Facturador
     end
 
     def resolve_receiver_entity(payload:, issuer_entity:)
+      # External invoices are NOT linked to receiver entities
+      # This prevents incorrect association with clients/consolidators
+      # Visibility state is determined for audit purposes but receiver_entity_id is always nil
       rfc = normalized_rfc(payload["receptorRfc"])
-      return [ issuer_entity, "pending_assignment" ] if rfc.blank?
 
-      candidates = Entity
-        .joins(:fiscal_profile)
-        .where("UPPER(fiscal_profiles.rfc) = ?", rfc)
-        .to_a
+      visibility_state = if rfc.blank?
+        "pending_assignment"
+      else
+        # Check if RFC exists in system
+        entity_exists = Entity
+          .joins(:fiscal_profile)
+          .where("UPPER(fiscal_profiles.rfc) = ?", rfc)
+          .exists?
 
-      receiver_entity = candidates.min_by { |entity| role_priority(entity.role_kind) }
-      return [ issuer_entity, "pending_assignment" ] if receiver_entity.blank?
+        entity_exists ? "mapped" : "pending_assignment"
+      end
 
-      [ receiver_entity, "mapped" ]
+      [ nil, visibility_state ]
     end
 
     def role_priority(role_kind)
@@ -397,8 +403,8 @@ module Facturador
     end
 
     def build_payload_snapshot(payload:, issuer_entity:, receiver_entity:, kind:)
-      receiver_profile = receiver_entity.fiscal_profile
-      receiver_address = receiver_entity.fiscal_address
+      receiver_profile = receiver_entity&.fiscal_profile
+      receiver_address = receiver_entity&.fiscal_address
       issuer_profile = issuer_entity.fiscal_profile
 
       forma_pago = normalized_present_string(payload["satFormaPagoClave"]) ||
@@ -435,7 +441,7 @@ module Facturador
           "regimenFiscal" => issuer_profile&.regimen.to_s.presence
         },
         "receptor" => {
-          "nombre" => normalized_present_string(payload["receptorNombre"]) || receiver_entity.name,
+          "nombre" => normalized_present_string(payload["receptorNombre"]) || receiver_entity&.name || "No especificado",
           "rfc" => normalized_rfc(payload["receptorRfc"]) || receiver_profile&.rfc.to_s.presence,
           "usoCFDI" => receiver_profile&.uso_cfdi.to_s.presence,
           "regimenFiscalReceptor" => receiver_profile&.regimen.to_s.presence,

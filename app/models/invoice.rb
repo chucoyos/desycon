@@ -23,7 +23,7 @@ class Invoice < ApplicationRecord
 
   belongs_to :invoiceable, polymorphic: true, optional: true
   belongs_to :issuer_entity, class_name: "Entity"
-  belongs_to :receiver_entity, class_name: "Entity"
+  belongs_to :receiver_entity, class_name: "Entity", optional: true
   belongs_to :customs_agent, class_name: "Entity", optional: true
 
   has_many :invoice_events, dependent: :destroy
