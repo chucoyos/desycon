@@ -515,7 +515,20 @@ module Facturador
     end
 
     def internal_reference_text
-      invoiceable_bl_house_line&.internal_reference
+      # Primero buscar en el invoiceable principal
+      reference = invoiceable_bl_house_line&.internal_reference
+      return reference if reference.present?
+
+      # Si no hay, buscar en los servicios linkados de tipo BlHouseLineService
+      linked_bl_house_services = invoice.invoice_service_links
+        .where(serviceable_type: "BlHouseLineService")
+        .map(&:serviceable)
+        .compact
+
+      return nil if linked_bl_house_services.empty?
+
+      # Obtener la primera referencia interna encontrada
+      linked_bl_house_services.first&.bl_house_line&.internal_reference
     end
 
     def invoiceable_bl_house_line
