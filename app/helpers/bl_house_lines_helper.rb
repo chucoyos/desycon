@@ -164,7 +164,7 @@ module BlHouseLinesHelper
       "validar_documentos" => "Validar Documentos",
       "listo" => "Listo",
       "revalidado" => "Revalidado",
-      "abandono" => "No lleva automatización de proceso de ABANDONO"
+      "abandono" => "Abandono"
     }[status] || status.humanize
   end
 end
