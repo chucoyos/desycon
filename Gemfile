@@ -5,6 +5,11 @@ source "https://rubygems.org"
 ruby "3.4.9"
 gem "rails", "~> 8.1.1"
 gem "rdoc", "~> 6.16.1"
+
+# Security updates for dependencies
+gem "loofah", ">= 2.25.2"
+gem "rails-html-sanitizer", ">= 1.7.1"
+
 gem "judoscale-rails"
 gem "judoscale-solid_queue"
 gem "newrelic_rpm"
