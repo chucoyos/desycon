@@ -1195,7 +1195,7 @@ class InvoicesController < ApplicationController
     @invoice_hbl_path_by_id = {}
     @invoice_agency_by_id = {}
     @invoice_internal_reference_by_id = {}
-    @invoice_recinto_by_id = {}
+    @invoice_almacen_by_id = {}
     @invoice_container_by_id = {}
     @invoice_port_by_id = {}
     @invoice_consolidator_by_id = {}
@@ -1238,7 +1238,7 @@ class InvoicesController < ApplicationController
         hbl_values = services.map { |service| service.bl_house_line&.blhouse.to_s.strip }.reject(&:blank?).uniq
         agency_values = services.map { |service| service.bl_house_line&.customs_agent&.name.to_s.strip }.reject(&:blank?).uniq
         internal_reference_values = services.map { |service| service.bl_house_line&.internal_reference.to_s.strip }.reject(&:blank?).uniq
-        recinto_values = services.map { |service| service.bl_house_line&.container&.recinto.to_s.strip }.reject(&:blank?).uniq
+        almacen_values = services.map { |service| service.bl_house_line&.container&.almacen.to_s.strip }.reject(&:blank?).uniq
         container_values = services.map { |service| service.bl_house_line&.container&.number.to_s.strip }.reject(&:blank?).uniq
         port_values = services.map { |service| port_label_for_container(service.bl_house_line&.container) }.reject(&:blank?).uniq
         consolidator_values = services.map { |service| service.bl_house_line&.container&.consolidator_entity&.name.to_s.strip }.reject(&:blank?).uniq
@@ -1247,7 +1247,7 @@ class InvoicesController < ApplicationController
         @invoice_hbl_path_by_id[invoice_id] = bl_house_line_path(bl_house_line_ids.first) if bl_house_line_ids.one?
         @invoice_agency_by_id[invoice_id] = agency_values.join(", ").presence || @invoice_agency_by_id[invoice_id]
         @invoice_internal_reference_by_id[invoice_id] = internal_reference_values.join(", ").presence
-        @invoice_recinto_by_id[invoice_id] = recinto_values.join(", ").presence
+        @invoice_almacen_by_id[invoice_id] = almacen_values.join(", ").presence
         @invoice_container_by_id[invoice_id] = container_values.join(", ").presence
         @invoice_port_by_id[invoice_id] = port_values.join(", ").presence
         @invoice_consolidator_by_id[invoice_id] = consolidator_values.join(", ").presence
@@ -1282,12 +1282,12 @@ class InvoicesController < ApplicationController
       services = service_ids.uniq.map { |service_id| container_service_data[service_id] }.compact
       next if services.empty?
 
-      recinto_values = services.map { |service| service.container&.recinto.to_s.strip }.reject(&:blank?).uniq
+      almacen_values = services.map { |service| service.container&.almacen.to_s.strip }.reject(&:blank?).uniq
       container_values = services.map { |service| service.container&.number.to_s.strip }.reject(&:blank?).uniq
       port_values = services.map { |service| port_label_for_container(service.container) }.reject(&:blank?).uniq
       consolidator_values = services.map { |service| service.container&.consolidator_entity&.name.to_s.strip }.reject(&:blank?).uniq
 
-      @invoice_recinto_by_id[invoice_id] = recinto_values.join(", ").presence if @invoice_recinto_by_id[invoice_id].blank?
+      @invoice_almacen_by_id[invoice_id] = almacen_values.join(", ").presence if @invoice_almacen_by_id[invoice_id].blank?
       @invoice_container_by_id[invoice_id] = container_values.join(", ").presence if @invoice_container_by_id[invoice_id].blank?
       @invoice_port_by_id[invoice_id] = port_values.join(", ").presence if @invoice_port_by_id[invoice_id].blank?
       @invoice_consolidator_by_id[invoice_id] = consolidator_values.join(", ").presence if @invoice_consolidator_by_id[invoice_id].blank?
@@ -1321,7 +1321,7 @@ class InvoicesController < ApplicationController
     end
 
     rows.each_with_index do |row, index|
-      text_lines << "#{index + 1}) Fecha: #{row[0]} | Ser: #{row[1]} | Fol: #{row[2]} | HBL: #{row[3]} | Ref.Int: #{row[4]} | Recinto: #{row[5]} | Agencia: #{row[6]} | Cliente: #{row[7]} | Saldo: $#{format('%.2f', row[total_column_index].to_d)} | M.Pago: #{row[9]} | Estatus Emision: #{row[10]}"
+      text_lines << "#{index + 1}) Fecha: #{row[0]} | Ser: #{row[1]} | Fol: #{row[2]} | HBL: #{row[3]} | Ref.Int: #{row[4]} | Almacen: #{row[5]} | Agencia: #{row[6]} | Cliente: #{row[7]} | Saldo: $#{format('%.2f', row[total_column_index].to_d)} | M.Pago: #{row[9]} | Estatus Emision: #{row[10]}"
       text_lines << ""
     end
 
@@ -1350,7 +1350,7 @@ class InvoicesController < ApplicationController
         folio,
         @invoice_hbl_by_id[invoice.id],
         @invoice_internal_reference_by_id[invoice.id],
-        @invoice_recinto_by_id[invoice.id],
+        @invoice_almacen_by_id[invoice.id],
         @invoice_agency_by_id[invoice.id],
         invoice.receiver_entity&.name,
         format("%.2f", invoice.outstanding_amount.to_d),
@@ -1367,7 +1367,7 @@ class InvoicesController < ApplicationController
       "Folio",
       "Blhouse",
       "Referencia Interna",
-      "Recinto",
+      "Almacen",
       "Agencia Aduanal",
       "Cliente",
       "Saldo",
