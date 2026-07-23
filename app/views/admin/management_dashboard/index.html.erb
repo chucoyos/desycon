@@ -379,4 +379,148 @@
         }
       } %>
   </section>
+
+  <!-- Consolidator Analytics Section -->
+  <% consolidators_data = @consolidator_metrics.dig(:consolidators) || []
+     consolidator_month_labels = @consolidator_metrics.dig(:month_labels) || []
+     consolidator_totals = @consolidator_metrics.dig(:totals) || {}
+     
+     consolidator_chart_colors = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"]
+     
+     consolidator_chart_data = consolidators_data.map do |consolidator|
+       {
+         name: consolidator[:name],
+         data: consolidator_month_labels.zip(consolidator[:monthly_series]).to_h
+       }
+     end
+     
+     consolidator_id_by_name = consolidators_data.each_with_object({}) do |consolidator, acc|
+       acc[consolidator[:name]] = consolidator[:id]
+     end
+  %>
+
+  <% if consolidators_data.any? %>
+    <section
+      class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"
+      data-controller="consolidator-chart-links"
+      data-consolidator-chart-links-year-value="<%= @selected_year %>"
+      data-consolidator-chart-links-invoices-path-value="<%= invoices_path %>"
+      data-consolidator-chart-links-chart-id-value="consolidator-chart"
+      data-consolidator-chart-links-consolidator-id-by-name-value='<%= consolidator_id_by_name.to_json %>'
+    >
+      <h2 class="text-lg font-bold text-slate-900">Análisis de Consolidadores</h2>
+      <p class="text-sm text-slate-600 mb-4">Ingresos y operación de partidas (BLs) por consolidador (YTD). Haz clic en una barra para filtrar facturas.</p>
+
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <% top_consolidator = consolidators_data.first %>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Consolidador Mayor Ingreso</p>
+          <p class="mt-2 text-lg font-bold text-blue-700"><%= top_consolidator[:name] %></p>
+          <p class="text-sm text-slate-600 mt-1"><%= number_to_currency(top_consolidator[:revenue]) %></p>
+        </div>
+
+        <% highest_avg = consolidators_data.max_by { |c| c[:avg_per_container] } %>
+        <% avg_value = highest_avg&.dig(:avg_per_container) || 0 %>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Mayor Promedio/Contenedor</p>
+          <p class="mt-2 text-lg font-bold text-emerald-700"><%= highest_avg&.dig(:name) || "-" %></p>
+          <p class="text-sm text-slate-600 mt-1"><%= number_to_currency(avg_value) %></p>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Consolidadores</p>
+          <p class="mt-2 text-2xl font-bold text-slate-900"><%= consolidators_data.count %></p>
+        </div>
+
+        <% bl_dispatch_rate = consolidator_totals.dig(:total_bl_total).to_i > 0 ? ((consolidator_totals.dig(:total_bl_dispatched).to_i / consolidator_totals.dig(:total_bl_total).to_f) * 100).round(1) : 0 %>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Partidas Despachadas</p>
+          <p class="mt-2 text-2xl font-bold text-violet-700"><%= "#{bl_dispatch_rate}%" %></p>
+          <p class="text-sm text-slate-600 mt-1"><%= consolidator_totals.dig(:total_bl_dispatched) || 0 %> de <%= consolidator_totals.dig(:total_bl_total) || 0 %></p>
+        </div>
+      </section>
+
+      <% if consolidator_chart_data.any? %>
+        <div class="mb-6">
+          <h3 class="text-sm font-semibold text-slate-700 mb-3">Ingresos por Consolidador (YTD)</h3>
+          <%= column_chart consolidator_chart_data,
+            id: "consolidator-chart",
+            height: "300px",
+            legend: "top",
+            thousands: ",",
+            prefix: "$",
+            colors: consolidator_chart_data.map { |series| consolidator_chart_colors[consolidator_chart_data.index(series) % consolidator_chart_colors.length] },
+            library: {
+              plotOptions: {
+                column: {
+                  pointWidth: 24,
+                  pointPadding: 0.1,
+                  groupPadding: 0.2
+                }
+              },
+              plugins: {
+                legend: {
+                  labels: {
+                    boxWidth: 12,
+                    boxHeight: 12
+                  }
+                }
+              }
+            } %>
+        </div>
+      <% end %>
+
+      <div class="border-t border-slate-200 pt-4">
+        <h3 class="text-sm font-semibold text-slate-700 mb-3">Ranking de Consolidadores</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50">
+                <th class="px-3 py-2 text-left font-semibold text-slate-700">Consolidador</th>
+                <th class="px-3 py-2 text-right font-semibold text-slate-700">Ingresos</th>
+                <th class="px-3 py-2 text-right font-semibold text-slate-700">Contenedores</th>
+                <th class="px-3 py-2 text-right font-semibold text-slate-700">BLs Total</th>
+                <th class="px-3 py-2 text-right font-semibold text-slate-700">Despachadas</th>
+                <th class="px-3 py-2 text-right font-semibold text-slate-700">Pendientes</th>
+                <th class="px-3 py-2 text-right font-semibold text-slate-700">Prom/Contenedor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% consolidators_data.each_with_index do |consolidator, index| %>
+                <tr class="border-b border-slate-100 hover:bg-slate-50">
+                  <td class="px-3 py-2 text-slate-900 font-medium">
+                    <span class="inline-flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">
+                        <%= index + 1 %>
+                      </span>
+                      <%= consolidator[:name] %>
+                    </span>
+                  </td>
+                  <td class="px-3 py-2 text-right text-slate-900 font-semibold"><%= number_to_currency(consolidator[:revenue]) %></td>
+                  <td class="px-3 py-2 text-right text-slate-700"><%= consolidator[:containers_count] %></td>
+                  <td class="px-3 py-2 text-right text-slate-700"><%= consolidator[:bl_total] %></td>
+                  <td class="px-3 py-2 text-right">
+                    <span class="inline-flex items-center gap-1 text-emerald-700 font-medium">
+                      <%= consolidator[:bl_dispatched] %>
+                      <% dispatch_pct = consolidator[:bl_total].to_i > 0 ? ((consolidator[:bl_dispatched] / consolidator[:bl_total].to_f) * 100).round(0) : 0 %>
+                      <span class="text-xs text-slate-600">(<%=dispatch_pct%>%)</span>
+                    </span>
+                  </td>
+                  <td class="px-3 py-2 text-right text-slate-700"><%= consolidator[:bl_pending] %></td>
+                  <td class="px-3 py-2 text-right font-semibold text-blue-700">
+                    <% avg = consolidator[:avg_per_container] %>
+                    <% if avg > 0 %>
+                      <%= number_to_currency(avg) %>
+                    <% else %>
+                      -
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  <% end %>
 </div>

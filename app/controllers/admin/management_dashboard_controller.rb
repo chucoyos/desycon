@@ -11,6 +11,7 @@ module Admin
 
       @revenue_metrics = Admin::ManagementDashboard::RevenueMonthlyService.call(year: @selected_year)
       @operations_metrics = Admin::ManagementDashboard::OperationsMonthlyService.call(year: @selected_year)
+      @consolidator_metrics = Admin::ManagementDashboard::ConsolidatorAnalyticsService.call(year: @selected_year)
     end
 
     private
