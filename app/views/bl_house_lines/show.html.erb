@@ -928,6 +928,9 @@
                     <p class="text-xs text-gray-600 mt-1">De: <%= bl_house_line_status_nombre(history.previous_status) %></p>
                   <% end %>
                   <p class="text-xs text-gray-400 mt-1">por <%= history.user&.email || "Sistema" %></p>
+                  <% if history.observations.present? %>
+                    <div class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900 whitespace-pre-wrap"><%= history.observations %></div>
+                  <% end %>
                 </div>
               </div>
             <% end %>
