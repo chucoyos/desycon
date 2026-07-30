@@ -3,7 +3,7 @@ source "https://rubygems.org"
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 
 ruby "3.4.9"
-gem "rails", "~> 8.1.1"
+gem "rails", "~> 8.1.3"
 gem "rdoc", "~> 6.16.1"
 
 # Security updates for dependencies
