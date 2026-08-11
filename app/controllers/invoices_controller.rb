@@ -1308,7 +1308,7 @@ class InvoicesController < ApplicationController
 
   def build_collections_report_text(invoices)
     rows = build_collections_report_rows(invoices)
-    total_column_index = 8
+    total_column_index = 9
 
     text_lines = []
     text_lines << "Reporte de cobranza (pagina actual)"
@@ -1321,7 +1321,7 @@ class InvoicesController < ApplicationController
     end
 
     rows.each_with_index do |row, index|
-      text_lines << "#{index + 1}) Fecha: #{row[0]} | Ser: #{row[1]} | Fol: #{row[2]} | HBL: #{row[3]} | Ref.Int: #{row[4]} | Almacen: #{row[5]} | Agencia: #{row[6]} | Cliente: #{row[7]} | Saldo: $#{format('%.2f', row[total_column_index].to_d)} | M.Pago: #{row[9]} | Estatus Emision: #{row[10]}"
+      text_lines << "#{index + 1}) Fecha: #{row[0]} | Ser: #{row[1]} | Fol: #{row[2]} | Consolidador: #{row[3]} | HBL: #{row[4]} | Ref.Int: #{row[5]} | Almacen: #{row[6]} | Agencia: #{row[7]} | Cliente: #{row[8]} | Saldo: $#{format('%.2f', row[total_column_index].to_d)} | M.Pago: #{row[10]} | Estatus Emision: #{row[11]}"
       text_lines << ""
     end
 
@@ -1348,6 +1348,7 @@ class InvoicesController < ApplicationController
         invoice.issued_at.present? ? I18n.l(invoice.issued_at, format: "%Y-%m-%d") : "-",
         serie,
         folio,
+        @invoice_consolidator_by_id[invoice.id],
         @invoice_hbl_by_id[invoice.id],
         @invoice_internal_reference_by_id[invoice.id],
         @invoice_almacen_by_id[invoice.id],
@@ -1365,6 +1366,7 @@ class InvoicesController < ApplicationController
       "Fecha",
       "Serie",
       "Folio",
+      "Consolidador",
       "Blhouse",
       "Referencia Interna",
       "Almacen",
@@ -1491,7 +1493,7 @@ class InvoicesController < ApplicationController
       )
 
       headers = collections_report_headers
-      total_column_index = 8
+      total_column_index = 9
       grand_total = 0.to_d
       sheet.add_row headers, style: Array.new(headers.size, header_style), height: 24
 
@@ -1519,19 +1521,19 @@ class InvoicesController < ApplicationController
 
       sheet.add_row []
 
-      footer_title_row = [ "Reporte de cobranza" ] + Array.new(10, "")
-      footer_subtitle_row = [ "Generado: #{I18n.l(Time.current, format: "%Y-%m-%d %H:%M")}" ] + Array.new(10, "")
+      footer_title_row = [ "Reporte de cobranza" ] + Array.new(11, "")
+      footer_subtitle_row = [ "Generado: #{I18n.l(Time.current, format: "%Y-%m-%d %H:%M")}" ] + Array.new(11, "")
 
-      sheet.add_row footer_title_row, style: Array.new(11, title_style), height: 24
+      sheet.add_row footer_title_row, style: Array.new(12, title_style), height: 24
       footer_title_row_index = sheet.rows.size
-      sheet.add_row footer_subtitle_row, style: Array.new(11, subtitle_style), height: 20
+      sheet.add_row footer_subtitle_row, style: Array.new(12, subtitle_style), height: 20
       footer_subtitle_row_index = sheet.rows.size
 
-      sheet.merge_cells("A#{footer_title_row_index}:K#{footer_title_row_index}")
-      sheet.merge_cells("A#{footer_subtitle_row_index}:K#{footer_subtitle_row_index}")
+      sheet.merge_cells("A#{footer_title_row_index}:L#{footer_title_row_index}")
+      sheet.merge_cells("A#{footer_subtitle_row_index}:L#{footer_subtitle_row_index}")
 
-      sheet.column_widths 10, 7, 9, 10, 10, 10, 28, 32, 10, 10, 12
-      sheet.auto_filter = "A1:K1"
+      sheet.column_widths 10, 7, 9, 28, 10, 10, 10, 28, 32, 10, 10, 12
+      sheet.auto_filter = "A1:L1"
     end
 
     package.to_stream.read
@@ -1547,7 +1549,7 @@ class InvoicesController < ApplicationController
     pdf.fill_color "000000"
     pdf.move_down 10
 
-    total_column_index = 8
+    total_column_index = 9
     report_rows = rows.map do |row|
       row_values = row.dup
       row_values[total_column_index] = "$#{format('%.2f', row_values[total_column_index].to_d)}"
@@ -1563,7 +1565,7 @@ class InvoicesController < ApplicationController
     pdf.table(
       table_data,
       header: true,
-      column_widths: [ 56, 42, 54, 68, 60, 88, 60, 88, 100, 52, 62 ],
+      column_widths: [ 56, 42, 54, 88, 68, 60, 88, 60, 88, 100, 52, 62 ],
       cell_style: {
         size: 8,
         padding: [ 4, 5, 4, 5 ],
