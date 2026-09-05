@@ -9,8 +9,20 @@ RSpec.describe "Containers autocomplete", type: :system do
   end
 
   def expect_container_show_page(number:)
-    expect(page).to have_text("Volver a contenedores", wait: 5)
-    expect(page).to have_text(number, wait: 5)
+    attempts = 0
+
+    begin
+      expect(page).to have_text("Volver a contenedores", wait: 5)
+      expect(page).to have_text(number, wait: 5)
+    rescue Selenium::WebDriver::Error::UnknownError => e
+      raise unless e.message.to_s.include?("Node with given id does not belong to the document")
+
+      attempts += 1
+      raise if attempts >= 3
+
+      sleep 0.1
+      retry
+    end
   end
 
   def autocomplete_results_for(field_name)
