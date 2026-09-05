@@ -9,6 +9,7 @@ gem "rdoc", "~> 6.16.1"
 # Security updates for dependencies
 gem "loofah", ">= 2.25.2"
 gem "rails-html-sanitizer", ">= 1.7.1"
+gem "rubyzip", ">= 3.4.0", "< 4.0"
 
 gem "judoscale-rails"
 gem "judoscale-solid_queue"
@@ -71,7 +72,7 @@ gem "countries", "~> 6.0"
 gem "kaminari", "~> 1.2"
 
 # Importación de archivos XLSX/CSV
-gem "roo", "~> 2.10"
+gem "roo", "~> 3.0"
 gem "caxlsx", "~> 4.1"
 gem "csv"
 
