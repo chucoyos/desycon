@@ -53,6 +53,7 @@ class Entity < ApplicationRecord
   has_many :billed_services, class_name: "ContainerService",
            foreign_key: :billed_to_entity_id, dependent: :nullify
   has_many :containers, foreign_key: :consolidator_entity_id, dependent: :restrict_with_error
+  has_many :consolidator_api_credentials, dependent: :restrict_with_error
 
   # Nested attributes
   accepts_nested_attributes_for :addresses, allow_destroy: true, reject_if: :all_blank

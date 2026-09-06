@@ -110,6 +110,7 @@ Rails.application.routes.draw do
     end
 
     member do
+      post :api_credentials
       get :customs_brokers_search
       get :customs_agencies_search
     end
@@ -202,6 +203,21 @@ Rails.application.routes.draw do
     end
   end
   resources :service_catalogs
+
+  get "docs/consolidator-api", to: "api_docs#consolidator", as: :consolidator_api_docs
+
+  namespace :api do
+    namespace :v1 do
+      namespace :consolidator do
+        resources :containers, only: [ :index ] do
+          resources :bl_house_lines, only: [ :index ], controller: "bl_house_lines" do
+            resources :photos, only: [ :index ], controller: "photos"
+          end
+          resources :photos, only: [ :index ], controller: "photos"
+        end
+      end
+    end
+  end
 
   get "blocked", to: "blocked_users#show", as: :blocked_users
 

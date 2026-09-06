@@ -2,7 +2,7 @@ class EntitiesController < ApplicationController
   DUPLICATE_RECIPIENT_EMAIL_MESSAGE = "Este correo electronico ya se encuentra registrado para esta entidad. Por favor, intenta con otro".freeze
 
   before_action :authenticate_user!
-  before_action :set_entity, only: [ :show, :edit, :update, :destroy, :customs_brokers_search, :customs_agencies_search ]
+  before_action :set_entity, only: [ :show, :edit, :update, :destroy, :api_credentials, :customs_brokers_search, :customs_agencies_search ]
   before_action :load_patents, only: [ :show ]
   after_action :verify_authorized, except: :index
 
@@ -38,6 +38,24 @@ class EntitiesController < ApplicationController
       []
     end
     authorize @entity
+  end
+
+  def api_credentials
+    authorize @entity, :show?
+
+    unless @entity.role_consolidator?
+      return redirect_to @entity, alert: "Solo las entidades consolidadoras pueden generar API Keys."
+    end
+
+    _credential, raw_key = ConsolidatorApiCredential.issue!(
+      entity: @entity,
+      name: params[:name].presence || "Integración API"
+    )
+
+    flash[:api_key] = raw_key
+    redirect_to @entity, notice: "API Key generada. Se muestra una sola vez."
+  rescue ArgumentError => e
+    redirect_to @entity, alert: e.message
   end
 
   def new

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_16_201142) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_05_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -147,6 +147,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_201142) do
     t.bigint "entity_id", null: false
     t.datetime "updated_at", null: false
     t.index ["entity_id"], name: "index_clients_on_entity_id"
+  end
+
+  create_table "consolidator_api_credentials", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "entity_id", null: false
+    t.datetime "expires_at"
+    t.string "key_digest", null: false
+    t.string "key_prefix", null: false
+    t.datetime "last_used_at"
+    t.string "name", null: false
+    t.datetime "revoked_at"
+    t.datetime "updated_at", null: false
+    t.index ["entity_id"], name: "index_consolidator_api_credentials_on_entity_id"
+    t.index ["key_digest"], name: "index_consolidator_api_credentials_on_key_digest", unique: true
+    t.index ["key_prefix"], name: "index_consolidator_api_credentials_on_key_prefix"
+    t.index ["revoked_at"], name: "index_consolidator_api_credentials_on_revoked_at"
   end
 
   create_table "consolidators", force: :cascade do |t|
@@ -652,6 +668,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_16_201142) do
   add_foreign_key "bl_house_lines", "entities", column: "customs_broker_id"
   add_foreign_key "bl_house_lines", "packagings"
   add_foreign_key "clients", "entities"
+  add_foreign_key "consolidator_api_credentials", "entities"
   add_foreign_key "consolidators", "entities"
   add_foreign_key "container_services", "containers"
   add_foreign_key "container_services", "entities", column: "billed_to_entity_id"

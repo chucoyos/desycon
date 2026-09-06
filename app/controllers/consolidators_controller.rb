@@ -55,7 +55,7 @@ class ConsolidatorsController < ApplicationController
   private
 
   def set_consolidator
-    @consolidator = Consolidator.includes(:fiscal_profile, :addresses).find(params[:id])
+    @consolidator = Consolidator.includes(entity: [ :fiscal_profile, :addresses ]).find(params[:id])
   end
 
   def consolidator_params
