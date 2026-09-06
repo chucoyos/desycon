@@ -55,7 +55,7 @@
   <%= render "entities/addresses_section", entity: @entity %>
 
   <% if @entity.role_consolidator? && current_user.admin_or_executive? %>
-    <details id="api_access_container" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-6 group">
+    <details id="api_access_container" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-6 group">
       <summary class="flex cursor-pointer list-none items-center justify-between px-4 py-4 sm:px-6">
         <div>
           <h2 class="text-lg font-semibold text-gray-900">Acceso API</h2>
