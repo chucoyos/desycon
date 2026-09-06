@@ -9,6 +9,7 @@ Guía de referencia para que un consolidador integre su sistema con Global DYC y
 - **Autenticación:** API Key tipo `Bearer`
 - **Alcance:** Solo lectura (`GET`). No se puede crear, modificar ni eliminar información mediante esta API.
 - **Multi-tenant:** Cada API Key pertenece a un único consolidador. Solo se devuelven datos de ese consolidador; nunca se acepta un identificador de consolidador enviado por el cliente.
+- **Consulta de contenedores:** Debe indicar un rango completo mediante `date_from` y `date_to` para evitar consultas masivas.
 
 ## 2. Obtener tu API Key
 
@@ -98,7 +99,7 @@ Todos los listados aceptan:
 |-------------|---------------------|--------------------------------------------------------------------------------|
 | 401         | `invalid_api_key`   | Falta el header, la clave es incorrecta, fue revocada o expiró.               |
 | 404         | `not_found`         | El contenedor o la partida no existe, o pertenece a otro consolidador.        |
-| 422         | `invalid_parameter` | Un filtro o parámetro de paginación no es válido (fecha, `date_field`, etc.). |
+| 422         | `invalid_parameter` | Falta o es inválido un parámetro, incluyendo el rango obligatorio de fechas.  |
 
 Por seguridad, un recurso que pertenece a otro consolidador **siempre responde `404`**, nunca `403`, para no revelar su existencia.
 
@@ -114,7 +115,7 @@ Todas las fechas se devuelven en formato ISO 8601 UTC, por ejemplo `2026-09-05T2
 GET /api/v1/consolidator/containers
 ```
 
-**Parámetros de consulta (todos opcionales):**
+**Parámetros de consulta:**
 
 | Parámetro     | Tipo   | Descripción                                                                 |
 |---------------|--------|-------------------------------------------------------------------------------|
@@ -123,8 +124,8 @@ GET /api/v1/consolidator/containers
 | `reference`   | string | Búsqueda parcial por referencia interna (`archivo_nr`).                       |
 | `bl_master`   | string | Búsqueda parcial por BL Master.                                               |
 | `date_field`  | string | `created_at` (default) o `fecha_desconsolidacion`. Define sobre qué campo se aplica el rango de fechas. |
-| `date_from`   | date   | Fecha inicial del rango (`YYYY-MM-DD`).                                       |
-| `date_to`     | date   | Fecha final del rango (`YYYY-MM-DD`).                                         |
+| `date_from`   | date   | **Obligatorio.** Fecha inicial del rango (`YYYY-MM-DD`).                       |
+| `date_to`     | date   | **Obligatorio.** Fecha final del rango (`YYYY-MM-DD`) y debe ser igual o posterior a `date_from`. |
 | `page`        | int    | Ver [Paginación](#41-paginación).                                             |
 | `per_page`    | int    | Ver [Paginación](#41-paginación).                                             |
 

@@ -19,7 +19,9 @@ RSpec.describe "Consolidator containers API", type: :request do
       own_container = create(:container, consolidator_entity: entity)
       create(:container, consolidator_entity: other_entity)
 
-      get api_v1_consolidator_containers_path, headers: headers
+      get api_v1_consolidator_containers_path,
+          params: { date_from: 1.day.ago.to_date.iso8601, date_to: Date.current.iso8601 },
+          headers: headers
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body.fetch("data").map { |container| container.fetch("id") })
@@ -55,6 +57,24 @@ RSpec.describe "Consolidator containers API", type: :request do
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.parsed_body.dig("error", "code")).to eq("invalid_parameter")
+    end
+
+    it "requires a complete date range" do
+      get api_v1_consolidator_containers_path,
+          params: { date_from: 1.day.ago.to_date.iso8601 },
+          headers: headers
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body.dig("error", "message")).to eq("date_from and date_to are required")
+    end
+
+    it "rejects an inverted date range" do
+      get api_v1_consolidator_containers_path,
+          params: { date_from: Date.current.iso8601, date_to: 1.day.ago.to_date.iso8601 },
+          headers: headers
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body.dig("error", "message")).to eq("date_from must be on or before date_to")
     end
   end
 

@@ -29,13 +29,14 @@ module Api
           scope = scope.where("archivo_nr ILIKE ?", "%#{sanitize_like(params[:reference])}%") if params[:reference].present?
           scope = scope.where("bl_master ILIKE ?", "%#{sanitize_like(params[:bl_master])}%") if params[:bl_master].present?
 
-          return scope unless params[:date_from].present? || params[:date_to].present?
-
           date_field = params[:date_field].presence || "created_at"
           raise ArgumentError, "date_field is invalid" unless DATE_FIELDS.include?(date_field)
+          raise ArgumentError, "date_from and date_to are required" if params[:date_from].blank? || params[:date_to].blank?
 
-          start_date = Date.iso8601(params[:date_from].presence || "1900-01-01").beginning_of_day
-          end_date = Date.iso8601(params[:date_to].presence || "2999-12-31").end_of_day
+          start_date = Date.iso8601(params[:date_from]).beginning_of_day
+          end_date = Date.iso8601(params[:date_to]).end_of_day
+          raise ArgumentError, "date_from must be on or before date_to" if start_date > end_date
+
           scope.where(date_field => start_date..end_date)
         end
 
