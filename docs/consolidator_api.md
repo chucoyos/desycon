@@ -26,10 +26,17 @@ Si pierdes la clave o sospechas que fue expuesta, solicita al equipo de Global D
 
 ## 3. Autenticación
 
+Antes de ejecutar los ejemplos, configura la URL y una API Key activa. Sustituye el valor de ejemplo por tu clave real; no la compartas ni la guardes en el repositorio:
+
+```bash
+export CONSOLIDATOR_API_BASE_URL="https://www.globaldyc.com/api/v1/consolidator"
+export CONSOLIDATOR_API_KEY="dsc_live_REEMPLAZA_CON_TU_CLAVE"
+```
+
 Cada solicitud debe incluir la clave en el header `Authorization`, usando el esquema `Bearer`:
 
 ```http
-GET /api/v1/consolidator/containers HTTP/1.1
+GET /api/v1/consolidator/containers?date_from=2026-09-01&date_to=2026-09-30 HTTP/1.1
 Host: globaldyc.com
 Authorization: Bearer dsc_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 Accept: application/json
@@ -38,10 +45,11 @@ Accept: application/json
 Ejemplo con `curl`:
 
 ```bash
-curl -s \
-  -H "Authorization: Bearer dsc_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
+curl -fsS -G "$CONSOLIDATOR_API_BASE_URL/containers" \
+  -H "Authorization: Bearer $CONSOLIDATOR_API_KEY" \
   -H "Accept: application/json" \
-  "https://www.globaldyc.com/api/v1/consolidator/containers"
+  --data-urlencode "date_from=2026-09-01" \
+  --data-urlencode "date_to=2026-09-30"
 ```
 
 Si el header falta, la clave es inválida, fue revocada o expiró, la API responde `401 Unauthorized`:
@@ -69,7 +77,7 @@ Los listados históricos usan `page` y `per_page`. Las consultas incrementales c
 | `page`     | integer | `1`     | mayor a 0   | Número de página solicitada.          |
 | `per_page` | integer | `25`    | 1 a 100     | Cantidad de resultados por página.    |
 
-### 4.2 Formato de respuesta (colecciones)
+### 4.2 Formato de respuesta (listados históricos)
 
 ```json
 {
@@ -140,13 +148,18 @@ GET /api/v1/consolidator/containers
 **Ejemplo de solicitud:**
 
 ```bash
-curl -s \
-  -H "Authorization: Bearer dsc_live_XXXX..." \
+curl -fsS -G "$CONSOLIDATOR_API_BASE_URL/containers" \
+  -H "Authorization: Bearer $CONSOLIDATOR_API_KEY" \
   -H "Accept: application/json" \
-  "https://www.globaldyc.com/api/v1/consolidator/containers?status=activo&date_field=fecha_desconsolidacion&date_from=2026-08-01&date_to=2026-08-31&page=1&per_page=25"
+  --data-urlencode "status=desconsolidado" \
+  --data-urlencode "date_field=fecha_desconsolidacion" \
+  --data-urlencode "date_from=2026-08-01" \
+  --data-urlencode "date_to=2026-08-31" \
+  --data-urlencode "page=1" \
+  --data-urlencode "per_page=25"
 ```
 
-**Ejemplo de respuesta `200 OK`:**
+**Ejemplo de respuesta `200 OK` si hay coincidencias:**
 
 ```json
 {
@@ -185,13 +198,14 @@ curl -s \
 **Ejemplo de sincronización incremental:**
 
 ```bash
-curl -s \
-  -H "Authorization: Bearer dsc_live_XXXX..." \
+curl -fsS -G "$CONSOLIDATOR_API_BASE_URL/containers" \
+  -H "Authorization: Bearer $CONSOLIDATOR_API_KEY" \
   -H "Accept: application/json" \
-  "https://www.globaldyc.com/api/v1/consolidator/containers?updated_since=2026-09-01T12%3A00%3A00Z&per_page=100"
+  --data-urlencode "updated_since=2026-09-01T12:00:00Z" \
+  --data-urlencode "per_page=1"
 ```
 
-La respuesta delta incluye un cursor y el límite superior fijo de la ventana:
+El ejemplo usa `per_page=1` para que, si existen al menos dos coincidencias, la primera página incluya `next_cursor`. Si no hay más resultados, `next_cursor` será `null`. El cursor de ejemplo es ilustrativo; usa siempre el valor exacto devuelto por la API.
 
 ```json
 {
@@ -205,23 +219,53 @@ La respuesta delta incluye un cursor y el límite superior fijo de la ventana:
     }
   ],
   "meta": {
-    "per_page": 100,
+    "per_page": 1,
     "next_cursor": "eyJf...firma...",
     "sync_until": "2026-09-05T20:20:00.000000Z"
   }
 }
 ```
 
-Para continuar, envía `cursor` y `per_page`, sin `updated_since` ni `page`:
+Para no copiar manualmente un cursor ficticio, este helper Bash consulta todas las páginas y extrae el cursor real de cada respuesta. Requiere `jq` además de `curl`:
 
 ```bash
-curl -s \
-  -H "Authorization: Bearer dsc_live_XXXX..." \
-  -H "Accept: application/json" \
-  "https://www.globaldyc.com/api/v1/consolidator/containers?cursor=eyJf...firma...&per_page=100"
+set -e
+
+sync_delta() {
+  local endpoint="$1"
+  local since="$2"
+  local cursor=""
+  local response
+
+  while :; do
+    if [[ -z "$cursor" ]]; then
+      response=$(curl -fsS -G "$endpoint" \
+        -H "Authorization: Bearer $CONSOLIDATOR_API_KEY" \
+        -H "Accept: application/json" \
+        --data-urlencode "updated_since=$since" \
+        --data-urlencode "per_page=100")
+    else
+      response=$(curl -fsS -G "$endpoint" \
+        -H "Authorization: Bearer $CONSOLIDATOR_API_KEY" \
+        -H "Accept: application/json" \
+        --data-urlencode "cursor=$cursor" \
+        --data-urlencode "per_page=100")
+    fi
+
+    printf '%s\n' "$response" | jq -c '.data[]?'
+    cursor=$(printf '%s\n' "$response" | jq -r '.meta.next_cursor // empty')
+    SYNC_UNTIL=$(printf '%s\n' "$response" | jq -r '.meta.sync_until')
+    [[ -n "$cursor" ]] || break
+  done
+
+  printf 'Completed through %s\n' "$SYNC_UNTIL" >&2
+}
+
+sync_delta "$CONSOLIDATOR_API_BASE_URL/containers" "2026-09-01T12:00:00Z"
+# Call sync_delta for /bl_house_lines too, using that resource's own watermark.
 ```
 
-Repite mientras `meta.next_cursor` no sea `null`. Al terminar todas las páginas, avanza el watermark a `meta.sync_until`; aplica upsert para tolerar registros repetidos. Los cambios posteriores a `sync_until` quedan para la siguiente sincronización.
+Guarda `SYNC_UNTIL` como nuevo watermark únicamente después de procesar correctamente todas las filas impresas. Usa upsert para que los duplicados sean inocuos. Los cambios posteriores a `sync_until` quedan para la siguiente sincronización.
 
 ### 5.2 Listar partidas (BL House Lines) del consolidador
 
@@ -248,11 +292,14 @@ Debe enviarse `updated_since` o el rango completo `date_from`/`date_to`. Los obj
 **Ejemplo incremental:**
 
 ```bash
-curl -s \
-  -H "Authorization: Bearer dsc_live_XXXX..." \
+curl -fsS -G "$CONSOLIDATOR_API_BASE_URL/bl_house_lines" \
+  -H "Authorization: Bearer $CONSOLIDATOR_API_KEY" \
   -H "Accept: application/json" \
-  "https://www.globaldyc.com/api/v1/consolidator/bl_house_lines?updated_since=2026-09-01T12%3A00%3A00Z&per_page=100"
+  --data-urlencode "updated_since=2026-09-01T12:00:00Z" \
+  --data-urlencode "per_page=100"
 ```
+
+Para recorrer todas las páginas, usa `sync_delta` de la sección 5.1 con `"$CONSOLIDATOR_API_BASE_URL/bl_house_lines"` y el watermark independiente de partidas.
 
 ### 5.3 Listar partidas (BL House Lines) de un contenedor
 
@@ -276,11 +323,13 @@ El `:container_id` debe pertenecer al consolidador autenticado; en caso contrari
 
 **Ejemplo de solicitud:**
 
+Define `CONTAINER_ID` con el `id` de un contenedor devuelto por el listado de esta misma API Key.
+
 ```bash
-curl -s \
-  -H "Authorization: Bearer dsc_live_XXXX..." \
+curl -fsS -G "$CONSOLIDATOR_API_BASE_URL/containers/$CONTAINER_ID/bl_house_lines" \
+  -H "Authorization: Bearer $CONSOLIDATOR_API_KEY" \
   -H "Accept: application/json" \
-  "https://www.globaldyc.com/api/v1/consolidator/containers/481/bl_house_lines?status=documentos_ok"
+  --data-urlencode "status=documentos_ok"
 ```
 
 **Ejemplo de respuesta `200 OK`:**
@@ -356,22 +405,24 @@ GET /api/v1/consolidator/containers/:container_id/bl_house_lines/:bl_house_line_
 | `page`     | int    | Ver [Paginación](#41-paginación).                     |
 | `per_page` | int    | Ver [Paginación](#41-paginación).                     |
 
+Define `CONTAINER_ID` con un ID devuelto por el listado de contenedores y `BL_HOUSE_LINE_ID` con un ID devuelto por el listado de partidas de ese contenedor.
+
 **Ejemplo de solicitud (fotos de contenedor):**
 
 ```bash
-curl -s \
-  -H "Authorization: Bearer dsc_live_XXXX..." \
+curl -fsS -G "$CONSOLIDATOR_API_BASE_URL/containers/$CONTAINER_ID/photos" \
+  -H "Authorization: Bearer $CONSOLIDATOR_API_KEY" \
   -H "Accept: application/json" \
-  "https://www.globaldyc.com/api/v1/consolidator/containers/481/photos?section=apertura"
+  --data-urlencode "section=apertura"
 ```
 
 **Ejemplo de solicitud (fotos de partida):**
 
 ```bash
-curl -s \
-  -H "Authorization: Bearer dsc_live_XXXX..." \
+curl -fsS -G "$CONSOLIDATOR_API_BASE_URL/containers/$CONTAINER_ID/bl_house_lines/$BL_HOUSE_LINE_ID/photos" \
+  -H "Authorization: Bearer $CONSOLIDATOR_API_KEY" \
   -H "Accept: application/json" \
-  "https://www.globaldyc.com/api/v1/consolidator/containers/481/bl_house_lines/9021/photos?section=etiquetado"
+  --data-urlencode "section=etiquetado"
 ```
 
 **Ejemplo de respuesta `200 OK` (producción, almacenamiento S3):**
@@ -387,7 +438,7 @@ curl -s \
       "byte_size": 245678,
       "created_at": "2026-08-10T13:05:00Z",
       "download_url": "https://desycon-bucket.s3.amazonaws.com/...&X-Amz-Expires=300&X-Amz-Signature=...",
-      "expires_at": "2026-09-05T20:20:00Z"
+      "expires_at": "2026-09-29T20:20:00Z"
     }
   ],
   "meta": {
@@ -419,14 +470,14 @@ En entornos de prueba (Active Storage con almacenamiento local), `download_url` 
 4. **Para cada contenedor o partida, obtener metadatos de fotografías y descargarlas antes de que expire la URL:**
    `GET /containers/{container_id}/photos`
    `GET /containers/{container_id}/bl_house_lines/{bl_house_line_id}/photos`
-5. **Avanzar el watermark delta** a `sync_until` solo después de terminar las páginas cursor de esa ventana.
+5. **Avanzar el watermark delta** a `sync_until` solo después de terminar y procesar correctamente todas las páginas cursor de esa ventana.
 
 Ejemplo de paginación completa en pseudocódigo:
 
 ```text
 page = 1
 loop:
-  response = GET /containers?page={page}&per_page=100
+  response = GET /containers?date_from=2026-09-01&date_to=2026-09-30&page={page}&per_page=100
   process(response.data)
   break if page >= response.meta.total_pages
   page += 1
@@ -434,7 +485,7 @@ loop:
 
 ## 7. Buenas prácticas de integración
 
-- Cachea el resultado de `containers` y `bl_house_lines` por un periodo corto (por ejemplo, unos minutos) para reducir llamadas repetidas. Para sincronización delta, persiste el último `updated_at` procesado y tolera duplicados mediante upsert o una ventana de solapamiento.
+- Cachea el resultado de `containers` y `bl_house_lines` por un periodo corto (por ejemplo, unos minutos) para reducir llamadas repetidas. Para sincronización delta, persiste `sync_until` después de procesar todas las páginas del recurso y tolera duplicados mediante upsert.
 - No hagas polling agresivo; el estado de contenedores y partidas no cambia con frecuencia menor a minutos.
 - Descarga las fotografías apenas obtengas la URL; no almacenes `download_url` para uso posterior, ya que expira.
 - Maneja explícitamente los códigos `401`, `404` y `422` en tu integración, en vez de asumir siempre `200`.
