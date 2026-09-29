@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_05_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -134,6 +134,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_05_000000) do
     t.datetime "updated_at", null: false
     t.decimal "volumen"
     t.index ["client_id"], name: "index_bl_house_lines_on_client_id"
+    t.index ["container_id", "updated_at", "id"], name: "index_bl_house_lines_on_container_updated_id"
     t.index ["container_id"], name: "index_bl_house_lines_on_container_id"
     t.index ["customs_agent_id"], name: "index_bl_house_lines_on_customs_agent_id"
     t.index ["customs_broker_id"], name: "index_bl_house_lines_on_customs_broker_id"
@@ -239,6 +240,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_05_000000) do
     t.datetime "updated_at", null: false
     t.bigint "vessel_id"
     t.bigint "voyage_id"
+    t.index ["consolidator_entity_id", "updated_at", "id"], name: "index_containers_on_consolidator_entity_updated_id"
     t.index ["consolidator_id"], name: "index_containers_on_consolidator_id"
     t.index ["fecha_tentativa_desconsolidacion"], name: "index_containers_on_fecha_tentativa_desconsolidacion"
     t.index ["number", "bl_master"], name: "index_containers_on_number_and_bl_master", unique: true

@@ -9,7 +9,7 @@ class BlHouseLine < ApplicationRecord
   belongs_to :customs_agent, class_name: "Entity", optional: true
   belongs_to :customs_broker, class_name: "Entity", optional: true
   belongs_to :client, class_name: "Entity", optional: true
-  belongs_to :container, optional: true
+  belongs_to :container, optional: true, touch: true
   belongs_to :packaging, optional: true
 
   # Status history

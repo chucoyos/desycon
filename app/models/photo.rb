@@ -14,7 +14,7 @@ class Photo < ApplicationRecord
     etiquetado: "etiquetado"
   }
 
-  belongs_to :attachable, polymorphic: true
+  belongs_to :attachable, polymorphic: true, touch: true
   belongs_to :uploaded_by, class_name: "User", optional: true
 
   has_one_attached :image

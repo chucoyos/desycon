@@ -9,11 +9,14 @@ RSpec.describe "Consolidator photos API", type: :request do
   it "returns photo metadata and a download URL for an owned container" do
     container = create(:container, consolidator_entity: entity)
     photo = create(:photo, attachable: container, section: "apertura")
+    other_photo = create(:photo, attachable: container, section: "apertura")
 
     get api_v1_consolidator_container_photos_path(container), headers: headers
 
     expect(response).to have_http_status(:ok)
-    item = response.parsed_body.fetch("data").first
+    expect(response.parsed_body.fetch("data").map { |item| item.fetch("id") })
+      .to contain_exactly(photo.id, other_photo.id)
+    item = response.parsed_body.fetch("data").find { |entry| entry.fetch("id") == photo.id }
     expect(item.fetch("id")).to eq(photo.id)
     expect(item.fetch("filename")).to eq(photo.image.filename.to_s)
     expect(item.fetch("download_url")).to include("/rails/active_storage/")
@@ -55,5 +58,37 @@ RSpec.describe "Consolidator photos API", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body.fetch("data").map { |item| item.fetch("id") }).to contain_exactly(photo.id)
+  end
+
+  it "touches the parent container when a photo is added to a bl house line" do
+    container = create(:container, consolidator_entity: entity)
+    line = create(:bl_house_line, container: container)
+    old_updated_at = 1.day.ago
+    container.update_column(:updated_at, old_updated_at)
+
+    create(:photo, attachable: line, section: "etiquetado")
+
+    expect(container.reload.updated_at).to be > old_updated_at
+  end
+
+  it "touches the container when a photo is added directly to it" do
+    container = create(:container, consolidator_entity: entity)
+    old_updated_at = 1.day.ago
+    container.update_column(:updated_at, old_updated_at)
+
+    create(:photo, attachable: container, section: "apertura")
+
+    expect(container.reload.updated_at).to be > old_updated_at
+  end
+
+  it "touches the container when an existing photo is updated" do
+    container = create(:container, consolidator_entity: entity)
+    photo = create(:photo, attachable: container, section: "apertura")
+    old_updated_at = 1.day.ago
+    container.update_column(:updated_at, old_updated_at)
+
+    photo.update!(section: "vacio")
+
+    expect(container.reload.updated_at).to be > old_updated_at
   end
 end

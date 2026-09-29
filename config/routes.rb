@@ -209,6 +209,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       namespace :consolidator do
+          resources :bl_house_lines, only: [ :index ], controller: "bl_house_lines"
         resources :containers, only: [ :index ] do
           resources :bl_house_lines, only: [ :index ], controller: "bl_house_lines" do
             resources :photos, only: [ :index ], controller: "photos"
