@@ -94,11 +94,8 @@ class FiscalProfile < ApplicationRecord
   validate :ppd_requires_forma_pago_por_definir
   validate :require_complete_profile_for_client_entities
 
-  # Validación de unicidad: global para no-entities, scoped al agente aduanal para entities
-  validates :rfc, uniqueness: {
-    case_sensitive: false,
-    unless: -> { profileable_type == "Entity" && profileable&.customs_agent_id.present? }
-  }
+  # Unicidad global (sin clientes de agencia, que se validan por agencia); excluye el registro actual
+  validate :rfc_uniqueness_global_scope
 
   # Validación custom para unicidad del RFC dentro del scope del agente aduanal
   validate :rfc_uniqueness_within_customs_agent_scope
@@ -155,6 +152,18 @@ class FiscalProfile < ApplicationRecord
     %i[rfc razon_social regimen uso_cfdi metodo_pago forma_pago].each do |field|
       errors.add(field, "no puede estar en blanco") if public_send(field).blank?
     end
+  end
+
+  def rfc_uniqueness_global_scope
+    return if rfc.blank?
+    return if profileable_type == "Entity" && profileable&.customs_agent_id.present?
+
+    scoped_client_ids = Entity.where.not(customs_agent_id: nil).select(:id)
+    duplicates = FiscalProfile.where("UPPER(rfc) = ?", rfc.upcase)
+                              .where.not(profileable_type: "Entity", profileable_id: scoped_client_ids)
+    duplicates = duplicates.where.not(id: id) if persisted?
+
+    errors.add(:rfc, :taken) if duplicates.exists?
   end
 
   def rfc_uniqueness_within_customs_agent_scope
