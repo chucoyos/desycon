@@ -9,7 +9,7 @@ class CustomsAgentPaymentEvidencesController < ApplicationController
     @selected_invoice_ids = selected_invoice_ids
 
     if @selected_invoice_ids.any?
-      @selected_agency_invoices = eligible_invoices.where(id: @selected_invoice_ids).preload(:receiver_entity, :invoice_payments).limit(500).to_a
+      @selected_agency_invoices = eligible_invoices.where(id: @selected_invoice_ids).preload(:invoice_payments).limit(500).to_a
       missing_invoice_ids = @selected_invoice_ids.map(&:to_i) - @selected_agency_invoices.map(&:id)
       @payment_evidence.errors.add(:base, "Una o más facturas no son válidas para tu agencia.") if missing_invoice_ids.any?
     end
@@ -97,7 +97,7 @@ class CustomsAgentPaymentEvidencesController < ApplicationController
     end
 
     @selected_invoice_ids = selected_invoice_ids
-    @selected_agency_invoices = eligible_invoices.where(id: @selected_invoice_ids).preload(:receiver_entity, :invoice_payments).limit(500).to_a
+    @selected_agency_invoices = eligible_invoices.where(id: @selected_invoice_ids).preload(:invoice_payments).limit(500).to_a
     @payment_evidence = InvoicePaymentEvidence.new(reference: payment_evidence_params[:reference], tracking_key: payment_evidence_params[:tracking_key])
     @payment_evidence.errors.add(:base, result.error_message)
 
