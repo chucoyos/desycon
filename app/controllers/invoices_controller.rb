@@ -34,6 +34,8 @@ class InvoicesController < ApplicationController
     @consolidators = admin_or_executive ? Entity.consolidators.order(:name) : Entity.none
     @admin_or_executive = admin_or_executive
     @consolidator_portal_user = current_user.consolidator? && current_user.entity&.role_consolidator?
+    @customs_agent_portal_user = current_user.customs_broker? && current_user.entity&.role_customs_agent?
+    @payment_evidence_batch_portal_user = @consolidator_portal_user || @customs_agent_portal_user
     @series_filter_options = build_series_filter_options
   end
 

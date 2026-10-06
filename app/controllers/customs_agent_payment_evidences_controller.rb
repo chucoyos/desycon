@@ -6,6 +6,13 @@ class CustomsAgentPaymentEvidencesController < ApplicationController
     @agency_invoices_for_payment_evidence = eligible_invoices.preload(:receiver_entity, :invoice_payments).limit(100)
     @selected_invoice_id = params[:invoice_id].presence
     @payment_evidence = InvoicePaymentEvidence.new(invoice_id: @selected_invoice_id)
+    @selected_invoice_ids = selected_invoice_ids
+
+    if @selected_invoice_ids.any?
+      @selected_agency_invoices = eligible_invoices.where(id: @selected_invoice_ids).preload(:receiver_entity, :invoice_payments).limit(500).to_a
+      missing_invoice_ids = @selected_invoice_ids.map(&:to_i) - @selected_agency_invoices.map(&:id)
+      @payment_evidence.errors.add(:base, "Una o más facturas no son válidas para tu agencia.") if missing_invoice_ids.any?
+    end
 
     return unless turbo_frame_request?
 
@@ -13,6 +20,8 @@ class CustomsAgentPaymentEvidencesController < ApplicationController
   end
 
   def create
+    return create_for_multiple_invoices if payment_evidence_params[:invoice_ids].present?
+
     invoice = eligible_invoices.find_by(id: payment_evidence_params[:invoice_id])
     unless invoice
       if turbo_frame_request?
@@ -62,7 +71,41 @@ class CustomsAgentPaymentEvidencesController < ApplicationController
   end
 
   def payment_evidence_params
-    params.require(:payment_evidence).permit(:invoice_id, :reference, :tracking_key, :receipt_file)
+    params.require(:payment_evidence).permit(:invoice_id, :reference, :tracking_key, :receipt_file, invoice_ids: [])
+  end
+
+  def selected_invoice_ids
+    ids = payment_evidence_params[:invoice_ids] if params[:payment_evidence].present?
+    ids ||= params[:invoice_ids]
+    Array(ids).map(&:to_s).map(&:strip).reject(&:blank?).uniq
+  end
+
+  def create_for_multiple_invoices
+    result = PaymentEvidences::CreateForCustomsAgentService.call(
+      actor: current_user,
+      invoice_ids: payment_evidence_params[:invoice_ids],
+      reference: payment_evidence_params[:reference],
+      tracking_key: payment_evidence_params[:tracking_key],
+      receipt_file: payment_evidence_params[:receipt_file]
+    )
+
+    if result.success?
+      return render partial: "customs_agent_payment_evidences/success" if turbo_frame_request?
+
+      redirect_to invoices_path, notice: "Tu comprobante de pago ha sido enviado y sera revisado para su validacion."
+      return
+    end
+
+    @selected_invoice_ids = selected_invoice_ids
+    @selected_agency_invoices = eligible_invoices.where(id: @selected_invoice_ids).preload(:receiver_entity, :invoice_payments).limit(500).to_a
+    @payment_evidence = InvoicePaymentEvidence.new(reference: payment_evidence_params[:reference], tracking_key: payment_evidence_params[:tracking_key])
+    @payment_evidence.errors.add(:base, result.error_message)
+
+    if turbo_frame_request?
+      render partial: "customs_agent_payment_evidences/modal", status: :unprocessable_content
+    else
+      redirect_to invoices_path, alert: result.error_message
+    end
   end
 
   def eligible_invoices
