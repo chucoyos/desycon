@@ -194,6 +194,26 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
     end
   end
 
+  describe "GET /admin/invoice_payment_evidences/:id with multiple PUE invoices" do
+    it "renders enabled grouped amount inputs prefilled with each outstanding balance" do
+      sign_in admin_user, scope: :user
+
+      pue_one = create(:invoice, status: "issued", receiver_entity: client_entity, payload_snapshot: { metodoPago: "PUE" })
+      pue_two = create(:invoice, status: "issued", receiver_entity: client_entity, payload_snapshot: { metodoPago: "PUE" })
+      multi_evidence = create(:invoice_payment_evidence, invoice: pue_one, customs_agent: customs_agent, submitted_by: customs_user)
+      create(:invoice_payment_evidence_link, invoice_payment_evidence: multi_evidence, invoice: pue_one)
+      create(:invoice_payment_evidence_link, invoice_payment_evidence: multi_evidence, invoice: pue_two)
+
+      get admin_invoice_payment_evidence_path(multi_evidence)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("register_payment[invoice_amounts][#{pue_one.id}]")
+      expect(response.body).to include("register_payment[invoice_amounts][#{pue_two.id}]")
+      expect(response.body).to include(%(value="#{pue_one.outstanding_amount.to_s('F')}"))
+      expect(response.body).not_to match(/<input[^>]*value="Registrar y vincular pago"[^>]*\sdisabled(="disabled")?[\s>]/)
+    end
+  end
+
   describe "PATCH /admin/invoice_payment_evidences/:id/reject" do
     it "rejects evidence with mandatory comment" do
       sign_in admin_user, scope: :user

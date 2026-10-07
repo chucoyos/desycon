@@ -97,7 +97,8 @@ module Admin
           review_comment: review_note.presence
         )
 
-        redirect_to admin_invoice_payment_evidence_path(@evidence), notice: "Pagos registrados y REP agrupado en proceso de emisión."
+        notice = grouped_result.complement_invoice.present? ? "Pagos registrados y REP agrupado en proceso de emisión." : "Pagos registrados y evidencia vinculada correctamente."
+        redirect_to admin_invoice_payment_evidence_path(@evidence), notice: notice
         return
       end
 
@@ -309,9 +310,8 @@ module Admin
 
       ActiveRecord::Associations::Preloader.new(records: invoices, associations: :receiver_entity).call
 
-      # RFC from receiver_entity.fiscal_profile is rendered only in grouped PPD mode.
-      grouped_ppd_mode = invoices.many? && invoices.all? { |invoice| invoice.payment_method_code == FiscalProfile::METODO_PAGO_PPD }
-      return unless grouped_ppd_mode
+      # RFC from receiver_entity.fiscal_profile is rendered only in grouped mode.
+      return unless invoices.many?
 
       receiver_entities = invoices.map(&:receiver_entity).compact
       return if receiver_entities.empty?

@@ -37,6 +37,9 @@ module Facturador
         raise RequestError, "Una o más facturas no pertenecen a la evidencia seleccionada."
       end
 
+      # Eligibility must be read before payments reduce the outstanding balance.
+      rep_eligible_invoice_ids = selected_entries.select { |entry| entry[:invoice].payment_complement_eligible? }.map { |entry| entry[:invoice].id }.to_set
+
       payments = []
       ActiveRecord::Base.transaction do
         selected_entries.each do |entry|
@@ -54,7 +57,7 @@ module Facturador
           payments << payment
         end
 
-        if Facturador::Config.auto_issue_rep_enabled? && payments.many? && payments.all? { |payment| payment.invoice.payment_complement_eligible? }
+        if Facturador::Config.auto_issue_rep_enabled? && payments.many? && payments.all? { |payment| rep_eligible_invoice_ids.include?(payment.invoice_id) }
           group_key = Digest::SHA256.hexdigest("evidence-grouped-rep:#{evidence.id}:#{payments.map(&:id).sort.join(':')}")
           complement_invoice = IssueGroupedPaymentComplementService.call(
             payments: payments,
@@ -66,7 +69,7 @@ module Facturador
 
         payments.each do |payment|
           next unless Facturador::Config.auto_issue_rep_enabled?
-          next unless payment.invoice.payment_complement_eligible?
+          next unless rep_eligible_invoice_ids.include?(payment.invoice_id)
 
           IssuePaymentComplementService.call(payment: payment, actor: actor)
         end

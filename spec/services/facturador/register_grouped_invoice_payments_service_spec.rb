@@ -112,6 +112,33 @@ RSpec.describe Facturador::RegisterGroupedInvoicePaymentsService, type: :service
       expect(Facturador::IssuePaymentComplementService).not_to have_received(:call).with(payment: payment_two, actor: admin_user)
     end
 
+    it "registers payments without issuing any REP when all invoices are PUE" do
+      first_invoice.update!(payload_snapshot: { metodoPago: "PUE" })
+      second_invoice.update!(payload_snapshot: { metodoPago: "PUE" })
+
+      payment_one = create(:invoice_payment, invoice: first_invoice, amount: 500, paid_at: Time.current, payment_method: "03")
+      payment_two = create(:invoice_payment, invoice: second_invoice, amount: 300, paid_at: Time.current, payment_method: "03")
+
+      allow(Facturador::RegisterInvoicePaymentService).to receive(:call).and_return(payment_one, payment_two)
+      allow(Facturador::IssueGroupedPaymentComplementService).to receive(:call)
+
+      result = described_class.call(
+        evidence: evidence,
+        invoice_amounts: {
+          first_invoice.id.to_s => "500.00",
+          second_invoice.id.to_s => "300.00"
+        },
+        paid_at: paid_at,
+        payment_method: "03",
+        actor: admin_user
+      )
+
+      expect(result.payments).to match_array([ payment_one, payment_two ])
+      expect(result.complement_invoice).to be_nil
+      expect(Facturador::IssueGroupedPaymentComplementService).not_to have_received(:call)
+      expect(Facturador::IssuePaymentComplementService).not_to have_received(:call)
+    end
+
     it "fails when all selected amounts are zero" do
       expect do
         described_class.call(
@@ -125,6 +152,36 @@ RSpec.describe Facturador::RegisterGroupedInvoicePaymentsService, type: :service
           actor: admin_user
         )
       end.to raise_error(Facturador::RequestError, /monto mayor a cero/)
+    end
+
+    it "requests a grouped REP when PPD invoices are paid in full" do
+      grouped_complement = create(
+        :invoice,
+        kind: "pago",
+        status: "queued",
+        issuer_entity: customs_agent,
+        receiver_entity: receiver,
+        subtotal: 800,
+        tax_total: 0,
+        total: 800
+      )
+      allow(Facturador::IssueGroupedPaymentComplementService).to receive(:call).and_return(grouped_complement)
+
+      result = described_class.call(
+        evidence: evidence,
+        invoice_amounts: {
+          first_invoice.id.to_s => first_invoice.outstanding_amount.to_s("F"),
+          second_invoice.id.to_s => second_invoice.outstanding_amount.to_s("F")
+        },
+        paid_at: paid_at,
+        payment_method: "03",
+        actor: admin_user
+      )
+
+      expect(first_invoice.reload.outstanding_amount).to eq(0)
+      expect(second_invoice.reload.outstanding_amount).to eq(0)
+      expect(result.complement_invoice).to eq(grouped_complement)
+      expect(Facturador::IssueGroupedPaymentComplementService).to have_received(:call).once
     end
 
     it "registers payments without issuing REP automatically when auto issue REP is disabled" do
