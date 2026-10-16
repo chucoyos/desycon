@@ -74,6 +74,7 @@
       <thead class="bg-gradient-to-r from-gray-50 to-white">
         <tr>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ID</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Envío</th>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Factura</th>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-64">Entidad remitente</th>
           <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Referencia</th>
@@ -100,6 +101,7 @@
             end %>
             <tr class="hover:bg-gray-50 transition-colors duration-150">
               <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">#<%= evidence.id %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700"><%= l(evidence.created_at, format: "%d/%m/%Y %H:%M") %></td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 <%= link_to invoice_label, invoice_path(evidence.invoice), class: "text-blue-600 hover:text-blue-800 font-medium" %>
               </td>
@@ -127,7 +129,7 @@
           <% end %>
         <% else %>
           <tr>
-            <td colspan="6" class="px-6 py-12 text-center text-gray-500">No hay evidencias de pago para los filtros seleccionados.</td>
+            <td colspan="7" class="px-6 py-12 text-center text-gray-500">No hay evidencias de pago para los filtros seleccionados.</td>
           </tr>
         <% end %>
       </tbody>

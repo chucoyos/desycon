@@ -27,6 +27,8 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include("Evidencias de pago")
+      expect(response.body).to include("Envío")
+      expect(response.body).to include(I18n.l(evidence.created_at, format: "%d/%m/%Y %H:%M"))
     end
 
     it "allows executive users" do
