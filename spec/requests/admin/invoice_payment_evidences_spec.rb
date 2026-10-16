@@ -190,6 +190,7 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include(invoice_path(invoice))
+      expect(response.body).to include(I18n.l(evidence.created_at, format: "%d/%m/%Y %H:%M"))
       expect(response.body).not_to include("Seleccionar")
     end
   end

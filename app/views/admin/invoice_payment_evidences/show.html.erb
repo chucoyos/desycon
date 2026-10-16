@@ -38,6 +38,10 @@
             <dd class="font-semibold"><%= @evidence.status_label %></dd>
           </div>
           <div>
+            <dt class="text-gray-500">Fecha de envío</dt>
+            <dd class="font-semibold"><%= l(@evidence.created_at, format: "%d/%m/%Y %H:%M") %></dd>
+          </div>
+          <div>
             <dt class="text-gray-500">Agencia</dt>
             <dd class="font-semibold"><%= @evidence.customs_agent&.name %></dd>
           </div>
