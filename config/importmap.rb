@@ -7,4 +7,4 @@ pin "@hotwired/stimulus", to: "stimulus.min.js"
 pin "@hotwired/stimulus-loading", to: "stimulus-loading.js"
 pin "chartkick" # @5.0.1
 pin_all_from "app/javascript/controllers", under: "controllers"
-pin "highcharts", to: "highcharts.js" # @12.6.0
+pin "highcharts" # @12.6.2

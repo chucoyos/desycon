@@ -7,8 +7,13 @@ gem "rails", "~> 8.1.3"
 gem "rdoc", "~> 8.1.0"
 
 # Security updates for dependencies
-gem "loofah", ">= 2.25.2"
-gem "rails-html-sanitizer", ">= 1.7.1"
+gem "addressable", ">= 2.9.1"
+gem "crass", ">= 1.0.8"
+gem "loofah", ">= 2.25.3"
+gem "net-ssh", ">= 7.3.5"
+gem "nokogiri", ">= 1.19.5"
+gem "rack", ">= 3.2.8"
+gem "rails-html-sanitizer", ">= 1.7.2"
 gem "rubyzip", ">= 3.4.0", "< 4.0"
 
 gem "judoscale-rails"
