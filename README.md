@@ -119,16 +119,16 @@ Notas:
 
 La aplicación está configurada para deployment en Heroku:
 
-```bash
- 
- 
-# Ejecutar migraciones
-heroku run rails db:migrate
+Las migraciones se ejecutan automáticamente en la fase `release` de cada deploy. Si necesitas ejecutarlas manualmente para una operación de mantenimiento:
 
-# Crear datos iniciales
+```bash
+heroku run rails db:migrate
+```
+
+Para abrir la consola de producción:
+```bash
 heroku run rails console
- 
-## Configuración de Ambiente
+```
 
 Variables de ambiente requeridas:
 
