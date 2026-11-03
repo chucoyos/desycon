@@ -2,9 +2,9 @@ source "https://rubygems.org"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 
-ruby "3.4.10"
+ruby "3.4.12"
 gem "rails", "~> 8.1.3"
-gem "rdoc", "~> 6.16.1"
+gem "rdoc", "~> 8.1.0"
 
 # Security updates for dependencies
 gem "loofah", ">= 2.25.2"
