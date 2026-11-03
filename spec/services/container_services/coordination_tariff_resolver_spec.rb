@@ -73,5 +73,46 @@ RSpec.describe ContainerServices::CoordinationTariffResolver do
         expect(described_class.call(container: container)).to be_nil
       end
     end
+
+    context "when resolving Lázaro Cárdenas rates for AGN" do
+      it "returns 3800 for each supported terminal and warehouse combination" do
+        combinations = [
+          [ "LCTPC TERMINAL PORTUARIA DE CONTENEDORES (HPH)", "UTTSA RECINTO 173" ],
+          [ "LCTPC TERMINAL PORTUARIA DE CONTENEDORES (HPH)", "LCTPC RECINTO 200" ],
+          [ "APM TERMINALS", "LCTPC RECINTO 200" ],
+          [ "APM TERMINALS", "UTTSA RECINTO 173" ]
+        ]
+
+        combinations.each do |terminal, warehouse|
+          container = build_container(
+            rfc: "AGN2405224U9",
+            port_code: "MXLZC",
+            recinto: terminal,
+            almacen: warehouse
+          )
+
+          expect(described_class.call(container: container)).to eq(BigDecimal("3800"))
+        end
+      end
+
+      it "accepts abbreviated terminal and warehouse codes" do
+        container = build_container(
+          rfc: "AGN2405224U9",
+          port_code: "MXLZC",
+          recinto: "APM",
+          almacen: "UTTSA"
+        )
+
+        expect(described_class.call(container: container)).to eq(BigDecimal("3800"))
+      end
+
+      it "does not apply the tariff to another RFC or an unsupported combination" do
+        other_rfc = build_container(rfc: "OTHER", port_code: "MXLZC", recinto: "APM TERMINALS", almacen: "UTTSA RECINTO 173")
+        unsupported_combination = build_container(rfc: "AGN2405224U9", port_code: "MXLZC", recinto: "APM TERMINALS", almacen: "UNKNOWN")
+
+        expect(described_class.call(container: other_rfc)).to be_nil
+        expect(described_class.call(container: unsupported_combination)).to be_nil
+      end
+    end
   end
 end

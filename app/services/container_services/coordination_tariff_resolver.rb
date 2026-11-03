@@ -27,6 +27,13 @@ module ContainerServices
       { rfc: "AGN2405224U9", terminal: :all, warehouse: :all, amount: BigDecimal("0") }
     ].freeze
 
+    LAZARO_CARDENAS_RULES = [
+      { rfc: "AGN2405224U9", terminal: [ "LCTPC", "LCTPC TERMINAL PORTUARIA DE CONTENEDORES (HPH)" ], warehouse: [ "UTTSA", "UTTSA RECINTO 173" ], amount: BigDecimal("3800") },
+      { rfc: "AGN2405224U9", terminal: [ "LCTPC", "LCTPC TERMINAL PORTUARIA DE CONTENEDORES (HPH)" ], warehouse: [ "LCTPC", "LCTPC RECINTO 200" ], amount: BigDecimal("3800") },
+      { rfc: "AGN2405224U9", terminal: [ "APM", "APM TERMINALS" ], warehouse: [ "LCTPC", "LCTPC RECINTO 200" ], amount: BigDecimal("3800") },
+      { rfc: "AGN2405224U9", terminal: [ "APM", "APM TERMINALS" ], warehouse: [ "UTTSA", "UTTSA RECINTO 173" ], amount: BigDecimal("3800") }
+    ].freeze
+
     VERACRUZ_RATES = {
       "PTM0701119T6" => BigDecimal("3800"),
       "SBM0601253SA" => BigDecimal("3800"),
@@ -55,6 +62,8 @@ module ContainerServices
       case destination_port_code
       when "MXZLO"
         resolve_manzanillo_rate
+      when "MXLZC"
+        resolve_lazaro_cardenas_rate
       when "MXVER"
         VERACRUZ_RATES[effective_consolidator_rfc]
       when "MXATM"
@@ -73,6 +82,19 @@ module ContainerServices
       warehouse = normalize_location(container.almacen)
 
       rule = MANZANILLO_RULES.find do |entry|
+        entry[:rfc] == effective_consolidator_rfc &&
+          matches_dimension?(terminal, entry[:terminal]) &&
+          matches_dimension?(warehouse, entry[:warehouse])
+      end
+
+      rule&.fetch(:amount, nil)
+    end
+
+    def resolve_lazaro_cardenas_rate
+      terminal = normalize_location(container.recinto)
+      warehouse = normalize_location(container.almacen)
+
+      rule = LAZARO_CARDENAS_RULES.find do |entry|
         entry[:rfc] == effective_consolidator_rfc &&
           matches_dimension?(terminal, entry[:terminal]) &&
           matches_dimension?(warehouse, entry[:warehouse])
