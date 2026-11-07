@@ -74,6 +74,30 @@ bundle exec rspec spec/policies/
 bundle exec rspec --format documentation
 ```
 
+## Solicitudes de servicios en Lázaro Cárdenas
+
+Las agencias pueden solicitar servicios de partida para MXLZC desde su listado
+o el detalle de la partida. Se requiere que la partida pertenezca a la agencia,
+esté revalidada, la factura de asignación esté pagada y la agencia no esté
+restringida por facturas vencidas. La partida debe tener un cliente facturable
+sin una asociación incompatible con la agencia.
+
+El catálogo ofrece servicios de BL House activos con código terminado en `LZC`,
+excepto las variantes automáticas de asignación, almacenaje, entrega, control
+documental y custodia. La agencia indica la fecha requerida; administración
+o un ejecutivo autoriza y asigna la hora, y puede reprogramar conservando la
+fecha original. La ejecución se confirma en la solicitud y no cambia el estado
+de despacho de la partida. El servicio autorizado se puede facturar; al
+reprogramar no se modifican los servicios ya facturados.
+
+Para importaciones MXLZC, el despacho genera el control documental `BL-CODIE-LZC`
+y el almacenaje `BL-ALM-LZC` cuando se supera la gracia. El almacenaje usa el
+monto diario de su catálogo, días cobrables, unidades y multiplicador IMO, con
+fecha de desconsolidación y `fecha_despacho`, sin tramos. Los servicios históricos
+`BL-ALMA` se conservan y no se genera otro almacenaje para la misma partida.
+Ambos catálogos LZC deben estar activos; si alguno falta, el despacho continúa y
+se registra un error. Los demás puertos conservan sus reglas.
+
 ## Runbooks Operativos
 
 - Diagnostico rapido de colas Solid Queue: [docs/solid_queue_quick_diagnosis_runbook.md](docs/solid_queue_quick_diagnosis_runbook.md)
@@ -436,4 +460,3 @@ Notas:
 
 - El job aborta fuera de `production`.
 - Si el tamaño ya coincide, no envía actualización (idempotente).
-

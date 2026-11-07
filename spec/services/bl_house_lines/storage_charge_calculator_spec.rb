@@ -175,6 +175,47 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
         expect(result.breakdown[:operation_type]).to eq("importacion")
         expect(result.breakdown[:tariff_source]).to eq("Tramos Altamira por puerto destino")
       end
+
+      context "when destination port is Lázaro Cárdenas" do
+        let(:peso) { 12_000 }
+        let(:volumen) { 10 }
+        let(:port) { build(:port, code: "MXLZC") }
+        let(:voyage) { build(:voyage, destination_port: port) }
+        let(:container) { build(:container, voyage: voyage, tipo_maniobra: "importacion") }
+        let(:bl_house_line) { build(:bl_house_line, peso: peso, volumen: volumen, container: container, clase_imo: "1", tipo_imo: "2") }
+
+        it "uses the catalog rate for every billable day and applies IMO" do
+          expect(result.billable_days).to eq(4)
+          expect(result.total).to eq(BigDecimal("16407.36"))
+          expect(result.breakdown[:tier_breakdown]).to be_empty
+        end
+
+        context "at the end of the grace period" do
+          let(:dispatch_date) { Time.zone.local(2026, 3, 26, 10, 0, 0) }
+
+          it "does not charge" do
+            expect(result.billable_days).to eq(0)
+            expect(result.total).to eq(0)
+          end
+        end
+
+        context "after more than one former tariff tier" do
+          let(:dispatch_date) { Time.zone.local(2026, 5, 11, 10, 0, 0) }
+
+          it "keeps the same daily rate" do
+            expect(result.billable_days).to eq(46)
+            expect(result.total).to eq(BigDecimal("188684.64"))
+          end
+        end
+
+        context "when the operation is not an import" do
+          let(:container) { build(:container, voyage: voyage, tipo_maniobra: "exportacion") }
+
+          it "uses the Lázaro catalog rate" do
+            expect(result.total).to eq(BigDecimal("16407.36"))
+          end
+        end
+      end
     end
 
     context "when destination port is Altamira but operation is not import" do

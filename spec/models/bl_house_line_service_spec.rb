@@ -163,6 +163,21 @@ RSpec.describe BlHouseLineService, type: :model do
       expect(service.errors[:base]).to include('No se puede crear BL-ALMA durante periodo de gracia.')
     end
 
+    it 'aplica formula y gracia al almacenaje Lázaro' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-ALM-LZC', amount: 100)
+      port = create(:port, code: 'MXLZC', country_code: 'MX')
+      voyage = create(:voyage, destination_port: port)
+      container = create(:container, voyage: voyage, fecha_desconsolidacion: Date.new(2026, 3, 20))
+      line = create(:bl_house_line, container: container, peso: 12_000, volumen: 10, fecha_despacho: Time.zone.local(2026, 3, 27))
+      service = create(:bl_house_line_service, bl_house_line: line, service_catalog: catalog, amount: 1)
+      expect(service.amount).to eq(1200)
+
+      line.update!(fecha_despacho: Time.zone.local(2026, 3, 26))
+      within_grace = build(:bl_house_line_service, bl_house_line: line, service_catalog: catalog)
+      expect(within_grace).not_to be_valid
+      expect(within_grace.errors[:base]).to include('No se puede crear BL-ALM-LZC durante periodo de gracia.')
+    end
+
     it 'calcula BL-PREVIO por formula aunque llegue monto manual' do
       catalog = create(
         :service_catalog,

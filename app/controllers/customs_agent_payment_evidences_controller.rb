@@ -109,9 +109,8 @@ class CustomsAgentPaymentEvidencesController < ApplicationController
   end
 
   def eligible_invoices
-    Invoice.joins(:receiver_entity)
+    Invoice.for_customs_agent(current_user.entity_id)
       .left_joins(:invoice_payments)
-      .where(entities: { customs_agent_id: current_user.entity_id })
       .where(kind: "ingreso")
       .where(status: %w[issued cancel_pending])
       .group("invoices.id")

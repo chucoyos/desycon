@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_06_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -70,6 +70,40 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_000000) do
     t.index ["agency_id", "broker_id"], name: "index_agency_brokers_on_agency_id_and_broker_id", unique: true
     t.index ["agency_id"], name: "index_agency_brokers_on_agency_id"
     t.index ["broker_id"], name: "index_agency_brokers_on_broker_id"
+  end
+
+  create_table "bl_house_line_service_request_events", force: :cascade do |t|
+    t.string "action", null: false
+    t.bigint "actor_id", null: false
+    t.bigint "bl_house_line_service_request_id", null: false
+    t.datetime "created_at", null: false
+    t.text "notes"
+    t.date "scheduled_date"
+    t.time "scheduled_time"
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_bl_house_line_service_request_events_on_actor_id"
+    t.index ["bl_house_line_service_request_id"], name: "index_bl_service_request_events_on_request_id"
+  end
+
+  create_table "bl_house_line_service_requests", force: :cascade do |t|
+    t.bigint "bl_house_line_id", null: false
+    t.bigint "bl_house_line_service_id"
+    t.datetime "created_at", null: false
+    t.bigint "customs_agent_id", null: false
+    t.datetime "executed_at"
+    t.date "requested_date", null: false
+    t.bigint "requester_id", null: false
+    t.text "review_notes"
+    t.date "scheduled_date"
+    t.time "scheduled_time"
+    t.bigint "service_catalog_id", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bl_house_line_id"], name: "index_bl_house_line_service_requests_on_bl_house_line_id"
+    t.index ["bl_house_line_service_id"], name: "idx_on_bl_house_line_service_id_0d9af035fc", unique: true
+    t.index ["customs_agent_id"], name: "index_bl_house_line_service_requests_on_customs_agent_id"
+    t.index ["requester_id"], name: "index_bl_house_line_service_requests_on_requester_id"
+    t.index ["service_catalog_id"], name: "index_bl_house_line_service_requests_on_service_catalog_id"
   end
 
   create_table "bl_house_line_services", force: :cascade do |t|
@@ -660,6 +694,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_000000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "agency_brokers", "entities", column: "agency_id"
   add_foreign_key "agency_brokers", "entities", column: "broker_id"
+  add_foreign_key "bl_house_line_service_request_events", "bl_house_line_service_requests"
+  add_foreign_key "bl_house_line_service_request_events", "users", column: "actor_id"
+  add_foreign_key "bl_house_line_service_requests", "bl_house_line_services"
+  add_foreign_key "bl_house_line_service_requests", "bl_house_lines"
+  add_foreign_key "bl_house_line_service_requests", "entities", column: "customs_agent_id"
+  add_foreign_key "bl_house_line_service_requests", "service_catalogs"
+  add_foreign_key "bl_house_line_service_requests", "users", column: "requester_id"
   add_foreign_key "bl_house_line_services", "bl_house_lines"
   add_foreign_key "bl_house_line_services", "entities", column: "billed_to_entity_id"
   add_foreign_key "bl_house_line_services", "service_catalogs"

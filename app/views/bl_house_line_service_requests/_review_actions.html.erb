@@ -1,0 +1,41 @@
+<% if service_request.review_notes.present? %>
+  <p class="mb-3 text-sm text-gray-600"><span class="font-medium">Observaciones:</span> <%= service_request.review_notes %></p>
+<% end %>
+<% if service_request.status.in?(%w[pending approved]) %>
+  <details class="rounded-lg border border-gray-200 bg-gray-50">
+    <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-indigo-700 hover:text-indigo-900">Gestionar solicitud</summary>
+    <div class="border-t border-gray-200 p-4 space-y-4">
+      <% action = service_request.status == "pending" ? approve_bl_house_line_service_request_path(service_request) : reschedule_bl_house_line_service_request_path(service_request) %>
+      <% field_prefix = "#{prefix}_request_#{service_request.id}" %>
+      <%= form_with scope: :bl_house_line_service_request, url: action, method: :patch, class: "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 items-end" do |f| %>
+        <div>
+          <%= f.label :scheduled_date, "Fecha programada", for: "#{field_prefix}_date", class: "block text-xs font-medium text-gray-600 mb-1" %>
+          <%= f.date_field :scheduled_date, id: "#{field_prefix}_date", value: service_request.scheduled_date || service_request.requested_date, required: true, class: "w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500" %>
+        </div>
+        <div>
+          <%= f.label :scheduled_time, "Hora de inicio", for: "#{field_prefix}_time", class: "block text-xs font-medium text-gray-600 mb-1" %>
+          <%= f.time_field :scheduled_time, id: "#{field_prefix}_time", value: service_request.scheduled_time&.strftime("%H:%M"), required: true, class: "w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500" %>
+        </div>
+        <div>
+          <%= f.label :notes, "Observaciones", for: "#{field_prefix}_notes", class: "block text-xs font-medium text-gray-600 mb-1" %>
+          <%= f.text_field :notes, id: "#{field_prefix}_notes", placeholder: "Observaciones", class: "w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500" %>
+        </div>
+        <%= f.submit(service_request.status == "pending" ? "Autorizar" : "Reprogramar", class: "inline-flex justify-center rounded-lg bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all cursor-pointer") %>
+      <% end %>
+      <% if service_request.status == "pending" %>
+        <%= form_with scope: :bl_house_line_service_request, url: reject_bl_house_line_service_request_path(service_request), method: :patch, class: "flex flex-col sm:flex-row sm:items-end gap-3" do |f| %>
+          <div class="w-full sm:max-w-md">
+            <%= f.label :notes, "Motivo del rechazo", for: "#{field_prefix}_rejection", class: "block text-xs font-medium text-gray-600 mb-1" %>
+            <%= f.text_field :notes, id: "#{field_prefix}_rejection", placeholder: "Motivo del rechazo", required: true, class: "w-full rounded-lg border-gray-300 text-sm focus:ring-red-500 focus:border-red-500" %>
+          </div>
+          <%= f.submit "Rechazar", class: "inline-flex justify-center rounded-lg border border-red-200 bg-white hover:bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition-all cursor-pointer" %>
+        <% end %>
+      <% else %>
+        <% execution_confirmation = "¿Confirmas la ejecución de esta solicitud?\n\nSolicitud: ##{service_request.id}\nServicio: #{service_request.service_catalog.display_name}\nBL House: #{service_request.bl_house_line.blhouse}\nAgencia: #{service_request.customs_agent.name}\nProgramada: #{service_request.scheduled_date} a las #{service_request.scheduled_time.strftime('%H:%M')}\n\nLa solicitud pasará a Ejecutada y se registrará el momento de la confirmación. Esta acción no cambia el estado de la partida y no se puede deshacer desde esta pantalla." %>
+        <%= button_to "Confirmar ejecución", execute_bl_house_line_service_request_path(service_request), method: :patch,
+              form: { data: { turbo_confirm: execution_confirmation } },
+              class: "inline-flex justify-center rounded-lg bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all cursor-pointer" %>
+      <% end %>
+    </div>
+  </details>
+<% end %>

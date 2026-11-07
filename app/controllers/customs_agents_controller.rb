@@ -186,7 +186,7 @@ class CustomsAgentsController < ApplicationController
       records: records,
       associations: [
         :client,
-        { container: :consolidator_entity },
+        { container: [ :consolidator_entity, { voyage: :destination_port } ] },
         :bl_house_line_status_histories,
         :bl_endosado_documento_attachment,
         :liberacion_documento_attachment,

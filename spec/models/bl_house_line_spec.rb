@@ -452,6 +452,137 @@ RSpec.describe BlHouseLine, type: :model do
       }.not_to change { other_line.reload.bl_house_line_services.where(service_catalog: catalog).count }
     end
 
+    it 'creates and recalculates Lázaro storage and creates documentary control' do
+      lazaro_storage = create(:service_catalog, code: "BL-ALM-LZC", applies_to: "bl_house_line", amount: 170.91)
+      lazaro_codie = create(:service_catalog, code: "BL-CODIE-LZC", applies_to: "bl_house_line", amount: 250)
+      port = create(:port, name: "Lázaro Cárdenas", code: "MXLZC", country_code: "MX")
+      voyage = create(:voyage, destination_port: port)
+      lazaro_container = create(:container, voyage: voyage, fecha_desconsolidacion: Date.new(2026, 3, 20), tipo_maniobra: "importacion", recinto: "APM TERMINALS", almacen: "UTTSA RECINTO 173")
+      line = create(:bl_house_line, container: lazaro_container, status: "revalidado", peso: 12_000, volumen: 10, fecha_despacho: Time.zone.local(2026, 3, 30))
+
+      line.update!(status: "despachado")
+      service = line.bl_house_line_services.find_by!(service_catalog: lazaro_storage)
+      expect(service.amount).to eq(BigDecimal("8203.68"))
+      expect(line.bl_house_line_services.find_by!(service_catalog: lazaro_codie).amount).to eq(BigDecimal("250"))
+      expect(line.bl_house_line_services.count).to eq(2)
+
+      line.update!(clase_imo: "1", tipo_imo: "2")
+      expect(service.reload.amount).to eq(BigDecimal("16407.36"))
+
+      service.update!(factura: "LZC-001")
+      line.update!(peso: 20_000)
+      expect(service.reload.amount).to eq(BigDecimal("16407.36"))
+    end
+
+    context "Lázaro dispatch services" do
+      let(:port) { create(:port, name: "Lázaro Cárdenas", code: "MXLZC", country_code: "MX") }
+      let(:voyage) { create(:voyage, destination_port: port) }
+      let(:lazaro_container) { create(:container, voyage: voyage, fecha_desconsolidacion: Date.new(2026, 3, 20), tipo_maniobra: "importacion", recinto: "APM TERMINALS", almacen: "UTTSA RECINTO 173") }
+      let(:line) { create(:bl_house_line, container: lazaro_container, status: "revalidado", peso: 12_000, volumen: 10, fecha_despacho: Time.zone.local(2026, 3, 26)) }
+      let!(:lazaro_storage) { create(:service_catalog, code: "BL-ALM-LZC", applies_to: "bl_house_line", amount: 100) }
+      let!(:lazaro_codie) { create(:service_catalog, code: "BL-CODIE-LZC", applies_to: "bl_house_line", amount: 250) }
+
+      it "creates documentary control but no storage on the final grace day" do
+        line.update!(status: "despachado")
+        expect(line.bl_house_line_services.where(service_catalog: lazaro_codie).count).to eq(1)
+        expect(line.bl_house_line_services.where(service_catalog: lazaro_storage).count).to eq(0)
+      end
+
+      it "uses the Lázaro tariff on the first billable day without duplicating services" do
+        line.update!(fecha_despacho: Time.zone.local(2026, 3, 27), status: "despachado")
+        expect(line.bl_house_line_services.find_by!(service_catalog: lazaro_storage).amount).to eq(1200)
+        line.update!(status: "revalidado")
+        line.update!(status: "despachado")
+        expect(line.bl_house_line_services.where(service_catalog: lazaro_storage).count).to eq(1)
+        expect(line.bl_house_line_services.where(service_catalog: lazaro_codie).count).to eq(1)
+      end
+
+      it "preserves historic storage without creating or recalculating a second charge" do
+        line.update!(fecha_despacho: Time.zone.local(2026, 3, 27))
+        old_service = create(:bl_house_line_service, bl_house_line: line, service_catalog: catalog)
+        old_amount = old_service.amount
+        line.update!(status: "despachado")
+        line.update!(peso: 20_000)
+        expect(old_service.reload.amount).to eq(old_amount)
+        expect(line.bl_house_line_services.where(service_catalog: lazaro_storage)).to be_empty
+        expect(line.bl_house_line_services.where(service_catalog: lazaro_codie).count).to eq(1)
+      end
+
+      it "logs missing catalogs independently without blocking dispatch" do
+        lazaro_storage.update!(active: false)
+        lazaro_codie.update!(active: false)
+        expect(Rails.logger).to receive(:error).with(/BL-ALM-LZC/)
+        expect(Rails.logger).to receive(:error).with(/BL-CODIE-LZC/)
+        line.update!(status: "despachado")
+        expect(line.reload).to be_despachado
+      end
+
+      it "creates control when only the storage catalog is missing" do
+        lazaro_storage.update!(active: false)
+        line.update!(fecha_despacho: Time.zone.local(2026, 3, 27), status: "despachado")
+        expect(line.bl_house_line_services.where(service_catalog: lazaro_codie).count).to eq(1)
+        expect(line.bl_house_line_services.where(service_catalog: lazaro_storage)).to be_empty
+      end
+
+      it "creates storage when only the control catalog is missing" do
+        lazaro_codie.update!(active: false)
+        line.update!(fecha_despacho: Time.zone.local(2026, 3, 27), status: "despachado")
+        expect(line.bl_house_line_services.where(service_catalog: lazaro_storage).count).to eq(1)
+        expect(line.bl_house_line_services.where(service_catalog: lazaro_codie)).to be_empty
+      end
+
+      it "preserves invoiced existing services across dispatch and recalculation" do
+        line.update!(fecha_despacho: Time.zone.local(2026, 3, 27))
+        storage = create(:bl_house_line_service, bl_house_line: line, service_catalog: lazaro_storage, factura: "ALM-1")
+        documentary = create(:bl_house_line_service, bl_house_line: line, service_catalog: lazaro_codie, factura: "COD-1")
+        line.update!(status: "despachado")
+        line.update!(peso: 20_000)
+        expect(storage.reload.amount).to eq(1200)
+        expect(documentary.reload.amount).to eq(250)
+        expect(line.bl_house_line_services.where(service_catalog: [ lazaro_storage, lazaro_codie ]).count).to eq(2)
+      end
+
+      it "removes unbilled Lázaro storage if its dispatch date returns to the grace period" do
+        line.update!(fecha_despacho: Time.zone.local(2026, 3, 27), status: "despachado")
+        storage = line.bl_house_line_services.find_by!(service_catalog: lazaro_storage)
+        line.update!(fecha_despacho: Time.zone.local(2026, 3, 26))
+        expect(BlHouseLineService.exists?(storage.id)).to be(false)
+        expect(line.bl_house_line_services.where(service_catalog: lazaro_codie).count).to eq(1)
+      end
+
+      it "invoices both generated services using their catalog SAT keys" do
+        lazaro_storage.update!(sat_clave_prod_serv: "80151600", sat_clave_unidad: "E48")
+        lazaro_codie.update!(sat_clave_prod_serv: "78101800", sat_clave_unidad: "H87")
+        line.update!(fecha_despacho: Time.zone.local(2026, 3, 27), status: "despachado")
+        receiver = line.client
+        create(:fiscal_profile, profileable: receiver)
+        create(:address, addressable: receiver, tipo: "matriz")
+        issuer = create(:entity, :customs_agent, :with_fiscal_profile, :with_address).reload
+        receiver.reload
+        allow(Facturador::Config).to receive_messages(enabled?: true, manual_actions_enabled?: true, issuer_entity: issuer)
+        services = line.bl_house_line_services.where(service_catalog: [ lazaro_storage, lazaro_codie ]).to_a
+        result = Facturador::IssueGroupedServicesService.call(serviceables: services)
+        expect(result.success?).to be(true), result.error_message
+        expect(result.invoice.invoice_line_items.size).to eq(2)
+        result.invoice.invoice_line_items.each do |item|
+          expect(item.sat_clave_prod_serv).to eq(item.service_catalog.sat_clave_prod_serv)
+          expect(item.sat_clave_unidad).to eq(item.service_catalog.sat_clave_unidad)
+        end
+      end
+
+      it "creates control even when storage dates are missing" do
+        line.update!(fecha_despacho: nil, status: "despachado")
+        expect(line.bl_house_line_services.where(service_catalog: lazaro_codie).count).to eq(1)
+        expect(line.bl_house_line_services.where(service_catalog: lazaro_storage)).to be_empty
+      end
+
+      it "does not generate either service for non-import operations" do
+        lazaro_container.update!(tipo_maniobra: "exportacion")
+        line.update!(status: "despachado")
+        expect(line.bl_house_line_services.where(service_catalog: [ lazaro_storage, lazaro_codie ])).to be_empty
+      end
+    end
+
     it 'recalculates amount when weight changes and service is not invoiced' do
       bl_house_line.update!(status: "despachado")
       service = bl_house_line.bl_house_line_services.find_by(service_catalog: catalog)

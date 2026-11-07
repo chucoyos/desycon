@@ -14,7 +14,7 @@ module BlHouseLinesHelper
         bl_house_line: service.bl_house_line,
         unit_price: service.service_catalog.amount
       )
-    when "BL-ALMA"
+    when *BlHouseLineService::STORAGE_SERVICE_CODES
       BlHouseLines::StorageChargeCalculator.call(
         bl_house_line: service.bl_house_line,
         desconsolidation_date: service.bl_house_line.container&.fecha_desconsolidacion,
@@ -69,7 +69,9 @@ module BlHouseLinesHelper
     rows << [ "Tipo maniobra", breakdown[:operation_type] ] if breakdown[:operation_type].present?
     rows << [ "Puerto destino", breakdown[:destination_port_code] ] if breakdown[:destination_port_code].present?
     rows << [ "Fuente de tarifa", breakdown[:tariff_source] ] if breakdown[:tariff_source].present?
-    rows << [ "Precio unitario", breakdown[:unit_price] ] if breakdown.key?(:unit_price) && breakdown[:service_code].to_s != "BL-ALMA"
+    if breakdown.key?(:unit_price) && (!BlHouseLineService::STORAGE_SERVICE_CODES.include?(breakdown[:service_code].to_s) || breakdown[:destination_port_code] == "MXLZC")
+      rows << [ "Precio unitario", breakdown[:unit_price] ]
+    end
     rows << [ "Multiplicador IMO", breakdown[:imo_multiplier] ] if breakdown.key?(:imo_multiplier)
     rows << [ "Subtotal diario", breakdown[:daily_subtotal] ] if breakdown.key?(:daily_subtotal)
     rows << [ "Formula", breakdown[:formula] ] if breakdown[:formula].present?

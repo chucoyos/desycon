@@ -64,6 +64,10 @@ class BlHouseLinePolicy < ApplicationPolicy
     update?
   end
 
+  def dispatch?
+    update? && !user.customs_broker?
+  end
+
   def destroy?
     user.present? && user.admin_or_executive?
   end

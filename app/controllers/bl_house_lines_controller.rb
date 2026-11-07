@@ -266,6 +266,10 @@ class BlHouseLinesController < ApplicationController
   def update
     authorize @bl_house_line
 
+    if customs_agent_user? && (params[:source] == "show_services" || agency_service_or_dispatch_changes?)
+      return redirect_to bl_house_line_path(@bl_house_line), alert: "No tienes permiso para modificar servicios o despacho."
+    end
+
     return handle_services_update_from_show if params[:source] == "show_services"
 
     assign_container_from_params
@@ -371,7 +375,7 @@ class BlHouseLinesController < ApplicationController
 
   # GET /bl_house_lines/1/dispatch_date
   def dispatch_date
-    authorize @bl_house_line, :update?
+    authorize @bl_house_line, :dispatch?
     return unless ensure_dispatch_allowed
 
     respond_to do |format|
@@ -382,7 +386,7 @@ class BlHouseLinesController < ApplicationController
 
   # PATCH /bl_house_lines/1/update_dispatch_date
   def update_dispatch_date
-    authorize @bl_house_line, :update?
+    authorize @bl_house_line, :dispatch?
     return unless ensure_dispatch_allowed
 
     @bl_house_line.assign_attributes(dispatch_date_params)
@@ -1057,6 +1061,14 @@ class BlHouseLinesController < ApplicationController
         :_destroy
       ]
     )
+  end
+
+  def agency_service_or_dispatch_changes?
+    attributes = params[:bl_house_line]
+    return false unless attributes.is_a?(ActionController::Parameters)
+
+    attributes.key?(:bl_house_line_services_attributes) || attributes.key?(:fecha_despacho) ||
+      attributes[:status].to_s == "despachado"
   end
 
   def assign_container_from_params

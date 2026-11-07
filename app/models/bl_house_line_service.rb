@@ -2,13 +2,15 @@ class BlHouseLineService < ApplicationRecord
   BILLING_LOCK_STATUSES = %w[queued issued cancel_pending cancelled].freeze
   AUTO_ISSUE_ORIGIN_STATUS_TRANSITION = "status_transition".freeze
   LABEL_TAGGING_SERVICE_CODES = %w[BL-ETIADH BL-ETICOS].freeze
-  FORMULA_AMOUNT_SERVICE_CODES = %w[BL-ENTCAM BL-PREVIO BL-RECASU BL-ALMA BL-MOVETI].freeze
+  STORAGE_SERVICE_CODES = %w[BL-ALMA BL-ALM-LZC].freeze
+  FORMULA_AMOUNT_SERVICE_CODES = (%w[BL-ENTCAM BL-PREVIO BL-RECASU BL-MOVETI] + STORAGE_SERVICE_CODES).freeze
 
   belongs_to :bl_house_line
   belongs_to :service_catalog
   belongs_to :billed_to_entity, class_name: "Entity", optional: true
   has_many :invoices, as: :invoiceable, dependent: :nullify
   has_many :invoice_service_links, as: :serviceable, dependent: :destroy
+  has_one :bl_house_line_service_request, dependent: :restrict_with_error
 
   before_validation :assign_default_billed_to_entity
   before_validation :assign_default_quantity
@@ -27,6 +29,8 @@ class BlHouseLineService < ApplicationRecord
   validates :factura, length: { maximum: 100 }, allow_blank: true
   validate :prevent_manual_storage_service_within_grace_period, on: :create
   validate :quantity_required_for_label_tagging_services
+  validate :preserve_requested_service_identity, on: :update
+  validate :requested_service_receiver_matches_agency, on: :update
 
   scope :facturados, -> { where.not(factura: nil) }
   scope :pendientes, -> { where(factura: nil) }
@@ -93,7 +97,7 @@ class BlHouseLineService < ApplicationRecord
     case service_catalog.code.to_s
     when "BL-ENTCAM", "BL-PREVIO", "BL-RECASU"
       self.amount = entcam_charge_result.total
-    when "BL-ALMA"
+    when *STORAGE_SERVICE_CODES
       result = storage_charge_result
       return if result.blank? || result.billable_days <= 0
 
@@ -135,15 +139,32 @@ class BlHouseLineService < ApplicationRecord
     errors.add(:quantity, "no puede estar en blanco")
   end
 
+  def preserve_requested_service_identity
+    return unless bl_house_line_id_changed? || service_catalog_id_changed?
+    return unless bl_house_line_service_request.present?
+
+    errors.add(:base, "No se puede cambiar la partida o el catálogo de un servicio solicitado.")
+  end
+
+  def requested_service_receiver_matches_agency
+    request = bl_house_line_service_request
+    return unless request
+    return if billed_to_entity.present? &&
+      (billed_to_entity.id == bl_house_line.client_id || billed_to_entity.customs_agent_id == request.customs_agent_id) &&
+      (billed_to_entity.customs_agent_id.blank? || billed_to_entity.customs_agent_id == request.customs_agent_id)
+
+    errors.add(:billed_to_entity, "debe ser compatible con la agencia que solicitó el servicio.")
+  end
+
   def prevent_manual_storage_service_within_grace_period
-    return unless service_catalog&.code.to_s == "BL-ALMA"
+    return unless STORAGE_SERVICE_CODES.include?(service_catalog&.code.to_s)
     return if auto_issue_origin_for_status_transition?
 
     result = storage_charge_result
     return if result.blank?
     return if result.billable_days.positive?
 
-    errors.add(:base, "No se puede crear BL-ALMA durante periodo de gracia.")
+    errors.add(:base, "No se puede crear #{service_catalog.code} durante periodo de gracia.")
   end
 
   def prevent_changes_if_facturado

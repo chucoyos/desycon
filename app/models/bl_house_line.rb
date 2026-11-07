@@ -25,6 +25,7 @@ class BlHouseLine < ApplicationRecord
   DOCUMENT_FIELDS = %i[bl_endosado_documento liberacion_documento encomienda_documento pago_documento].freeze
 
   has_many :bl_house_line_services, dependent: :destroy
+  has_many :bl_house_line_service_requests, dependent: :restrict_with_error
   accepts_nested_attributes_for :bl_house_line_services, allow_destroy: true, reject_if: :all_blank
 
   # Enums
@@ -68,7 +69,9 @@ class BlHouseLine < ApplicationRecord
   after_update :notify_customs_agent_revalidation, if: -> { saved_change_to_status? && revalidado? }
   after_update :ensure_asignacion_electronica_service, if: -> { saved_change_to_status? && revalidado? }
   after_update :ensure_services_on_despachado, if: -> { saved_change_to_status? && despachado? && auto_partida_services_allowed_by_port? }
-  after_update :recalculate_storage_service_if_needed, if: -> { storage_recalculation_triggered? && auto_partida_services_allowed_by_port? }
+  after_update :ensure_storage_service_on_despachado, if: -> { saved_change_to_status? && despachado? && lazaro_storage_allowed? }
+  after_update :ensure_codie_service_on_despachado, if: -> { saved_change_to_status? && despachado? && lazaro_storage_allowed? }
+  after_update :recalculate_storage_service_if_needed, if: -> { storage_recalculation_triggered? && (auto_partida_services_allowed_by_port? || lazaro_storage_allowed?) }
   after_update :recalculate_entcam_service_if_needed, if: -> { storage_recalculation_triggered? && auto_partida_services_allowed_by_port? }
   after_update :recalculate_previo_service_if_needed, if: :storage_recalculation_triggered?
   after_update :recalculate_recasu_service_if_needed, if: :storage_recalculation_triggered?
@@ -170,8 +173,16 @@ class BlHouseLine < ApplicationRecord
   end
 
   def ensure_storage_service_on_despachado
+    if lazaro_storage_allowed? && bl_house_line_services.joins(:service_catalog).exists?(service_catalogs: { code: "BL-ALMA" })
+      Rails.logger.info("Storage service unchanged for BL #{id}: existing legacy BL-ALMA")
+      return true
+    end
+
     catalog = storage_catalog
-    return false unless catalog
+    unless catalog
+      Rails.logger.error("Storage service skipped for BL #{id}: missing active catalog #{storage_catalog_code}") if lazaro_storage_allowed?
+      return false
+    end
 
     result = storage_charge_result(unit_price: catalog.amount)
     if result.blank?
@@ -222,6 +233,10 @@ class BlHouseLine < ApplicationRecord
     end
 
     if result.billable_days <= 0
+      if lazaro_storage_allowed? && service.bl_house_line_service_request.present?
+        Rails.logger.warn("Storage service unchanged for BL #{id}: linked to a service request")
+        return
+      end
       service.destroy!
       Rails.logger.info("Storage service removed for BL #{id}: within grace period")
       return
@@ -258,7 +273,11 @@ class BlHouseLine < ApplicationRecord
   def ensure_codie_service_on_despachado
     catalog = codie_catalog
     unless catalog
-      Rails.logger.warn("CODIE service skipped for BL #{id}: missing destination catalog")
+      if lazaro_storage_allowed?
+        Rails.logger.error("CODIE service skipped for BL #{id}: missing active catalog BL-CODIE-LZC")
+      else
+        Rails.logger.warn("CODIE service skipped for BL #{id}: missing destination catalog")
+      end
       return
     end
 
@@ -374,12 +393,20 @@ class BlHouseLine < ApplicationRecord
     destination_port_code.in?(%w[MXVER MXATM])
   end
 
+  def lazaro_storage_allowed?
+    container&.tipo_maniobra_importacion? && destination_port_code == "MXLZC"
+  end
+
   def destination_port_code
     container&.destination_port&.code.to_s.upcase
   end
 
   def storage_catalog
-    ServiceCatalog.active.find_by(code: "BL-ALMA", applies_to: "bl_house_line")
+    ServiceCatalog.active.find_by(code: storage_catalog_code, applies_to: "bl_house_line")
+  end
+
+  def storage_catalog_code
+    lazaro_storage_allowed? ? "BL-ALM-LZC" : "BL-ALMA"
   end
 
   def entcam_catalog
@@ -387,7 +414,11 @@ class BlHouseLine < ApplicationRecord
   end
 
   def codie_catalog
-    code = destination_port_code == "MXATM" ? "BL-CODIE-ATM" : "BL-CODIE"
+    code = case destination_port_code
+    when "MXATM" then "BL-CODIE-ATM"
+    when "MXLZC" then "BL-CODIE-LZC"
+    else "BL-CODIE"
+    end
     ServiceCatalog.active.find_by(code: code, applies_to: "bl_house_line")
   end
 

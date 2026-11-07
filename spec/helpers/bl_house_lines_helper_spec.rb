@@ -11,6 +11,21 @@ require 'rails_helper'
 #   end
 # end
 RSpec.describe BlHouseLinesHelper, type: :helper do
+  describe "#bl_service_calculation_breakdown" do
+    it "shows the flat-rate calculation for Lázaro storage" do
+      allow(helper).to receive(:temporary_service_breakdown_enabled?).and_return(true)
+      port = create(:port, code: "MXLZC", country_code: "MX")
+      container = create(:container, voyage: create(:voyage, destination_port: port), fecha_desconsolidacion: Date.new(2026, 3, 20))
+      line = create(:bl_house_line, container: container, peso: 12_000, volumen: 10, fecha_despacho: Time.zone.local(2026, 3, 27))
+      catalog = create(:service_catalog, code: "BL-ALM-LZC", applies_to: "bl_house_line", amount: 100)
+      service = create(:bl_house_line_service, bl_house_line: line, service_catalog: catalog)
+
+      breakdown = helper.bl_service_calculation_breakdown(service)
+      expect(breakdown[:calculated_amount]).to eq(1200)
+      expect(helper.bl_service_breakdown_rows(breakdown)).to include([ "Precio unitario", BigDecimal("100") ])
+    end
+  end
+
   describe "#bl_service_breakdown_rows" do
     it "hides unit price for ALMA and includes tariff metadata" do
       rows = helper.bl_service_breakdown_rows(

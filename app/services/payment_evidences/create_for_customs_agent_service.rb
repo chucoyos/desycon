@@ -55,9 +55,8 @@ module PaymentEvidences
     private
 
     def eligible_invoices
-      Invoice.joins(:receiver_entity)
+      Invoice.for_customs_agent(@actor.entity_id)
         .left_joins(:invoice_payments)
-        .where(entities: { customs_agent_id: @actor.entity_id })
         .where(kind: "ingreso")
         .where(status: ELIGIBLE_STATUSES)
         .group("invoices.id")

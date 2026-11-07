@@ -115,6 +115,10 @@ module BlHouseLines
       remaining = billable_days
       return { subtotal: BigDecimal("0"), tiers: [] } if remaining <= 0
 
+      if lazaro_port?
+        return { subtotal: unit_price.to_d * billable_days, tiers: [] }
+      end
+
       subtotal = BigDecimal("0")
       tiers = []
       daily_rate_tiers.each do |tier|
@@ -152,11 +156,17 @@ module BlHouseLines
     end
 
     def tariff_source
+      return "Tarifa plana Lázaro Cárdenas por catálogo" if lazaro_port?
+
       if bl_house_line&.container&.tipo_maniobra_importacion?
         destination_port_code == "MXATM" ? "Tramos Altamira por puerto destino" : "Tramos Veracruz por puerto destino"
       else
         "Tramos Veracruz por maniobra no importacion"
       end
+    end
+
+    def lazaro_port?
+      destination_port_code == "MXLZC"
     end
 
     def tier_days_for(remaining:, tier:)

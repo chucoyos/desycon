@@ -38,6 +38,15 @@ module Facturador
       receiver = resolve_receiver
       return Result.new(error_message: "Todos los servicios seleccionados deben tener el mismo receptor") if receiver.blank?
 
+      request_agencies = serviceables.filter_map do |service|
+        service.bl_house_line_service_request&.customs_agent_id if service.is_a?(BlHouseLineService)
+      end.uniq
+      if request_agencies.any? && (request_agencies.size != 1 || serviceables.any? { |service|
+          !service.is_a?(BlHouseLineService) || service.bl_house_line.customs_agent_id != request_agencies.first
+        } || (receiver.customs_agent_id.present? && receiver.customs_agent_id != request_agencies.first))
+        return Result.new(error_message: "Los servicios solicitados deben facturarse con partidas de la misma agencia.")
+      end
+
       issuer = Config.issuer_entity
       return Result.new(error_message: "No se encontró el emisor configurado") if issuer.blank?
 

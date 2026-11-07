@@ -82,6 +82,15 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :bl_house_line_service_requests, only: [ :index, :new, :create ] do
+    member do
+      patch :approve
+      patch :reject
+      patch :reschedule
+      patch :execute
+    end
+  end
+
   resources :revalidations, only: [ :show ]
 
   resources :packagings

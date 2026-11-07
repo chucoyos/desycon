@@ -37,11 +37,7 @@ module CustomsAgents
 
       def base_invoices_for(customs_agent)
         Invoice
-          .left_outer_joins(:receiver_entity)
-          .where(
-            "invoices.customs_agent_id = :agency_id OR entities.customs_agent_id = :agency_id",
-            agency_id: customs_agent.id
-          )
+          .for_customs_agent(customs_agent.id)
           .where(kind: "ingreso")
           .where.not(status: %w[cancelled cancel_pending])
           .where.not(issued_at: nil)

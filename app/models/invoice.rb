@@ -51,6 +51,35 @@ class Invoice < ApplicationRecord
   validate :customs_agent_must_be_agency_when_present
 
   scope :recent_first, -> { order(created_at: :desc) }
+  scope :for_customs_agent, ->(agency_id) {
+    left_outer_joins(:receiver_entity).where(
+      <<~SQL.squish, agency_id: agency_id
+        invoices.customs_agent_id = :agency_id OR entities.customs_agent_id = :agency_id OR
+        EXISTS (
+          SELECT 1 FROM bl_house_line_service_requests requests
+          WHERE requests.customs_agent_id = :agency_id
+            AND (invoices.customs_agent_id IS NULL OR invoices.customs_agent_id = :agency_id)
+            AND (entities.customs_agent_id IS NULL OR entities.customs_agent_id = :agency_id)
+            AND NOT EXISTS (
+              SELECT 1 FROM invoice_service_links other_links
+              LEFT JOIN bl_house_line_services other_services
+                ON other_links.serviceable_type = 'BlHouseLineService' AND other_services.id = other_links.serviceable_id
+              LEFT JOIN bl_house_lines other_lines ON other_lines.id = other_services.bl_house_line_id
+              WHERE other_links.invoice_id = invoices.id
+                AND (other_lines.customs_agent_id IS NULL OR other_lines.customs_agent_id <> :agency_id)
+            )
+            AND (
+              (invoices.invoiceable_type = 'BlHouseLineService' AND invoices.invoiceable_id = requests.bl_house_line_service_id)
+              OR EXISTS (
+                SELECT 1 FROM invoice_service_links links
+                WHERE links.invoice_id = invoices.id AND links.serviceable_type = 'BlHouseLineService'
+                  AND links.serviceable_id = requests.bl_house_line_service_id
+              )
+            )
+        )
+      SQL
+    ).distinct
+  }
   scope :issued, -> { where(status: "issued") }
   scope :cancelled, -> { where(status: "cancelled") }
   scope :external_imported, -> { where(source_origin: "facturador_external") }
@@ -66,6 +95,15 @@ class Invoice < ApplicationRecord
       Arel.sql("COALESCE(invoices.issued_at, invoices.created_at) DESC")
     )
   }
+
+  def request_customs_agent_ids
+    service_ids = invoice_service_links.where(serviceable_type: "BlHouseLineService").select(:serviceable_id)
+    requests = BlHouseLineServiceRequest.where(bl_house_line_service_id: service_ids)
+    if invoiceable_type == "BlHouseLineService" && invoiceable_id.present?
+      requests = requests.or(BlHouseLineServiceRequest.where(bl_house_line_service_id: invoiceable_id))
+    end
+    requests.distinct.pluck(:customs_agent_id)
+  end
   scope :with_payment_status, ->(payment_status) {
     next all unless PAYMENT_STATUSES.include?(payment_status)
 

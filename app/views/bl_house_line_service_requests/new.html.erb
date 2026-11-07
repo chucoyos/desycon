@@ -1,0 +1,90 @@
+<% content_for :title, "Solicitar servicio" %>
+
+<div class="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+  <div class="mb-4 sm:mb-6">
+    <%= link_to bl_house_line_path(@bl_house_line), class: "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-blue-700 hover:bg-blue-50 transition-all duration-200 group" do %>
+      <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+      </svg>
+      <span>Volver a la partida</span>
+    <% end %>
+  </div>
+
+  <div class="mb-6 sm:mb-8 flex items-start gap-4">
+    <div class="flex flex-shrink-0 items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg">
+      <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 4v6m-3-3h6"/>
+      </svg>
+    </div>
+    <div class="min-w-0">
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Solicitar servicio</h1>
+      <p class="mt-2 text-sm sm:text-base text-gray-600">Seleccione el servicio y la fecha requerida. Los campos marcados con <span class="text-red-500 font-medium">*</span> son obligatorios.</p>
+      <div class="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M9 4h6l4 4v12H5V4h4z"/>
+        </svg>
+        <span>BL House: <%= @bl_house_line.blhouse %></span>
+      </div>
+    </div>
+  </div>
+
+  <%= form_with model: @service_request, class: "space-y-6" do |form| %>
+    <%= form.hidden_field :bl_house_line_id, value: @bl_house_line.id %>
+
+    <% if @service_request.errors.any? %>
+      <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 shadow-sm" role="alert">
+        <div class="flex gap-3">
+          <svg class="h-5 w-5 flex-shrink-0 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div>
+            <h2 class="text-sm font-semibold text-red-800">No fue posible enviar la solicitud:</h2>
+            <ul class="mt-2 text-sm text-red-700 list-disc list-inside space-y-1">
+              <% @service_request.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <section class="bg-white shadow-md rounded-xl p-5 sm:p-6 border border-gray-100" aria-labelledby="request-details-heading">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-600 shadow-sm">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+        </div>
+        <h2 id="request-details-heading" class="text-xl font-bold text-gray-900">Datos de la solicitud</h2>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+        <div>
+          <%= form.label :service_catalog_id, "Servicio *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+          <%= form.collection_select :service_catalog_id, @catalogs, :id, :display_name, { prompt: "Selecciona un servicio" }, { required: true, class: "w-full px-4 py-3 rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200" } %>
+        </div>
+        <div>
+          <%= form.label :requested_date, "Fecha requerida *", class: "block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider" %>
+          <%= form.date_field :requested_date, required: true, aria: { describedby: "requested-date-help" }, class: "w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200" %>
+          <p id="requested-date-help" class="mt-2 flex items-start gap-2 text-sm text-gray-600">
+            <svg class="w-4 h-4 mt-0.5 flex-shrink-0 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            El personal interno asignará la hora.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+      <%= link_to "Cancelar", bl_house_line_path(@bl_house_line), class: "inline-flex items-center justify-center px-5 py-3 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors" %>
+      <%= form.button type: "submit", class: "inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-indigo-600 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors" do %>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12l4 4L19 6"/>
+        </svg>
+        Enviar solicitud
+      <% end %>
+    </div>
+  <% end %>
+</div>

@@ -67,12 +67,7 @@ class InvoicePolicy < ApplicationPolicy
       if user.customs_broker? && user.entity&.role_customs_agent?
         return scope
                .where.not(external_visibility_state: "pending_assignment")
-               .joins(:receiver_entity)
-               .where(
-                 "invoices.customs_agent_id = :agency_id OR entities.customs_agent_id = :agency_id",
-                 agency_id: user.entity_id
-               )
-               .distinct
+               .for_customs_agent(user.entity_id)
       end
 
       if user.consolidator? && user.entity_id.present?
@@ -95,7 +90,9 @@ class InvoicePolicy < ApplicationPolicy
     return false unless customs_agency_user?
     return false unless record.is_a?(Invoice)
 
-    record.customs_agent_id == user.entity_id || record.receiver_entity&.customs_agent_id == user.entity_id
+    return true if record.customs_agent_id == user.entity_id || record.receiver_entity&.customs_agent_id == user.entity_id
+
+    record.persisted? && Invoice.for_customs_agent(user.entity_id).where(id: record.id).exists?
   end
 
   def consolidator_user?
