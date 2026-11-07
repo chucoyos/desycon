@@ -84,4 +84,42 @@ RSpec.describe BlHouseLines::ReassignService do
       ).call
     }.to raise_error(BlHouseLines::ReassignService::Error, "No existe el catálogo de servicio BL-ASIG para registrar la reasignación.")
   end
+
+  it "does not select the Lázaro catalog as a fallback for other ports" do
+    catalog.destroy!
+    create(:service_catalog, code: "bl-asig-lzc", name: "Asignacion electronica de carga", applies_to: "bl_house_line")
+    expect {
+      described_class.new(bl_house_line: bl_house_line, new_customs_agent_id: new_agent.id,
+        new_customs_broker_id: new_broker.id, new_client_id: new_client.id, current_user: current_user).call
+    }.to raise_error(described_class::Error, /catálogo de servicio BL-ASIG/)
+    expect(bl_house_line.reload.customs_agent_id).to eq(original_agent.id)
+  end
+
+  context "with a Lázaro destination" do
+    let(:port) { create(:port, code: "MXLZC", country_code: "MX") }
+    let(:container) { create(:container, voyage: create(:voyage, destination_port: port)) }
+    let(:bl_house_line) { create(:bl_house_line, container: container, customs_agent: original_agent) }
+    let!(:lazaro_catalog) { create(:service_catalog, code: "BL-ASIG-LZC", applies_to: "bl_house_line", amount: 425) }
+
+    def reassign
+      described_class.new(bl_house_line: bl_house_line, new_customs_agent_id: new_agent.id,
+        new_customs_broker_id: new_broker.id, new_client_id: new_client.id, current_user: current_user).call
+    end
+
+    it "creates a new reassignment using the Lázaro catalog and its tariff" do
+      create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, factura: "HIST-1")
+      expect { reassign }.to change { bl_house_line.bl_house_line_services.count }.by(1)
+      service = bl_house_line.bl_house_line_services.order(:id).last
+      expect(service.service_catalog).to eq(lazaro_catalog)
+      expect(service.amount).to eq(425)
+      expect(service.billed_to_entity_id).to eq(new_client.id)
+    end
+
+    it "rolls back reassignment when the Lázaro catalog is inactive" do
+      lazaro_catalog.update!(active: false)
+      expect { reassign }.to raise_error(described_class::Error, /catálogo activo BL-ASIG-LZC/)
+      expect(bl_house_line.reload.customs_agent_id).to eq(original_agent.id)
+      expect(bl_house_line.bl_house_line_services).to be_empty
+    end
+  end
 end

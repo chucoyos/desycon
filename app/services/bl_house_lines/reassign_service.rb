@@ -39,15 +39,27 @@ module BlHouseLines
     end
 
     def add_reassign_service!
+      if bl_house_line.lazaro_destination?
+        catalog = ServiceCatalog.for_bl_house_lines.where("UPPER(code) = ?", "BL-ASIG-LZC").first
+        raise Error, "No existe el catálogo activo BL-ASIG-LZC para registrar la reasignación." if catalog.blank?
+
+        return create_reassign_service!(catalog)
+      end
+
       catalog = ServiceCatalog.find_by(code: "BL-ASIG", applies_to: "bl_house_line")
       catalog ||= ServiceCatalog.find_by(code: "BL-ASIG")
-      catalog ||= ServiceCatalog.find_by(name: "Asignación electrónica de carga", applies_to: "bl_house_line")
-      catalog ||= ServiceCatalog.find_by(name: "Asignacion electronica de carga", applies_to: "bl_house_line")
-      catalog ||= ServiceCatalog.find_by(name: "Asignación electrónica de carga")
-      catalog ||= ServiceCatalog.find_by(name: "Asignacion electronica de carga")
+      fallback_catalogs = ServiceCatalog.where.not("UPPER(code) = ?", "BL-ASIG-LZC")
+      catalog ||= fallback_catalogs.find_by(name: "Asignación electrónica de carga", applies_to: "bl_house_line")
+      catalog ||= fallback_catalogs.find_by(name: "Asignacion electronica de carga", applies_to: "bl_house_line")
+      catalog ||= fallback_catalogs.find_by(name: "Asignación electrónica de carga")
+      catalog ||= fallback_catalogs.find_by(name: "Asignacion electronica de carga")
 
       raise Error, "No existe el catálogo de servicio BL-ASIG para registrar la reasignación." if catalog.blank?
 
+      create_reassign_service!(catalog)
+    end
+
+    def create_reassign_service!(catalog)
       bl_house_line.bl_house_line_services.create!(
         service_catalog_id: catalog.id,
         billed_to_entity_id: new_client_id.presence || new_customs_agent_id.presence || bl_house_line.customs_agent_id,

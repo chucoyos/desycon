@@ -161,15 +161,36 @@ class BlHouseLine < ApplicationRecord
   end
 
   def ensure_asignacion_electronica_service
-    catalog = ServiceCatalog.find_by(name: "Asignación electrónica de carga", applies_to: "bl_house_line")
+    if lazaro_destination?
+      return if assignment_services.exists?
+
+      catalog = ServiceCatalog.for_bl_house_lines.where("UPPER(code) = ?", "BL-ASIG-LZC").first
+      unless catalog
+        Rails.logger.error("Asignación electrónica skipped for BL #{id}: missing active catalog BL-ASIG-LZC")
+        return
+      end
+    else
+      catalog = ServiceCatalog.where(name: "Asignación electrónica de carga", applies_to: "bl_house_line")
+        .where.not("UPPER(code) = ?", "BL-ASIG-LZC").first
+    end
     return unless catalog
 
-    bl_house_line_services.find_or_create_by(service_catalog: catalog) do |service|
+    bl_house_line_services.find_or_create_by!(service_catalog: catalog) do |service|
       service.billed_to_entity_id ||= client_id
       service.creation_origin = BlHouseLineService::AUTO_ISSUE_ORIGIN_STATUS_TRANSITION
     end
   rescue StandardError => e
     Rails.logger.error("Failed to create asignación electrónica de carga service for BL #{id}: #{e.message}")
+  end
+
+  def lazaro_destination?
+    destination_port_code == "MXLZC"
+  end
+
+  def assignment_services
+    bl_house_line_services.joins(:service_catalog)
+      .where("UPPER(service_catalogs.code) IN (?) OR (service_catalogs.name = ? AND service_catalogs.applies_to = ?)",
+        %w[BL-ASIG BL-ASIG-LZC], "Asignación electrónica de carga", "bl_house_line")
   end
 
   def ensure_storage_service_on_despachado

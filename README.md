@@ -82,6 +82,14 @@ esté revalidada, la factura de asignación esté pagada y la agencia no esté
 restringida por facturas vencidas. La partida debe tener un cliente facturable
 sin una asociación incompatible con la agencia.
 
+Al revalidar una partida MXLZC, se usa el catálogo activo `BL-ASIG-LZC` para
+la asignación electrónica; las asignaciones históricas se conservan sin crear
+un cargo duplicado. Al reasignar se crea una nueva asignación `BL-ASIG-LZC`.
+Para solicitar servicios debe estar pagada la asignación más reciente, incluida
+una factura directa o agrupada. Si falta el catálogo activo `BL-ASIG-LZC`, la
+revalidación registra un error y la reasignación no se completa. Los demás
+puertos conservan su catálogo de asignación existente.
+
 El catálogo ofrece servicios de BL House activos con código terminado en `LZC`,
 excepto las variantes automáticas de asignación, almacenaje, entrega, control
 documental y custodia. La agencia indica la fecha requerida; administración

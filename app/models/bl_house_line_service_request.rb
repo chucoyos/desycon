@@ -126,8 +126,7 @@ class BlHouseLineServiceRequest < ApplicationRecord
   end
 
   def assignment_paid?
-    assignment = bl_house_line.bl_house_line_services.joins(:service_catalog)
-      .where(service_catalogs: { name: "Asignación electrónica de carga", applies_to: "bl_house_line" }).first
+    assignment = bl_house_line.assignment_services.order(id: :desc).first
     return false unless assignment
 
     direct = assignment.invoices.where(status: "issued", kind: "ingreso")

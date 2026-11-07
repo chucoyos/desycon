@@ -111,6 +111,39 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     expect(document.at_css("select[name='bl_house_line_service_request[service_catalog_id]'] option[selected]")["value"]).to eq(catalog.id.to_s)
   end
 
+  it "accepts a paid Lázaro assignment regardless of its catalog name" do
+    assignment_catalog.update!(code: "BL-ASIG-LZC", name: "Asignación electrónica Lázaro")
+    sign_in agency_user, scope: :user
+    expect { submit_request }.to change(BlHouseLineServiceRequest, :count).by(1)
+  end
+
+  it "accepts a paid historical reassignment using a container catalog" do
+    assignment_catalog.update!(applies_to: "container", name: "Asignacion electronica de carga")
+    sign_in agency_user, scope: :user
+    expect { submit_request }.to change(BlHouseLineServiceRequest, :count).by(1)
+  end
+
+  it "accepts a paid grouped invoice for the Lázaro assignment" do
+    assignment_catalog.update!(code: "BL-ASIG-LZC", name: "Asignación electrónica Lázaro")
+    payment.destroy!
+    grouped = create(:invoice, invoiceable: nil, status: "issued")
+    InvoiceServiceLink.create!(invoice: grouped, serviceable: assignment)
+    create(:invoice_payment, invoice: grouped, amount: grouped.total)
+    sign_in agency_user, scope: :user
+    expect { submit_request }.to change(BlHouseLineServiceRequest, :count).by(1)
+  end
+
+  it "requires payment of the latest assignment rather than a paid historical assignment" do
+    lazaro_catalog = create(:service_catalog, code: "BL-ASIG-LZC", applies_to: "bl_house_line")
+    latest = create(:bl_house_line_service, bl_house_line: line, service_catalog: lazaro_catalog)
+    latest_invoice = create(:invoice, invoiceable: latest, status: "issued")
+    sign_in agency_user, scope: :user
+    expect { submit_request }.not_to change(BlHouseLineServiceRequest, :count)
+    expect(response.body).to include("factura de asignación debe estar pagada")
+    create(:invoice_payment, invoice: latest_invoice, amount: latest_invoice.total)
+    expect { submit_request }.to change(BlHouseLineServiceRequest, :count).by(1)
+  end
+
   it "rejects a service that is not for Lázaro" do
     catalog.update!(code: "BL-PMD")
     sign_in agency_user, scope: :user
@@ -170,6 +203,10 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     expect(response.body).not_to include(catalog.display_name)
     expect { submit_request }.not_to change(BlHouseLineServiceRequest, :count)
     catalog.update!(code: "BL-CODIE-LZC")
+    expect { submit_request }.not_to change(BlHouseLineServiceRequest, :count)
+    catalog.update!(code: "bl-asig-lzc")
+    get new_bl_house_line_service_request_path(bl_house_line_id: line.id)
+    expect(response.body).not_to include(catalog.display_name)
     expect { submit_request }.not_to change(BlHouseLineServiceRequest, :count)
     catalog.update!(code: "BL-PMD-LZC", active: false)
     expect { submit_request }.not_to change(BlHouseLineServiceRequest, :count)

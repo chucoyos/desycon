@@ -294,6 +294,69 @@ RSpec.describe BlHouseLine, type: :model do
         bl_house_line.update!(status: "revalidado")
       }.not_to change { bl_house_line.reload.bl_house_line_services.count }
     end
+
+    context "Lázaro Cárdenas" do
+      let(:port) { create(:port, code: "MXLZC", country_code: "MX") }
+      let(:container) { create(:container, voyage: create(:voyage, destination_port: port)) }
+      let(:line) { create(:bl_house_line, container: container, status: "documentos_ok") }
+      let!(:lazaro_catalog) { create(:service_catalog, code: "BL-ASIG-LZC", applies_to: "bl_house_line", amount: 350) }
+
+      it "creates the Lázaro assignment using its own catalog amount" do
+        line.update!(status: "revalidado")
+        line.ensure_asignacion_electronica_service
+        service = line.bl_house_line_services.find_by!(service_catalog: lazaro_catalog)
+        expect(service.amount).to eq(350)
+        expect(service.creation_origin).to eq(BlHouseLineService::AUTO_ISSUE_ORIGIN_STATUS_TRANSITION)
+        expect(line.bl_house_line_services.count).to eq(1)
+      end
+
+      it "does not duplicate a historical assignment during revalidation" do
+        legacy = create(:bl_house_line_service, bl_house_line: line, service_catalog: catalog, factura: "HIST-1")
+        line.update!(status: "revalidado")
+        expect(line.bl_house_line_services.count).to eq(1)
+        expect(legacy.reload.factura).to eq("HIST-1")
+      end
+
+      it "recognizes a legacy reassignment catalog registered for containers" do
+        legacy_catalog = create(:service_catalog, code: "BL-ASIG", applies_to: "container")
+        create(:bl_house_line_service, bl_house_line: line, service_catalog: legacy_catalog)
+        line.update!(status: "revalidado")
+        expect(line.bl_house_line_services.count).to eq(1)
+      end
+
+      it "logs an error rather than falling back when the Lázaro catalog is inactive" do
+        lazaro_catalog.update!(active: false)
+        expect(Rails.logger).to receive(:error).with(/missing active catalog BL-ASIG-LZC/)
+        line.update!(status: "revalidado")
+        expect(line.bl_house_line_services).to be_empty
+      end
+
+      it "matches a catalog code independently of letter case" do
+        lazaro_catalog.update!(code: "bl-asig-lzc")
+        line.update!(status: "revalidado")
+        expect(line.bl_house_line_services.first.service_catalog).to eq(lazaro_catalog)
+      end
+    end
+
+    %w[MXVER MXATM].each do |port_code|
+      it "keeps the existing assignment for #{port_code}" do
+        port = create(:port, code: port_code, country_code: "MX")
+        container = create(:container, voyage: create(:voyage, destination_port: port))
+        line = create(:bl_house_line, container: container, status: "documentos_ok")
+        create(:service_catalog, name: "Asignación electrónica Lázaro", code: "bl-asig-lzc", applies_to: "bl_house_line")
+        line.update!(status: "revalidado")
+        expect(line.bl_house_line_services.first.service_catalog).to eq(catalog)
+      end
+
+      it "does not select the Lázaro catalog for #{port_code} when the general catalog is missing" do
+        catalog.destroy!
+        create(:service_catalog, name: "Asignación electrónica de carga", code: "bl-asig-lzc", applies_to: "bl_house_line")
+        port = create(:port, code: port_code, country_code: "MX")
+        line = create(:bl_house_line, container: create(:container, voyage: create(:voyage, destination_port: port)), status: "documentos_ok")
+        line.update!(status: "revalidado")
+        expect(line.bl_house_line_services).to be_empty
+      end
+    end
   end
 
   describe 'almacenaje service' do
