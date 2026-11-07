@@ -30,8 +30,7 @@ RSpec.describe NotificationsController, type: :controller do
 
   describe "GET #index" do
     it "returns http success when authenticated" do
-      allow(controller).to receive(:authenticate_user!).and_return(true)
-      allow(controller).to receive(:current_user).and_return(user)
+      sign_in user
       get :index
       expect(response).to have_http_status(:ok)
     end
