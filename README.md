@@ -100,7 +100,8 @@ reprogramar no se modifican los servicios ya facturados.
 
 Para importaciones MXLZC, el despacho genera el control documental `BL-CODIE-LZC`
 y el almacenaje `BL-ALM-LZC` cuando se supera la gracia. El almacenaje usa el
-monto diario de su catálogo, días cobrables, unidades y multiplicador IMO, con
+monto diario de su catálogo, días cobrables, unidades y multiplicador IMO; para
+`BL-ALM-LZC` se cobran como mínimo 10 unidades. El cálculo usa
 fecha de desconsolidación y `fecha_despacho`, sin tramos. Los servicios históricos
 `BL-ALMA` se conservan y no se genera otro almacenaje para la misma partida.
 Ambos catálogos LZC deben estar activos; si alguno falta, el despacho continúa y

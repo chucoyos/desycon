@@ -19,7 +19,8 @@ module BlHouseLinesHelper
         bl_house_line: service.bl_house_line,
         desconsolidation_date: service.bl_house_line.container&.fecha_desconsolidacion,
         dispatch_date: service.bl_house_line.fecha_despacho,
-        unit_price: service.service_catalog.amount
+        unit_price: service.service_catalog.amount,
+        service_code: code
       )
     when "BL-MOVETI"
       BlHouseLines::MovementForLabelingCalculator.call(

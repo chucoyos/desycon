@@ -2,6 +2,7 @@ module BlHouseLines
   class StorageChargeCalculator
     GRACE_DAYS = 7
     MINIMUM_UNITS = 9
+    LAZARO_MINIMUM_UNITS = 10
     VERACRUZ_DAILY_RATE_TIERS = [
       { from: 1, to: 15, rate: BigDecimal("126") },
       { from: 16, to: 45, rate: BigDecimal("196") },
@@ -25,21 +26,23 @@ module BlHouseLines
     )
 
     class << self
-      def call(bl_house_line:, desconsolidation_date:, dispatch_date:, unit_price:)
+      def call(bl_house_line:, desconsolidation_date:, dispatch_date:, unit_price:, service_code: "BL-ALMA")
         new(
           bl_house_line: bl_house_line,
           desconsolidation_date: desconsolidation_date,
           dispatch_date: dispatch_date,
-          unit_price: unit_price
+          unit_price: unit_price,
+          service_code: service_code
         ).call
       end
     end
 
-    def initialize(bl_house_line:, desconsolidation_date:, dispatch_date:, unit_price:)
-      @bl_house_line = bl_house_line
-      @desconsolidation_date = desconsolidation_date
-      @dispatch_date = dispatch_date
-      @unit_price = unit_price
+      def initialize(bl_house_line:, desconsolidation_date:, dispatch_date:, unit_price:, service_code:)
+        @bl_house_line = bl_house_line
+        @desconsolidation_date = desconsolidation_date
+        @dispatch_date = dispatch_date
+        @unit_price = unit_price
+        @service_code = service_code
     end
 
     def call
@@ -49,7 +52,8 @@ module BlHouseLines
       peso_ton = kilograms_to_tons(peso_kg)
       weight_units = ceil_units(peso_ton)
       volume_units = ceil_units(bl_house_line.volumen)
-      billable_units = [ weight_units, volume_units, MINIMUM_UNITS ].max
+      minimum_units = minimum_billable_units
+      billable_units = [ weight_units, volume_units, minimum_units ].max
       billable_days = calculate_billable_days
       daily_subtotal_data = calculate_daily_subtotal_with_breakdown(billable_days)
       daily_subtotal = daily_subtotal_data[:subtotal]
@@ -76,7 +80,7 @@ module BlHouseLines
           volumen_input: bl_house_line.volumen.to_d,
           weight_units: weight_units,
           volume_units: volume_units,
-          minimum_units: MINIMUM_UNITS,
+          minimum_units: minimum_units,
           billable_units: billable_units,
           billable_days: billable_days,
           destination_port_code: destination_port_code,
@@ -93,7 +97,11 @@ module BlHouseLines
 
     private
 
-    attr_reader :bl_house_line, :desconsolidation_date, :dispatch_date, :unit_price
+    attr_reader :bl_house_line, :desconsolidation_date, :dispatch_date, :unit_price, :service_code
+
+    def minimum_billable_units
+      service_code.to_s.upcase == "BL-ALM-LZC" ? LAZARO_MINIMUM_UNITS : MINIMUM_UNITS
+    end
 
     def ceil_units(value)
       value.to_d.ceil

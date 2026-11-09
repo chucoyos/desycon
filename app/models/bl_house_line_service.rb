@@ -210,7 +210,8 @@ class BlHouseLineService < ApplicationRecord
       bl_house_line: bl_house_line,
       desconsolidation_date: bl_house_line.container&.fecha_desconsolidacion,
       dispatch_date: bl_house_line.fecha_despacho,
-      unit_price: service_catalog.amount
+      unit_price: service_catalog.amount,
+      service_code: service_catalog.code
     )
   end
 

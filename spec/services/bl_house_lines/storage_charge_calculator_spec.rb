@@ -6,13 +6,15 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
     let(:desconsolidation_date) { Date.new(2026, 3, 20) }
     let(:dispatch_date) { Time.zone.local(2026, 3, 30, 10, 0, 0) }
     let(:unit_price) { BigDecimal("170.91") }
+    let(:service_code) { "BL-ALMA" }
 
     subject(:result) do
       described_class.call(
         bl_house_line: bl_house_line,
         desconsolidation_date: desconsolidation_date,
         dispatch_date: dispatch_date,
-        unit_price: unit_price
+        unit_price: unit_price,
+        service_code: service_code
       )
     end
 
@@ -179,6 +181,7 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
       context "when destination port is Lázaro Cárdenas" do
         let(:peso) { 12_000 }
         let(:volumen) { 10 }
+        let(:service_code) { "BL-ALM-LZC" }
         let(:port) { build(:port, code: "MXLZC") }
         let(:voyage) { build(:voyage, destination_port: port) }
         let(:container) { build(:container, voyage: voyage, tipo_maniobra: "importacion") }
@@ -188,6 +191,17 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
           expect(result.billable_days).to eq(4)
           expect(result.total).to eq(BigDecimal("16407.36"))
           expect(result.breakdown[:tier_breakdown]).to be_empty
+        end
+
+        context "when both measured units are below the minimum" do
+          let(:peso) { 3_000 }
+          let(:volumen) { 6 }
+
+          it "charges the Lázaro minimum of 10 units" do
+            expect(result.billable_units).to eq(10)
+            expect(result.breakdown[:minimum_units]).to eq(10)
+            expect(result.total).to eq(BigDecimal("13672.8"))
+          end
         end
 
         context "at the end of the grace period" do

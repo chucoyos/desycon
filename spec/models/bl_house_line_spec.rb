@@ -560,6 +560,11 @@ RSpec.describe BlHouseLine, type: :model do
         expect(line.bl_house_line_services.where(service_catalog: lazaro_codie).count).to eq(1)
       end
 
+      it "applies a 10-unit minimum to Lázaro storage when weight and volume are lower" do
+        line.update!(peso: 3_000, volumen: 6, fecha_despacho: Time.zone.local(2026, 3, 30), status: "despachado")
+        expect(line.bl_house_line_services.find_by!(service_catalog: lazaro_storage).amount).to eq(4000)
+      end
+
       it "preserves historic storage without creating or recalculating a second charge" do
         line.update!(fecha_despacho: Time.zone.local(2026, 3, 27))
         old_service = create(:bl_house_line_service, bl_house_line: line, service_catalog: catalog)

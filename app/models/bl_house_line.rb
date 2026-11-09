@@ -461,7 +461,8 @@ class BlHouseLine < ApplicationRecord
       bl_house_line: self,
       desconsolidation_date: container&.fecha_desconsolidacion,
       dispatch_date: fecha_despacho,
-      unit_price: unit_price
+      unit_price: unit_price,
+      service_code: storage_catalog_code
     )
   end
 
