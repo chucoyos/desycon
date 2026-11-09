@@ -82,6 +82,11 @@ esté revalidada, la factura de asignación esté pagada y la agencia no esté
 restringida por facturas vencidas. La partida debe tener un cliente facturable
 sin una asociación incompatible con la agencia.
 
+Para solicitar la entrega (`BL-ENT-LZC`) es obligatorio adjuntar un único PDF
+que contenga DODA, pedimento completo y simple pagado, tarja desconsol, MBL
+revalidado y carta revalidado. Los demás servicios no lo requieren. El archivo
+puede descargarse desde el detalle de la partida y el listado del personal.
+
 Al revalidar una partida MXLZC, se usa el catálogo activo `BL-ASIG-LZC` para
 la asignación electrónica; las asignaciones históricas se conservan sin crear
 un cargo duplicado. Al reasignar se crea una nueva asignación `BL-ASIG-LZC`.

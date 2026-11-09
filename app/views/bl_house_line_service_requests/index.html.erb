@@ -140,7 +140,7 @@
           <% @requests.each do |service_request| %>
             <tbody class="border-t border-gray-200" data-request-id="<%= service_request.id %>">
               <tr class="hover:bg-gray-50">
-                <td class="px-5 py-4 text-sm font-semibold text-gray-900"><%= service_request.service_catalog.display_name %></td>
+                <td class="px-5 py-4 text-sm font-semibold text-gray-900"><%= service_request.service_catalog.display_name %><% if service_request.documentos_entrega.attached? %><%= link_to "Documentos de entrega (PDF)", rails_blob_path(service_request.documentos_entrega, disposition: "attachment"), class: "block mt-1 text-xs font-medium text-indigo-600 hover:text-indigo-800" %><% end %></td>
                 <td class="px-5 py-4 text-sm text-gray-700">
                   <%= link_to service_request.bl_house_line.blhouse, bl_house_line_path(service_request.bl_house_line), class: "font-semibold text-indigo-700 hover:text-indigo-900" %>
                   <div class="text-xs text-gray-500 mt-1"><%= service_request.bl_house_line.container&.number || "Sin contenedor" %></div>
@@ -172,7 +172,7 @@
         <article class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-4" data-request-id="<%= service_request.id %>">
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
-              <h3 class="font-semibold text-gray-900"><%= service_request.service_catalog.display_name %></h3>
+              <div><h3 class="font-semibold text-gray-900"><%= service_request.service_catalog.display_name %></h3><% if service_request.documentos_entrega.attached? %><%= link_to "Documentos de entrega (PDF)", rails_blob_path(service_request.documentos_entrega, disposition: "attachment"), class: "block mt-1 text-xs font-medium text-indigo-600 hover:text-indigo-800" %><% end %></div>
               <%= link_to service_request.bl_house_line.blhouse, bl_house_line_path(service_request.bl_house_line), class: "text-sm font-medium text-indigo-700 hover:text-indigo-900" %>
             </div>
             <span class="shrink-0 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium <%= status_classes.fetch(service_request.status) %>"><%= BlHouseLineServiceRequest::STATUS_LABELS.fetch(service_request.status) %></span>

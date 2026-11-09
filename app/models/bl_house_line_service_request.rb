@@ -1,6 +1,7 @@
 class BlHouseLineServiceRequest < ApplicationRecord
   STATUSES = %w[pending approved rejected executed].freeze
   STATUS_LABELS = { "pending" => "Pendiente", "approved" => "Autorizada", "rejected" => "Rechazada", "executed" => "Ejecutada" }.freeze
+  DELIVERY_CODE = "BL-ENT-LZC".freeze
   AUTOMATIC_CODES = %w[BL-ASIG BL-ALMA BL-ALM BL-ENTCAM BL-CODIE BL-COCUS].freeze
 
   belongs_to :bl_house_line
@@ -8,12 +9,22 @@ class BlHouseLineServiceRequest < ApplicationRecord
   belongs_to :requester, class_name: "User"
   belongs_to :customs_agent, class_name: "Entity"
   belongs_to :bl_house_line_service, optional: true
+  has_one_attached :documentos_entrega
   has_many :events, class_name: "BlHouseLineServiceRequestEvent", dependent: :destroy
 
   validates :status, inclusion: { in: STATUSES }
   validates :requested_date, presence: true
   validates :scheduled_date, :scheduled_time, presence: true, if: -> { status.in?(%w[approved executed]) }
   validate :eligible_for_request, on: :create
+  validate :delivery_documents_present, on: :create
+
+  def self.delivery_catalog?(catalog)
+    catalog&.code.to_s.upcase == DELIVERY_CODE
+  end
+
+  def delivery_request?
+    self.class.delivery_catalog?(service_catalog)
+  end
 
   def self.requestable_catalogs
     ServiceCatalog.for_bl_house_lines.where("UPPER(code) LIKE ?", "%LZC")
@@ -103,6 +114,16 @@ class BlHouseLineServiceRequest < ApplicationRecord
 
     errors.add(:base, "La solicitud ya fue revisada.")
     false
+  end
+
+  def delivery_documents_present
+    return unless delivery_request?
+
+    if !documentos_entrega.attached?
+      errors.add(:documentos_entrega, "es obligatorio: adjunta un solo PDF con los documentos requeridos.")
+    elsif documentos_entrega.blob.content_type != "application/pdf"
+      errors.add(:documentos_entrega, "debe ser un archivo PDF.")
+    end
   end
 
   def eligible_for_request

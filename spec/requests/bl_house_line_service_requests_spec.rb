@@ -457,7 +457,7 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       sheet = Nokogiri::XML(zip.read("xl/worksheets/sheet1.xml"))
       expect(sheet.xpath("//*[local-name()='row']").size).to eq(27)
       header = sheet.xpath("//*[local-name()='row'][1]//*[local-name()='t']").map(&:text)
-      expect(header).to include("Cantidad", "Peso (kg)", "Volumen (m³)", "Embalaje")
+      expect(header).to include("Cantidad", "Peso (kg)", "Volumen (m³)", "Embalaje", "Almacén")
       expect(header).not_to include("Solicitada", "Fecha requerida", "Ejecución")
     end
     get bl_house_line_service_requests_path(format: :xlsx), params: { date_type: "requested_date", start_date: "2026-12-02" }
@@ -612,6 +612,56 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     [ "desktop", "mobile" ].each do |prefix|
       expect(document.at_css("##{prefix}_request_#{request_record.id}_date")["value"]).to eq("2026-12-02")
       expect(document.at_css("##{prefix}_request_#{request_record.id}_time")["value"]).to eq("09:30")
+    end
+  end
+
+  describe "documentos de entrega BL-ENT-LZC" do
+    let(:delivery_catalog) { create(:service_catalog, code: "BL-ENT-LZC", applies_to: "bl_house_line") }
+    let(:pdf) { Rack::Test::UploadedFile.new(StringIO.new("%PDF-1.4 test"), "application/pdf", original_filename: "entrega.pdf") }
+    let(:txt) { Rack::Test::UploadedFile.new(StringIO.new("hola"), "text/plain", original_filename: "entrega.txt") }
+
+    def submit_delivery(file)
+      attrs = { bl_house_line_id: line.id, service_catalog_id: delivery_catalog.id, requested_date: "2026-12-01" }
+      attrs[:documentos_entrega] = file if file
+      post bl_house_line_service_requests_path, params: { bl_house_line_service_request: attrs }
+    end
+
+    before { sign_in agency_user, scope: :user }
+
+    it "requires a document" do
+      expect { submit_delivery(nil) }.not_to change(BlHouseLineServiceRequest, :count)
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("es obligatorio")
+    end
+
+    it "rejects non-PDF files" do
+      expect { submit_delivery(txt) }.not_to change(BlHouseLineServiceRequest, :count)
+      expect(response.body).to include("debe ser un archivo PDF")
+    end
+
+    it "accepts a PDF and exposes the download to the agency and staff" do
+      expect { submit_delivery(pdf) }.to change(BlHouseLineServiceRequest, :count).by(1)
+      expect(BlHouseLineServiceRequest.last.documentos_entrega).to be_attached
+
+      get bl_house_line_path(line)
+      expect(response.body).to include("Documentos de entrega (PDF)")
+
+      sign_out agency_user
+      sign_in executive, scope: :user
+      get bl_house_line_service_requests_path
+      expect(response.body).to include("Documentos de entrega (PDF)")
+    end
+
+    it "does not require a document for other services" do
+      expect { submit_request }.to change(BlHouseLineServiceRequest, :count).by(1)
+    end
+
+    it "renders the conditional upload field in the form" do
+      delivery_catalog
+      get new_bl_house_line_service_request_path(bl_house_line_id: line.id)
+      document = Nokogiri::HTML(response.body)
+      expect(document.at_css("form[enctype='multipart/form-data']")).to be_present
+      expect(document.at_css("input[type=file][name='bl_house_line_service_request[documentos_entrega]']")).to be_present
     end
   end
 end

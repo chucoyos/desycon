@@ -13,7 +13,7 @@ class BlHouseLineServiceRequestsController < ApplicationController
       return send_data export_xlsx(@requests), filename: "solicitudes_lazaro.xlsx",
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     end
-    @requests = @requests.page(params[:page]).per(25)
+    @requests = @requests.with_attached_documentos_entrega.page(params[:page]).per(25)
     @service_catalogs = ServiceCatalog.for_bl_house_lines.where("UPPER(code) LIKE ?", "%LZC").order(:name).to_a
     @customs_agents = Entity.customs_agents.order(:name).to_a
   rescue Date::Error
@@ -72,7 +72,7 @@ class BlHouseLineServiceRequestsController < ApplicationController
   end
 
   def request_params
-    params.require(:bl_house_line_service_request).permit(:service_catalog_id, :requested_date)
+    params.require(:bl_house_line_service_request).permit(:service_catalog_id, :requested_date, :documentos_entrega)
   end
 
   def review_params
@@ -129,29 +129,32 @@ class BlHouseLineServiceRequestsController < ApplicationController
 
     workbook.add_worksheet(name: "Solicitudes", page_setup: { orientation: :landscape, fit_to_width: 1, fit_to_height: 0 }) do |sheet|
       sheet.sheet_view.show_grid_lines = false
-      sheet.add_row [ "Solicitud", "BL", "Contenedor", "Agencia", "Servicio", "Cantidad", "Peso (kg)", "Volumen (m³)", "Embalaje", "Estado", "Fecha programada", "Hora" ],
+      sheet.add_row [ "Solicitud", "BL", "Contenedor", "Almacén", "Agencia", "Servicio", "Cantidad", "Peso (kg)", "Volumen (m³)", "Embalaje", "Estado", "Fecha programada", "Hora" ],
         style: header, height: 30
+      widths = [ 11, 20, 16, 24, 30, 46, 11, 13, 14, 20, 14, 18, 9 ]
       row_number = 0
       requests.preload(bl_house_line: :packaging).find_each do |request|
         line = request.bl_house_line
         alt = row_number.odd?
         row_number += 1
         pick = ->(key) { alt ? zebra[key] : { text: text, centered: centered, integer: integer, decimal: decimal, date: date }[key] }
-        sheet.add_row [ request.id, line.blhouse, line.container&.number, request.customs_agent.name, request.service_catalog.display_name,
+        values = [ request.id, line.blhouse, line.container&.number, line.container&.almacen, request.customs_agent.name, request.service_catalog.display_name,
           line.cantidad, line.peso&.to_f, line.volumen&.to_f, line.packaging&.nombre,
-          BlHouseLineServiceRequest::STATUS_LABELS.fetch(request.status), request.scheduled_date, request.scheduled_time&.strftime("%H:%M") ],
-          style: [ pick.(:centered), pick.(:text), pick.(:centered), pick.(:text), pick.(:text), pick.(:integer), pick.(:decimal),
+          BlHouseLineServiceRequest::STATUS_LABELS.fetch(request.status), request.scheduled_date, request.scheduled_time&.strftime("%H:%M") ]
+        lines = values.zip(widths).map { |value, width| [ (value.to_s.length / (width * 0.9)).ceil, 1 ].max }.max
+        sheet.add_row values,
+          style: [ pick.(:centered), pick.(:text), pick.(:centered), pick.(:text), pick.(:text), pick.(:text), pick.(:integer), pick.(:decimal),
             pick.(:decimal), pick.(:text), status_styles.fetch(request.status), pick.(:date), pick.(:centered) ],
-          height: 22
+          height: 12 + (lines * 14)
       end
-      sheet.column_widths 11, 20, 16, 30, 46, 11, 13, 14, 20, 14, 18, 9
+      sheet.column_widths(*widths)
       sheet.sheet_view.pane do |pane|
         pane.state = :frozen
         pane.y_split = 1
         pane.top_left_cell = "A2"
         pane.active_pane = :bottom_right
       end
-      sheet.auto_filter = "A1:L#{row_number + 1}"
+      sheet.auto_filter = "A1:M#{row_number + 1}"
     end
     package.to_stream.read
   end

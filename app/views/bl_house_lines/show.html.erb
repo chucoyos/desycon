@@ -39,7 +39,7 @@
   <% if is_customs_agent %>
     <%= render 'customs_agents/status_pipeline', bl_house_line: @bl_house_line %>
     <% if @bl_house_line.customs_agent_id == current_user.entity_id && @bl_house_line.container&.destination_port&.code.to_s.upcase == "MXLZC" %>
-      <% service_requests = @bl_house_line.bl_house_line_service_requests.includes(:service_catalog).order(created_at: :desc) %>
+      <% service_requests = @bl_house_line.bl_house_line_service_requests.with_attached_documentos_entrega.includes(:service_catalog).order(created_at: :desc) %>
       <% request_status_classes = {
         "pending" => "bg-amber-100 text-amber-800",
         "approved" => "bg-blue-100 text-blue-800",
@@ -72,7 +72,7 @@
             <% service_requests.each do |service_request| %>
               <article class="rounded-xl border border-gray-200 bg-gray-50 p-4" data-service-request-id="<%= service_request.id %>">
                 <div class="flex flex-wrap items-start justify-between gap-2">
-                  <h3 class="font-semibold text-gray-900 break-words"><%= service_request.service_catalog.display_name %></h3>
+                  <div><h3 class="font-semibold text-gray-900 break-words"><%= service_request.service_catalog.display_name %></h3><% if service_request.documentos_entrega.attached? %><%= link_to "Documentos de entrega (PDF)", rails_blob_path(service_request.documentos_entrega, disposition: "attachment"), class: "block mt-1 text-xs font-medium text-indigo-600 hover:text-indigo-800" %><% end %></div>
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= request_status_classes.fetch(service_request.status) %>">
                     <%= BlHouseLineServiceRequest::STATUS_LABELS.fetch(service_request.status) %>
                   </span>
