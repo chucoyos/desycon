@@ -456,6 +456,9 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     Zip::File.open_buffer(response.body) do |zip|
       sheet = Nokogiri::XML(zip.read("xl/worksheets/sheet1.xml"))
       expect(sheet.xpath("//*[local-name()='row']").size).to eq(27)
+      header = sheet.xpath("//*[local-name()='row'][1]//*[local-name()='t']").map(&:text)
+      expect(header).to include("Cantidad", "Peso (kg)", "Volumen (m³)", "Embalaje")
+      expect(header).not_to include("Solicitada", "Fecha requerida", "Ejecución")
     end
     get bl_house_line_service_requests_path(format: :xlsx), params: { date_type: "requested_date", start_date: "2026-12-02" }
     Zip::File.open_buffer(response.body) do |zip|

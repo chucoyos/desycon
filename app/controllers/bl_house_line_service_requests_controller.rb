@@ -106,13 +106,52 @@ class BlHouseLineServiceRequestsController < ApplicationController
 
   def export_xlsx(requests)
     package = Axlsx::Package.new
-    package.workbook.add_worksheet(name: "Solicitudes") do |sheet|
-      sheet.add_row [ "Solicitud", "BL", "Contenedor", "Agencia", "Servicio", "Estado", "Solicitada", "Fecha requerida", "Fecha programada", "Hora", "Ejecución" ]
-      requests.find_each do |request|
-        sheet.add_row [ request.id, request.bl_house_line.blhouse, request.bl_house_line.container&.number,
-          request.customs_agent.name, request.service_catalog.display_name, BlHouseLineServiceRequest::STATUS_LABELS.fetch(request.status), request.created_at,
-          request.requested_date, request.scheduled_date, request.scheduled_time&.strftime("%H:%M"), request.executed_at ]
+    workbook = package.workbook
+    styles = workbook.styles
+    base = { font_name: "Calibri", sz: 11, border: { style: :thin, color: "E2E8F0" }, alignment: { vertical: :center } }
+    header = styles.add_style(font_name: "Calibri", sz: 11, b: true, fg_color: "FFFFFF", bg_color: "312E81",
+      alignment: { horizontal: :center, vertical: :center, wrap_text: true }, border: { style: :thin, color: "1E1B4B" })
+    text = styles.add_style(base.merge(alignment: { vertical: :center, wrap_text: true }))
+    centered = styles.add_style(base.merge(alignment: { horizontal: :center, vertical: :center }))
+    integer = styles.add_style(base.merge(format_code: "#,##0", alignment: { horizontal: :right, vertical: :center }))
+    decimal = styles.add_style(base.merge(format_code: "#,##0.00", alignment: { horizontal: :right, vertical: :center }))
+    date = styles.add_style(base.merge(format_code: "yyyy-mm-dd", alignment: { horizontal: :center, vertical: :center }))
+    zebra = { text: text, centered: centered, integer: integer, decimal: decimal, date: date }.transform_values do |style_id|
+      style = styles.style_index[style_id]
+      styles.add_style(style.merge(bg_color: "F8FAFC"))
+    end
+    status_styles = {
+      "pending" => %w[92400E FEF3C7], "approved" => %w[1E40AF DBEAFE],
+      "rejected" => %w[991B1B FEE2E2], "executed" => %w[065F46 D1FAE5]
+    }.transform_values do |(font, fill)|
+      styles.add_style(base.merge(b: true, fg_color: font, bg_color: fill, alignment: { horizontal: :center, vertical: :center }))
+    end
+
+    workbook.add_worksheet(name: "Solicitudes", page_setup: { orientation: :landscape, fit_to_width: 1, fit_to_height: 0 }) do |sheet|
+      sheet.sheet_view.show_grid_lines = false
+      sheet.add_row [ "Solicitud", "BL", "Contenedor", "Agencia", "Servicio", "Cantidad", "Peso (kg)", "Volumen (m³)", "Embalaje", "Estado", "Fecha programada", "Hora" ],
+        style: header, height: 30
+      row_number = 0
+      requests.preload(bl_house_line: :packaging).find_each do |request|
+        line = request.bl_house_line
+        alt = row_number.odd?
+        row_number += 1
+        pick = ->(key) { alt ? zebra[key] : { text: text, centered: centered, integer: integer, decimal: decimal, date: date }[key] }
+        sheet.add_row [ request.id, line.blhouse, line.container&.number, request.customs_agent.name, request.service_catalog.display_name,
+          line.cantidad, line.peso&.to_f, line.volumen&.to_f, line.packaging&.nombre,
+          BlHouseLineServiceRequest::STATUS_LABELS.fetch(request.status), request.scheduled_date, request.scheduled_time&.strftime("%H:%M") ],
+          style: [ pick.(:centered), pick.(:text), pick.(:centered), pick.(:text), pick.(:text), pick.(:integer), pick.(:decimal),
+            pick.(:decimal), pick.(:text), status_styles.fetch(request.status), pick.(:date), pick.(:centered) ],
+          height: 22
       end
+      sheet.column_widths 11, 20, 16, 30, 46, 11, 13, 14, 20, 14, 18, 9
+      sheet.sheet_view.pane do |pane|
+        pane.state = :frozen
+        pane.y_split = 1
+        pane.top_left_cell = "A2"
+        pane.active_pane = :bottom_right
+      end
+      sheet.auto_filter = "A1:L#{row_number + 1}"
     end
     package.to_stream.read
   end
