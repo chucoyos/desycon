@@ -74,4 +74,79 @@ RSpec.describe BlHouseLines::EntregaAlmacenCamionCalculator do
       end
     end
   end
+
+  describe "BL-PRV-LZC" do
+    let(:unit_price) { BigDecimal("679") }
+
+    def calculate(peso:, volumen:, code: "BL-PRV-LZC")
+      described_class.call(bl_house_line: build(:bl_house_line, peso: peso, volumen: volumen), unit_price: unit_price, service_code: code)
+    end
+
+    it "applies a minimum of 10 units" do
+      result = calculate(peso: 3_000, volumen: 4.2)
+      expect(result.billable_units).to eq(10)
+      expect(result.breakdown[:minimum_units]).to eq(10)
+      expect(result.total).to eq(BigDecimal("6790"))
+    end
+
+    it "charges the greater of tons or cubic meters" do
+      expect(calculate(peso: 13_200, volumen: 8.1).billable_units).to eq(14)
+      expect(calculate(peso: 6_400, volumen: 15.2).billable_units).to eq(16)
+    end
+
+    it "keeps the minimum of 12 for other codes and case-insensitive matching" do
+      expect(calculate(peso: 3_000, volumen: 4.2, code: "BL-PREVIO").billable_units).to eq(12)
+      expect(calculate(peso: 3_000, volumen: 4.2, code: "bl-prv-lzc").billable_units).to eq(10)
+    end
+  end
+
+  describe "BL-REAC-LZC" do
+    def calculate(peso:, volumen:)
+      described_class.call(bl_house_line: build(:bl_house_line, peso: peso, volumen: volumen), unit_price: BigDecimal("600"), service_code: "BL-REAC-LZC")
+    end
+
+    it "applies a minimum of 7 units" do
+      result = calculate(peso: 3_000, volumen: 4.2)
+      expect(result.billable_units).to eq(7)
+      expect(result.total).to eq(BigDecimal("4200"))
+    end
+
+    it "charges the greater of tons or cubic meters above the minimum" do
+      expect(calculate(peso: 13_200, volumen: 8.1).billable_units).to eq(14)
+      expect(calculate(peso: 3_000, volumen: 9.5).total).to eq(BigDecimal("6000"))
+    end
+  end
+
+  describe "BL-POSC-LZC" do
+    def calculate(peso:, volumen:)
+      described_class.call(bl_house_line: build(:bl_house_line, peso: peso, volumen: volumen), unit_price: BigDecimal("679"), service_code: "BL-POSC-LZC")
+    end
+
+    it "applies a minimum of 10 units" do
+      result = calculate(peso: 3_000, volumen: 4.2)
+      expect(result.billable_units).to eq(10)
+      expect(result.total).to eq(BigDecimal("6790"))
+    end
+
+    it "charges the greater of tons or cubic meters above the minimum" do
+      expect(calculate(peso: 13_200, volumen: 8.1).billable_units).to eq(14)
+      expect(calculate(peso: 3_000, volumen: 15.2).billable_units).to eq(16)
+    end
+  end
+
+  describe "BL-MF-LZC" do
+    def calculate(peso:, volumen:)
+      described_class.call(bl_house_line: build(:bl_house_line, peso: peso, volumen: volumen), unit_price: BigDecimal("626"), service_code: "BL-MF-LZC")
+    end
+
+    it "applies a minimum of 10 units" do
+      result = calculate(peso: 3_000, volumen: 4.2)
+      expect(result.billable_units).to eq(10)
+      expect(result.total).to eq(BigDecimal("6260"))
+    end
+
+    it "charges the greater of tons or cubic meters above the minimum" do
+      expect(calculate(peso: 13_200, volumen: 8.1).billable_units).to eq(14)
+    end
+  end
 end

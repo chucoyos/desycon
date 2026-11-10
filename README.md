@@ -114,6 +114,32 @@ fecha de desconsolidación y `fecha_despacho`, sin tramos. Los servicios histór
 Ambos catálogos LZC deben estar activos; si alguno falta, el despacho continúa y
 se registra un error. Los demás puertos conservan sus reglas.
 
+El servicio solicitable `BL-PRV-LZC` (coordinación previo de carga en almacén
+LZC) se calcula como `BL-PREVIO`: tarifa del catálogo por tonelada o m³, lo que
+sea mayor, con un mínimo de 10 unidades y el multiplicador IMO existente. `BL-REAC-LZC` (coordinación reacomodo de carga) usa
+la misma fórmula con un mínimo de 7 unidades, y `BL-POSC-LZC` (coordinación
+posicionamiento de carga) y `BL-MF-LZC` (maniobra en falso) con un mínimo de 10 unidades.
+
+`BL-PA-LZC` (personal adicional) es tarifa fija por unidad: monto del catálogo ($1,300 + IVA) por la cantidad capturada, sin fórmula de peso o volumen.
+
+`BL-ETQ-LZC` (colocación de etiqueta) es tarifa por etiqueta ($10 + IVA c/u): monto del catálogo por la cantidad capturada, sin mínimo.
+
+`BL-PER-LZC` (pernoctaje en recinto) es tarifa por día ($2,500 + IVA): monto del catálogo por la cantidad de días capturada.
+
+`BL-PMD-LZC` (programación mismo día) es tarifa fija por HBL ($3,447 + IVA): monto del catálogo con cantidad 1.
+
+`BL-EMP-LZC` (emplaye) es tarifa por pallet ($500 + IVA): se calcula automáticamente con la `cantidad` de la partida; si no la tiene, usa la cantidad capturada.
+
+`BL-FLJ-LZC` (fleje) es tarifa por metro ($300 + IVA): monto del catálogo por los metros capturados en la cantidad del servicio.
+
+`BL-GRP-LZC` (sello metálico/grapas) es tarifa por pieza ($20 + IVA c/u): monto del catálogo por la cantidad capturada.
+
+`BL-CLVS-LZC` (clavos) es tarifa por pieza ($15 + IVA c/u): monto del catálogo por la cantidad capturada.
+
+`BL-REF-LZC` (refacturación) es tarifa fija ($1,200 + IVA): monto del catálogo con cantidad 1.
+
+Para crear o actualizar los catálogos de estos servicios LZC (clave SAT 80151600, unidad E48) ejecuta únicamente `bin/rails runner db/seeds/lzc_services.rb`; es idempotente.
+
 ## Runbooks Operativos
 
 - Diagnostico rapido de colas Solid Queue: [docs/solid_queue_quick_diagnosis_runbook.md](docs/solid_queue_quick_diagnosis_runbook.md)

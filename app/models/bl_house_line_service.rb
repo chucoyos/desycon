@@ -3,7 +3,7 @@ class BlHouseLineService < ApplicationRecord
   AUTO_ISSUE_ORIGIN_STATUS_TRANSITION = "status_transition".freeze
   LABEL_TAGGING_SERVICE_CODES = %w[BL-ETIADH BL-ETICOS].freeze
   STORAGE_SERVICE_CODES = %w[BL-ALMA BL-ALM-LZC].freeze
-  FORMULA_AMOUNT_SERVICE_CODES = (%w[BL-ENTCAM BL-PREVIO BL-RECASU BL-MOVETI] + STORAGE_SERVICE_CODES).freeze
+  FORMULA_AMOUNT_SERVICE_CODES = (%w[BL-ENTCAM BL-PREVIO BL-PRV-LZC BL-REAC-LZC BL-POSC-LZC BL-MF-LZC BL-EMP-LZC BL-RECASU BL-MOVETI] + STORAGE_SERVICE_CODES).freeze
 
   belongs_to :bl_house_line
   belongs_to :service_catalog
@@ -95,13 +95,17 @@ class BlHouseLineService < ApplicationRecord
     return if service_catalog.blank? || bl_house_line.blank?
 
     case service_catalog.code.to_s
-    when "BL-ENTCAM", "BL-PREVIO", "BL-RECASU"
+    when "BL-ENTCAM", "BL-PREVIO", "BL-PRV-LZC", "BL-REAC-LZC", "BL-POSC-LZC", "BL-MF-LZC", "BL-RECASU"
       self.amount = entcam_charge_result.total
     when *STORAGE_SERVICE_CODES
       result = storage_charge_result
       return if result.blank? || result.billable_days <= 0
 
       self.amount = result.total
+    when "BL-EMP-LZC"
+      pallets = bl_house_line.cantidad.to_i.positive? ? bl_house_line.cantidad.to_i : quantity.to_i
+      self.quantity = pallets if pallets.positive?
+      self.amount = (pallets * service_catalog.amount.to_d).round(2) if pallets.positive?
     when "BL-MOVETI"
       result = movement_for_labeling_charge_result
       return if result.blank?
@@ -201,7 +205,8 @@ class BlHouseLineService < ApplicationRecord
   def entcam_charge_result
     BlHouseLines::EntregaAlmacenCamionCalculator.call(
       bl_house_line: bl_house_line,
-      unit_price: service_catalog.amount
+      unit_price: service_catalog.amount,
+      service_code: service_catalog.code
     )
   end
 

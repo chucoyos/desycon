@@ -193,6 +193,114 @@ RSpec.describe BlHouseLineService, type: :model do
       expect(service.amount).to eq(BigDecimal('1764'))
     end
 
+    it 'calcula BL-PRV-LZC por formula con minimo de 10 unidades' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-PRV-LZC', amount: 679, currency: 'MXN')
+      small = create(:bl_house_line, peso: 3_000, volumen: 4.2)
+      large = create(:bl_house_line, peso: 13_200, volumen: 8.1)
+
+      expect(create(:bl_house_line_service, bl_house_line: small, service_catalog: catalog, amount: 1).amount).to eq(BigDecimal('6790'))
+      expect(create(:bl_house_line_service, bl_house_line: large, service_catalog: catalog, amount: 1).amount).to eq(BigDecimal('9506'))
+    end
+
+    it 'calcula BL-REAC-LZC por formula con minimo de 7 unidades' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-REAC-LZC', amount: 600, currency: 'MXN')
+      small = create(:bl_house_line, peso: 3_000, volumen: 4.2)
+      large = create(:bl_house_line, peso: 13_200, volumen: 8.1)
+
+      expect(create(:bl_house_line_service, bl_house_line: small, service_catalog: catalog, amount: 1).amount).to eq(BigDecimal('4200'))
+      expect(create(:bl_house_line_service, bl_house_line: large, service_catalog: catalog, amount: 1).amount).to eq(BigDecimal('8400'))
+    end
+
+    it 'calcula BL-POSC-LZC por formula con minimo de 10 unidades' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-POSC-LZC', amount: 679, currency: 'MXN')
+      small = create(:bl_house_line, peso: 3_000, volumen: 4.2)
+      large = create(:bl_house_line, peso: 13_200, volumen: 8.1)
+
+      expect(create(:bl_house_line_service, bl_house_line: small, service_catalog: catalog, amount: 1).amount).to eq(BigDecimal('6790'))
+      expect(create(:bl_house_line_service, bl_house_line: large, service_catalog: catalog, amount: 1).amount).to eq(BigDecimal('9506'))
+    end
+
+    it 'calcula BL-MF-LZC por formula con minimo de 10 unidades' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-MF-LZC', amount: 626, currency: 'MXN')
+      small = create(:bl_house_line, peso: 3_000, volumen: 4.2)
+      large = create(:bl_house_line, peso: 13_200, volumen: 8.1)
+
+      expect(create(:bl_house_line_service, bl_house_line: small, service_catalog: catalog, amount: 1).amount).to eq(BigDecimal('6260'))
+      expect(create(:bl_house_line_service, bl_house_line: large, service_catalog: catalog, amount: 1).amount).to eq(BigDecimal('8764'))
+    end
+
+    it 'calcula BL-PA-LZC como tarifa fija por cantidad' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-PA-LZC', amount: 1300, currency: 'MXN')
+      bl_house_line = create(:bl_house_line)
+
+      expect(create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, quantity: 1, amount: nil).amount).to eq(BigDecimal('1300'))
+      expect(create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, quantity: 3, amount: nil).amount).to eq(BigDecimal('3900'))
+    end
+
+    it 'calcula BL-ETQ-LZC como tarifa por etiqueta sin minimo' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-ETQ-LZC', amount: 10, currency: 'MXN')
+      bl_house_line = create(:bl_house_line)
+
+      expect(create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, quantity: 1, amount: nil).amount).to eq(BigDecimal('10'))
+      expect(create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, quantity: 25, amount: nil).amount).to eq(BigDecimal('250'))
+    end
+
+    it 'calcula BL-PER-LZC como tarifa por dia' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-PER-LZC', amount: 2500, currency: 'MXN')
+      bl_house_line = create(:bl_house_line)
+
+      expect(create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, quantity: 1, amount: nil).amount).to eq(BigDecimal('2500'))
+      expect(create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, quantity: 3, amount: nil).amount).to eq(BigDecimal('7500'))
+    end
+
+    it 'calcula BL-PMD-LZC como tarifa fija por HBL' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-PMD-LZC', amount: 3447, currency: 'MXN')
+      bl_house_line = create(:bl_house_line)
+
+      expect(create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, amount: nil).amount).to eq(BigDecimal('3447'))
+    end
+
+    it 'calcula BL-EMP-LZC con la cantidad de pallets de la partida' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-EMP-LZC', amount: 500, currency: 'MXN')
+      bl_house_line = create(:bl_house_line, cantidad: 4)
+
+      service = create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, quantity: 1, amount: 1)
+
+      expect(service.amount).to eq(BigDecimal('2000'))
+      expect(service.quantity).to eq(4)
+    end
+
+    it 'calcula BL-FLJ-LZC como tarifa por metro capturado' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-FLJ-LZC', amount: 300, currency: 'MXN')
+      bl_house_line = create(:bl_house_line)
+
+      expect(create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, quantity: 1, amount: nil).amount).to eq(BigDecimal('300'))
+      expect(create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, quantity: 12, amount: nil).amount).to eq(BigDecimal('3600'))
+    end
+
+    it 'calcula BL-GRP-LZC como tarifa por pieza capturada' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-GRP-LZC', amount: 20, currency: 'MXN')
+      bl_house_line = create(:bl_house_line)
+
+      expect(create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, quantity: 1, amount: nil).amount).to eq(BigDecimal('20'))
+      expect(create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, quantity: 50, amount: nil).amount).to eq(BigDecimal('1000'))
+    end
+
+    it 'calcula BL-CLVS-LZC como tarifa por pieza capturada' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-CLVS-LZC', amount: 15, currency: 'MXN')
+      bl_house_line = create(:bl_house_line)
+
+      expect(create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, quantity: 1, amount: nil).amount).to eq(BigDecimal('15'))
+      expect(create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, quantity: 40, amount: nil).amount).to eq(BigDecimal('600'))
+    end
+
+    it 'calcula BL-REF-LZC como tarifa fija' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-REF-LZC', amount: 1200, currency: 'MXN')
+      bl_house_line = create(:bl_house_line)
+
+      expect(create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, amount: nil).amount).to eq(BigDecimal('1200'))
+    end
+
     it 'recalcula BL-PREVIO al editar aunque llegue monto manual' do
       catalog = create(
         :service_catalog,

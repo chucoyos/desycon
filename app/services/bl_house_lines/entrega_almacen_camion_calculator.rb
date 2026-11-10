@@ -1,6 +1,7 @@
 module BlHouseLines
   class EntregaAlmacenCamionCalculator
     MINIMUM_UNITS = 12
+    LAZARO_MINIMUM_UNITS = { "BL-PRV-LZC" => 10, "BL-REAC-LZC" => 7, "BL-POSC-LZC" => 10, "BL-MF-LZC" => 10 }.freeze
 
     Result = Struct.new(
       :weight_units,
@@ -13,14 +14,15 @@ module BlHouseLines
     )
 
     class << self
-      def call(bl_house_line:, unit_price:)
-        new(bl_house_line: bl_house_line, unit_price: unit_price).call
+      def call(bl_house_line:, unit_price:, service_code: nil)
+        new(bl_house_line: bl_house_line, unit_price: unit_price, service_code: service_code).call
       end
     end
 
-    def initialize(bl_house_line:, unit_price:)
+    def initialize(bl_house_line:, unit_price:, service_code: nil)
       @bl_house_line = bl_house_line
       @unit_price = unit_price
+      @service_code = service_code.to_s.upcase
     end
 
     def call
@@ -28,7 +30,7 @@ module BlHouseLines
       peso_ton = kilograms_to_tons(peso_kg)
       weight_units = ceil_units(peso_ton)
       volume_units = ceil_units(bl_house_line.volumen)
-      billable_units = [ weight_units, volume_units, MINIMUM_UNITS ].max
+      billable_units = [ weight_units, volume_units, minimum_units ].max
       price = unit_price.to_d
       multiplier = imo_charge_multiplier
       total = (billable_units * price * multiplier).round(2)
@@ -47,7 +49,7 @@ module BlHouseLines
           volumen_input: bl_house_line.volumen.to_d,
           weight_units: weight_units,
           volume_units: volume_units,
-          minimum_units: MINIMUM_UNITS,
+          minimum_units: minimum_units,
           billable_units: billable_units,
           unit_price: price,
           imo_multiplier: multiplier,
@@ -59,7 +61,11 @@ module BlHouseLines
 
     private
 
-    attr_reader :bl_house_line, :unit_price
+    attr_reader :bl_house_line, :unit_price, :service_code
+
+    def minimum_units
+      LAZARO_MINIMUM_UNITS.fetch(service_code, MINIMUM_UNITS)
+    end
 
     def ceil_units(value)
       value.to_d.ceil
