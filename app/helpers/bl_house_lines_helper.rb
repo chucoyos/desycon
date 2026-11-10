@@ -9,7 +9,7 @@ module BlHouseLinesHelper
 
     code = service.service_catalog.code.to_s
     calculator_result = case code
-    when "BL-ENTCAM", "BL-PREVIO", "BL-PRV-LZC", "BL-REAC-LZC", "BL-POSC-LZC", "BL-MF-LZC", "BL-RECASU"
+    when "BL-ENTCAM", "BL-PREVIO", "BL-PRV-LZC", "BL-REAC-LZC", "BL-POSC-LZC", "BL-MF-LZC", "BL-ENT-LZC", "BL-RECASU"
       BlHouseLines::EntregaAlmacenCamionCalculator.call(
         bl_house_line: service.bl_house_line,
         unit_price: service.service_catalog.amount,

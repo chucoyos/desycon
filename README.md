@@ -118,7 +118,7 @@ El servicio solicitable `BL-PRV-LZC` (coordinación previo de carga en almacén
 LZC) se calcula como `BL-PREVIO`: tarifa del catálogo por tonelada o m³, lo que
 sea mayor, con un mínimo de 10 unidades y el multiplicador IMO existente. `BL-REAC-LZC` (coordinación reacomodo de carga) usa
 la misma fórmula con un mínimo de 7 unidades, y `BL-POSC-LZC` (coordinación
-posicionamiento de carga) y `BL-MF-LZC` (maniobra en falso) con un mínimo de 10 unidades.
+posicionamiento de carga), `BL-MF-LZC` (maniobra en falso) y `BL-ENT-LZC` (entrega de almacén a camión, $626) con un mínimo de 10 unidades.
 
 `BL-PA-LZC` (personal adicional) es tarifa fija por unidad: monto del catálogo ($1,300 + IVA) por la cantidad capturada, sin fórmula de peso o volumen.
 
@@ -139,6 +139,8 @@ posicionamiento de carga) y `BL-MF-LZC` (maniobra en falso) con un mínimo de 10
 `BL-REF-LZC` (refacturación) es tarifa fija ($1,200 + IVA): monto del catálogo con cantidad 1.
 
 Para crear o actualizar los catálogos de estos servicios LZC (clave SAT 80151600, unidad E48) ejecuta únicamente `bin/rails runner db/seeds/lzc_services.rb`; es idempotente.
+
+El listado de solicitudes muestra de inicio las de los últimos tres meses (por fecha de solicitud); se amplía cambiando o vaciando el filtro «Desde». Al autorizar `BL-PRV-LZC` se crea también automáticamente el servicio `BL-REAC-LZC` con la misma fecha programada; si su catálogo no existe o está inactivo, la autorización se rechaza.
 
 ## Runbooks Operativos
 

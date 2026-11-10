@@ -301,6 +301,15 @@ RSpec.describe BlHouseLineService, type: :model do
       expect(create(:bl_house_line_service, bl_house_line: bl_house_line, service_catalog: catalog, amount: nil).amount).to eq(BigDecimal('1200'))
     end
 
+    it 'calcula BL-ENT-LZC por formula con minimo de 10 unidades' do
+      catalog = create(:service_catalog, applies_to: 'bl_house_line', code: 'BL-ENT-LZC', amount: 626, currency: 'MXN')
+      small = create(:bl_house_line, peso: 3_000, volumen: 4.2)
+      large = create(:bl_house_line, peso: 13_200, volumen: 8.1)
+
+      expect(create(:bl_house_line_service, bl_house_line: small, service_catalog: catalog, amount: 1).amount).to eq(BigDecimal('6260'))
+      expect(create(:bl_house_line_service, bl_house_line: large, service_catalog: catalog, amount: 1).amount).to eq(BigDecimal('8764'))
+    end
+
     it 'recalcula BL-PREVIO al editar aunque llegue monto manual' do
       catalog = create(
         :service_catalog,

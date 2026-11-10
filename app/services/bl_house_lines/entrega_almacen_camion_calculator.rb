@@ -1,7 +1,7 @@
 module BlHouseLines
   class EntregaAlmacenCamionCalculator
     MINIMUM_UNITS = 12
-    LAZARO_MINIMUM_UNITS = { "BL-PRV-LZC" => 10, "BL-REAC-LZC" => 7, "BL-POSC-LZC" => 10, "BL-MF-LZC" => 10 }.freeze
+    LAZARO_MINIMUM_UNITS = { "BL-PRV-LZC" => 10, "BL-REAC-LZC" => 7, "BL-POSC-LZC" => 10, "BL-MF-LZC" => 10, "BL-ENT-LZC" => 10 }.freeze
 
     Result = Struct.new(
       :weight_units,

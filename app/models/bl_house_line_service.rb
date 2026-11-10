@@ -3,7 +3,7 @@ class BlHouseLineService < ApplicationRecord
   AUTO_ISSUE_ORIGIN_STATUS_TRANSITION = "status_transition".freeze
   LABEL_TAGGING_SERVICE_CODES = %w[BL-ETIADH BL-ETICOS].freeze
   STORAGE_SERVICE_CODES = %w[BL-ALMA BL-ALM-LZC].freeze
-  FORMULA_AMOUNT_SERVICE_CODES = (%w[BL-ENTCAM BL-PREVIO BL-PRV-LZC BL-REAC-LZC BL-POSC-LZC BL-MF-LZC BL-EMP-LZC BL-RECASU BL-MOVETI] + STORAGE_SERVICE_CODES).freeze
+  FORMULA_AMOUNT_SERVICE_CODES = (%w[BL-ENTCAM BL-PREVIO BL-PRV-LZC BL-REAC-LZC BL-POSC-LZC BL-MF-LZC BL-ENT-LZC BL-EMP-LZC BL-RECASU BL-MOVETI] + STORAGE_SERVICE_CODES).freeze
 
   belongs_to :bl_house_line
   belongs_to :service_catalog
@@ -95,7 +95,7 @@ class BlHouseLineService < ApplicationRecord
     return if service_catalog.blank? || bl_house_line.blank?
 
     case service_catalog.code.to_s
-    when "BL-ENTCAM", "BL-PREVIO", "BL-PRV-LZC", "BL-REAC-LZC", "BL-POSC-LZC", "BL-MF-LZC", "BL-RECASU"
+    when "BL-ENTCAM", "BL-PREVIO", "BL-PRV-LZC", "BL-REAC-LZC", "BL-POSC-LZC", "BL-MF-LZC", "BL-ENT-LZC", "BL-RECASU"
       self.amount = entcam_charge_result.total
     when *STORAGE_SERVICE_CODES
       result = storage_charge_result

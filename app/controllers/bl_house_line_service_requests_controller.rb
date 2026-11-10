@@ -8,6 +8,7 @@ class BlHouseLineServiceRequestsController < ApplicationController
 
   def index
     authorize BlHouseLineServiceRequest
+    apply_default_date_range
     @requests = filtered_requests.order(created_at: :desc, id: :desc)
     if params[:format] == "xlsx"
       return send_data export_xlsx(@requests), filename: "solicitudes_lazaro.xlsx",
@@ -77,6 +78,13 @@ class BlHouseLineServiceRequestsController < ApplicationController
 
   def review_params
     params.require(:bl_house_line_service_request).permit(:scheduled_date, :scheduled_time, :notes)
+  end
+
+  def apply_default_date_range
+    return if params.key?(:start_date) || params.key?(:end_date)
+
+    params[:date_type] = "created_at" if params[:date_type].blank?
+    params[:start_date] = 3.months.ago.to_date.iso8601
   end
 
   def filtered_requests

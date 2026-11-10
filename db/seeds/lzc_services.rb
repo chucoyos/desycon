@@ -7,6 +7,7 @@ LZC_SERVICES = [
   { code: "BL-REAC-LZC", name: "Coordinación reacomodo de carga LZC", amount: 600.00 },
   { code: "BL-POSC-LZC", name: "Coordinación posicionamiento de carga LZC", amount: 679.00 },
   { code: "BL-MF-LZC", name: "Coordinación Maniobra en falso LZC", amount: 626.00 },
+  { code: "BL-ENT-LZC", name: "Coordinación entrega de carga de almacén a camión LZC", amount: 626.00 },
   { code: "BL-PA-LZC", name: "Coordinación Personal Adicional LZC", amount: 1300.00 },
   { code: "BL-ETQ-LZC", name: "Coordinación Colocación de etiqueta LZC", amount: 10.00 },
   { code: "BL-PER-LZC", name: "Coordinación Pernoctaje en recinto LZC", amount: 2500.00 },

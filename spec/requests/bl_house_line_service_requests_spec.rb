@@ -598,7 +598,7 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
 
   it "only shows an active date filter when a date boundary is supplied" do
     sign_in executive, scope: :user
-    get bl_house_line_service_requests_path, params: { date_type: "scheduled_date", page: 2 }
+    get bl_house_line_service_requests_path, params: { date_type: "scheduled_date", start_date: "", page: 2 }
     expect(response.body).not_to include("Filtros activos:", "Quitar filtros")
 
     get bl_house_line_service_requests_path, params: { end_date: "2026-12-31" }
@@ -742,5 +742,60 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       expect(document.at_css("form[enctype='multipart/form-data']")).to be_present
       expect(document.at_css("input[type=file][name='bl_house_line_service_request[documentos_entrega]']")).to be_present
     end
+  end
+
+  it "defaults the list to the last three months of requests and lets the user widen it" do
+    sign_in agency_user, scope: :user
+    2.times { submit_request }
+    old_request = BlHouseLineServiceRequest.first
+    old_request.update_columns(created_at: 4.months.ago)
+    sign_out agency_user
+    sign_in executive, scope: :user
+
+    get bl_house_line_service_requests_path
+    document = Nokogiri::HTML(response.body)
+    expect(document.css("table tbody[data-request-id]").map { |row| row["data-request-id"].to_i }).not_to include(old_request.id)
+    expect(document.at_css("input[name=start_date]")["value"]).to eq(3.months.ago.to_date.iso8601)
+
+    get bl_house_line_service_requests_path, params: { start_date: "", end_date: "" }
+    expect(Nokogiri::HTML(response.body).css("table tbody[data-request-id]").map { |row| row["data-request-id"].to_i }).to include(old_request.id)
+  end
+
+  it "creates the rearrangement service when a BL-PRV-LZC request is approved" do
+    preview = create(:service_catalog, code: "BL-PRV-LZC", applies_to: "bl_house_line", amount: 679)
+    rearrangement = create(:service_catalog, code: "BL-REAC-LZC", applies_to: "bl_house_line", amount: 600)
+    sign_in agency_user, scope: :user
+    post bl_house_line_service_requests_path, params: {
+      bl_house_line_service_request: { bl_house_line_id: line.id, service_catalog_id: preview.id, requested_date: "2026-12-01" }
+    }
+    request_record = BlHouseLineServiceRequest.last
+    sign_out agency_user
+    sign_in executive, scope: :user
+
+    patch approve_bl_house_line_service_request_path(request_record), params: {
+      bl_house_line_service_request: { scheduled_date: "2026-12-01", scheduled_time: "09:30" }
+    }
+
+    expect(request_record.reload.status).to eq("approved")
+    expect(line.bl_house_line_services.where(service_catalog: rearrangement).count).to eq(1)
+    expect(line.bl_house_line_services.find_by(service_catalog: rearrangement).fecha_programada).to eq(Date.new(2026, 12, 1))
+  end
+
+  it "does not approve a BL-PRV-LZC request when the rearrangement catalog is missing" do
+    preview = create(:service_catalog, code: "BL-PRV-LZC", applies_to: "bl_house_line", amount: 679)
+    sign_in agency_user, scope: :user
+    post bl_house_line_service_requests_path, params: {
+      bl_house_line_service_request: { bl_house_line_id: line.id, service_catalog_id: preview.id, requested_date: "2026-12-01" }
+    }
+    request_record = BlHouseLineServiceRequest.last
+    sign_out agency_user
+    sign_in executive, scope: :user
+
+    patch approve_bl_house_line_service_request_path(request_record), params: {
+      bl_house_line_service_request: { scheduled_date: "2026-12-01", scheduled_time: "09:30" }
+    }
+
+    expect(request_record.reload.status).to eq("pending")
+    expect(line.bl_house_line_services.where(service_catalog: preview)).to be_empty
   end
 end

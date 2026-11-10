@@ -2,6 +2,8 @@ class BlHouseLineServiceRequest < ApplicationRecord
   STATUSES = %w[pending approved rejected executed].freeze
   STATUS_LABELS = { "pending" => "Pendiente", "approved" => "Autorizada", "rejected" => "Rechazada", "executed" => "Ejecutada" }.freeze
   DELIVERY_CODE = "BL-ENT-LZC".freeze
+  PREVIEW_CODE = "BL-PRV-LZC".freeze
+  REARRANGEMENT_CODE = "BL-REAC-LZC".freeze
   AUTOMATIC_CODES = %w[BL-ASIG BL-ALMA BL-ALM BL-ENTCAM BL-CODIE BL-COCUS].freeze
 
   belongs_to :bl_house_line
@@ -52,12 +54,20 @@ class BlHouseLineServiceRequest < ApplicationRecord
       self.review_notes = notes
       self.status = "approved"
       validate!
+      rearrangement_catalog = companion_rearrangement_catalog
       service = bl_house_line.bl_house_line_services.create!(
         service_catalog: service_catalog,
         fecha_programada: scheduled_date,
         billed_to_entity_id: bl_house_line.client_id
       )
       update!(bl_house_line_service: service)
+      if rearrangement_catalog
+        bl_house_line.bl_house_line_services.create!(
+          service_catalog: rearrangement_catalog,
+          fecha_programada: scheduled_date,
+          billed_to_entity_id: bl_house_line.client_id
+        )
+      end
       events.create!(actor: actor, action: "approved", scheduled_date: scheduled_date, scheduled_time: scheduled_time, notes: notes)
     end
   end
@@ -101,6 +111,16 @@ class BlHouseLineServiceRequest < ApplicationRecord
   end
 
   private
+
+  def companion_rearrangement_catalog
+    return unless service_catalog.code.to_s.upcase == PREVIEW_CODE
+
+    catalog = ServiceCatalog.for_bl_house_lines.find_by("UPPER(code) = ?", REARRANGEMENT_CODE)
+    return catalog if catalog
+
+    errors.add(:base, "No existe el catálogo activo #{REARRANGEMENT_CODE}; no se puede autorizar el previo de carga.")
+    raise ActiveRecord::RecordInvalid, self
+  end
 
   def automatic_service_already_present?
     codes = case service_catalog.code.to_s.upcase
