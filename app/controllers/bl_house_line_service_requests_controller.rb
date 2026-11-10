@@ -13,7 +13,7 @@ class BlHouseLineServiceRequestsController < ApplicationController
       return send_data export_xlsx(@requests), filename: "solicitudes_lazaro.xlsx",
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     end
-    @requests = @requests.with_attached_documentos_entrega.page(params[:page]).per(25)
+    @requests = @requests.with_delivery_documents.page(params[:page]).per(25)
     @service_catalogs = ServiceCatalog.for_bl_house_lines.where("UPPER(code) LIKE ?", "%LZC").order(:name).to_a
     @customs_agents = Entity.customs_agents.order(:name).to_a
   rescue Date::Error

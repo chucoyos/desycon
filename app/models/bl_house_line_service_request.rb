@@ -12,6 +12,8 @@ class BlHouseLineServiceRequest < ApplicationRecord
   has_one_attached :documentos_entrega
   has_many :events, class_name: "BlHouseLineServiceRequestEvent", dependent: :destroy
 
+  scope :with_delivery_documents, -> { includes(documentos_entrega_attachment: :blob) }
+
   validates :status, inclusion: { in: STATUSES }
   validates :requested_date, presence: true
   validates :scheduled_date, :scheduled_time, presence: true, if: -> { status.in?(%w[approved executed]) }

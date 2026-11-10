@@ -19,7 +19,7 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     }
   end
 
-  it "shows the service request section and its empty state only for the agency's Lázaro line" do
+  it "shows the empty service request section to the agency and internal staff only for Lázaro lines" do
     sign_in agency_user, scope: :user
     get bl_house_line_path(line)
 
@@ -36,6 +36,12 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     sign_out agency_user
     sign_in executive, scope: :user
     get bl_house_line_path(line)
+    section = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='service-requests-heading']")
+    expect(section.text).to include("Aún no hay solicitudes")
+    expect(section.at_css("a[href='#{new_bl_house_line_service_request_path(bl_house_line_id: line.id)}']")).to be_nil
+
+    port.update!(code: "MXVER")
+    get bl_house_line_path(line)
     expect(Nokogiri::HTML(response.body).at_css("section[aria-labelledby='service-requests-heading']")).to be_nil
   end
 
@@ -50,13 +56,28 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     }
     patch execute_bl_house_line_service_request_path(request_record)
 
-    sign_out executive
+    [ executive, create(:user, :admin), agency_user ].each do |user|
+      sign_out :user
+      sign_in user, scope: :user
+      get bl_house_line_path(line)
+      card = Nokogiri::HTML(response.body).at_css("article[data-service-request-id='#{request_record.id}']")
+      expect(card.text).to include(catalog.display_name, "Ejecutada", "Solicitada", "2026-12-01",
+        "2026-12-02", "09:30", "Observaciones", "Confirmado con agencia")
+      expect(card.text).to include(I18n.l(request_record.reload.executed_at, format: :short))
+      section = card.ancestors("section").first
+      request_link = section.at_css("a[href='#{new_bl_house_line_service_request_path(bl_house_line_id: line.id)}']")
+      expect(request_link.present?).to eq(user == agency_user)
+    end
+  end
+
+  it "does not expose service requests in the line details to a tramitador" do
     sign_in agency_user, scope: :user
+    submit_request
+    sign_out :user
+    sign_in create(:user, :tramitador), scope: :user
     get bl_house_line_path(line)
-    card = Nokogiri::HTML(response.body).at_css("article[data-service-request-id='#{request_record.id}']")
-    expect(card.text).to include(catalog.display_name, "Ejecutada", "Solicitada", "2026-12-01",
-      "2026-12-02", "09:30", "Observaciones", "Confirmado con agencia")
-    expect(card.text).to include(I18n.l(request_record.reload.executed_at, format: :short))
+    expect(response).to have_http_status(:ok)
+    expect(Nokogiri::HTML(response.body).at_css("section[aria-labelledby='service-requests-heading']")).to be_nil
   end
 
   it "allows an agency to request a service, then staff to schedule, reschedule and execute without dispatching" do
@@ -639,17 +660,75 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       expect(response.body).to include("debe ser un archivo PDF")
     end
 
-    it "accepts a PDF and exposes the download to the agency and staff" do
+    it "accepts a PDF and exposes it to the agency and staff" do
       expect { submit_delivery(pdf) }.to change(BlHouseLineServiceRequest, :count).by(1)
       expect(BlHouseLineServiceRequest.last.documentos_entrega).to be_attached
 
       get bl_house_line_path(line)
-      expect(response.body).to include("Documentos de entrega (PDF)")
+      link = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='service-requests-heading'] a[target='_blank']")
+      expect(link.text).to eq("Documentos de entrega (PDF)")
+      expect(link["rel"].split).to include("noopener", "noreferrer")
+      expect(Rack::Utils.parse_query(URI.parse(link["href"]).query)).to include("disposition" => "inline")
+      get link["href"]
+      follow_redirect!
+      expect(response).to have_http_status(:ok)
+      expect(response.headers["Content-Disposition"]).to start_with("inline")
+      expect(response.media_type).to eq("application/pdf")
 
       sign_out agency_user
       sign_in executive, scope: :user
+      get bl_house_line_path(line)
+      link = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='service-requests-heading'] a[target='_blank']")
+      expect(link.text).to eq("Documentos de entrega (PDF)")
+      expect(Rack::Utils.parse_query(URI.parse(link["href"]).query)).to include("disposition" => "inline")
+
       get bl_house_line_service_requests_path
-      expect(response.body).to include("Documentos de entrega (PDF)")
+      links = Nokogiri::HTML(response.body).css("a").select { |link| link.text == "Documentos de entrega (PDF)" }
+      expect(links.size).to eq(2)
+      links.each do |link|
+        expect(link["target"]).to eq("_blank")
+        expect(link["rel"].split).to include("noopener", "noreferrer")
+        expect(Rack::Utils.parse_query(URI.parse(link["href"]).query)).to include("disposition" => "inline")
+      end
+
+      get links.first["href"]
+      follow_redirect!
+      expect(response).to have_http_status(:ok)
+      expect(response.headers["Content-Disposition"]).to start_with("inline")
+      expect(response.media_type).to eq("application/pdf")
+    end
+
+    it "renders both lists without unused attachment preloads or N+1 queries when variant tracking is enabled" do
+      2.times { submit_delivery(pdf) }
+      submit_request
+
+      previous_enable = Bullet.enable?
+      previous_raise = UniformNotifier::Raise.active?
+      previous_track_variants = ActiveStorage.track_variants
+      ActiveStorage.track_variants = true
+      Bullet.enable = true
+      Bullet.raise = true
+      begin
+        [ [ agency_user, bl_house_line_path(line), 2 ],
+          [ executive, bl_house_line_path(line), 2 ],
+          [ executive, bl_house_line_service_requests_path, 4 ] ].each do |user, path, link_count|
+          sign_out :user
+          sign_in user, scope: :user
+          Bullet.start_request
+          begin
+            get path
+            expect(response).to have_http_status(:ok)
+            expect(Nokogiri::HTML(response.body).css("a").count { |link| link.text == "Documentos de entrega (PDF)" }).to eq(link_count)
+            Bullet.perform_out_of_channel_notifications if Bullet.notification?
+          ensure
+            Bullet.end_request
+          end
+        end
+      ensure
+        UniformNotifier.raise = previous_raise
+        Bullet.enable = previous_enable
+        ActiveStorage.track_variants = previous_track_variants
+      end
     end
 
     it "does not require a document for other services" do

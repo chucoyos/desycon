@@ -85,7 +85,9 @@ sin una asociación incompatible con la agencia.
 Para solicitar la entrega (`BL-ENT-LZC`) es obligatorio adjuntar un único PDF
 que contenga DODA, pedimento completo y simple pagado, tarja desconsol, MBL
 revalidado y carta revalidado. Los demás servicios no lo requieren. El archivo
-puede descargarse desde el detalle de la partida y el listado del personal.
+se abre en una pestaña nueva desde el detalle de la partida o el listado del
+personal. El seguimiento de solicitudes en el detalle está disponible para la
+agencia propietaria y para administradores y ejecutivos.
 
 Al revalidar una partida MXLZC, se usa el catálogo activo `BL-ASIG-LZC` para
 la asignación electrónica; las asignaciones históricas se conservan sin crear
