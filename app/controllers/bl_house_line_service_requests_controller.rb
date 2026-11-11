@@ -64,7 +64,7 @@ class BlHouseLineServiceRequestsController < ApplicationController
   def preview_pdf
     service_request = BlHouseLineServiceRequest.find(params[:id])
     authorize service_request, :preview_pdf?
-    unless service_request.preview_request? && service_request.status != "rejected" &&
+    unless service_request.preview_request? && service_request.status.in?(%w[approved executed]) &&
         service_request.bl_house_line.container&.destination_port&.code.to_s.upcase == "MXLZC"
       raise ActiveRecord::RecordNotFound
     end

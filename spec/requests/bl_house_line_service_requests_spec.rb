@@ -816,10 +816,23 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       end.join("\n")
     end
 
-    it "downloads a pending preview without quantity, complements or financial information and shows both dashboard links" do
+    it "shows the preview paper only after approval and includes the logo without financial information" do
       preview = request_service(preview_catalog)
-      complement = request_service(complement_catalog)
-      complement.approve!(actor: executive, date: Date.new(2026, 12, 2), time: "09:30", notes: nil)
+      request_service(complement_catalog)
+      sign_in agency_user, scope: :user
+
+      get customs_agents_dashboard_path
+      preview_links = Nokogiri::HTML(response.body).css("a[href='#{preview_pdf_bl_house_line_service_request_path(preview)}']")
+      expect(preview_links).to be_empty
+      get bl_house_line_path(line)
+      expect(Nokogiri::HTML(response.body).at_css("a[href='#{preview_pdf_bl_house_line_service_request_path(preview)}']")).to be_nil
+
+      get preview_pdf_bl_house_line_service_request_path(preview)
+      expect(response).to have_http_status(:not_found)
+
+      create(:service_catalog, code: "BL-REAC-LZC", applies_to: "bl_house_line", amount: 600)
+      sign_out :user
+      preview.approve!(actor: executive, date: Date.new(2026, 12, 2), time: "09:30", notes: nil)
       sign_in agency_user, scope: :user
 
       get customs_agents_dashboard_path
@@ -838,7 +851,8 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       expect(response.media_type).to eq("application/pdf")
       expect(response.headers["Content-Disposition"]).to start_with("inline")
       expect(response.body).to start_with("%PDF-")
-      expect(pdf_text(response.body)).to include("PAPELETA DE PREVIO", "Pendiente", "BL-PRV-LZC", line.blhouse)
+      expect(response.body).to include("/Subtype /Image")
+      expect(pdf_text(response.body)).to include("PAPELETA DE PREVIO", "Autorizada", "BL-PRV-LZC", line.blhouse)
       expect(pdf_text(response.body)).not_to include("Precio unitario", "Subtotal", "IVA", "Total", "BL-ETQ-LZC")
     end
 
@@ -877,11 +891,16 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     it "blocks ambiguous previos but ignores rejected ones" do
       preview = request_service(preview_catalog)
       other_preview = request_service(preview_catalog)
+      create(:service_catalog, code: "BL-REAC-LZC", applies_to: "bl_house_line", amount: 600)
+      preview.approve!(actor: executive, date: Date.new(2026, 12, 2), time: "09:30", notes: nil)
       sign_in agency_user, scope: :user
 
       get preview_pdf_bl_house_line_service_request_path(preview)
       expect(response).to redirect_to(bl_house_line_path(line))
       expect(flash[:alert]).to include("más de un previo")
+      expect(response).not_to have_http_status(:ok)
+      get preview_pdf_bl_house_line_service_request_path(other_preview)
+      expect(response).to have_http_status(:not_found)
       other_preview.reject!(actor: executive, notes: "Duplicada")
       get preview_pdf_bl_house_line_service_request_path(preview)
       expect(response).to have_http_status(:ok)
@@ -891,6 +910,8 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
 
     it "denies other agencies and tramitadores and allows internal staff" do
       preview = request_service(preview_catalog)
+      create(:service_catalog, code: "BL-REAC-LZC", applies_to: "bl_house_line", amount: 600)
+      preview.approve!(actor: executive, date: Date.new(2026, 12, 2), time: "09:30", notes: nil)
       other_agency = create(:user, role: agency_user.role, entity: create(:entity, :customs_agent))
       [ other_agency, create(:user, :tramitador) ].each do |user|
         sign_in user, scope: :user

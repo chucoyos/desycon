@@ -12,6 +12,8 @@ class PreviewServiceRequestPdf
     Prawn::Document.new(page_size: "LETTER", margin: [ 32, 32, 48, 32 ]) do |pdf|
       pdf.font "Helvetica"
       pdf.fill_color "24354B"
+      pdf.image Rails.root.join("app/assets/images/logoDyC.jpeg"), fit: [ 112, 48 ]
+      pdf.move_down 6
       pdf.text "PAPELETA DE PREVIO", size: 16, style: :bold
       pdf.text "Detalle de solicitud de servicio", size: 10
       pdf.move_down 10
