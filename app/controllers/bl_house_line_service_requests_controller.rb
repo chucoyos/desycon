@@ -75,8 +75,21 @@ class BlHouseLineServiceRequestsController < ApplicationController
       return
     end
 
-    send_data PreviewServiceRequestPdf.new(service_request).render,
+    send_data ServiceRequestPdf.new(service_request).render,
       filename: "papeleta_previo_#{service_request.id}.pdf",
+      type: "application/pdf", disposition: "inline"
+  end
+
+  def delivery_pdf
+    service_request = BlHouseLineServiceRequest.find(params[:id])
+    authorize service_request, :delivery_pdf?
+    unless service_request.delivery_request? && service_request.status.in?(%w[approved executed]) &&
+        service_request.bl_house_line.container&.destination_port&.code.to_s.upcase == "MXLZC"
+      raise ActiveRecord::RecordNotFound
+    end
+
+    send_data ServiceRequestPdf.new(service_request).render,
+      filename: "papeleta_despacho_#{service_request.id}.pdf",
       type: "application/pdf", disposition: "inline"
   end
 

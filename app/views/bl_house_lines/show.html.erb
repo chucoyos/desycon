@@ -83,6 +83,9 @@
                 <% if service_request.preview_request? && service_request.status.in?(%w[approved executed]) %>
                   <%= link_to "Ver papeleta de previo", preview_pdf_bl_house_line_service_request_path(service_request), target: "_blank", rel: "noopener noreferrer", data: { turbo: false }, class: "inline-flex items-center min-h-12 mt-2 text-sm font-medium text-indigo-700 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-600 rounded-lg" %>
                 <% end %>
+                <% if service_request.delivery_request? && service_request.status.in?(%w[approved executed]) %>
+                  <%= link_to "Ver papeleta de despacho", delivery_pdf_bl_house_line_service_request_path(service_request), target: "_blank", rel: "noopener noreferrer", data: { turbo: false }, class: "inline-flex items-center min-h-12 mt-2 text-sm font-medium text-indigo-700 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-600 rounded-lg" %>
+                <% end %>
                 <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 text-sm">
                   <div>
                     <dt class="text-gray-500">Solicitada</dt>

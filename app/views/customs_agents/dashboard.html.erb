@@ -370,12 +370,12 @@
                               </svg>
                               Solicitar servicio
                             <% end %>
-                            <% @preview_requests_by_line.fetch(bl_house_line.id, []).each do |preview_request| %>
-                              <%= link_to preview_pdf_bl_house_line_service_request_path(preview_request), target: "_blank", rel: "noopener noreferrer", data: { turbo: false }, class: "flex items-center gap-3 min-h-12 px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 rounded-lg", role: "menuitem" do %>
+                            <% @papeleta_requests_by_line.fetch(bl_house_line.id, []).each do |service_request| %>
+                              <%= link_to(service_request.delivery_request? ? delivery_pdf_bl_house_line_service_request_path(service_request) : preview_pdf_bl_house_line_service_request_path(service_request), target: "_blank", rel: "noopener noreferrer", data: { turbo: false }, class: "flex items-center gap-3 min-h-12 px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 rounded-lg", role: "menuitem") do %>
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M9 4h6l4 4v11a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2h2z"/>
                                 </svg>
-                                Papeleta previo
+                                <%= service_request.delivery_request? ? "Papeleta despacho" : "Papeleta previo" %>
                               <% end %>
                             <% end %>
                           <% end %>
@@ -467,12 +467,12 @@
                       </svg>
                       Solicitar servicio
                     <% end %>
-                    <% @preview_requests_by_line.fetch(bl_house_line.id, []).each do |preview_request| %>
-                      <%= link_to preview_pdf_bl_house_line_service_request_path(preview_request), target: "_blank", rel: "noopener noreferrer", data: { turbo: false }, class: "inline-flex items-center gap-2 min-h-12 px-3 text-sm text-indigo-700 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 rounded-lg" do %>
+                    <% @papeleta_requests_by_line.fetch(bl_house_line.id, []).each do |service_request| %>
+                      <%= link_to(service_request.delivery_request? ? delivery_pdf_bl_house_line_service_request_path(service_request) : preview_pdf_bl_house_line_service_request_path(service_request), target: "_blank", rel: "noopener noreferrer", data: { turbo: false }, class: "inline-flex items-center gap-2 min-h-12 px-3 text-sm text-indigo-700 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 rounded-lg") do %>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M9 4h6l4 4v11a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2h2z"/>
                         </svg>
-                        Papeleta previo
+                        <%= service_request.delivery_request? ? "Papeleta despacho" : "Papeleta previo" %>
                       <% end %>
                     <% end %>
                   <% end %>

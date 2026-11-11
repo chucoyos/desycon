@@ -25,4 +25,8 @@ class BlHouseLineServiceRequestPolicy < ApplicationPolicy
       record.bl_house_line&.customs_agent_id == user.entity_id &&
       !record.bl_house_line.hidden_from_customs_agent?
   end
+
+  def delivery_pdf?
+    preview_pdf?
+  end
 end

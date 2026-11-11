@@ -67,10 +67,10 @@ class CustomsAgentsController < ApplicationController
 
     @bl_house_lines = filtered_scope.page(params[:page]).per(params[:per] || 20)
     preload_dashboard_listing_associations(@bl_house_lines)
-    @preview_requests_by_line = BlHouseLineServiceRequest.joins(:service_catalog)
+    @papeleta_requests_by_line = BlHouseLineServiceRequest.joins(:service_catalog).includes(:service_catalog)
       .where(bl_house_line_id: @bl_house_lines.map(&:id), customs_agent_id: current_user.entity_id)
       .where(status: %w[approved executed])
-      .where("UPPER(service_catalogs.code) = ?", BlHouseLineServiceRequest::PREVIEW_CODE)
+      .where("UPPER(service_catalogs.code) IN (?)", [ BlHouseLineServiceRequest::PREVIEW_CODE, BlHouseLineServiceRequest::DELIVERY_CODE ])
       .order(:id).group_by(&:bl_house_line_id)
 
     # Dashboard cards (use unfiltered scope) in a single aggregated query.

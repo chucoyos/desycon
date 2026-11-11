@@ -816,6 +816,73 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       end.join("\n")
     end
 
+    it "opens a separate delivery paper only after approval with exactly the delivery concept" do
+      delivery_catalog = create(:service_catalog, code: "BL-ENT-LZC", applies_to: "bl_house_line", name: "Entrega LZC")
+      delivery = BlHouseLineServiceRequest.new(bl_house_line: line, service_catalog: delivery_catalog,
+        requester: agency_user, customs_agent: agency_user.entity, requested_date: Date.new(2026, 12, 1))
+      delivery.documentos_entrega.attach(io: StringIO.new("%PDF-1.4 test"), filename: "entrega.pdf", content_type: "application/pdf")
+      delivery.save!
+      complement = request_service(complement_catalog)
+      complement.approve!(actor: executive, date: Date.new(2026, 12, 2), time: "09:30", notes: nil)
+      sign_in agency_user, scope: :user
+
+      get customs_agents_dashboard_path
+      expect(Nokogiri::HTML(response.body).css("a[href='#{delivery_pdf_bl_house_line_service_request_path(delivery)}']")).to be_empty
+      get bl_house_line_path(line)
+      expect(Nokogiri::HTML(response.body).at_css("a[href='#{delivery_pdf_bl_house_line_service_request_path(delivery)}']")).to be_nil
+      get delivery_pdf_bl_house_line_service_request_path(delivery)
+      expect(response).to have_http_status(:not_found)
+
+      delivery.approve!(actor: executive, date: Date.new(2026, 12, 3), time: "10:30", notes: nil)
+      get customs_agents_dashboard_path
+      links = Nokogiri::HTML(response.body).css("a[href='#{delivery_pdf_bl_house_line_service_request_path(delivery)}']")
+      expect(links.size).to eq(2)
+      expect(links).to all(satisfy { |link| link.text.strip == "Papeleta despacho" && link["target"] == "_blank" && (link["rel"].split & %w[noopener noreferrer]).size == 2 })
+      get bl_house_line_path(line)
+      expect(Nokogiri::HTML(response.body).at_css("a[href='#{delivery_pdf_bl_house_line_service_request_path(delivery)}']")).to be_present
+
+      get delivery_pdf_bl_house_line_service_request_path(delivery)
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/pdf")
+      expect(response.headers["Content-Disposition"]).to start_with("inline")
+      expect(response.body).to include("/Subtype /Image")
+      text = pdf_text(response.body)
+      expect(text).to include("PAPELETA DE DESPACHO", "BL-ENT-LZC", "Coordinación entrega de carga de almacén a camión", "10:30")
+      expect(text.scan("BL-ENT-LZC").size).to eq(1)
+      expect(text).not_to include("BL-ETQ-LZC", "Etiquetas LZC", "Precio unitario", "Subtotal", "IVA")
+      expect(line.reload.status).to eq("revalidado")
+
+      delivery.execute!(actor: executive)
+      get delivery_pdf_bl_house_line_service_request_path(delivery)
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "restricts delivery papers to authorized users and delivery requests in Lázaro" do
+      delivery_catalog = create(:service_catalog, code: "BL-ENT-LZC", applies_to: "bl_house_line")
+      delivery = BlHouseLineServiceRequest.new(bl_house_line: line, service_catalog: delivery_catalog,
+        requester: agency_user, customs_agent: agency_user.entity, requested_date: Date.new(2026, 12, 1))
+      delivery.documentos_entrega.attach(io: StringIO.new("%PDF-1.4 test"), filename: "entrega.pdf", content_type: "application/pdf")
+      delivery.save!
+      delivery.approve!(actor: executive, date: Date.new(2026, 12, 3), time: "10:30", notes: nil)
+      other_agency = create(:user, role: agency_user.role, entity: create(:entity, :customs_agent))
+      [ other_agency, create(:user, :tramitador) ].each do |user|
+        sign_in user, scope: :user
+        get delivery_pdf_bl_house_line_service_request_path(delivery)
+        expect(response.media_type).not_to eq("application/pdf")
+        expect(response).not_to have_http_status(:ok)
+        sign_out user
+      end
+      sign_in executive, scope: :user
+      get delivery_pdf_bl_house_line_service_request_path(delivery)
+      expect(response).to have_http_status(:ok)
+      other_request = request_service(catalog)
+      get delivery_pdf_bl_house_line_service_request_path(other_request)
+      expect(response).to have_http_status(:not_found)
+      port.update!(code: "MXVER")
+      get delivery_pdf_bl_house_line_service_request_path(delivery)
+      expect(response).to have_http_status(:not_found)
+    end
+
     it "shows the preview paper only after approval and includes the logo without financial information" do
       preview = request_service(preview_catalog)
       request_service(complement_catalog)
@@ -961,9 +1028,17 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       expect(response).not_to have_http_status(:ok)
     end
 
-    it "renders dashboard and detail without Bullet warnings for previews" do
+    it "renders dashboard and detail without Bullet warnings for previews and delivery papers" do
+      create(:service_catalog, code: "BL-REAC-LZC", applies_to: "bl_house_line", amount: 600)
+      preview = request_service(preview_catalog)
+      preview.approve!(actor: executive, date: Date.new(2026, 12, 2), time: "09:30", notes: nil)
       request_service(preview_catalog)
-      request_service(preview_catalog)
+      delivery_catalog = create(:service_catalog, code: "BL-ENT-LZC", applies_to: "bl_house_line")
+      delivery = BlHouseLineServiceRequest.new(bl_house_line: line, service_catalog: delivery_catalog,
+        requester: agency_user, customs_agent: agency_user.entity, requested_date: Date.new(2026, 12, 1))
+      delivery.documentos_entrega.attach(io: StringIO.new("%PDF-1.4 test"), filename: "entrega.pdf", content_type: "application/pdf")
+      delivery.save!
+      delivery.approve!(actor: executive, date: Date.new(2026, 12, 3), time: "10:30", notes: nil)
       sign_in agency_user, scope: :user
       previous_enable = Bullet.enable?
       previous_raise = UniformNotifier::Raise.active?

@@ -1,7 +1,7 @@
 require "prawn"
 require "prawn/table"
 
-class PreviewServiceRequestPdf
+class ServiceRequestPdf
   def initialize(service_request)
     @request = service_request
     @line = service_request.bl_house_line
@@ -14,7 +14,7 @@ class PreviewServiceRequestPdf
       pdf.fill_color "24354B"
       pdf.image Rails.root.join("app/assets/images/logoDyC.jpeg"), fit: [ 112, 48 ]
       pdf.move_down 6
-      pdf.text "PAPELETA DE PREVIO", size: 16, style: :bold
+      pdf.text(@request.delivery_request? ? "PAPELETA DE DESPACHO" : "PAPELETA DE PREVIO", size: 16, style: :bold)
       pdf.text "Detalle de solicitud de servicio", size: 10
       pdf.move_down 10
 
@@ -52,10 +52,12 @@ class PreviewServiceRequestPdf
       ])
 
       section(pdf, "Servicios solicitados")
-      requests = [ @request ] + @request.preview_complements.to_a
+      requests = [ @request ]
+      requests.concat(@request.preview_complements.to_a) if @request.preview_request?
       rows = requests.map do |request|
         quantity = request.bl_house_line_service&.quantity unless request.status == "pending"
-        [ quantity.to_s, safe(request.service_catalog.code), safe(request.service_catalog.name) ]
+        description = request.delivery_request? ? "Coordinación entrega de carga de almacén a camión" : request.service_catalog.name
+        [ quantity.to_s, safe(request.service_catalog.code), safe(description) ]
       end
       pdf.table([ [ "Cantidad", "Código / Clave", "Descripción del servicio" ] ] + rows,
         header: true, width: pdf.bounds.width, column_widths: [ 60, 110, pdf.bounds.width - 170 ],
