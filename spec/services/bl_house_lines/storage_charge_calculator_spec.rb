@@ -197,10 +197,10 @@ RSpec.describe BlHouseLines::StorageChargeCalculator do
           let(:peso) { 3_000 }
           let(:volumen) { 6 }
 
-          it "charges the Lázaro minimum of 10 units" do
-            expect(result.billable_units).to eq(10)
-            expect(result.breakdown[:minimum_units]).to eq(10)
-            expect(result.total).to eq(BigDecimal("13672.8"))
+          it "charges the Lázaro minimum of 8 units" do
+            expect(result.billable_units).to eq(8)
+            expect(result.breakdown[:minimum_units]).to eq(8)
+            expect(result.total).to eq(BigDecimal("10938.24"))
           end
         end
 

@@ -2,7 +2,7 @@ module BlHouseLines
   class StorageChargeCalculator
     GRACE_DAYS = 7
     MINIMUM_UNITS = 9
-    LAZARO_MINIMUM_UNITS = 10
+    LAZARO_MINIMUM_UNITS = 8
     VERACRUZ_DAILY_RATE_TIERS = [
       { from: 1, to: 15, rate: BigDecimal("126") },
       { from: 16, to: 45, rate: BigDecimal("196") },
