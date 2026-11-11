@@ -61,6 +61,25 @@ class BlHouseLineServiceRequestsController < ApplicationController
     perform_review { |request| request.execute!(actor: current_user) }
   end
 
+  def preview_pdf
+    service_request = BlHouseLineServiceRequest.find(params[:id])
+    authorize service_request, :preview_pdf?
+    unless service_request.preview_request? && service_request.status != "rejected" &&
+        service_request.bl_house_line.container&.destination_port&.code.to_s.upcase == "MXLZC"
+      raise ActiveRecord::RecordNotFound
+    end
+
+    if service_request.ambiguous_preview?
+      redirect_to bl_house_line_path(service_request.bl_house_line),
+        alert: "No se puede generar la papeleta: hay más de un previo no rechazado en esta partida."
+      return
+    end
+
+    send_data PreviewServiceRequestPdf.new(service_request).render,
+      filename: "papeleta_previo_#{service_request.id}.pdf",
+      type: "application/pdf", disposition: "inline"
+  end
+
   private
 
   def perform_review

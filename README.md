@@ -114,6 +114,15 @@ fecha de desconsolidación y `fecha_despacho`, sin tramos. Los servicios histór
 Ambos catálogos LZC deben estar activos; si alguno falta, el despacho continúa y
 se registra un error. Los demás puertos conservan sus reglas.
 
+La papeleta operativa de `BL-PRV-LZC` puede descargarse desde el dashboard de
+la agencia propietaria o el detalle de la partida; administración y ejecutivos
+también pueden descargarla desde el detalle. Se genera con los datos actuales,
+sin importes. La solicitud pendiente aparece sin cantidad ni complementos; al
+autorizarla se incluyen los complementos autorizados o ejecutados de la misma
+partida y agencia, aunque tengan otras fechas, usando la cantidad de cada servicio.
+Si hay más de un previo no rechazado en la partida, se bloquea la descarga por
+ambigüedad. La generación no altera solicitudes, servicios ni facturas.
+
 El servicio solicitable `BL-PRV-LZC` (coordinación previo de carga en almacén
 LZC) se calcula como `BL-PREVIO`: tarifa del catálogo por tonelada o m³, lo que
 sea mayor, con un mínimo de 10 unidades y el multiplicador IMO existente. `BL-REAC-LZC` (coordinación reacomodo de carga) usa

@@ -798,4 +798,170 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     expect(request_record.reload.status).to eq("pending")
     expect(line.bl_house_line_services.where(service_catalog: preview)).to be_empty
   end
+
+  describe "papeleta de previo" do
+    let(:preview_catalog) { create(:service_catalog, code: "BL-PRV-LZC", applies_to: "bl_house_line", amount: 679) }
+    let(:complement_catalog) { create(:service_catalog, code: "BL-ETQ-LZC", applies_to: "bl_house_line", amount: 10, name: "Etiquetas LZC") }
+
+    def request_service(service_catalog)
+      BlHouseLineServiceRequest.create!(
+        bl_house_line: line, service_catalog: service_catalog, requester: agency_user,
+        customs_agent: agency_user.entity, requested_date: Date.new(2026, 12, 1)
+      )
+    end
+
+    def pdf_text(pdf)
+      pdf.scan(/\[([^\]]*)\]\s*TJ/n).map do |match|
+        match.first.scan(/<([0-9a-f]+)>/i).flatten.join.then { |hex| [ hex ].pack("H*").force_encoding("Windows-1252").encode("UTF-8") }
+      end.join("\n")
+    end
+
+    it "downloads a pending preview without quantity, complements or financial information and shows both dashboard links" do
+      preview = request_service(preview_catalog)
+      complement = request_service(complement_catalog)
+      complement.approve!(actor: executive, date: Date.new(2026, 12, 2), time: "09:30", notes: nil)
+      sign_in agency_user, scope: :user
+
+      get customs_agents_dashboard_path
+      preview_links = Nokogiri::HTML(response.body).css("a[href='#{preview_pdf_bl_house_line_service_request_path(preview)}']")
+      expect(preview_links.size).to eq(2)
+      expect(preview_links).to all(satisfy { |link| link["target"] == "_blank" && link["rel"].include?("noopener noreferrer") })
+      expect(preview_links).to all(satisfy { |link| link.text.strip == "Papeleta previo" && link.at_css("svg[aria-hidden='true']").present? })
+      get bl_house_line_path(line)
+      detail_link = Nokogiri::HTML(response.body).at_css("a[href='#{preview_pdf_bl_house_line_service_request_path(preview)}']")
+      expect(detail_link).to be_present
+      expect(detail_link["target"]).to eq("_blank")
+      expect(detail_link["rel"]).to include("noopener noreferrer")
+
+      get preview_pdf_bl_house_line_service_request_path(preview)
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/pdf")
+      expect(response.headers["Content-Disposition"]).to start_with("inline")
+      expect(response.body).to start_with("%PDF-")
+      expect(pdf_text(response.body)).to include("PAPELETA DE PREVIO", "Pendiente", "BL-PRV-LZC", line.blhouse)
+      expect(pdf_text(response.body)).not_to include("Precio unitario", "Subtotal", "IVA", "Total", "BL-ETQ-LZC")
+    end
+
+    it "includes only authorized complements of the same line across dates and uses their current quantity" do
+      create(:service_catalog, code: "BL-REAC-LZC", applies_to: "bl_house_line", amount: 600)
+      preview = request_service(preview_catalog)
+      preview.approve!(actor: executive, date: Date.new(2026, 12, 2), time: "09:30", notes: nil)
+      complement = request_service(complement_catalog)
+      complement.approve!(actor: executive, date: Date.new(2026, 11, 1), time: "08:00", notes: nil)
+      complement.bl_house_line_service.update!(quantity: 25)
+      pending = request_service(complement_catalog)
+      rejected = request_service(complement_catalog)
+      rejected.reject!(actor: executive, notes: "No requerido")
+      unrelated = request_service(catalog)
+      unrelated.approve!(actor: executive, date: Date.new(2026, 12, 2), time: "09:30", notes: nil)
+      other_line = create(:bl_house_line, container: container, customs_agent: agency_user.entity, status: "revalidado")
+      other_line_request = request_service(complement_catalog)
+      other_line_request.approve!(actor: executive, date: Date.new(2026, 12, 2), time: "09:30", notes: nil)
+      other_line_request.update_columns(bl_house_line_id: other_line.id)
+      sign_in executive, scope: :user
+
+      get preview_pdf_bl_house_line_service_request_path(preview)
+      expect(response).to have_http_status(:ok)
+      text = pdf_text(response.body)
+      expect(text).to include("BL-ETQ-LZC", "Etiquetas LZC", "25", "09:30", executive.email)
+      expect(preview.preview_complements).to contain_exactly(complement)
+      expect(preview.preview_complements).not_to include(pending, rejected, unrelated, other_line_request)
+
+      preview.reschedule!(actor: executive, date: Date.new(2026, 12, 3), time: "11:00", notes: nil)
+      complement.execute!(actor: executive)
+      get preview_pdf_bl_house_line_service_request_path(preview)
+      expect(pdf_text(response.body)).to include("11:00")
+      expect(preview.preview_complements).to contain_exactly(complement)
+    end
+
+    it "blocks ambiguous previos but ignores rejected ones" do
+      preview = request_service(preview_catalog)
+      other_preview = request_service(preview_catalog)
+      sign_in agency_user, scope: :user
+
+      get preview_pdf_bl_house_line_service_request_path(preview)
+      expect(response).to redirect_to(bl_house_line_path(line))
+      expect(flash[:alert]).to include("más de un previo")
+      other_preview.reject!(actor: executive, notes: "Duplicada")
+      get preview_pdf_bl_house_line_service_request_path(preview)
+      expect(response).to have_http_status(:ok)
+      get preview_pdf_bl_house_line_service_request_path(other_preview)
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "denies other agencies and tramitadores and allows internal staff" do
+      preview = request_service(preview_catalog)
+      other_agency = create(:user, role: agency_user.role, entity: create(:entity, :customs_agent))
+      [ other_agency, create(:user, :tramitador) ].each do |user|
+        sign_in user, scope: :user
+        get preview_pdf_bl_house_line_service_request_path(preview)
+        expect(response.media_type).not_to eq("application/pdf")
+        expect(response).not_to have_http_status(:ok)
+        sign_out user
+      end
+      sign_in executive, scope: :user
+      get preview_pdf_bl_house_line_service_request_path(preview)
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "paginates long lists of complements without financial data" do
+      create(:service_catalog, code: "BL-REAC-LZC", applies_to: "bl_house_line", amount: 600)
+      preview = request_service(preview_catalog)
+      preview.approve!(actor: executive, date: Date.new(2026, 12, 2), time: "09:30", notes: nil)
+      35.times do
+        complement = request_service(complement_catalog)
+        complement.approve!(actor: executive, date: Date.new(2026, 12, 2), time: "09:30", notes: nil)
+      end
+      sign_in agency_user, scope: :user
+
+      get preview_pdf_bl_house_line_service_request_path(preview)
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to match(%r{/Count [2-9]})
+      expect(pdf_text(response.body).scan("BL-ETQ-LZC").size).to eq(35)
+      expect(pdf_text(response.body)).to include("Página 1 de", "Página 2 de")
+      expect(pdf_text(response.body)).not_to include("Precio unitario", "Subtotal", "IVA", "Total")
+    end
+
+    it "does not serve non-preview services, other ports or hidden lines to the agency" do
+      preview = request_service(preview_catalog)
+      other_request = request_service(catalog)
+      sign_in agency_user, scope: :user
+      get preview_pdf_bl_house_line_service_request_path(other_request)
+      expect(response).to have_http_status(:not_found)
+
+      port.update!(code: "MXVER")
+      get preview_pdf_bl_house_line_service_request_path(preview)
+      expect(response).to have_http_status(:not_found)
+      port.update!(code: "MXLZC")
+      line.update!(hidden_from_customs_agent: true)
+      get preview_pdf_bl_house_line_service_request_path(preview)
+      expect(response.media_type).not_to eq("application/pdf")
+      expect(response).not_to have_http_status(:ok)
+    end
+
+    it "renders dashboard and detail without Bullet warnings for previews" do
+      request_service(preview_catalog)
+      request_service(preview_catalog)
+      sign_in agency_user, scope: :user
+      previous_enable = Bullet.enable?
+      previous_raise = UniformNotifier::Raise.active?
+      Bullet.enable = true
+      Bullet.raise = true
+      begin
+        [ customs_agents_dashboard_path, bl_house_line_path(line) ].each do |path|
+          Bullet.start_request
+          begin
+            get path
+            expect(response).to have_http_status(:ok)
+            Bullet.perform_out_of_channel_notifications if Bullet.notification?
+          ensure
+            Bullet.end_request
+          end
+        end
+      ensure
+        UniformNotifier.raise = previous_raise
+        Bullet.enable = previous_enable
+      end
+    end
+  end
 end

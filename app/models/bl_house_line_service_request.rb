@@ -4,6 +4,7 @@ class BlHouseLineServiceRequest < ApplicationRecord
   DELIVERY_CODE = "BL-ENT-LZC".freeze
   PREVIEW_CODE = "BL-PRV-LZC".freeze
   REARRANGEMENT_CODE = "BL-REAC-LZC".freeze
+  PREVIEW_COMPLEMENT_CODES = %w[BL-PA-LZC BL-ETQ-LZC BL-EMP-LZC BL-FLJ-LZC BL-GRP-LZC BL-CLVS-LZC].freeze
   AUTOMATIC_CODES = %w[BL-ASIG BL-ALMA BL-ALM BL-ENTCAM BL-CODIE BL-COCUS].freeze
 
   belongs_to :bl_house_line
@@ -28,6 +29,29 @@ class BlHouseLineServiceRequest < ApplicationRecord
 
   def delivery_request?
     self.class.delivery_catalog?(service_catalog)
+  end
+
+  def preview_request?
+    service_catalog.code.to_s.upcase == PREVIEW_CODE
+  end
+
+  def preview_complements
+    return BlHouseLineServiceRequest.none unless status.in?(%w[approved executed])
+
+    bl_house_line.bl_house_line_service_requests
+      .joins(:service_catalog)
+      .where(status: %w[approved executed], customs_agent_id: customs_agent_id)
+      .where("UPPER(service_catalogs.code) IN (?)", PREVIEW_COMPLEMENT_CODES)
+      .includes(:service_catalog, :bl_house_line_service)
+      .order(:created_at, :id)
+  end
+
+  def ambiguous_preview?
+    bl_house_line.bl_house_line_service_requests
+      .joins(:service_catalog)
+      .where.not(status: "rejected")
+      .where("UPPER(service_catalogs.code) = ?", PREVIEW_CODE)
+      .limit(2).count > 1
   end
 
   def self.requestable_catalogs

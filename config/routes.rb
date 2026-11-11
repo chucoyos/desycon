@@ -84,6 +84,7 @@ Rails.application.routes.draw do
 
   resources :bl_house_line_service_requests, only: [ :index, :new, :create ] do
     member do
+      get :preview_pdf
       patch :approve
       patch :reject
       patch :reschedule

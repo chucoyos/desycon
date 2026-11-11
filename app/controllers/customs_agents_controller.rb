@@ -67,6 +67,11 @@ class CustomsAgentsController < ApplicationController
 
     @bl_house_lines = filtered_scope.page(params[:page]).per(params[:per] || 20)
     preload_dashboard_listing_associations(@bl_house_lines)
+    @preview_requests_by_line = BlHouseLineServiceRequest.joins(:service_catalog)
+      .where(bl_house_line_id: @bl_house_lines.map(&:id), customs_agent_id: current_user.entity_id)
+      .where.not(status: "rejected")
+      .where("UPPER(service_catalogs.code) = ?", BlHouseLineServiceRequest::PREVIEW_CODE)
+      .order(:id).group_by(&:bl_house_line_id)
 
     # Dashboard cards (use unfiltered scope) in a single aggregated query.
     metrics_scope = BlHouseLine.where(customs_agent: current_user.entity).visible_to_customs_agent
