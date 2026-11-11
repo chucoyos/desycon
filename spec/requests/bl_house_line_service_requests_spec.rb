@@ -853,6 +853,7 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       expect(response.body).to start_with("%PDF-")
       expect(response.body).to include("/Subtype /Image")
       expect(pdf_text(response.body)).to include("PAPELETA DE PREVIO", "Autorizada", "BL-PRV-LZC", line.blhouse)
+      expect(pdf_text(response.body)).not_to include("Recinto fiscalizado")
       expect(pdf_text(response.body)).not_to include("Precio unitario", "Subtotal", "IVA", "Total", "BL-ETQ-LZC")
     end
 

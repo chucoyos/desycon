@@ -20,7 +20,6 @@ class PreviewServiceRequestPdf
 
       approval = @request.events.includes(:actor).find_by(action: "approved")
       details = [
-        [ "Recinto fiscalizado", @container.recinto ],
         [ "Almacén", @container.almacen ],
         [ "Folio de solicitud", @request.id ],
         [ "Estatus", BlHouseLineServiceRequest::STATUS_LABELS.fetch(@request.status) ],
