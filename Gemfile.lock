@@ -249,7 +249,7 @@ GEM
     minitest (6.0.6)
       drb (~> 2.0)
       prism (~> 1.5)
-    msgpack (1.8.3)
+    msgpack (1.8.7)
     net-imap (0.6.6)
       date
       net-protocol
@@ -307,7 +307,7 @@ GEM
       activesupport (>= 7.0.0)
       rack
     public_suffix (7.0.5)
-    puma (8.0.2)
+    puma (8.1.2)
       nio4r (~> 2.0)
     pundit (2.5.2)
       activesupport (>= 3.0.0)
@@ -540,6 +540,7 @@ DEPENDENCIES
   kamal
   kaminari (~> 1.2)
   loofah (>= 2.25.3)
+  msgpack (>= 1.8.7)
   net-ssh (>= 7.3.5)
   newrelic_rpm
   nokogiri (>= 1.19.5)
@@ -547,7 +548,7 @@ DEPENDENCIES
   prawn (~> 2.4)
   prawn-table (~> 0.2)
   propshaft
-  puma (>= 5.0)
+  puma (>= 8.0.3)
   pundit (~> 2.4)
   rack (>= 3.2.8)
   rails (~> 8.1.4, >= 8.1.4.1)

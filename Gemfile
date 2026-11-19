@@ -10,6 +10,7 @@ gem "rdoc", "~> 8.1.0"
 gem "addressable", ">= 2.9.1"
 gem "crass", ">= 1.0.8"
 gem "loofah", ">= 2.25.3"
+gem "msgpack", ">= 1.8.7"
 gem "net-ssh", ">= 7.3.5"
 gem "nokogiri", ">= 1.19.5"
 gem "rack", ">= 3.2.8"
@@ -24,7 +25,7 @@ gem "propshaft"
 # Use postgresql as the database for Active Record
 gem "pg", "~> 1.1"
 # Use the Puma web server [https://github.com/puma/puma]
-gem "puma", ">= 5.0"
+gem "puma", ">= 8.0.3"
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
 gem "importmap-rails"
 # Hotwire's SPA-like page accelerator [https://turbo.hotwired.dev]
