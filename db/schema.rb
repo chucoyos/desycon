@@ -73,13 +73,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_18_210000) do
   end
 
   create_table "bl_house_line_service_request_events", force: :cascade do |t|
-    t.string "action", null: false
-    t.bigint "actor_id", null: false
     t.bigint "bl_house_line_service_request_id", null: false
-    t.datetime "created_at", null: false
-    t.text "notes"
+    t.bigint "actor_id", null: false
+    t.string "action", null: false
     t.date "scheduled_date"
     t.time "scheduled_time"
+    t.text "notes"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["actor_id"], name: "index_bl_house_line_service_request_events_on_actor_id"
     t.index ["bl_house_line_service_request_id"], name: "index_bl_service_request_events_on_request_id"
@@ -87,17 +87,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_18_210000) do
 
   create_table "bl_house_line_service_requests", force: :cascade do |t|
     t.bigint "bl_house_line_id", null: false
-    t.bigint "bl_house_line_service_id"
-    t.datetime "created_at", null: false
-    t.bigint "customs_agent_id", null: false
-    t.datetime "executed_at"
-    t.date "requested_date", null: false
+    t.bigint "service_catalog_id", null: false
     t.bigint "requester_id", null: false
-    t.text "review_notes"
+    t.bigint "customs_agent_id", null: false
+    t.bigint "bl_house_line_service_id"
+    t.date "requested_date", null: false
     t.date "scheduled_date"
     t.time "scheduled_time"
-    t.bigint "service_catalog_id", null: false
     t.string "status", default: "pending", null: false
+    t.datetime "executed_at"
+    t.text "review_notes"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "numero_economico"
     t.string "transportista"
@@ -189,14 +189,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_18_210000) do
   end
 
   create_table "consolidator_api_credentials", force: :cascade do |t|
-    t.datetime "created_at", null: false
     t.bigint "entity_id", null: false
-    t.datetime "expires_at"
-    t.string "key_digest", null: false
-    t.string "key_prefix", null: false
-    t.datetime "last_used_at"
     t.string "name", null: false
+    t.string "key_prefix", null: false
+    t.string "key_digest", null: false
+    t.datetime "expires_at"
     t.datetime "revoked_at"
+    t.datetime "last_used_at"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["entity_id"], name: "index_consolidator_api_credentials_on_entity_id"
     t.index ["key_digest"], name: "index_consolidator_api_credentials_on_key_digest", unique: true
