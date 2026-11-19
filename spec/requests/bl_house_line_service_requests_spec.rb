@@ -641,8 +641,18 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     let(:pdf) { Rack::Test::UploadedFile.new(StringIO.new("%PDF-1.4 test"), "application/pdf", original_filename: "entrega.pdf") }
     let(:txt) { Rack::Test::UploadedFile.new(StringIO.new("hola"), "text/plain", original_filename: "entrega.txt") }
 
-    def submit_delivery(file)
+    def delivery_transport_details
+      {
+        numero_economico: "ECO-123",
+        transportista: "Transportes Demo",
+        operador: "Operador Demo",
+        placas: "ABC-123"
+      }
+    end
+
+    def submit_delivery(file, transport_details: delivery_transport_details)
       attrs = { bl_house_line_id: line.id, service_catalog_id: delivery_catalog.id, requested_date: "2026-12-01" }
+        .merge(transport_details)
       attrs[:documentos_entrega] = file if file
       post bl_house_line_service_requests_path, params: { bl_house_line_service_request: attrs }
     end
@@ -660,9 +670,21 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       expect(response.body).to include("debe ser un archivo PDF")
     end
 
+    it "requires all transport details" do
+      delivery_transport_details.each_key do |attribute|
+        expect {
+          submit_delivery(pdf, transport_details: delivery_transport_details.except(attribute))
+        }.not_to change(BlHouseLineServiceRequest, :count)
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.body).to include("no puede estar en blanco")
+      end
+    end
+
     it "accepts a PDF and exposes it to the agency and staff" do
       expect { submit_delivery(pdf) }.to change(BlHouseLineServiceRequest, :count).by(1)
-      expect(BlHouseLineServiceRequest.last.documentos_entrega).to be_attached
+      request_record = BlHouseLineServiceRequest.last
+      expect(request_record.documentos_entrega).to be_attached
+      expect(request_record.attributes).to include(delivery_transport_details.stringify_keys)
 
       get bl_house_line_path(line)
       link = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='service-requests-heading'] a[target='_blank']")
@@ -741,6 +763,14 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       document = Nokogiri::HTML(response.body)
       expect(document.at_css("form[enctype='multipart/form-data']")).to be_present
       expect(document.at_css("input[type=file][name='bl_house_line_service_request[documentos_entrega]']")).to be_present
+      expect(document.css("input[name^='bl_house_line_service_request[']").map { |input| input["name"] })
+        .to include(
+          "bl_house_line_service_request[numero_economico]",
+          "bl_house_line_service_request[transportista]",
+          "bl_house_line_service_request[operador]",
+          "bl_house_line_service_request[placas]"
+        )
+      expect(document.text).to include("Aviso de Cruce")
     end
   end
 
@@ -819,7 +849,8 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     it "opens a separate delivery paper only after approval with exactly the delivery concept" do
       delivery_catalog = create(:service_catalog, code: "BL-ENT-LZC", applies_to: "bl_house_line", name: "Entrega LZC")
       delivery = BlHouseLineServiceRequest.new(bl_house_line: line, service_catalog: delivery_catalog,
-        requester: agency_user, customs_agent: agency_user.entity, requested_date: Date.new(2026, 12, 1))
+        requester: agency_user, customs_agent: agency_user.entity, requested_date: Date.new(2026, 12, 1),
+        numero_economico: "ECO-123", transportista: "Transportes Demo", operador: "Operador Demo", placas: "ABC-123")
       delivery.documentos_entrega.attach(io: StringIO.new("%PDF-1.4 test"), filename: "entrega.pdf", content_type: "application/pdf")
       delivery.save!
       complement = request_service(complement_catalog)
@@ -848,6 +879,8 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       expect(response.body).to include("/Subtype /Image")
       text = pdf_text(response.body)
       expect(text).to include("PAPELETA DE DESPACHO", "BL-ENT-LZC", "Coordinación entrega de carga de almacén a camión", "10:30")
+      expect(text).to include("Número económico", "ECO-123", "Transportista", "Transportes Demo",
+        "Operador", "Operador Demo", "Placas", "ABC-123")
       expect(text.scan("BL-ENT-LZC").size).to eq(1)
       expect(text).not_to include("BL-ETQ-LZC", "Etiquetas LZC", "Precio unitario", "Subtotal", "IVA")
       expect(line.reload.status).to eq("revalidado")
@@ -860,7 +893,8 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     it "restricts delivery papers to authorized users and delivery requests in Lázaro" do
       delivery_catalog = create(:service_catalog, code: "BL-ENT-LZC", applies_to: "bl_house_line")
       delivery = BlHouseLineServiceRequest.new(bl_house_line: line, service_catalog: delivery_catalog,
-        requester: agency_user, customs_agent: agency_user.entity, requested_date: Date.new(2026, 12, 1))
+        requester: agency_user, customs_agent: agency_user.entity, requested_date: Date.new(2026, 12, 1),
+        numero_economico: "ECO-123", transportista: "Transportes Demo", operador: "Operador Demo", placas: "ABC-123")
       delivery.documentos_entrega.attach(io: StringIO.new("%PDF-1.4 test"), filename: "entrega.pdf", content_type: "application/pdf")
       delivery.save!
       delivery.approve!(actor: executive, date: Date.new(2026, 12, 3), time: "10:30", notes: nil)
@@ -881,6 +915,25 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       port.update!(code: "MXVER")
       get delivery_pdf_bl_house_line_service_request_path(delivery)
       expect(response).to have_http_status(:not_found)
+    end
+
+    it "keeps generating delivery papers for historical requests without transport details" do
+      delivery_catalog = create(:service_catalog, code: "BL-ENT-LZC", applies_to: "bl_house_line")
+      delivery = BlHouseLineServiceRequest.new(bl_house_line: line, service_catalog: delivery_catalog,
+        requester: agency_user, customs_agent: agency_user.entity, requested_date: Date.new(2026, 12, 1),
+        numero_economico: "ECO-123", transportista: "Transportes Demo", operador: "Operador Demo", placas: "ABC-123")
+      delivery.documentos_entrega.attach(io: StringIO.new("%PDF-1.4 test"), filename: "entrega.pdf", content_type: "application/pdf")
+      delivery.save!
+      delivery.update_columns(numero_economico: nil, transportista: nil, operador: nil, placas: nil)
+      delivery.approve!(actor: executive, date: Date.new(2026, 12, 3), time: "10:30", notes: nil)
+      sign_in agency_user, scope: :user
+
+      get delivery_pdf_bl_house_line_service_request_path(delivery)
+
+      expect(response).to have_http_status(:ok)
+      text = pdf_text(response.body)
+      expect(text).to include("PAPELETA DE DESPACHO", "BL-ENT-LZC")
+      expect(text).not_to include("Número económico", "Transportista", "Operador", "Placas")
     end
 
     it "shows the preview paper only after approval and includes the logo without financial information" do
@@ -1035,7 +1088,8 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       request_service(preview_catalog)
       delivery_catalog = create(:service_catalog, code: "BL-ENT-LZC", applies_to: "bl_house_line")
       delivery = BlHouseLineServiceRequest.new(bl_house_line: line, service_catalog: delivery_catalog,
-        requester: agency_user, customs_agent: agency_user.entity, requested_date: Date.new(2026, 12, 1))
+        requester: agency_user, customs_agent: agency_user.entity, requested_date: Date.new(2026, 12, 1),
+        numero_economico: "ECO-123", transportista: "Transportes Demo", operador: "Operador Demo", placas: "ABC-123")
       delivery.documentos_entrega.attach(io: StringIO.new("%PDF-1.4 test"), filename: "entrega.pdf", content_type: "application/pdf")
       delivery.save!
       delivery.approve!(actor: executive, date: Date.new(2026, 12, 3), time: "10:30", notes: nil)

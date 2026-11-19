@@ -70,6 +70,11 @@ es:
         updated_at: Fecha de actualización
       container:
         archivo_nr: Referencia
+      bl_house_line_service_request:
+        numero_economico: Número económico
+        transportista: Transportista
+        operador: Operador
+        placas: Placas
       invoice:
         statuses:
           draft: Borrador

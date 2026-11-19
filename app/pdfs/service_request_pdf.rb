@@ -30,6 +30,14 @@ class ServiceRequestPdf
         [ "Fecha de autorización", datetime(approval&.created_at) ],
         [ "Usuario autorizador", approval&.actor&.email ]
       ]
+      if @request.delivery_request?
+        details.concat([
+          [ "Número económico", @request.numero_economico ],
+          [ "Transportista", @request.transportista ],
+          [ "Operador", @request.operador ],
+          [ "Placas", @request.placas ]
+        ])
+      end
       details_table(pdf, details)
 
       section(pdf, "Datos de la operación logística")

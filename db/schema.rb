@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_06_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_18_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -99,6 +99,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_150000) do
     t.bigint "service_catalog_id", null: false
     t.string "status", default: "pending", null: false
     t.datetime "updated_at", null: false
+    t.string "numero_economico"
+    t.string "transportista"
+    t.string "operador"
+    t.string "placas"
     t.index ["bl_house_line_id"], name: "index_bl_house_line_service_requests_on_bl_house_line_id"
     t.index ["bl_house_line_service_id"], name: "idx_on_bl_house_line_service_id_0d9af035fc", unique: true
     t.index ["customs_agent_id"], name: "index_bl_house_line_service_requests_on_customs_agent_id"

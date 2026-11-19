@@ -22,6 +22,7 @@ class BlHouseLineServiceRequest < ApplicationRecord
   validates :scheduled_date, :scheduled_time, presence: true, if: -> { status.in?(%w[approved executed]) }
   validate :eligible_for_request, on: :create
   validate :delivery_documents_present, on: :create
+  validate :delivery_transport_details_present, on: :create
 
   def self.delivery_catalog?(catalog)
     catalog&.code.to_s.upcase == DELIVERY_CODE
@@ -169,6 +170,19 @@ class BlHouseLineServiceRequest < ApplicationRecord
       errors.add(:documentos_entrega, "es obligatorio: adjunta un solo PDF con los documentos requeridos.")
     elsif documentos_entrega.blob.content_type != "application/pdf"
       errors.add(:documentos_entrega, "debe ser un archivo PDF.")
+    end
+  end
+
+  def delivery_transport_details_present
+    return unless delivery_request?
+
+    {
+      numero_economico: "Número económico",
+      transportista: "Transportista",
+      operador: "Operador",
+      placas: "Placas"
+    }.each do |attribute, label|
+      errors.add(attribute, "no puede estar en blanco") if public_send(attribute).blank?
     end
   end
 

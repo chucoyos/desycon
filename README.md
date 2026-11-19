@@ -82,12 +82,16 @@ esté revalidada, la factura de asignación esté pagada y la agencia no esté
 restringida por facturas vencidas. La partida debe tener un cliente facturable
 sin una asociación incompatible con la agencia.
 
-Para solicitar la entrega (`BL-ENT-LZC`) es obligatorio adjuntar un único PDF
+Para solicitar la entrega (`BL-ENT-LZC`), la agencia debe capturar número
+económico, transportista, operador y placas, además de adjuntar un único PDF
 que contenga DODA, pedimento completo y simple pagado, tarja desconsol, MBL
-revalidado y carta revalidado. Los demás servicios no lo requieren. El archivo
-se abre en una pestaña nueva desde el detalle de la partida o el listado del
-personal. El seguimiento de solicitudes en el detalle está disponible para la
-agencia propietaria y para administradores y ejecutivos.
+revalidado, carta revalidado y Aviso de Cruce. El sistema verifica que sea un
+PDF, pero no inspecciona su contenido. La papeleta de despacho incluye los
+datos del transporte capturados. Los demás servicios no requieren estos datos
+ni el documento. El archivo se abre en una pestaña nueva desde el detalle de
+la partida o el listado del personal. El seguimiento de solicitudes en el
+detalle está disponible para la agencia propietaria y para administradores y
+ejecutivos.
 
 Al revalidar una partida MXLZC, se usa el catálogo activo `BL-ASIG-LZC` para
 la asignación electrónica; las asignaciones históricas se conservan sin crear

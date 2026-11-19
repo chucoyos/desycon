@@ -105,7 +105,10 @@ class BlHouseLineServiceRequestsController < ApplicationController
   end
 
   def request_params
-    params.require(:bl_house_line_service_request).permit(:service_catalog_id, :requested_date, :documentos_entrega)
+    params.require(:bl_house_line_service_request).permit(
+      :service_catalog_id, :requested_date, :documentos_entrega,
+      :numero_economico, :transportista, :operador, :placas
+    )
   end
 
   def review_params
