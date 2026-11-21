@@ -1,0 +1,18 @@
+<% transport_values = [
+  [ "Número económico", service_request.numero_economico ],
+  [ "Transportista", service_request.transportista ],
+  [ "Operador", service_request.operador ],
+  [ "Placas", service_request.placas ]
+] %>
+<% if service_request.delivery_request? && service_request.transport_details_present? %>
+  <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-gray-200 pt-3 text-sm">
+    <% transport_values.each do |label, value| %>
+      <% if value.present? %>
+        <div>
+          <dt class="text-gray-500"><%= label %></dt>
+          <dd class="mt-1 font-medium text-gray-900"><%= value %></dd>
+        </div>
+      <% end %>
+    <% end %>
+  </dl>
+<% end %>

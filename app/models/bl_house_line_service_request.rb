@@ -32,6 +32,10 @@ class BlHouseLineServiceRequest < ApplicationRecord
     self.class.delivery_catalog?(service_catalog)
   end
 
+  def transport_details_present?
+    [ numero_economico, transportista, operador, placas ].any?(&:present?)
+  end
+
   def preview_request?
     service_catalog.code.to_s.upcase == PREVIEW_CODE
   end

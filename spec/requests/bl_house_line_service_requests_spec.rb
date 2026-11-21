@@ -687,7 +687,13 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       expect(request_record.attributes).to include(delivery_transport_details.stringify_keys)
 
       get bl_house_line_path(line)
-      link = Nokogiri::HTML(response.body).at_css("section[aria-labelledby='service-requests-heading'] a[target='_blank']")
+      detail = Nokogiri::HTML(response.body)
+      request_section = detail.at_css("section[aria-labelledby='service-requests-heading']")
+      expect(request_section.at_css("details[open]")).to be_nil
+      expect(request_section.at_css("summary").text).to include("Solicitudes de servicios")
+      expect(request_section.text).to include("ECO-123", "Transportes Demo", "Operador Demo", "ABC-123")
+      expect(request_section.at_css("a[href='#{new_bl_house_line_service_request_path(bl_house_line_id: line.id)}']")).to be_present
+      link = request_section.at_css("a[target='_blank']")
       expect(link.text).to eq("Documentos de entrega (PDF)")
       expect(link["rel"].split).to include("noopener", "noreferrer")
       expect(Rack::Utils.parse_query(URI.parse(link["href"]).query)).to include("disposition" => "inline")
@@ -705,7 +711,16 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       expect(Rack::Utils.parse_query(URI.parse(link["href"]).query)).to include("disposition" => "inline")
 
       get bl_house_line_service_requests_path
-      links = Nokogiri::HTML(response.body).css("a").select { |link| link.text == "Documentos de entrega (PDF)" }
+      request_index = Nokogiri::HTML(response.body)
+      desktop_details = request_index.at_css("tbody[data-request-id='#{request_record.id}'] details")
+      mobile_details = request_index.at_css("article[data-request-id='#{request_record.id}'] details")
+      [ desktop_details, mobile_details ].each do |details|
+        expect(details).to be_present
+        expect(details["open"]).to be_nil
+        expect(details.at_css("summary").text).to include("Datos del transporte")
+        expect(details.text).to include("ECO-123", "Transportes Demo", "Operador Demo", "ABC-123")
+      end
+      links = request_index.css("a").select { |item| item.text == "Documentos de entrega (PDF)" }
       expect(links.size).to eq(2)
       links.each do |link|
         expect(link["target"]).to eq("_blank")
@@ -866,11 +881,16 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
 
       delivery.approve!(actor: executive, date: Date.new(2026, 12, 3), time: "10:30", notes: nil)
       get customs_agents_dashboard_path
+      expect(response.body).not_to include("ECO-123", "Transportes Demo", "Operador Demo", "ABC-123")
       links = Nokogiri::HTML(response.body).css("a[href='#{delivery_pdf_bl_house_line_service_request_path(delivery)}']")
       expect(links.size).to eq(2)
       expect(links).to all(satisfy { |link| link.text.strip == "Papeleta despacho" && link["target"] == "_blank" && (link["rel"].split & %w[noopener noreferrer]).size == 2 })
       get bl_house_line_path(line)
-      expect(Nokogiri::HTML(response.body).at_css("a[href='#{delivery_pdf_bl_house_line_service_request_path(delivery)}']")).to be_present
+      detail = Nokogiri::HTML(response.body)
+      expect(detail.at_css("a[href='#{delivery_pdf_bl_house_line_service_request_path(delivery)}']")).to be_present
+      request_section = detail.at_css("section[aria-labelledby='service-requests-heading']")
+      expect(request_section.at_css("details[open]")).to be_nil
+      expect(request_section.text).to include("ECO-123", "Transportes Demo", "Operador Demo", "ABC-123")
 
       get delivery_pdf_bl_house_line_service_request_path(delivery)
       expect(response).to have_http_status(:ok)
@@ -879,8 +899,9 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       expect(response.body).to include("/Subtype /Image")
       text = pdf_text(response.body)
       expect(text).to include("PAPELETA DE DESPACHO", "BL-ENT-LZC", "Coordinación entrega de carga de almacén a camión", "10:30")
-      expect(text).to include("Número económico", "ECO-123", "Transportista", "Transportes Demo",
+      expect(text).to include("Datos del transporte", "Número económico", "ECO-123", "Transportista", "Transportes Demo",
         "Operador", "Operador Demo", "Placas", "ABC-123")
+      expect(text.index("Datos del transporte")).to be > text.index("Datos de la operación logística")
       expect(text.scan("BL-ENT-LZC").size).to eq(1)
       expect(text).not_to include("BL-ETQ-LZC", "Etiquetas LZC", "Precio unitario", "Subtotal", "IVA")
       expect(line.reload.status).to eq("revalidado")
@@ -933,7 +954,7 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       expect(response).to have_http_status(:ok)
       text = pdf_text(response.body)
       expect(text).to include("PAPELETA DE DESPACHO", "BL-ENT-LZC")
-      expect(text).not_to include("Número económico", "Transportista", "Operador", "Placas")
+      expect(text).not_to include("Datos del transporte", "Número económico", "Transportista", "Operador", "Placas")
     end
 
     it "shows the preview paper only after approval and includes the logo without financial information" do

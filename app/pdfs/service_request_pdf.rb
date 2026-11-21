@@ -30,14 +30,6 @@ class ServiceRequestPdf
         [ "Fecha de autorización", datetime(approval&.created_at) ],
         [ "Usuario autorizador", approval&.actor&.email ]
       ]
-      if @request.delivery_request?
-        details.concat([
-          [ "Número económico", @request.numero_economico ],
-          [ "Transportista", @request.transportista ],
-          [ "Operador", @request.operador ],
-          [ "Placas", @request.placas ]
-        ])
-      end
       details_table(pdf, details)
 
       section(pdf, "Datos de la operación logística")
@@ -58,6 +50,19 @@ class ServiceRequestPdf
         [ "Tipo de trámite", @container.tipo_maniobra&.humanize ],
         [ "Referencia interna", @line.internal_reference ]
       ])
+
+      if @request.delivery_request?
+        transport_details = [
+          [ "Número económico", @request.numero_economico ],
+          [ "Transportista", @request.transportista ],
+          [ "Operador", @request.operador ],
+          [ "Placas", @request.placas ]
+        ]
+        if transport_details.any? { |_, value| value.present? }
+          section(pdf, "Datos del transporte")
+          details_table(pdf, transport_details)
+        end
+      end
 
       section(pdf, "Servicios solicitados")
       requests = [ @request ]
