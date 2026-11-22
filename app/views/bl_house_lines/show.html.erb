@@ -50,15 +50,15 @@
       <section class="bg-white shadow-md rounded-xl border border-gray-100 p-5 sm:p-6 mt-6" aria-labelledby="service-requests-heading">
         <details class="group">
           <summary class="flex min-h-12 cursor-pointer list-none items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300">
-            <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-600 shadow-sm flex-shrink-0">
+            <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-600 shadow-sm" aria-hidden="true">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
               </svg>
-            </div>
-            <div>
-              <h2 id="service-requests-heading" class="text-xl font-bold text-gray-900">Solicitudes de servicios</h2>
-              <p class="text-sm text-gray-500">Seguimiento de los servicios solicitados para esta partida</p>
-            </div>
+            </span>
+            <span class="min-w-0">
+              <span id="service-requests-heading" role="heading" aria-level="2" class="block text-xl font-bold text-gray-900">Solicitudes de servicios</span>
+              <span class="block text-sm text-gray-500">Seguimiento de los servicios solicitados para esta partida</span>
+            </span>
             <svg class="ml-auto h-5 w-5 shrink-0 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/>
             </svg>
@@ -78,7 +78,8 @@
                 <% if service_request.preview_request? && service_request.status.in?(%w[approved executed]) %>
                   <%= link_to "Ver papeleta de previo", preview_pdf_bl_house_line_service_request_path(service_request), target: "_blank", rel: "noopener noreferrer", data: { turbo: false }, class: "inline-flex items-center min-h-12 mt-2 text-sm font-medium text-indigo-700 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-600 rounded-lg" %>
                 <% end %>
-                <% if service_request.delivery_request? && service_request.status.in?(%w[approved executed]) %>
+                <% if service_request.delivery_request? && service_request.status.in?(%w[approved executed]) &&
+                    (current_user.admin_or_executive? || service_request.customs_agent_id == current_user.entity_id) %>
                   <%= link_to "Ver papeleta de despacho", delivery_pdf_bl_house_line_service_request_path(service_request), target: "_blank", rel: "noopener noreferrer", data: { turbo: false }, class: "inline-flex items-center min-h-12 mt-2 text-sm font-medium text-indigo-700 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-600 rounded-lg" %>
                 <% end %>
                 <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 text-sm">
@@ -101,7 +102,17 @@
                     </div>
                   <% end %>
                 </dl>
-                <div class="mt-4"><%= render "bl_house_line_service_requests/transport_details", service_request: service_request %></div>
+                <% if service_request.delivery_request? %>
+                  <details class="group mt-4 rounded-lg border border-gray-200 bg-white px-3 py-2">
+                    <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded text-sm font-semibold text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600">
+                      <span>Datos del transporte</span>
+                      <svg class="h-5 w-5 shrink-0 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/>
+                      </svg>
+                    </summary>
+                    <div class="mt-2"><%= render "bl_house_line_service_requests/transport_details", service_request: service_request %></div>
+                  </details>
+                <% end %>
                 <% if service_request.review_notes.present? %>
                   <div class="mt-4 pt-3 border-t border-gray-200 text-sm">
                     <p class="font-medium text-gray-500">Observaciones</p>

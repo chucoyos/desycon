@@ -691,7 +691,13 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       request_section = detail.at_css("section[aria-labelledby='service-requests-heading']")
       expect(request_section.at_css("details[open]")).to be_nil
       expect(request_section.at_css("summary").text).to include("Solicitudes de servicios")
+      expect(request_section.at_css("summary > div")).to be_nil
       expect(request_section.text).to include("ECO-123", "Transportes Demo", "Operador Demo", "ABC-123")
+      transport_details = request_section.at_css("article[data-service-request-id='#{request_record.id}'] details")
+      expect(transport_details).to be_present
+      expect(transport_details["open"]).to be_nil
+      expect(transport_details.at_css("summary").text).to include("Datos del transporte")
+      expect(transport_details.text).to include("ECO-123", "Transportes Demo", "Operador Demo", "ABC-123")
       expect(request_section.at_css("a[href='#{new_bl_house_line_service_request_path(bl_house_line_id: line.id)}']")).to be_present
       link = request_section.at_css("a[target='_blank']")
       expect(link.text).to eq("Documentos de entrega (PDF)")
@@ -720,6 +726,7 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
         expect(details.at_css("summary").text).to include("Datos del transporte")
         expect(details.text).to include("ECO-123", "Transportes Demo", "Operador Demo", "ABC-123")
       end
+      expect(request_index.css("a").select { |item| item.text == "Papeleta despacho" }).to be_empty
       links = request_index.css("a").select { |item| item.text == "Documentos de entrega (PDF)" }
       expect(links.size).to eq(2)
       links.each do |link|
@@ -891,6 +898,21 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       request_section = detail.at_css("section[aria-labelledby='service-requests-heading']")
       expect(request_section.at_css("details[open]")).to be_nil
       expect(request_section.text).to include("ECO-123", "Transportes Demo", "Operador Demo", "ABC-123")
+      transport_details = request_section.at_css("article[data-service-request-id='#{delivery.id}'] details")
+      expect(transport_details.at_css("summary").text).to include("Datos del transporte")
+
+      sign_out agency_user
+      sign_in executive, scope: :user
+      get bl_house_line_service_requests_path
+      request_index = Nokogiri::HTML(response.body)
+      [ request_index.at_css("tbody[data-request-id='#{delivery.id}']"),
+        request_index.at_css("article[data-request-id='#{delivery.id}']") ].each do |request_item|
+        paper_link = request_item.at_css("a[href='#{delivery_pdf_bl_house_line_service_request_path(delivery)}']")
+        expect(paper_link).to be_present
+        expect(paper_link.text).to eq("Papeleta despacho")
+        expect(paper_link["target"]).to eq("_blank")
+        expect(paper_link["rel"].split).to include("noopener", "noreferrer")
+      end
 
       get delivery_pdf_bl_house_line_service_request_path(delivery)
       expect(response).to have_http_status(:ok)
@@ -938,6 +960,25 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       expect(response).to have_http_status(:not_found)
     end
 
+    it "does not show a previous agency's delivery paper link after reassignment" do
+      delivery_catalog = create(:service_catalog, code: "BL-ENT-LZC", applies_to: "bl_house_line")
+      delivery = BlHouseLineServiceRequest.new(bl_house_line: line, service_catalog: delivery_catalog,
+        requester: agency_user, customs_agent: agency_user.entity, requested_date: Date.new(2026, 12, 1),
+        numero_economico: "ECO-123", transportista: "Transportes Demo", operador: "Operador Demo", placas: "ABC-123")
+      delivery.documentos_entrega.attach(io: StringIO.new("%PDF-1.4 test"), filename: "entrega.pdf", content_type: "application/pdf")
+      delivery.save!
+      delivery.approve!(actor: executive, date: Date.new(2026, 12, 3), time: "10:30", notes: nil)
+
+      new_agency_user = create(:user, role: agency_user.role, entity: create(:entity, :customs_agent))
+      line.update_column(:customs_agent_id, new_agency_user.entity_id)
+      sign_in new_agency_user, scope: :user
+
+      get bl_house_line_path(line)
+
+      expect(response).to have_http_status(:ok)
+      expect(Nokogiri::HTML(response.body).at_css("a[href='#{delivery_pdf_bl_house_line_service_request_path(delivery)}']")).to be_nil
+    end
+
     it "keeps generating delivery papers for historical requests without transport details" do
       delivery_catalog = create(:service_catalog, code: "BL-ENT-LZC", applies_to: "bl_house_line")
       delivery = BlHouseLineServiceRequest.new(bl_house_line: line, service_catalog: delivery_catalog,
@@ -955,6 +996,16 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
       text = pdf_text(response.body)
       expect(text).to include("PAPELETA DE DESPACHO", "BL-ENT-LZC")
       expect(text).not_to include("Datos del transporte", "Número económico", "Transportista", "Operador", "Placas")
+
+      sign_in executive, scope: :user
+      get bl_house_line_service_requests_path
+      request_index = Nokogiri::HTML(response.body)
+      [ request_index.at_css("tbody[data-request-id='#{delivery.id}']"),
+        request_index.at_css("article[data-request-id='#{delivery.id}']") ].each do |request_item|
+        transport_details = request_item.at_css("details")
+        expect(transport_details.at_css("summary").text).to include("Datos del transporte")
+        expect(transport_details.text).to include("No hay datos de transporte registrados")
+      end
     end
 
     it "shows the preview paper only after approval and includes the logo without financial information" do

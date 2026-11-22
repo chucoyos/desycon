@@ -143,9 +143,17 @@
                 <td class="px-5 py-4 text-sm font-semibold text-gray-900">
                   <%= service_request.service_catalog.display_name %>
                   <% if service_request.documentos_entrega.attached? %><%= link_to "Documentos de entrega (PDF)", rails_blob_path(service_request.documentos_entrega, disposition: "inline"), target: "_blank", rel: "noopener noreferrer", class: "block mt-1 text-xs font-medium text-indigo-600 hover:text-indigo-800" %><% end %>
-                  <% if service_request.delivery_request? && service_request.transport_details_present? %>
-                    <details class="mt-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-                      <summary class="flex min-h-12 cursor-pointer items-center rounded text-xs font-semibold text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600">Datos del transporte</summary>
+                  <% if service_request.delivery_request? && service_request.status.in?(%w[approved executed]) %>
+                    <%= link_to "Papeleta despacho", delivery_pdf_bl_house_line_service_request_path(service_request), target: "_blank", rel: "noopener noreferrer", data: { turbo: false }, class: "block mt-1 min-h-12 text-xs font-medium text-indigo-600 hover:text-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 rounded-lg" %>
+                  <% end %>
+                  <% if service_request.delivery_request? %>
+                    <details class="group mt-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                      <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded text-xs font-semibold text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600">
+                        <span>Datos del transporte</span>
+                        <svg class="h-5 w-5 shrink-0 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/>
+                        </svg>
+                      </summary>
                       <div class="mt-2"><%= render "transport_details", service_request: service_request %></div>
                     </details>
                   <% end %>
@@ -184,9 +192,17 @@
               <div>
                 <h3 class="font-semibold text-gray-900"><%= service_request.service_catalog.display_name %></h3>
                 <% if service_request.documentos_entrega.attached? %><%= link_to "Documentos de entrega (PDF)", rails_blob_path(service_request.documentos_entrega, disposition: "inline"), target: "_blank", rel: "noopener noreferrer", class: "block mt-1 text-xs font-medium text-indigo-600 hover:text-indigo-800" %><% end %>
-                <% if service_request.delivery_request? && service_request.transport_details_present? %>
-                  <details class="mt-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-                    <summary class="flex min-h-12 cursor-pointer items-center rounded text-xs font-semibold text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600">Datos del transporte</summary>
+                <% if service_request.delivery_request? && service_request.status.in?(%w[approved executed]) %>
+                  <%= link_to "Papeleta despacho", delivery_pdf_bl_house_line_service_request_path(service_request), target: "_blank", rel: "noopener noreferrer", data: { turbo: false }, class: "block mt-1 min-h-12 text-xs font-medium text-indigo-600 hover:text-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 rounded-lg" %>
+                <% end %>
+                <% if service_request.delivery_request? %>
+                  <details class="group mt-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                    <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded text-xs font-semibold text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600">
+                      <span>Datos del transporte</span>
+                      <svg class="h-5 w-5 shrink-0 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/>
+                      </svg>
+                    </summary>
                     <div class="mt-2"><%= render "transport_details", service_request: service_request %></div>
                   </details>
                 <% end %>
