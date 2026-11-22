@@ -263,7 +263,7 @@ GEM
       net-ssh (>= 5.0.0, < 8.0.0)
     net-smtp (0.5.1)
       net-protocol
-    net-ssh (7.3.8)
+    net-ssh (7.3.10)
       logger
     newrelic_rpm (10.5.0)
       logger
@@ -541,7 +541,7 @@ DEPENDENCIES
   kaminari (~> 1.2)
   loofah (>= 2.25.3)
   msgpack (>= 1.8.7)
-  net-ssh (>= 7.3.5)
+  net-ssh (~> 7.3, >= 7.3.10)
   newrelic_rpm
   nokogiri (>= 1.19.5)
   pg (~> 1.1)
