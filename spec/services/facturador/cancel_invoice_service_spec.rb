@@ -16,6 +16,9 @@ RSpec.describe Facturador::CancelInvoiceService, type: :service do
     end
 
     it 'marks invoice as cancelled when PAC confirms immediate cancellation' do
+      agency = create(:entity, :customs_agent)
+      invoice.update!(customs_agent: agency)
+      expect(CustomsAgents::RecalculateAccessRestrictionsJob).to receive(:perform_later).with(customs_agent_id: agency.id)
       allow(client_double).to receive(:cancelar_comprobante).and_return(
         {
           'esValido' => true,

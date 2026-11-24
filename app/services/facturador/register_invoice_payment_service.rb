@@ -80,8 +80,7 @@ module Facturador
     end
 
     def enqueue_customs_agency_access_recalculation
-      agency_ids = [ invoice.customs_agent_id, invoice.receiver_entity&.customs_agent_id, *invoice.request_customs_agent_ids ].compact.uniq
-      agency_ids.each do |agency_id|
+      invoice.restriction_customs_agent_ids.each do |agency_id|
         CustomsAgents::RecalculateAccessRestrictionsJob.perform_later(customs_agent_id: agency_id)
       end
     end

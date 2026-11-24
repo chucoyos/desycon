@@ -37,6 +37,7 @@ class Invoice < ApplicationRecord
   has_one_attached :pdf_file
 
   before_validation :ensure_idempotency_key
+  after_update_commit :enqueue_customs_agency_access_recalculation, if: :cancellation_status_changed?
 
   validates :kind, inclusion: { in: KINDS }
   validates :status, inclusion: { in: STATUSES }
@@ -103,6 +104,10 @@ class Invoice < ApplicationRecord
       requests = requests.or(BlHouseLineServiceRequest.where(bl_house_line_service_id: invoiceable_id))
     end
     requests.distinct.pluck(:customs_agent_id)
+  end
+
+  def restriction_customs_agent_ids
+    [ customs_agent_id, receiver_entity&.customs_agent_id, *request_customs_agent_ids ].compact.uniq
   end
   scope :with_payment_status, ->(payment_status) {
     next all unless PAYMENT_STATUSES.include?(payment_status)
@@ -367,6 +372,16 @@ class Invoice < ApplicationRecord
   end
 
   private
+
+  def cancellation_status_changed?
+    saved_change_to_status? && (saved_change_to_status & %w[cancel_pending cancelled]).any?
+  end
+
+  def enqueue_customs_agency_access_recalculation
+    restriction_customs_agent_ids.each do |agency_id|
+      CustomsAgents::RecalculateAccessRestrictionsJob.perform_later(customs_agent_id: agency_id)
+    end
+  end
 
   def external_receiver_name_from_payload
     payload_snapshot.to_h.dig("receptor", "nombre").to_s.strip.presence ||

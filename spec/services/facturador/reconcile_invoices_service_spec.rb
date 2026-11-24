@@ -15,7 +15,9 @@ RSpec.describe Facturador::ReconcileInvoicesService, type: :service do
     end
 
     it 'marks invoice as cancelled when provider reports cancelado' do
-      invoice = create(:invoice, status: 'cancel_pending', sat_uuid: 'UUID-CANCEL')
+      agency = create(:entity, :customs_agent)
+      invoice = create(:invoice, status: 'cancel_pending', sat_uuid: 'UUID-CANCEL', customs_agent: agency)
+      expect(CustomsAgents::RecalculateAccessRestrictionsJob).to receive(:perform_later).with(customs_agent_id: agency.id)
       allow(client_double).to receive(:buscar_comprobantes).and_return([
         {
           'uuid' => 'UUID-CANCEL',

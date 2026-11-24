@@ -2,6 +2,11 @@
 
 Checklist operativo para habilitar `solid_queue + worker` en produccion de forma segura, reversible y con control de costos.
 
+El recálculo global de restricciones de agencias se programa cuatro veces al día
+(05:00, 10:00, 15:00 y 20:00, según la zona horaria del scheduler). Los cambios
+de estado de cancelación de facturas también encolan un recálculo por agencia
+después de confirmar la transacción. Ambos mecanismos requieren el worker activo.
+
 ## 1. Objetivo
 
 - Tener cola persistente para jobs de Active Job.

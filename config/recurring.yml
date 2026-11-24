@@ -24,11 +24,7 @@ production:
 
   customs_agents_recalculate_access_restrictions:
     command: "CustomsAgents::RecalculateAccessRestrictionsJob.perform_later"
-    schedule: "0 5 * * *"
-
-  customs_agents_recalculate_access_restrictions_afternoon:
-    command: "CustomsAgents::RecalculateAccessRestrictionsJob.perform_later"
-    schedule: "0 15 * * *"
+    schedule: "0 5,10,15,20 * * *"
 
   photos_cleanup_expired_archives:
     class: "Photos::CleanupExpiredArchivesJob"
@@ -95,11 +91,7 @@ staging:
 
   customs_agents_recalculate_access_restrictions:
     command: "CustomsAgents::RecalculateAccessRestrictionsJob.perform_later"
-    schedule: "0 5 * * *"
-
-  customs_agents_recalculate_access_restrictions_afternoon:
-    command: "CustomsAgents::RecalculateAccessRestrictionsJob.perform_later"
-    schedule: "0 15 * * *"
+    schedule: "0 5,10,15,20 * * *"
 
   photos_cleanup_expired_archives:
     class: "Photos::CleanupExpiredArchivesJob"

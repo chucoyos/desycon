@@ -358,7 +358,7 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     expect(CustomsAgents::RestrictionEvaluatorService.call(customs_agent: agency_user.entity).restricted).to be(true)
   end
 
-  it "includes grouped invoice links in the agency rule and payment recalculation" do
+  it "includes grouped invoice links in the agency rule and payment and cancellation recalculation" do
     sign_in agency_user, scope: :user
     submit_request
     request_record = BlHouseLineServiceRequest.last
@@ -380,8 +380,9 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     get new_customs_agents_payment_evidence_path, params: { invoice_id: grouped.id }
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(grouped.id.to_s)
-    expect(CustomsAgents::RecalculateAccessRestrictionsJob).to receive(:perform_later).with(customs_agent_id: agency_user.entity_id)
+    expect(CustomsAgents::RecalculateAccessRestrictionsJob).to receive(:perform_later).with(customs_agent_id: agency_user.entity_id).twice
     Facturador::RegisterInvoicePaymentService.call(invoice: grouped, amount: grouped.total, paid_at: Time.current, payment_method: "03")
+    grouped.mark_cancel_pending!(motive: "02")
     expect(CustomsAgents::RestrictionEvaluatorService.call(customs_agent: agency_user.entity).restricted).to be(false)
   end
 

@@ -3,7 +3,7 @@ module CustomsAgents
     queue_as :default
 
     RECURRING_TASK_KEY = "customs_agents_recalculate_access_restrictions".freeze
-    MIN_GLOBAL_RECALC_INTERVAL = 7.hours
+    MIN_GLOBAL_RECALC_INTERVAL = 4.hours
     ADVISORY_LOCK_KEY = 1_204_202_601
 
     def perform(customs_agent_id: nil, force: false)

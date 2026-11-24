@@ -93,6 +93,46 @@ RSpec.describe Invoice, type: :model do
       expect(invoice.payment_status_label).to eq('Pendiente')
     end
 
+    describe 'cancellation restriction recalculation' do
+      it 'queues each directly and indirectly associated agency once after a status change' do
+        agency = create(:entity, :customs_agent)
+        other_agency = create(:entity, :customs_agent)
+        invoice = create(:invoice, status: 'issued', customs_agent: agency,
+          receiver_entity: create(:entity, :client, customs_agent: other_agency))
+        allow(invoice).to receive(:request_customs_agent_ids).and_return([ agency.id ])
+        allow(CustomsAgents::RecalculateAccessRestrictionsJob).to receive(:perform_later)
+
+        invoice.mark_cancel_pending!(motive: '02')
+
+        expect(CustomsAgents::RecalculateAccessRestrictionsJob).to have_received(:perform_later).with(customs_agent_id: agency.id).once
+        expect(CustomsAgents::RecalculateAccessRestrictionsJob).to have_received(:perform_later).with(customs_agent_id: other_agency.id).once
+      end
+
+      it 'does not queue a recalculation for unrelated changes or an unchanged cancellation status' do
+        invoice = create(:invoice, status: 'cancel_pending')
+        allow(CustomsAgents::RecalculateAccessRestrictionsJob).to receive(:perform_later)
+
+        invoice.mark_cancel_pending!(motive: '02')
+        invoice.update!(total: 999)
+
+        expect(CustomsAgents::RecalculateAccessRestrictionsJob).not_to have_received(:perform_later)
+      end
+
+      it 'does not queue a recalculation when the cancellation transaction rolls back' do
+        agency = create(:entity, :customs_agent)
+        invoice = create(:invoice, status: 'issued', customs_agent: agency)
+        allow(CustomsAgents::RecalculateAccessRestrictionsJob).to receive(:perform_later)
+
+        Invoice.transaction(requires_new: true) do
+          invoice.mark_cancel_pending!(motive: '02')
+          raise ActiveRecord::Rollback
+        end
+
+        expect(invoice.reload.status).to eq('issued')
+        expect(CustomsAgents::RecalculateAccessRestrictionsJob).not_to have_received(:perform_later)
+      end
+    end
+
     it 'returns partial when paid amount is below total' do
       invoice = create(:invoice, status: 'issued', total: 1000)
       create(:invoice_payment, invoice: invoice, amount: 400, status: 'registered')
