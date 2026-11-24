@@ -1,4 +1,18 @@
 require "rails_helper"
+require "capybara/selenium/driver"
+
+module ChromeSessionResetFallback
+  def reset!
+    super
+  rescue Selenium::WebDriver::Error::InvalidArgumentError => e
+    raise unless e.message.include?("* is not a valid URL")
+
+    Rails.logger.warn("Capybara: Chrome rechazó el origen comodín al limpiar la sesión; se reinicia el navegador.")
+    quit
+  end
+end
+
+Capybara::Selenium::Driver::ChromeDriver.prepend(ChromeSessionResetFallback)
 
 # System tests configuration
 RSpec.configure do |config|

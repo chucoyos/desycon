@@ -6,11 +6,11 @@ RSpec.describe CustomsAgents::RecalculateAccessRestrictionsJob, type: :job do
     schedules = YAML.safe_load(ERB.new(Rails.root.join("config/recurring.yml").read).result)
     %w[production staging].each do |environment|
       task = schedules.fetch(environment).fetch("customs_agents_recalculate_access_restrictions")
-      cron = Fugit.parse(task.fetch("schedule"))
-      time = Time.local(2026, 11, 24)
+      cron = Fugit.parse("#{task.fetch('schedule')} UTC")
+      time = Time.utc(2026, 11, 24)
       hours = 4.times.map do
         time = cron.next_time(time)
-        time.to_local_time.hour
+        time.to_local_time.utc.hour
       end
       expect(hours).to eq([ 5, 10, 15, 20 ])
     end
