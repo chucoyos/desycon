@@ -258,7 +258,7 @@ class BlHouseLinesController < ApplicationController
       @customs_agents = available_customs_agents
       @service_catalogs = ServiceCatalog.for_bl_house_lines
       load_clients
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -281,7 +281,7 @@ class BlHouseLinesController < ApplicationController
       @customs_agents = available_customs_agents
       @service_catalogs = ServiceCatalog.for_bl_house_lines
       load_clients
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
@@ -394,7 +394,7 @@ class BlHouseLinesController < ApplicationController
 
     if @bl_house_line.fecha_despacho.blank?
       @bl_house_line.errors.add(:fecha_despacho, "no puede estar en blanco")
-      return render_dispatch_modal(:unprocessable_entity)
+      return render_dispatch_modal(:unprocessable_content)
     end
 
     if @bl_house_line.save
@@ -412,7 +412,7 @@ class BlHouseLinesController < ApplicationController
         format.html { redirect_to bl_house_lines_path, notice: "Fecha de despacho guardada." }
       end
     else
-      render_dispatch_modal(:unprocessable_entity)
+      render_dispatch_modal(:unprocessable_content)
     end
   end
 
@@ -435,7 +435,7 @@ class BlHouseLinesController < ApplicationController
           format.html { redirect_to bl_house_lines_path, notice: "Instrucciones enviadas." }
         end
       else
-        render :revalidation_approval, status: :unprocessable_entity
+        render :revalidation_approval, status: :unprocessable_content
       end
 
     elsif decision == "assign"
@@ -448,7 +448,7 @@ class BlHouseLinesController < ApplicationController
 
       unless documents_validated?(@bl_house_line)
         @bl_house_line.errors.add(:base, "Debes marcar todos los documentos como validados antes de continuar.")
-        return render :revalidation_approval, status: :unprocessable_entity
+        return render :revalidation_approval, status: :unprocessable_content
       end
 
       container = @bl_house_line.container
@@ -459,7 +459,7 @@ class BlHouseLinesController < ApplicationController
       unless tarja_present
         if tentative_date.blank?
           @bl_house_line.errors.add(:base, "Debes capturar la fecha tentativa de desconsolidación.")
-          return render :revalidation_approval, status: :unprocessable_entity
+          return render :revalidation_approval, status: :unprocessable_content
         end
 
         if container
@@ -514,11 +514,11 @@ class BlHouseLinesController < ApplicationController
         if e.record != @bl_house_line
           @bl_house_line.errors.add(:base, e.record.errors.full_messages.to_sentence)
         end
-        render :revalidation_approval, status: :unprocessable_entity
+        render :revalidation_approval, status: :unprocessable_content
       rescue => e
         Rails.logger.error "Error in approve_revalidation (assign): #{e.message}"
         @bl_house_line.errors.add(:base, "Ocurrió un error al procesar la aprobación: #{e.message}")
-        render :revalidation_approval, status: :unprocessable_entity
+        render :revalidation_approval, status: :unprocessable_content
       end
     end
   end
@@ -554,7 +554,7 @@ class BlHouseLinesController < ApplicationController
     Rails.logger.error("Failed to reassign BL House Line ##{@bl_house_line.id}: #{e.message}")
     flash.now[:alert] = "No se pudo reasignar la partida: #{e.message}"
     load_reassign_collections
-    render :reassign, status: :unprocessable_entity
+    render :reassign, status: :unprocessable_content
   end
 
   # GET /bl_house_lines/1/reassign_brokers

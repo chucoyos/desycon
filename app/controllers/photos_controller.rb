@@ -116,7 +116,7 @@ class PhotosController < ApplicationController
 
     token = params[:token].to_s
     share_link = Photos::DownloadLinkToken.resolve(token: token, allow_expired: true)
-    return render json: { revoked: false, message: "Link inválido." }, status: :unprocessable_entity unless share_link
+    return render json: { revoked: false, message: "Link inválido." }, status: :unprocessable_content unless share_link
 
     authorize share_link.attachable, :show?
     share_link.revoke!(revoked_by: current_user)
@@ -171,7 +171,7 @@ class PhotosController < ApplicationController
 
     if section.blank?
       if request.format.json?
-        return render json: { status: "invalid", message: "Sección inválida para descargar fotografías." }, status: :unprocessable_entity
+        return render json: { status: "invalid", message: "Sección inválida para descargar fotografías." }, status: :unprocessable_content
       end
 
       return redirect_back fallback_location: polymorphic_path(attachable), alert: "Sección inválida para descargar fotografías."
@@ -261,7 +261,7 @@ class PhotosController < ApplicationController
           section: section,
           title: title,
           subtitle: subtitle,
-          status: :unprocessable_entity
+          status: :unprocessable_content
         )
       end
 
@@ -302,7 +302,7 @@ class PhotosController < ApplicationController
         section: section,
         title: title,
         subtitle: subtitle,
-        status: last_error.present? ? :unprocessable_entity : :ok
+        status: last_error.present? ? :unprocessable_content : :ok
       )
     end
 
@@ -319,7 +319,7 @@ class PhotosController < ApplicationController
 
     section = share_link_section_for(attachable)
     if section.blank?
-      return render json: { status: "invalid", message: "Sección inválida para compartir descarga." }, status: :unprocessable_entity
+      return render json: { status: "invalid", message: "Sección inválida para compartir descarga." }, status: :unprocessable_content
     end
 
     share_link = PhotoDownloadLink.create!(
@@ -491,7 +491,7 @@ class PhotosController < ApplicationController
     render_share_link_status_page(
       title: "Link inválido",
       message: "Este link de descarga no es válido.",
-      status: :unprocessable_entity,
+      status: :unprocessable_content,
       tone: :error
     )
   end

@@ -467,7 +467,7 @@ class ContainersController < ApplicationController
 
     if lifecycle_bl_master_params[:bl_master_documento].blank?
       @container.errors.add(:bl_master_documento, "debe adjuntarse")
-      return render_lifecycle_modal("containers/lifecycle/bl_master_modal", :unprocessable_entity)
+      return render_lifecycle_modal("containers/lifecycle/bl_master_modal", :unprocessable_content)
     end
 
     @container.assign_attributes(lifecycle_bl_master_params)
@@ -475,7 +475,7 @@ class ContainersController < ApplicationController
     if @container.save
       render_lifecycle_success("BL Master actualizado correctamente.")
     else
-      render_lifecycle_modal("containers/lifecycle/bl_master_modal", :unprocessable_entity)
+      render_lifecycle_modal("containers/lifecycle/bl_master_modal", :unprocessable_content)
     end
   end
 
@@ -491,13 +491,13 @@ class ContainersController < ApplicationController
 
     if @container.fecha_descarga.blank?
       @container.errors.add(:fecha_descarga, "no puede estar en blanco")
-      return render_lifecycle_modal("containers/lifecycle/descarga_modal", :unprocessable_entity)
+      return render_lifecycle_modal("containers/lifecycle/descarga_modal", :unprocessable_content)
     end
 
     if @container.save
       render_lifecycle_success("Fecha de descarga guardada correctamente.")
     else
-      render_lifecycle_modal("containers/lifecycle/descarga_modal", :unprocessable_entity)
+      render_lifecycle_modal("containers/lifecycle/descarga_modal", :unprocessable_content)
     end
   end
 
@@ -522,25 +522,25 @@ class ContainersController < ApplicationController
         return render_lifecycle_success("Transferencia marcada como no aplica.")
       end
 
-      return render_lifecycle_modal("containers/lifecycle/transferencia_modal", :unprocessable_entity)
+      return render_lifecycle_modal("containers/lifecycle/transferencia_modal", :unprocessable_content)
     end
 
     @container.assign_attributes(lifecycle_transferencia_params.merge(transferencia_no_aplica: false))
 
     if @container.fecha_transferencia.blank?
       @container.errors.add(:fecha_transferencia, "no puede estar en blanco")
-      return render_lifecycle_modal("containers/lifecycle/transferencia_modal", :unprocessable_entity)
+      return render_lifecycle_modal("containers/lifecycle/transferencia_modal", :unprocessable_content)
     end
 
     if @container.almacen.blank?
       @container.errors.add(:almacen, "no puede estar en blanco")
-      return render_lifecycle_modal("containers/lifecycle/transferencia_modal", :unprocessable_entity)
+      return render_lifecycle_modal("containers/lifecycle/transferencia_modal", :unprocessable_content)
     end
 
     if @container.save
       render_lifecycle_success("Cita de transferencia guardada correctamente.")
     else
-      render_lifecycle_modal("containers/lifecycle/transferencia_modal", :unprocessable_entity)
+      render_lifecycle_modal("containers/lifecycle/transferencia_modal", :unprocessable_content)
     end
   end
 
@@ -556,18 +556,18 @@ class ContainersController < ApplicationController
 
     if @container.fecha_tentativa_desconsolidacion.blank?
       @container.errors.add(:fecha_tentativa_desconsolidacion, "no puede estar en blanco")
-      return render_lifecycle_modal("containers/lifecycle/tentativa_modal", :unprocessable_entity)
+      return render_lifecycle_modal("containers/lifecycle/tentativa_modal", :unprocessable_content)
     end
 
     if @container.tentativa_turno.blank?
       @container.errors.add(:tentativa_turno, "no puede estar en blanco")
-      return render_lifecycle_modal("containers/lifecycle/tentativa_modal", :unprocessable_entity)
+      return render_lifecycle_modal("containers/lifecycle/tentativa_modal", :unprocessable_content)
     end
 
     if @container.save
       render_lifecycle_success("Fecha tentativa guardada correctamente.")
     else
-      render_lifecycle_modal("containers/lifecycle/tentativa_modal", :unprocessable_entity)
+      render_lifecycle_modal("containers/lifecycle/tentativa_modal", :unprocessable_content)
     end
   end
 
@@ -584,7 +584,7 @@ class ContainersController < ApplicationController
     if @container.save
       render_lifecycle_success("Estatus actualizado a En proceso desconsolidación.")
     else
-      render_lifecycle_modal("containers/lifecycle/en_proceso_desconsolidacion_modal", :unprocessable_entity)
+      render_lifecycle_modal("containers/lifecycle/en_proceso_desconsolidacion_modal", :unprocessable_content)
     end
   end
 
@@ -598,12 +598,12 @@ class ContainersController < ApplicationController
 
     if lifecycle_tarja_params[:tarja_documento].blank?
       @container.errors.add(:tarja_documento, "debe adjuntarse")
-      return render_lifecycle_modal("containers/lifecycle/tarja_modal", :unprocessable_entity)
+      return render_lifecycle_modal("containers/lifecycle/tarja_modal", :unprocessable_content)
     end
 
     if lifecycle_tarja_params[:fecha_desconsolidacion].blank?
       @container.errors.add(:fecha_desconsolidacion, "no puede estar en blanco")
-      return render_lifecycle_modal("containers/lifecycle/tarja_modal", :unprocessable_entity)
+      return render_lifecycle_modal("containers/lifecycle/tarja_modal", :unprocessable_content)
     end
 
     @container.assign_attributes(lifecycle_tarja_params)
@@ -611,7 +611,7 @@ class ContainersController < ApplicationController
     if @container.save
       render_lifecycle_success("Tarja actualizada correctamente.")
     else
-      render_lifecycle_modal("containers/lifecycle/tarja_modal", :unprocessable_entity)
+      render_lifecycle_modal("containers/lifecycle/tarja_modal", :unprocessable_content)
     end
   end
 

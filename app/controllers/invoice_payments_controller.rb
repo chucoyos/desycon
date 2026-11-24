@@ -24,7 +24,7 @@ class InvoicePaymentsController < ApplicationController
       redirect_to invoice_path(@invoice, anchor: "payments-section"), notice: "Pago actualizado correctamente."
     else
       flash.now[:alert] = "No fue posible actualizar el pago."
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

@@ -48,7 +48,7 @@ class ServiceCatalogsController < ApplicationController
     if @service_catalog.save
       redirect_to @service_catalog, notice: "Servicio creado correctamente."
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -58,7 +58,7 @@ class ServiceCatalogsController < ApplicationController
     if @service_catalog.update(service_catalog_params)
       redirect_to @service_catalog, notice: "Servicio actualizado correctamente.", status: :see_other
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

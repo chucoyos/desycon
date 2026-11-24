@@ -93,7 +93,7 @@ class CustomsAgentsController < ApplicationController
     end
 
     if search_blhouse.blank?
-      render partial: "customs_agents/revalidation_not_found", status: :unprocessable_entity and return
+      render partial: "customs_agents/revalidation_not_found", status: :unprocessable_content and return
     end
 
     @bl_house_line = revalidation_lookup_scope.includes(:container)
@@ -158,7 +158,7 @@ class CustomsAgentsController < ApplicationController
 
     if revalidation_request_blocked?(@bl_house_line)
       @bl_house_line.errors.add(:base, "Esta partida ya cuenta con una revalidación vigente o el proceso de documentación ha concluido. No se requieren acciones adicionales.")
-      render partial: "customs_agents/revalidation_modal", status: :unprocessable_entity, locals: { bl_house_line: @bl_house_line, customs_agents: revalidation_customs_agents, clients: revalidation_clients } and return
+      render partial: "customs_agents/revalidation_modal", status: :unprocessable_content, locals: { bl_house_line: @bl_house_line, customs_agents: revalidation_customs_agents, clients: revalidation_clients } and return
     end
 
     @bl_house_line.skip_revalidation_notification = true
@@ -174,7 +174,7 @@ class CustomsAgentsController < ApplicationController
       @bl_house_line.notify_revalidation_request
       render partial: "customs_agents/revalidation_success", locals: { bl_house_line: @bl_house_line }
     else
-      render partial: "customs_agents/revalidation_modal", status: :unprocessable_entity, locals: { bl_house_line: @bl_house_line, customs_agents: revalidation_customs_agents, clients: revalidation_clients }
+      render partial: "customs_agents/revalidation_modal", status: :unprocessable_content, locals: { bl_house_line: @bl_house_line, customs_agents: revalidation_customs_agents, clients: revalidation_clients }
     end
   end
 

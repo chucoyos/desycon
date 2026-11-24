@@ -60,7 +60,7 @@ class EntityAddressesController < ApplicationController
       respond_to do |format|
         format.turbo_stream do
           flash.now[:alert] = error_message
-          render :destroy, status: :unprocessable_entity
+          render :destroy, status: :unprocessable_content
         end
         format.html { redirect_to @entity, alert: error_message }
       end

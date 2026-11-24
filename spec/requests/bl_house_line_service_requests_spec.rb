@@ -124,7 +124,7 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     payment.destroy!
     sign_in agency_user, scope: :user
     expect { submit_request }.not_to change(BlHouseLineServiceRequest, :count)
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("factura de asignación debe estar pagada")
     document = Nokogiri::HTML(response.body)
     expect(document.at_css("[role='alert']").text).to include("factura de asignación debe estar pagada")
@@ -169,7 +169,7 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     catalog.update!(code: "BL-PMD")
     sign_in agency_user, scope: :user
     expect { submit_request }.not_to change(BlHouseLineServiceRequest, :count)
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
   end
 
   it "rejects requests for a line that is not revalidated or is in another port" do
@@ -437,7 +437,7 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
     create(:invoice, status: "issued", issued_at: 20.days.ago, customs_agent: agency_user.entity)
     sign_in agency_user, scope: :user
     expect { submit_request }.not_to change(BlHouseLineServiceRequest, :count)
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
   end
 
   it "does not allow deleting or changing the catalog of an approved requested service" do
@@ -662,7 +662,7 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
 
     it "requires a document" do
       expect { submit_delivery(nil) }.not_to change(BlHouseLineServiceRequest, :count)
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("es obligatorio")
     end
 
@@ -676,7 +676,7 @@ RSpec.describe "Solicitudes de servicios Lázaro", type: :request do
         expect {
           submit_delivery(pdf, transport_details: delivery_transport_details.except(attribute))
         }.not_to change(BlHouseLineServiceRequest, :count)
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(response.body).to include("no puede estar en blanco")
       end
     end

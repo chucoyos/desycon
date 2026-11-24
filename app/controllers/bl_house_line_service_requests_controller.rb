@@ -37,7 +37,7 @@ class BlHouseLineServiceRequestsController < ApplicationController
       redirect_to bl_house_line_path(@bl_house_line), notice: "Solicitud de servicio registrada."
     else
       @catalogs = BlHouseLineServiceRequest.requestable_catalogs.order(:name)
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 

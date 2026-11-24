@@ -72,7 +72,7 @@ class VesselsController < ApplicationController
         format.json { head :no_content }
       else
         format.html { redirect_to vessels_path, alert: "No se puede eliminar el buque porque tiene contenedores asociados." }
-        format.json { render json: @vessel.errors, status: :unprocessable_entity }
+        format.json { render json: @vessel.errors, status: :unprocessable_content }
       end
     end
   end
