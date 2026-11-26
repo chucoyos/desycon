@@ -527,3 +527,7 @@ Notas:
 # Evidencias de pago
 
 Administradores y ejecutivos pueden reemplazar el comprobante desde el detalle de una evidencia, independientemente de su estado. El reemplazo no conserva versiones anteriores ni modifica las facturas, los pagos o el comprobante adjunto directamente a un pago.
+
+## Eliminación de pagos con REP cancelado
+
+Administradores y ejecutivos pueden eliminar un pago vinculado a un REP únicamente cuando la cancelación del REP esté confirmada (`status: cancelled`). El REP cancelado se conserva como historial; la eliminación no lo borra. Los REP vigentes o con cancelación pendiente no permiten eliminar el pago, y el pago vinculado a un REP cancelado no se puede editar.

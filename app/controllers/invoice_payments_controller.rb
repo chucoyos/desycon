@@ -2,7 +2,7 @@ class InvoicePaymentsController < ApplicationController
   before_action :authenticate_user!
   before_action :set_invoice
   before_action :set_payment
-  before_action :ensure_manageable_payment!, only: %i[edit update destroy]
+  before_action :ensure_editable_payment!, only: %i[edit update]
   after_action :verify_authorized
 
   def show
@@ -31,7 +31,15 @@ class InvoicePaymentsController < ApplicationController
   def destroy
     authorize @payment, :destroy?
 
-    @payment.destroy!
+    deleted = @payment.with_lock do
+      @payment.destroy! if @payment.deletable?
+      @payment.destroyed?
+    end
+    unless deleted
+      return redirect_to invoice_path(@invoice, anchor: "payments-section"),
+        alert: "No se puede eliminar el pago mientras su REP no esté cancelado."
+    end
+
     redirect_to invoice_path(@invoice, anchor: "payments-section"), notice: "Pago eliminado correctamente."
   end
 
@@ -58,7 +66,7 @@ class InvoicePaymentsController < ApplicationController
     params.require(:invoice_payment).permit(:amount, :paid_at, :payment_method, :reference, :tracking_key, :notes, :receipt_file)
   end
 
-  def ensure_manageable_payment!
+  def ensure_editable_payment!
     return if @payment.complement_invoice_id.blank? && @payment.status.in?([ "registered", "failed" ])
 
     redirect_to invoice_path(@invoice, anchor: "payments-section"), alert: "Este pago ya está ligado a un complemento y no se puede modificar." and return

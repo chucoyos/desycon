@@ -60,6 +60,20 @@ RSpec.describe 'InvoicePayments', type: :request do
       expect(response).to redirect_to(invoice_path(invoice, anchor: 'payments-section'))
       expect(flash[:alert]).to be_present
     end
+
+    it 'keeps editing blocked when the linked REP has been cancelled' do
+      complement = create(:invoice, kind: 'pago', status: 'cancelled', sat_uuid: 'UUID-COMP-CANCELLED-EDIT')
+      payment.update!(status: 'complement_issued', complement_invoice: complement)
+
+      patch invoice_invoice_payment_path(invoice, payment), params: {
+        invoice_payment: { amount: 600, reference: 'NO-EDIT' }
+      }
+
+      expect(response).to redirect_to(invoice_path(invoice, anchor: 'payments-section'))
+      expect(flash[:alert]).to be_present
+      expect(payment.reload.amount.to_f).to eq(500.0)
+      expect(payment.reference).to eq('REF-001')
+    end
   end
 
   describe 'PATCH /invoices/:invoice_id/invoice_payments/:id' do
@@ -103,6 +117,38 @@ RSpec.describe 'InvoicePayments', type: :request do
       }.to change(InvoicePayment, :count).by(-1)
 
       expect(response).to redirect_to(invoice_path(invoice, anchor: 'payments-section'))
+    end
+
+    it 'deletes a payment linked to a confirmed-cancelled REP and preserves the REP and other linked payments' do
+      complement = create(:invoice, kind: 'pago', status: 'cancelled', sat_uuid: 'UUID-COMP-CANCELLED')
+      target = create(:invoice_payment, invoice: invoice, status: 'complement_issued', complement_invoice: complement)
+      other_payment = create(:invoice_payment, invoice: invoice, status: 'complement_issued', complement_invoice: complement)
+
+      expect {
+        delete invoice_invoice_payment_path(invoice, target)
+      }.to change(InvoicePayment, :count).by(-1)
+
+      expect(response).to redirect_to(invoice_path(invoice, anchor: 'payments-section'))
+      expect(flash[:notice]).to eq('Pago eliminado correctamente.')
+      expect(Invoice.exists?(complement.id)).to be(true)
+      expect(complement.reload.status).to eq('cancelled')
+      expect(complement.payment_complements).to contain_exactly(other_payment)
+      expect(other_payment.reload.complement_invoice_id).to eq(complement.id)
+    end
+
+    %w[issued cancel_pending].each do |rep_status|
+      it "blocks deleting a payment while its REP is #{rep_status}" do
+        complement = create(:invoice, kind: 'pago', status: rep_status)
+        target = create(:invoice_payment, invoice: invoice, status: 'complement_issued', complement_invoice: complement)
+
+        expect {
+          delete invoice_invoice_payment_path(invoice, target)
+        }.not_to change(InvoicePayment, :count)
+
+        expect(response).to redirect_to(invoice_path(invoice, anchor: 'payments-section'))
+        expect(flash[:alert]).to include('mientras su REP no esté cancelado')
+        expect(target.reload.complement_invoice_id).to eq(complement.id)
+      end
     end
   end
 
@@ -148,6 +194,22 @@ RSpec.describe 'InvoicePayments', type: :request do
 
       expect(response).to redirect_to(customs_agents_dashboard_path)
       expect(flash[:alert]).to be_present
+    end
+
+    it 'denies customs broker users deleting a payment with a cancelled REP' do
+      sign_out admin_user
+      broker_user = create(:user, :customs_broker)
+      sign_in broker_user, scope: :user
+      complement = create(:invoice, kind: 'pago', status: 'cancelled', sat_uuid: 'UUID-COMP-CANCELLED-AUTH')
+      target = create(:invoice_payment, invoice: invoice, status: 'complement_issued', complement_invoice: complement)
+
+      expect {
+        delete invoice_invoice_payment_path(invoice, target)
+      }.not_to change(InvoicePayment, :count)
+
+      expect(response).to redirect_to(customs_agents_dashboard_path)
+      expect(flash[:alert]).to be_present
+      expect(target.reload).to be_persisted
     end
   end
 end

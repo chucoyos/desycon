@@ -28,6 +28,14 @@ class InvoicePayment < ApplicationRecord
     STATUS_LABELS[status] || status.to_s.humanize
   end
 
+  def deletable?
+    if complement_invoice_id.blank?
+      status.in?(%w[registered failed])
+    else
+      complement_invoice&.kind == "pago" && complement_invoice.status == "cancelled"
+    end
+  end
+
   private
 
   def cumulative_amount_within_invoice_total

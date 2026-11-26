@@ -956,6 +956,35 @@ RSpec.describe 'Invoices', type: :request do
       expect(response.body).to include('PDF')
     end
 
+    it 'shows payment deletion but not editing for cancelled REP in desktop and mobile layouts' do
+      invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-SHOW-CANCELLED-REP')
+      complement = create(:invoice, kind: 'pago', status: 'cancelled', sat_uuid: 'UUID-COMP-CANCELLED-SHOW')
+      payment = create(:invoice_payment, invoice: invoice, status: 'complement_issued', complement_invoice: complement)
+
+      get invoice_path(invoice)
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      payment_path = invoice_invoice_payment_path(invoice, payment)
+      delete_forms = document.css('form').select { |form| form['action'] == payment_path }
+
+      expect(delete_forms.size).to eq(2)
+      expect(delete_forms.map { |form| form['data-turbo-confirm'] }.uniq.join).to include('REP cancelado se conservará como registro histórico')
+      expect(document.css("a[href='#{edit_invoice_invoice_payment_path(invoice, payment)}']")).to be_empty
+    end
+
+    it 'does not show payment deletion for a payment with a non-cancelled REP' do
+      invoice = create(:invoice, status: 'issued', sat_uuid: 'UUID-SHOW-ACTIVE-REP')
+      complement = create(:invoice, kind: 'pago', status: 'issued', sat_uuid: 'UUID-COMP-ACTIVE-SHOW')
+      payment = create(:invoice_payment, invoice: invoice, status: 'complement_issued', complement_invoice: complement)
+
+      get invoice_path(invoice)
+
+      expect(response).to have_http_status(:ok)
+      document = Nokogiri::HTML(response.body)
+      expect(document.css("form[action='#{invoice_invoice_payment_path(invoice, payment)}']")).to be_empty
+    end
+
     it 'shows included CFDIs table for REP with one row per related document' do
       receiver = create(:entity, :client, name: 'Cliente Receptor Con Nombre Muy Largo Para Probar Tabla REP Sin Romper Layout')
       source_invoice_one = create(
