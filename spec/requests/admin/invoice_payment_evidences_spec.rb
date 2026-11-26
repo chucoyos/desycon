@@ -194,6 +194,117 @@ RSpec.describe "Admin::InvoicePaymentEvidences", type: :request do
       expect(response.body).to include(invoice_path(invoice))
       expect(response.body).to include(I18n.l(evidence.created_at, format: "%d/%m/%Y %H:%M"))
       expect(response.body).not_to include("Seleccionar")
+      expect(response.body).to include("Reemplazar comprobante")
+      expect(response.body).to include('name="invoice_payment_evidence[receipt_file]"')
+      expect(Nokogiri::HTML(response.body).at_css('label[for="invoice_payment_evidence_receipt_file"]').text).to eq("Reemplazar comprobante")
+      expect(response.body).to include("Advertencia:")
+    end
+  end
+
+  describe "PATCH /admin/invoice_payment_evidences/:id/replace_receipt" do
+    let(:new_file) do
+      Rack::Test::UploadedFile.new(StringIO.new("nuevo comprobante"), "application/pdf", original_filename: "nuevo.pdf")
+    end
+    let(:path) { replace_receipt_admin_invoice_payment_evidence_path(evidence, invoice_id: invoice.id) }
+
+    %w[pending linked rejected].each do |status|
+      it "allows an administrator to replace a #{status} evidence without changing its other data" do
+        evidence.update!(status: status, review_comment: "Revisión conservada")
+        previous_attributes = evidence.attributes.except("updated_at")
+        previous_blob_id = evidence.receipt_file.blob.id
+        sign_in admin_user, scope: :user
+
+        patch path, params: { invoice_payment_evidence: { receipt_file: new_file, status: "pending" } }
+
+        expect(response).to redirect_to(admin_invoice_payment_evidence_path(evidence, invoice_id: invoice.id))
+        expect(flash[:notice]).to be_present
+        evidence.reload
+        expect(evidence.attributes.except("updated_at")).to eq(previous_attributes)
+        expect(evidence.receipt_file.blob.id).not_to eq(previous_blob_id)
+        expect(evidence.receipt_file.download).to eq("nuevo comprobante")
+      end
+    end
+
+    it "allows an executive to replace the receipt without imposing a new file type restriction" do
+      sign_in executive_user, scope: :user
+      text_file = Rack::Test::UploadedFile.new(StringIO.new("otro formato"), "text/plain", original_filename: "nuevo.txt")
+
+      patch path, params: { invoice_payment_evidence: { receipt_file: text_file } }
+
+      expect(flash[:notice]).to be_present
+      expect(evidence.reload.receipt_file.download).to eq("otro formato")
+    end
+
+    [ :customs_broker, :consolidator, :tramitador ].each do |role|
+      it "denies replacement by a #{role}" do
+        old_blob_id = evidence.receipt_file.blob.id
+        sign_in(role == :customs_broker ? customs_user : create(:user, role), scope: :user)
+
+        patch path, params: { invoice_payment_evidence: { receipt_file: new_file } }
+
+        expect(response).to have_http_status(:redirect)
+        expect(flash[:alert]).to be_present
+        expect(evidence.reload.receipt_file.blob.id).to eq(old_blob_id)
+      end
+    end
+
+    [ nil, "invalid", { unexpected: "value" } ].each do |file|
+      it "rejects a missing or invalid file (#{file.inspect}) without changing the receipt" do
+        old_blob_id = evidence.receipt_file.blob.id
+        sign_in admin_user, scope: :user
+
+        patch path, params: { invoice_payment_evidence: { receipt_file: file } }
+
+        expect(flash[:alert]).to be_present
+        expect(evidence.reload.receipt_file.blob.id).to eq(old_blob_id)
+        expect(evidence.receipt_file.download).to eq("fake receipt content")
+      end
+    end
+
+    it "leaves the existing receipt intact when the upload fails" do
+      old_blob_id = evidence.receipt_file.blob.id
+      sign_in admin_user, scope: :user
+      allow(ActiveStorage::Blob.service).to receive(:upload).and_raise(IOError, "falló la carga")
+
+      expect {
+        patch path, params: { invoice_payment_evidence: { receipt_file: new_file } }
+      }.to raise_error(IOError, "falló la carga")
+
+      expect(evidence.reload.receipt_file.blob.id).to eq(old_blob_id)
+      expect(evidence.receipt_file.download).to eq("fake receipt content")
+    end
+
+    it "keeps the existing receipt and reports an error when the evidence is invalid" do
+      evidence.update_column(:reference, "")
+      old_blob_id = evidence.receipt_file.blob.id
+      sign_in admin_user, scope: :user
+
+      patch path, params: { invoice_payment_evidence: { receipt_file: new_file } }
+
+      expect(flash[:alert]).to include("No fue posible actualizar el comprobante")
+      expect(evidence.reload.receipt_file.blob.id).to eq(old_blob_id)
+      expect(evidence.receipt_file.download).to eq("fake receipt content")
+    end
+
+    it "preserves linked invoices, payment and its separate receipt" do
+      other_invoice = create(:invoice, status: "issued", receiver_entity: client_entity)
+      create(:invoice_payment_evidence_link, invoice_payment_evidence: evidence, invoice: invoice)
+      create(:invoice_payment_evidence_link, invoice_payment_evidence: evidence, invoice: other_invoice)
+      payment = create(:invoice_payment, invoice: invoice)
+      payment.receipt_file.attach(io: StringIO.new("comprobante de pago"), filename: "pago.pdf", content_type: "application/pdf")
+      evidence.update!(invoice_payment: payment, status: "linked")
+      payment_blob_id = payment.receipt_file.blob.id
+      sign_in admin_user, scope: :user
+
+      patch path, params: { invoice_payment_evidence: { receipt_file: new_file } }
+
+      expect(evidence.reload.invoices.pluck(:id)).to match_array([ invoice.id, other_invoice.id ])
+      expect(evidence.invoice_payment_id).to eq(payment.id)
+      expect(payment.reload.receipt_file.blob.id).to eq(payment_blob_id)
+      expect(payment.receipt_file.download).to eq("comprobante de pago")
+      get invoice_invoice_payment_path(invoice, payment)
+      expect(response.body).to include(rails_blob_path(evidence.receipt_file, disposition: "inline"))
+      expect(response.body).to include(rails_blob_path(payment.receipt_file, disposition: "inline"))
     end
   end
 

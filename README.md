@@ -524,3 +524,6 @@ Notas:
 
 - El job aborta fuera de `production`.
 - Si el tamaño ya coincide, no envía actualización (idempotente).
+# Evidencias de pago
+
+Administradores y ejecutivos pueden reemplazar el comprobante desde el detalle de una evidencia, independientemente de su estado. El reemplazo no conserva versiones anteriores ni modifica las facturas, los pagos o el comprobante adjunto directamente a un pago.

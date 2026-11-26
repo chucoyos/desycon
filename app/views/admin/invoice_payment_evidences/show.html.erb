@@ -65,6 +65,14 @@
             <%= link_to "Descargar comprobante", rails_blob_path(@evidence.receipt_file, disposition: "attachment"), class: "cursor-pointer inline-flex items-center px-3 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold" %>
           </div>
         <% end %>
+        <% if policy(@evidence).update? %>
+          <%= form_with url: replace_receipt_admin_invoice_payment_evidence_path(@evidence, invoice_id: @invoice&.id), method: :patch, scope: :invoice_payment_evidence, data: { turbo_confirm: "¿Deseas reemplazar el comprobante de esta evidencia? El archivo actual se sustituirá y no se conservará una versión anterior. Los pagos y las facturas vinculadas no se modificarán." }, class: "mt-5 space-y-3 rounded-xl border border-amber-300 bg-amber-50 p-4" do |f| %>
+            <%= f.label :receipt_file, "Reemplazar comprobante", class: "block text-sm font-semibold text-amber-900" %>
+            <p id="replacement-receipt-help" class="text-sm text-amber-900"><span class="font-semibold">Advertencia:</span> El archivo actual se reemplazará sin conservar una versión anterior.</p>
+            <%= f.file_field :receipt_file, required: true, aria: { describedby: "replacement-receipt-help" }, class: "block min-h-12 w-full cursor-pointer rounded-xl border border-gray-300 bg-white text-sm text-gray-700 transition-colors duration-200 ease-out hover:border-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 file:mr-3 file:min-h-12 file:cursor-pointer file:border-0 file:border-r file:border-indigo-200 file:bg-indigo-50 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50" %>
+            <%= f.submit "Reemplazar comprobante", class: "inline-flex min-h-12 cursor-pointer items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors duration-200 hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" %>
+          <% end %>
+        <% end %>
       </div>
 
       <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">

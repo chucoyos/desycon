@@ -5,7 +5,7 @@ module Admin
     DATE_FILTER_TYPES = %w[created_at paid_at].freeze
 
     before_action :authenticate_user!
-    before_action :set_evidence, only: [ :show, :reject, :register_payment ]
+    before_action :set_evidence, only: [ :show, :reject, :register_payment, :replace_receipt ]
     after_action :verify_authorized
 
     def index
@@ -52,6 +52,27 @@ module Admin
       @invoice = selected_invoice_for_registration
       @invoice_payments = @invoice.present? ? @invoice.invoice_payments.recent_first : InvoicePayment.none
       @payment_method_options = FiscalProfile::FORMAS_PAGO.map { |code, label| [ "#{code} - #{label}", code ] }
+    end
+
+    def replace_receipt
+      authorize @evidence, :update?
+
+      file = params[:invoice_payment_evidence].is_a?(ActionController::Parameters) &&
+        params[:invoice_payment_evidence].permit(:receipt_file)[:receipt_file]
+      invoice_id = @evidence.invoice_for_admin_registration(params[:invoice_id])&.id
+      return redirect_to admin_invoice_payment_evidence_path(@evidence, invoice_id: invoice_id),
+        alert: "Selecciona un archivo para reemplazar el comprobante." unless file.is_a?(ActionDispatch::Http::UploadedFile)
+
+      blob = ActiveStorage::Blob.create_and_upload!(
+        io: file.open, filename: file.original_filename, content_type: file.content_type
+      )
+      @evidence.update!(receipt_file: blob)
+      redirect_to admin_invoice_payment_evidence_path(@evidence, invoice_id: invoice_id),
+        notice: "Comprobante de pago actualizado correctamente."
+    rescue ActiveRecord::RecordInvalid => e
+      blob&.purge
+      redirect_to admin_invoice_payment_evidence_path(@evidence, invoice_id: invoice_id),
+        alert: "No fue posible actualizar el comprobante: #{e.record.errors.full_messages.to_sentence}"
     end
 
     def reject

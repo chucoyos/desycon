@@ -109,6 +109,7 @@ Rails.application.routes.draw do
     resources :invoice_payment_evidences, only: [ :index, :show ] do
       member do
         patch :reject
+        patch :replace_receipt
         post :register_payment
       end
     end
